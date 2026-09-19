@@ -11,7 +11,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 2 | Hierarquia de prioridade + regra de escopo | — | lei do plano (D7) | ● |
 | 3 | Núcleo de dados financeiros | P0 | F0, F1 | ● |
 | 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ● |
-| 5 | Cartões e crédito | P0 | F3 | ○ |
+| 5 | Cartões e crédito | P0 | F3 | ● |
 | 6 | Contas, obrigações e calendário | P0 | F4 | ○ |
 | 7 | Fluxo de caixa e projeção | P0 | F5 | ○ |
 | 8 | Diagnóstico financeiro | P0 | F7 | ○ |
@@ -92,12 +92,31 @@ compõe — nenhum é uma caixa preta. Portão verificado com Playwright: o
 painel Início responde com o número, e os detalhes batem exatamente com os
 lançamentos que os originaram.
 
-### §5 — Cartões e crédito `P0` — **F3**
+### §5 — Cartões e crédito `P0` — ✅ **F3** (19/09/2026)
 
 Limite total, disponível e utilizado · fatura atual, próxima e vencimento ·
 parceladas e comprometimento de meses futuros · **compra no cartão ≠ pagamento
 de fatura** · sem dupla contagem · comprometimento futuro visível · alerta de
 aproximação de limite e de utilização anormal · cartões de mais de uma pessoa.
+
+**Como foi entregue:** `domain/cartoes.js`. "Utilizado" soma **todo**
+compromisso ainda não pago — inclusive parcelas que só vão fechar fatura
+daqui a meses, não só a fatura corrente (é a leitura correta de
+"comprometimento futuro" do §5, não uma limitação). Tela de Cartões ganhou
+detalhe expansível: barra de utilização, fatura atual/próxima e a lista de
+compromisso futuro, uma linha por parcela. Cartões de mais de uma pessoa já
+existiam desde a Fase 0 (`cartao.pessoaId`), agora visíveis na tela.
+
+Alerta de **aproximação de limite**: dois degraus (70% atenção, 90%
+crítico). Alerta de **utilização anormal** (comparada ao padrão histórico)
+é §17 — Fase 10, Anomalias — não esta fase: sem histórico acumulado ainda,
+qualquer "anormal" agora seria palpite.
+
+Bug real achado e corrigido no caminho: o texto da fatura em aberto dizia
+"fecha e vence [mesma data]" — fechamento e vencimento são datas
+diferentes (ex.: fecha dia 28, vence dia 5 do mês seguinte); o texto usava
+a data de vencimento para as duas coisas. Corrigido calculando o
+fechamento de verdade (`dataFechamentoFatura`).
 
 ### §6 — Contas, obrigações e calendário `P0` — **F4**
 

@@ -17,15 +17,22 @@ import { ErroDeValidacao } from "../../dados/repositorios.js";
  * @param {string} config.rotuloNovo - texto do botão "+ Novo ..."
  * @param {Array}  config.campos - [{id, rotulo, tipo, opcoes?, origemContexto?, obrigatorio?, padrao?}]
  *   tipo: 'texto' | 'numero' | 'moeda' | 'data' | 'select' | 'select-contexto' | 'check'
- * @param {(dados: object, contexto: object) => {titulo, sub, valorDireita?, tag?}} config.exibir
+ * @param {(dados: object, contexto: object, id: string) => {titulo, sub, valorDireita?, tag?}} config.exibir
  * @param {() => Promise<object>} [config.carregarContexto] - dados extra para selects dinâmicos (ex.: lista de pessoas)
+ * @param {(dados: object, id: string, contexto: object) => string} [config.renderExtra] - quando presente,
+ *   cada item ganha uma seta de expandir; ao abrir, mostra o HTML retornado aqui (ex.: fatura atual/próxima
+ *   de um cartão). Calculado a partir do `contexto` carregado no mount — não é ao vivo dentro do detalhe
+ *   expandido; reabrir a aba atualiza.
  */
 export function criarTelaCadastro(config) {
   let contexto = {};
   let itens = [];
   let pararAssinatura = null;
+  let containerAtual = null;
+  const expandidos = new Set();
 
   async function montar(container) {
+    containerAtual = container;
     container.innerHTML = `
       <div class="tela-head">
         <div>
@@ -45,16 +52,19 @@ export function criarTelaCadastro(config) {
     if (pararAssinatura) pararAssinatura();
     pararAssinatura = config.repo.assinar((lista) => {
       itens = lista;
-      renderizarLista(container);
+      renderizarLista();
     });
   }
 
   function desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
+    containerAtual = null;
+    expandidos.clear();
   }
 
-  function renderizarLista(container) {
-    const alvo = container.querySelector("#lista-cadastro");
+  function renderizarLista() {
+    if (!containerAtual) return;
+    const alvo = containerAtual.querySelector("#lista-cadastro");
     if (!alvo) return;
     if (!itens.length) {
       alvo.innerHTML = `
@@ -66,7 +76,9 @@ export function criarTelaCadastro(config) {
       return;
     }
     alvo.innerHTML = itens.map((item) => {
-      const v = config.exibir(item.dados, contexto);
+      const v = config.exibir(item.dados, contexto, item.id);
+      const expansivel = typeof config.renderExtra === "function";
+      const aberto = expansivel && expandidos.has(item.id);
       return `
         <div class="item-cartao" data-id="${escapeHtml(item.id)}">
           <div class="item-avatar">${escapeHtml(iniciais(v.titulo))}</div>
@@ -75,12 +87,14 @@ export function criarTelaCadastro(config) {
             <div class="item-sub">${escapeHtml(v.sub || "")}</div>
           </div>
           ${v.valorDireita != null ? `<div class="item-valor" data-valor>${escapeHtml(v.valorDireita)}</div>` : ""}
-          ${v.tag ? `<span class="item-tag${v.tagInativa ? " inativa" : ""}">${escapeHtml(v.tag)}</span>` : ""}
+          ${v.tag ? `<span class="item-tag${v.tagInativa ? " inativa" : ""}${v.tagClasse ? " " + escapeHtml(v.tagClasse) : ""}">${escapeHtml(v.tag)}</span>` : ""}
+          ${expansivel ? `<button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" title="Ver detalhes" aria-label="Ver detalhes">▾</button>` : ""}
           <div class="item-acoes">
             <button class="icon-btn" data-acao="editar" title="Editar" aria-label="Editar">✎</button>
             <button class="icon-btn danger" data-acao="apagar" title="Apagar" aria-label="Apagar">✕</button>
           </div>
-        </div>`;
+        </div>
+        ${aberto ? `<div class="item-extra">${config.renderExtra(item.dados, item.id, contexto)}</div>` : ""}`;
     }).join("");
     alvo.querySelectorAll('[data-acao="editar"]').forEach((btn) => {
       btn.addEventListener("click", (ev) => {
@@ -96,10 +110,17 @@ export function criarTelaCadastro(config) {
         if (item) confirmarApagar(item);
       });
     });
+    alvo.querySelectorAll('[data-acao="expandir"]').forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        const id = ev.target.closest(".item-cartao").dataset.id;
+        if (expandidos.has(id)) expandidos.delete(id); else expandidos.add(id);
+        renderizarLista();
+      });
+    });
   }
 
   function confirmarApagar(item) {
-    const v = config.exibir(item.dados, contexto);
+    const v = config.exibir(item.dados, contexto, item.id);
     abrirModal(`
       <div class="modal">
         <h2>Apagar “${escapeHtml(v.titulo)}”?</h2>

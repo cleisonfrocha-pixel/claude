@@ -135,6 +135,28 @@
   background: var(--surface-2); color: var(--text-muted); white-space: nowrap;
 }
 .item-tag.inativa { background: var(--danger-bg); color: var(--danger); }
+.item-tag.atencao { background: var(--warn-bg); color: var(--warn); }
+.item-tag.critico { background: var(--danger-bg); color: var(--danger); }
+
+/* ---- item expansível (ex.: detalhe de cartão) ---- */
+.item-chevron { transition: transform .15s ease; font-size: 12px; }
+.item-chevron.aberto { transform: rotate(180deg); }
+.item-extra {
+  background: var(--surface-2); border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 12px 12px; margin: -10px 0 10px; padding: 4px 16px 14px;
+}
+.barra-limite { height: 6px; border-radius: 999px; background: var(--surface); overflow: hidden; margin: 8px 0 14px; }
+.barra-limite span { display: block; height: 100%; border-radius: 999px; background: var(--good); }
+.barra-limite.atencao span { background: var(--warn); }
+.barra-limite.critico span { background: var(--danger); }
+.fatura-linha {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px;
+}
+.fatura-linha:last-child { border-bottom: none; }
+.fatura-linha .rotulo { color: var(--text-muted); }
+.fatura-linha .rotulo small { display: block; color: var(--text-faint); font-size: 11.5px; margin-top: 1px; }
+.fatura-linha b { font-family: 'IBM Plex Mono', monospace; }
 
 /* ---- estado vazio ---- */
 .vazio {

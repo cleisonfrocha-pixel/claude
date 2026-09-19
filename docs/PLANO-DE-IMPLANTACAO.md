@@ -156,7 +156,7 @@ Nunca chegou a afetar dado publicado (só sessões de teste local), mas era
 uma corrida de verdade. Corrigido trocando o timeout por
 `requestAnimationFrame` com checagem de foco ativo.
 
-### Fase 3 · Cartões e crédito · 3 sessões — §5
+### Fase 3 · Cartões e crédito · 3 sessões — §5 — ✅ concluída (19/09/2026)
 
 Limite total, disponível e utilizado; fatura atual, próxima e vencimento;
 parceladas e comprometimento de meses futuros; alerta de aproximação de limite;
@@ -164,6 +164,21 @@ cartões de mais de uma pessoa no mesmo núcleo.
 
 **Portão:** uma compra parcelada em 10x aparece como parcela no mês corrente
 **e** como compromisso nos 9 meses seguintes, sem contar o dinheiro duas vezes.
+
+**Entregue:** `domain/cartoes.js` — utilizado soma todo compromisso ainda não
+pago (não só a fatura corrente), disponível, nível de alerta em dois degraus
+(70%/90%), e fatura atual/próxima/compromisso futuro. A tela Cartões ganhou
+detalhe expansível por cartão: barra de utilização e a lista de faturas, uma
+linha por parcela, com data de vencimento. 9 testes de domínio novos (83 no
+total). Portão verificado de ponta a ponta com Playwright: uma compra
+parcelada em 10x de R$ 100 aparece com a parcela 1 na fatura atual e as
+outras 9 na lista de compromisso futuro, e "disponível" já desconta o
+R$ 1.000,00 inteiro comprometido, não só a parcela do mês.
+
+Extensão de reuso registrada: `telaCadastro.js` (a fábrica de tela de
+cadastro da Fase 0) ganhou um hook `renderExtra` genérico — item
+expansível com detalhe — em vez de duplicar a lógica de lista só para
+cartões. Fica disponível para Dívidas e Patrimônio mais adiante.
 
 ### Fase 4 · Compromissos e calendário · 3 sessões — §6
 
