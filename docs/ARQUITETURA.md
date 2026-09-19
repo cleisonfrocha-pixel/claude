@@ -61,6 +61,10 @@ análise. O artefato nasce privado. Compartilhar com edição (para o cônjuge, 
 exemplo) dá acesso aos lançamentos. Não é cofre bancário — é um painel pessoal.
 Se isso não for aceitável, a Trilha B (D6) é o caminho.
 
+> **Confirmado pelo dono do produto (19/09/2026):** o modelo é aceitável — é um
+> painel pessoal, não um cofre bancário. Trilha A confirmada; o gatilho 4 do D6
+> está descartado enquanto essa posição não mudar.
+
 ## D3 — O motor financeiro é puro e portátil
 
 Todo cálculo — saldo comprometido, projeção, pressão de dívida, gap de renda —
@@ -131,7 +135,8 @@ celular hoje.
 2. os dados passarem do que o `db` aguenta com folga;
 3. você precisar de app nativo (o §28 diz explicitamente para não fazer isso
    antes de validar a experiência central);
-4. a privacidade do D2 deixar de ser aceitável.
+4. a privacidade do D2 deixar de ser aceitável — **descartado em 19/09/2026**,
+   ver a confirmação no D2.
 
 Enquanto nenhum disparar, Trilha B é custo sem retorno. E por causa do D3, se um
 dia disparar, o motor financeiro atravessa inteiro — a migração é de casca, não
