@@ -46,7 +46,7 @@ entrega publicada ao fim), não em dias de calendário.
 
 ## Onda 0 — Fundação
 
-### Fase 0 · Esqueleto e mudança de fundação · 2 sessões
+### Fase 0 · Esqueleto e mudança de fundação · 2 sessões — ✅ concluída (19/09/2026)
 
 O único momento em que se mexe em encanamento. Depois disso, só produto.
 
@@ -61,6 +61,24 @@ O único momento em que se mexe em encanamento. Depois disso, só produto.
 
 **Portão:** dá para cadastrar uma pessoa, uma conta e um cartão, fechar o
 navegador, abrir no celular e os dados estarem lá.
+
+**Entregue:** repositório organizado em `app/src/{domain,dados,ui}` (D1);
+persistência migrada para a capability `db`, com fallback local documentado
+para quando ela não está disponível (D2); motor de dinheiro e tempo puros,
+24 testes automatizados (`app/testes`, `node --test`); cadastros de pessoas,
+contas, cartões e categorias com validação; navegação dos 11 módulos do §26
+(4 funcionais, 7 como placeholder honesto apontando a fase que os entrega);
+ocultar valores (§27). Publicado em
+[Vida Financeira](https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6), com
+`capabilities: {db: {}}` apenas — as capabilities `artifact`/`user` herdadas
+do GEDI foram revogadas por não serem mais usadas. Portão verificado com
+Playwright (cadastro sobrevive a fechar/reabrir a página).
+
+Decisão registrada em `migrador.js`: os dados de agência que estavam nessa
+cópia do GEDI (clientes, prestadores, lançamentos) **não foram migrados** —
+o domínio é outro (agência × família), e inventar esse mapeamento produziria
+dados errados. Eles continuam intactos no artefato original "Painel GEDI",
+do qual esta era uma cópia feita para servir de base a este projeto.
 
 ---
 

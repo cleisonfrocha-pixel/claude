@@ -9,12 +9,14 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 0 — planejamento concluído, implementação não iniciada.**
+**Fase 0 concluída (19/09/2026).** Cadastros de pessoas, contas, cartões e
+categorias funcionando, com dados sincronizados de verdade. Fase 1
+(transações) ainda não começou.
 
-## Documentos
-
+Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>
 
+## Documentos
 
 | Documento | O que responde |
 |---|---|
@@ -23,6 +25,11 @@ Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>
 | [`docs/RASTREABILIDADE.md`](docs/RASTREABILIDADE.md) | Onde cada uma das 31 seções do blueprint é entregue |
 | [`docs/MODELO-DE-DADOS.md`](docs/MODELO-DE-DADOS.md) | As coleções de dados e o significado de cada campo |
 | [`docs/blueprint-extraido-do-pdf.txt`](docs/blueprint-extraido-do-pdf.txt) | Texto integral do blueprint, para consulta |
+
+## Código
+
+`app/` — o produto em si (ver `app/src/domain`, `app/src/dados`, `app/src/ui`).
+`app/testes` roda com `node --test testes/*.test.js` dentro de `app/`.
 
 ## Caminho até a V1
 

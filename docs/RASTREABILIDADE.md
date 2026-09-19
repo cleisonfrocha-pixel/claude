@@ -9,7 +9,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 |---|---|---|---|---|
 | 1 | Visão do produto — centro de comando, não registro de gastos | P0 | princípio de todas | ○ |
 | 2 | Hierarquia de prioridade + regra de escopo | — | lei do plano (D7) | ● |
-| 3 | Núcleo de dados financeiros | P0 | F0, F1 | ○ |
+| 3 | Núcleo de dados financeiros | P0 | F0, F1 | ◐ |
 | 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ○ |
 | 5 | Cartões e crédito | P0 | F3 | ○ |
 | 6 | Contas, obrigações e calendário | P0 | F4 | ○ |
@@ -32,8 +32,8 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 23 | Qualidade, completude e confiança dos dados | P1 | F10 | ○ |
 | 24 | Alertas e acompanhamento | P1 | F10 | ○ |
 | 25 | Experiência principal da Home | P0 | F2 (parcial), F7 (completa) | ○ |
-| 26 | Navegação e módulos | P0 | F0 | ○ |
-| 27 | Funções de qualidade de vida | P2 | F0 (ocultar), F15 | ○ |
+| 26 | Navegação e módulos | P0 | F0 | ● |
+| 27 | Funções de qualidade de vida | P2 | F0 (ocultar), F15 | ◐ |
 | 28 | O que NÃO deve ser prioridade | P3 | fora da V1, registrado | ● |
 | 29 | Critérios de sucesso — 14 perguntas | P0 | portão em F7 e F9 | ○ |
 | 30 | Ordem de entrega recomendada | — | é a ordem das fases | ● |
@@ -57,6 +57,11 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | Despesas: categoria, natureza e situação de pagamento | F1 |
 | Recorrências reconhecidas e acompanhadas | F1 |
 | Parcelamentos: parcela atual **e** compromisso futuro | F1 · F3 |
+
+**Estado em 19/09/2026:** F0 entregue — pessoas, contas, cartões e categorias
+funcionando, com validação e sincronização real (capability `db`). Portão
+verificado com Playwright: cadastro sobrevive a fechar e reabrir. F1
+(transações, transferências, recorrências, parcelamentos) ainda não começou.
 
 ### §4 — Dinheiro presente, comprometido e seguro `P0`
 

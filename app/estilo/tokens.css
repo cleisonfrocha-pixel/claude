@@ -1,0 +1,87 @@
+/* Tokens de design — herdados do Painel GEDI (docs/ARQUITETURA.md, seção
+   "O que já está pronto"). Claro por padrão; escuro por preferência do
+   sistema OU por escolha explícita do viewer (dois seletores, de propósito:
+   ver o contrato de tema do artifact-design). */
+:root {
+  --bg: #F4F6FA;
+  --surface: #FFFFFF;
+  --surface-2: #EEF1F7;
+  --border: #DCE1EA;
+  --text: #0B1220;
+  --text-muted: #5B6472;
+  --text-faint: #8B93A3;
+  --ink: #111111;
+  --accent: #14161B;
+  --accent-ink: #FFFFFF;
+  --good: #12B76A;
+  --good-bg: #DEF5EA;
+  --warn: #D97706;
+  --warn-bg: #FDF3E1;
+  --danger: #E4232F;
+  --danger-bg: #FCE9EA;
+  --shadow: 0 1px 2px rgba(11, 18, 32, .05), 0 10px 28px -14px rgba(11, 18, 32, .16);
+  --radius: 14px;
+  color-scheme: light dark;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1220;
+    --surface: #121A2B;
+    --surface-2: #182337;
+    --border: #26314A;
+    --text: #EAF0FB;
+    --text-muted: #9AA7BD;
+    --text-faint: #6C7891;
+    --ink: #F2F4F8;
+    --accent: #E7E9EE;
+    --accent-ink: #0B1220;
+    --good: #1FAE63;
+    --good-bg: rgba(31, 174, 99, .18);
+    --warn: #F5A524;
+    --warn-bg: rgba(245, 165, 36, .14);
+    --danger: #F5504F;
+    --danger-bg: rgba(245, 80, 79, .16);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px -14px rgba(0, 0, 0, .55);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1220;
+  --surface: #121A2B;
+  --surface-2: #182337;
+  --border: #26314A;
+  --text: #EAF0FB;
+  --text-muted: #9AA7BD;
+  --text-faint: #6C7891;
+  --ink: #F2F4F8;
+  --accent: #E7E9EE;
+  --accent-ink: #0B1220;
+  --good: #1FAE63;
+  --good-bg: rgba(31, 174, 99, .18);
+  --warn: #F5A524;
+  --warn-bg: rgba(245, 165, 36, .14);
+  --danger: #F5504F;
+  --danger-bg: rgba(245, 80, 79, .16);
+  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px -14px rgba(0, 0, 0, .55);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Poppins', -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: -.005em;
+}
+.mono { font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace; font-variant-numeric: tabular-nums; }
+
+/* Modo de ocultar valores (§27) — aplicado a qualquer elemento com
+   [data-valor], sem precisar recalcular nada: só borra visualmente. */
+body.valores-ocultos [data-valor] {
+  filter: blur(7px);
+  user-select: none;
+  transition: filter .15s ease;
+}
+body.valores-ocultos [data-valor]:hover { filter: blur(3px); }

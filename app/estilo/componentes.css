@@ -1,0 +1,157 @@
+/* Componentes de interface — cabeçalho, navegação por módulos, formulários,
+   modal/planilha inferior, cartões de lista, toast. Fase 0: navegação dos
+   11 módulos do §26 + cadastros de pessoas, contas, cartões e categorias. */
+
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 18px 64px; }
+
+/* ---- cabeçalho ---- */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: 1120px; margin: 0 auto; padding: 14px 20px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.wordmark { font-weight: 800; font-size: 20px; letter-spacing: -.02em; color: var(--ink); }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.modo-local-badge {
+  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn);
+  white-space: nowrap;
+}
+
+/* ---- navegação por módulos: uma fileira de chips, igual em mobile e desktop ---- */
+.modulos-nav {
+  position: sticky; top: calc(53px + env(safe-area-inset-top, 0px)); z-index: 25;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.modulos-nav::-webkit-scrollbar { display: none; }
+.modulos-nav-inner {
+  max-width: 1120px; margin: 0 auto; padding: 10px 20px;
+  display: flex; gap: 8px; min-width: max-content;
+}
+.modulo-chip {
+  flex: 0 0 auto; height: 38px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface);
+  font-weight: 600; font-size: 13.5px; color: var(--text-muted);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: background .1s ease, color .1s ease, border-color .1s ease;
+}
+.modulo-chip:hover { border-color: var(--text-faint); }
+.modulo-chip.ativo { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.modulo-chip .badge-em-breve {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 999px; background: var(--surface-2); color: var(--text-faint);
+}
+.modulo-chip.ativo .badge-em-breve { background: rgba(255,255,255,.18); color: inherit; }
+
+/* ---- cabeçalho de tela ---- */
+.tela-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin: 22px 0 16px; }
+.tela-titulo { font-weight: 700; font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
+.tela-sub { font-size: 14px; color: var(--text-muted); max-width: 60ch; }
+
+/* ---- botões ---- */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; border-radius: 999px;
+  padding: 10px 18px; font-weight: 600; font-size: 14px; cursor: pointer;
+  border: 1px solid transparent; line-height: 1; font-family: inherit;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { opacity: .88; }
+.btn-ghost { background: var(--surface); border-color: var(--border); color: var(--text); }
+.btn-ghost:hover { border-color: var(--text-faint); }
+.btn-sm { padding: 7px 14px; font-size: 13px; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-muted); cursor: pointer; flex-shrink: 0;
+}
+.icon-btn:hover { border-color: var(--text-faint); color: var(--text); }
+.icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ---- cartões de lista (pessoas, contas, cartões, categorias) ---- */
+.lista-cartoes { display: flex; flex-direction: column; gap: 10px; }
+.item-cartao {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+}
+.item-avatar {
+  width: 40px; height: 40px; border-radius: 10px; background: var(--surface-2);
+  color: var(--text); font-weight: 700; font-size: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.item-corpo { flex: 1; min-width: 0; }
+.item-titulo { font-weight: 600; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-sub { font-size: 13px; color: var(--text-faint); margin-top: 2px; }
+.item-valor { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; white-space: nowrap; }
+.item-acoes { display: flex; gap: 6px; flex-shrink: 0; }
+.item-tag {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+  background: var(--surface-2); color: var(--text-muted); white-space: nowrap;
+}
+.item-tag.inativa { background: var(--danger-bg); color: var(--danger); }
+
+/* ---- estado vazio ---- */
+.vazio {
+  background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);
+  padding: 36px 20px; text-align: center; color: var(--text-muted); font-size: 15px;
+}
+.vazio .btn { margin-top: 14px; }
+
+/* ---- placeholder de módulo ainda não construído ---- */
+.em-construcao {
+  background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);
+  padding: 32px 24px; text-align: center;
+}
+.em-construcao .icone { font-size: 28px; margin-bottom: 8px; }
+.em-construcao h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; color: var(--text); }
+.em-construcao p { margin: 0; font-size: 14px; color: var(--text-muted); max-width: 46ch; margin-inline: auto; line-height: 1.5; }
+.em-construcao .fase-ref {
+  display: inline-block; margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+  color: var(--text-faint); background: var(--surface-2); padding: 4px 10px; border-radius: 999px;
+}
+
+/* ---- formulário / modal ---- */
+.overlay {
+  position: fixed; inset: 0; background: rgba(8, 12, 22, .55);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 16px; overflow-y: auto; z-index: 50;
+}
+.overlay[hidden] { display: none !important; }
+.modal { background: var(--surface); border-radius: 16px; max-width: 480px; width: 100%; padding: 26px 26px 22px; box-shadow: var(--shadow); }
+.modal h2 { font-weight: 700; font-size: 19px; margin: 0 0 18px; letter-spacing: -.01em; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 13.5px; font-weight: 600; color: var(--text-muted); }
+.field input, .field select {
+  border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px;
+  background: var(--surface); color: var(--text); width: 100%; font-size: 15px; font-family: inherit;
+}
+.field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field-check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text); margin-bottom: 14px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.erro-form {
+  background: var(--danger-bg); color: var(--danger); border-radius: 9px; padding: 10px 13px;
+  font-size: 13.5px; margin-bottom: 14px;
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+/* ---- toast ---- */
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%); background: var(--text); color: var(--bg);
+  padding: 12px 20px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow); z-index: 60;
+  max-width: calc(100% - 32px); text-align: center;
+}
+.toast[hidden] { display: none !important; }
+
+@media (max-width: 640px) {
+  .row2 { grid-template-columns: 1fr; }
+  .modal { border-radius: 20px 20px 0 0; max-width: 100%; }
+  .overlay { align-items: flex-end; padding: 0; }
+  .item-acoes .btn-texto-desktop { display: none; }
+}
+@media (max-width: 480px) {
+  .item-valor { font-size: 13.5px; }
+}

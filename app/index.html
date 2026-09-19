@@ -1,0 +1,26 @@
+<title>Vida Financeira</title>
+<link rel="stylesheet" href="estilo/tokens.css">
+<link rel="stylesheet" href="estilo/componentes.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="wordmark">Vida Financeira</span>
+    <div class="topbar-actions">
+      <span class="modo-local-badge" id="badge-modo-local" hidden>modo local — sem sincronização</span>
+    </div>
+  </div>
+</header>
+
+<nav class="modulos-nav">
+  <div class="modulos-nav-inner" id="nav-modulos-inner"></div>
+</nav>
+
+<main class="wrap">
+  <div id="conteudo-principal"></div>
+</main>
+
+<div class="overlay" id="overlay-modal" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="src/main.js"></script>
