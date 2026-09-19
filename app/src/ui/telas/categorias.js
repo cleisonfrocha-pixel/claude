@@ -20,7 +20,7 @@ export default criarTelaCadastro({
     { id: "grupo", rotulo: "Grupo", tipo: "select", opcoes: GRUPOS_CATEGORIA.map((g) => ({ valor: g, rotulo: ROTULO_GRUPO[g] })) },
     { id: "natureza", rotulo: "Natureza", tipo: "select", opcoes: NATUREZAS_CATEGORIA.map((n) => ({ valor: n, rotulo: ROTULO_NATUREZA[n] })) },
     { id: "essencial", rotulo: "Essencial (custo mínimo de vida)", tipo: "check" },
-    { id: "ativa", rotulo: "Ativa", tipo: "check" },
+    { id: "ativa", rotulo: "Ativa", tipo: "check", padrao: true },
   ],
   exibir(dados) {
     return {

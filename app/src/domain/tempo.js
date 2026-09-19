@@ -60,6 +60,22 @@ export function diferencaEmMeses(a, b) {
   return (anoB - anoA) * 12 + (mesB - mesA);
 }
 
+/** Quantos dias tem o mês de uma competência "AAAA-MM". */
+export function diasNoMes(competencia) {
+  const [ano, mes] = competencia.split("-").map(Number);
+  return new Date(ano, mes, 0).getDate();
+}
+
+/** Constrói "AAAA-MM-DD" a partir de uma competência e um dia do mês,
+ * limitando ao último dia real do mês (dia 31 em fevereiro vira o dia 28
+ * ou 29) — para gerar a data de um lançamento de recorrência sem estourar
+ * o calendário. */
+export function dataDeCompetencia(competencia, dia) {
+  const max = diasNoMes(competencia);
+  const diaSeguro = Math.min(Math.max(1, dia || 1), max);
+  return `${competencia}-${String(diaSeguro).padStart(2, "0")}`;
+}
+
 /** Formata uma data ISO como dd/mm/aaaa. */
 export function formatarData(iso) {
   if (!iso) return "";

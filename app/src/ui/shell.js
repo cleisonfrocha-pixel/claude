@@ -10,14 +10,16 @@ import { criarTelaPlaceholder } from "./telas/placeholder.js";
 import telaInicio from "./telas/inicio.js";
 import telaContas from "./telas/contas.js";
 import telaCartoes from "./telas/cartoes.js";
+import telaTransacoes from "./telas/transacoes.js";
 import telaPessoas from "./telas/pessoas.js";
 import telaCategorias from "./telas/categorias.js";
 import telaPreferencias from "./telas/preferencias.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
-  subtitulo: "Contas e cartões. Transações e revisão chegam na Fase 1.",
+  subtitulo: "Contas, cartões e toda a movimentação. Revisão de importação chega na Fase 11.",
   abas: [
+    { id: "transacoes", rotulo: "Transações", tela: telaTransacoes },
     { id: "contas", rotulo: "Contas", tela: telaContas },
     { id: "cartoes", rotulo: "Cartões", tela: telaCartoes },
   ],

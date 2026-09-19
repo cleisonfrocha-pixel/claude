@@ -16,7 +16,7 @@ export default criarTelaCadastro({
   campos: [
     { id: "nome", rotulo: "Nome", tipo: "texto", obrigatorio: true, placeholder: "Ex.: Cleison" },
     { id: "papel", rotulo: "Papel", tipo: "select", opcoes: PAPEIS_PESSOA.map((p) => ({ valor: p, rotulo: ROTULO_PAPEL[p] })) },
-    { id: "ativo", rotulo: "Ativa no núcleo financeiro", tipo: "check" },
+    { id: "ativo", rotulo: "Ativa no núcleo financeiro", tipo: "check", padrao: true },
   ],
   exibir(dados) {
     return {

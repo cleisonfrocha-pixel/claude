@@ -122,9 +122,19 @@ export function criarTelaCadastro(config) {
     const id = `campo-${campo.id}`;
     const obrig = campo.obrigatorio ? "required" : "";
     if (campo.tipo === "check") {
+      // "valorMarcado"/"valorDesmarcado" deixam a caixa dirigir um campo de
+      // texto com dois valores (ex.: status "ativa"/"encerrada"), não só um
+      // booleano puro — ver lerCampo(). Em registro novo, valorAtual vem de
+      // um objeto vazio (undefined): sem "padrao" a caixa nasceria sempre
+      // desmarcada, mesmo quando o padrão do domínio é o contrário (ex.:
+      // pessoa/categoria nascem ativas).
+      const temMapa = Object.prototype.hasOwnProperty.call(campo, "valorMarcado");
+      const marcado = valorAtual != null
+        ? (temMapa ? valorAtual === campo.valorMarcado : !!valorAtual)
+        : (temMapa ? campo.padrao === campo.valorMarcado : !!campo.padrao);
       return `
         <label class="field-check">
-          <input type="checkbox" id="${id}" ${valorAtual ? "checked" : ""}>
+          <input type="checkbox" id="${id}" ${marcado ? "checked" : ""}>
           ${escapeHtml(campo.rotulo)}
         </label>`;
     }
@@ -153,7 +163,12 @@ export function criarTelaCadastro(config) {
   function lerCampo(campo) {
     const el = document.getElementById(`campo-${campo.id}`);
     if (!el) return undefined;
-    if (campo.tipo === "check") return el.checked;
+    if (campo.tipo === "check") {
+      if (Object.prototype.hasOwnProperty.call(campo, "valorMarcado")) {
+        return el.checked ? campo.valorMarcado : campo.valorDesmarcado;
+      }
+      return el.checked;
+    }
     if (campo.tipo === "moeda") return paraCentavos(el.value);
     if (campo.tipo === "numero") return el.value === "" ? null : Number(el.value);
     return el.value;

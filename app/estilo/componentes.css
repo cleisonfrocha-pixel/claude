@@ -47,6 +47,24 @@
 }
 .modulo-chip.ativo .badge-em-breve { background: rgba(255,255,255,.18); color: inherit; }
 
+/* ---- fileira de sub-abas (dentro de um módulo, ou dentro de um modal) ---- */
+.subabas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+/* ---- navegação de mês + resumo (telas com competência, ex.: Transações) ---- */
+.mes-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.mes-nav-label { font-weight: 700; font-size: 16px; letter-spacing: -.01em; min-width: 140px; }
+.resumo-mes {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.resumo-item {
+  flex: 1 1 140px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;
+}
+.resumo-item span { font-size: 12.5px; color: var(--text-faint); font-weight: 600; }
+.resumo-item b { font-size: 18px; }
+.valor-pos { color: var(--good); }
+.valor-neg { color: var(--danger); }
+
 /* ---- cabeçalho de tela ---- */
 .tela-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin: 22px 0 16px; }
 .tela-titulo { font-weight: 700; font-size: 22px; letter-spacing: -.01em; margin: 0 0 4px; }
@@ -148,7 +166,16 @@
 
 @media (max-width: 640px) {
   .row2 { grid-template-columns: 1fr; }
-  .modal { border-radius: 20px 20px 0 0; max-width: 100%; }
+  /* max-height + overflow-y no .modal (não só no .overlay) é obrigatório
+     aqui: um item flex maior que o container, dentro de um container com
+     align-items:flex-end e overflow, deixa o início do item impossível de
+     alcançar por scroll (o scroll para no zero, e o topo do modal fica
+     "negativo"). Limitar a altura do próprio modal e rolar por dentro dele
+     evita esse buraco — testado com um formulário de 10+ campos. */
+  .modal {
+    border-radius: 20px 20px 0 0; max-width: 100%;
+    max-height: 85vh; max-height: 85dvh; overflow-y: auto;
+  }
   .overlay { align-items: flex-end; padding: 0; }
   .item-acoes .btn-texto-desktop { display: none; }
 }

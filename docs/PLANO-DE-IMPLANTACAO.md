@@ -87,7 +87,7 @@ do qual esta era uma cópia feita para servir de base a este projeto.
 O blueprint é explícito: "dados primeiro, decisões depois". Nada de inteligência
 nesta onda. O objetivo é que o sistema represente a vida financeira sem mentir.
 
-### Fase 1 · Núcleo financeiro · 4 sessões — §3
+### Fase 1 · Núcleo financeiro · 4 sessões — §3 — ✅ concluída (19/09/2026)
 
 Transações, transferências, receitas, despesas, recorrências, parcelamentos.
 
@@ -98,6 +98,31 @@ cartão versus pagamento da fatura (§5).
 
 **Portão:** transferir R$ 1.000 entre duas contas próprias não altera nenhum
 total de receita ou despesa do mês. Teste automatizado, não conferência no olho.
+
+**Entregue:** as cinco formas de lançamento na tela Transações (dentro de
+Dinheiro) — receita/despesa simples, transferência, parcelamento, recorrência
+e pagamento de fatura — todas passando por `dados/transacoesRepo.js` e
+`dados/recorrenciasRepo.js`, que aplicam as regras do domínio
+(`domain/transacoes.js`) antes de gravar. Fatura de cartão nasce sozinha
+quando uma despesa é lançada nele (§5). 47 testes de domínio, incluindo o
+teste literal do portão. Verificado de ponta a ponta com Playwright: as duas
+regras não-negociáveis do CLAUDE.md (transferência não conta, fatura paga não
+duplica a despesa), parcelamento sem perder centavo, e recorrência
+provisionando os próximos meses sozinha.
+
+Decisão de design registrada em `docs/MODELO-DE-DADOS.md`: a competência de
+uma transação (mês em que ela conta como despesa/receita) e a competência da
+fatura que ela pertence (mês da cobrança no cartão) são **eixos
+independentes** e podem divergir — uma compra feita depois do fechamento cai
+na fatura do mês seguinte, mas continua sendo despesa do mês em que aconteceu.
+Primeira versão do parcelamento confundia os dois; ficou como teste de
+regressão.
+
+No caminho, dois bugs reais da Fase 0 apareceram e foram corrigidos (detalhe
+em `docs/RASTREABILIDADE.md`, §3): o checkbox "Ativa" nascia desmarcado em
+registros novos, e o checkbox "Encerrada" de contas gravava um booleano num
+campo que precisa ser texto — sem `validarConta` conferir, o que deixava a
+falha passar batido.
 
 ### Fase 2 · Clareza de caixa · 3 sessões — §4 + bloco Dinheiro do §25
 

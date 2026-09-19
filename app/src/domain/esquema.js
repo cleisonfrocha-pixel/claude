@@ -12,6 +12,19 @@ export const STATUS_CARTAO = ["ativo", "cancelado", "bloqueado"];
 export const GRUPOS_CATEGORIA = ["moradia", "transporte", "alimentacao", "saude", "educacao", "lazer", "dividas", "renda", "outros"];
 export const NATUREZAS_CATEGORIA = ["receita", "despesa", "transferencia"];
 
+// Transações — ver docs/MODELO-DE-DADOS.md, "Movimentação — Fase 1".
+// tipo governa a regra que mais importa no produto inteiro (CLAUDE.md):
+// transferência e pagamento de fatura NUNCA contam como receita ou despesa
+// — ver domain/transacoes.js, que é onde essa regra é aplicada de fato.
+export const TIPOS_TRANSACAO = ["receita", "despesa", "transferencia", "pagamento_fatura"];
+export const STATUS_TRANSACAO = ["previsto", "agendado", "pago", "atrasado", "cancelado"];
+export const CERTEZAS_TRANSACAO = ["confirmado", "provavel", "incerto"];
+// Só mensal por enquanto: é o que cobre a esmagadora maioria das contas
+// reais (aluguel, assinatura, financiamento). Semanal/anual entram se um
+// caso real pedir — não antecipado sem necessidade.
+export const PERIODICIDADES_RECORRENCIA = ["mensal"];
+export const STATUS_FATURA = ["aberta", "fechada", "paga"];
+
 /** Preenche os campos que faltam de uma pessoa com valores padrão seguros. */
 export function padraoPessoa(dados = {}) {
   return {
@@ -61,6 +74,59 @@ export function padraoCategoria(dados = {}) {
   };
 }
 
+export function padraoTransacao(dados = {}) {
+  return {
+    data: new Date().toISOString().slice(0, 10),
+    competencia: "",
+    valorCentavos: 0,
+    tipo: "despesa",
+    contaId: null,
+    cartaoId: null,
+    categoriaId: "",
+    pessoaId: "",
+    descricao: "",
+    status: "pago",
+    certeza: "confirmado",
+    transferenciaId: null,
+    faturaId: null,
+    parcelaDe: null,
+    parcelaNum: null,
+    parcelaTotal: null,
+    recorrenciaId: null,
+    origem: "manual",
+    origemId: null,
+    revisado: true,
+    ...dados,
+  };
+}
+
+export function padraoRecorrencia(dados = {}) {
+  return {
+    descricao: "",
+    tipo: "despesa",
+    valorEstimadoCentavos: 0,
+    categoriaId: "",
+    pessoaId: "",
+    contaId: null,
+    cartaoId: null,
+    periodicidade: "mensal",
+    diaBase: 1,
+    inicio: new Date().toISOString().slice(0, 7),
+    fim: null,
+    ativa: true,
+    ...dados,
+  };
+}
+
+export function padraoFatura(dados = {}) {
+  return {
+    cartaoId: "",
+    competencia: "",
+    status: "aberta",
+    ...dados,
+  };
+}
+
 /** Valida uma pessoa; retorna lista de erros (vazia = válido). */
 export function validarPessoa(p) {
   const erros = [];
@@ -74,6 +140,7 @@ export function validarConta(c) {
   if (!c.nome || !c.nome.trim()) erros.push("Nome da conta é obrigatório.");
   if (!c.pessoaId) erros.push("A conta precisa de um responsável.");
   if (!TIPOS_CONTA.includes(c.tipo)) erros.push("Tipo de conta inválido.");
+  if (!STATUS_CONTA.includes(c.status)) erros.push("Status da conta inválido.");
   return erros;
 }
 
@@ -92,6 +159,31 @@ export function validarCategoria(c) {
   if (!c.nome || !c.nome.trim()) erros.push("Nome da categoria é obrigatório.");
   if (!GRUPOS_CATEGORIA.includes(c.grupo)) erros.push("Grupo inválido.");
   if (!NATUREZAS_CATEGORIA.includes(c.natureza)) erros.push("Natureza inválida.");
+  return erros;
+}
+
+export function validarTransacao(t) {
+  const erros = [];
+  if (!TIPOS_TRANSACAO.includes(t.tipo)) erros.push("Tipo de transação inválido.");
+  if (!t.data) erros.push("Data é obrigatória.");
+  if (!Number.isFinite(t.valorCentavos) || t.valorCentavos <= 0) erros.push("Valor precisa ser maior que zero.");
+  if (!t.contaId && !t.cartaoId && t.tipo !== "transferencia") erros.push("Escolha uma conta ou um cartão.");
+  if (t.tipo === "despesa" && !t.categoriaId) erros.push("Despesa precisa de categoria.");
+  if (t.tipo === "receita" && !t.categoriaId) erros.push("Receita precisa de categoria.");
+  if (!STATUS_TRANSACAO.includes(t.status)) erros.push("Status inválido.");
+  if (!CERTEZAS_TRANSACAO.includes(t.certeza)) erros.push("Certeza inválida.");
+  return erros;
+}
+
+export function validarRecorrencia(r) {
+  const erros = [];
+  if (!r.descricao || !r.descricao.trim()) erros.push("Descrição é obrigatória.");
+  if (r.tipo !== "receita" && r.tipo !== "despesa") erros.push("Tipo precisa ser receita ou despesa.");
+  if (!Number.isFinite(r.valorEstimadoCentavos) || r.valorEstimadoCentavos <= 0) erros.push("Valor estimado precisa ser maior que zero.");
+  if (!r.contaId && !r.cartaoId) erros.push("Escolha uma conta ou um cartão.");
+  if (!r.categoriaId) erros.push("Escolha uma categoria.");
+  if (!PERIODICIDADES_RECORRENCIA.includes(r.periodicidade)) erros.push("Periodicidade inválida.");
+  if (r.diaBase < 1 || r.diaBase > 31) erros.push("Dia do mês inválido.");
   return erros;
 }
 

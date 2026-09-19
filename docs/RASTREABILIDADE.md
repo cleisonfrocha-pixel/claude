@@ -9,7 +9,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 |---|---|---|---|---|
 | 1 | Visão do produto — centro de comando, não registro de gastos | P0 | princípio de todas | ○ |
 | 2 | Hierarquia de prioridade + regra de escopo | — | lei do plano (D7) | ● |
-| 3 | Núcleo de dados financeiros | P0 | F0, F1 | ◐ |
+| 3 | Núcleo de dados financeiros | P0 | F0, F1 | ● |
 | 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ○ |
 | 5 | Cartões e crédito | P0 | F3 | ○ |
 | 6 | Contas, obrigações e calendário | P0 | F4 | ○ |
@@ -58,10 +58,24 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | Recorrências reconhecidas e acompanhadas | F1 |
 | Parcelamentos: parcela atual **e** compromisso futuro | F1 · F3 |
 
-**Estado em 19/09/2026:** F0 entregue — pessoas, contas, cartões e categorias
-funcionando, com validação e sincronização real (capability `db`). Portão
-verificado com Playwright: cadastro sobrevive a fechar e reabrir. F1
-(transações, transferências, recorrências, parcelamentos) ainda não começou.
+**Estado em 19/09/2026:** F0 e F1 entregues. F0: pessoas, contas, cartões e
+categorias funcionando, com validação e sincronização real (capability `db`).
+F1: transações, transferências, compras parceladas, recorrências e pagamento
+de fatura — tudo passando pelas mesmas regras do domínio. Portão de cada fase
+verificado com Playwright, incluindo o teste literal da Fase 1: transferir
+R$ 1.000 entre contas próprias não altera receita nem despesa do mês, e pagar
+uma fatura de cartão não soma a despesa uma segunda vez.
+
+Duas descobertas reais no caminho, corrigidas e cobertas por teste:
+- O checkbox "Ativa" de pessoas/categorias nascia **desmarcado** em registros
+  novos, mesmo o padrão do domínio sendo `true` — cadastros novos ficavam
+  invisíveis nos seletores que filtram por ativo. Corrigido em
+  `telaCadastro.js`, com um `padrao` explícito por campo.
+- O checkbox "Encerrada" de contas gravava um **booleano** (`true`/`false`)
+  num campo que precisa ser a string `"ativa"`/`"encerrada"` — e
+  `validarConta` nunca conferia isso, então passava batido. Corrigido com um
+  mapeamento `valorMarcado`/`valorDesmarcado` no campo, e `validarConta`
+  agora rejeita qualquer status fora do enum.
 
 ### §4 — Dinheiro presente, comprometido e seguro `P0`
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { paraCentavos, paraReais, formatarBRL, formatarBRLCurto, somar } from "../src/domain/dinheiro.js";
+import { paraCentavos, paraReais, formatarBRL, formatarBRLCurto, somar, dividirCentavos } from "../src/domain/dinheiro.js";
 
 test("paraCentavos: formatos brasileiros comuns", () => {
   assert.equal(paraCentavos("1.234,56"), 123456);
@@ -52,6 +52,26 @@ test("formatarBRLCurto: acima de mil reais abrevia em k", () => {
 test("somar: soma segura, ignora valores inválidos", () => {
   assert.equal(somar(100, 200, 300), 600);
   assert.equal(somar(100, NaN, undefined, null), 100);
+});
+
+test("dividirCentavos: divisão exata não perde nem ganha centavo", () => {
+  assert.deepEqual(dividirCentavos(9000, 3), [3000, 3000, 3000]);
+});
+
+test("dividirCentavos: divisão que não fecha distribui o resto nas primeiras parcelas", () => {
+  const partes = dividirCentavos(10000, 3);
+  assert.deepEqual(partes, [3334, 3333, 3333]);
+  assert.equal(partes.reduce((a, b) => a + b, 0), 10000);
+});
+
+test("dividirCentavos: 1 centavo em 3 partes não inventa nem some dinheiro", () => {
+  const partes = dividirCentavos(1, 3);
+  assert.deepEqual(partes, [1, 0, 0]);
+});
+
+test("dividirCentavos: valor negativo também soma exato", () => {
+  const partes = dividirCentavos(-1000, 3);
+  assert.equal(partes.reduce((a, b) => a + b, 0), -1000);
 });
 
 test("regra de ouro: nunca ponto flutuante perdendo centavo", () => {

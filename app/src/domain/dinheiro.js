@@ -79,3 +79,28 @@ export function formatarBRLCurto(centavos) {
 export function somar(...centavosLista) {
   return centavosLista.reduce((acc, v) => acc + (Math.round(Number(v)) || 0), 0);
 }
+
+/**
+ * Divide um total em centavos em N partes inteiras que somam exatamente o
+ * total — nunca sobra nem falta 1 centavo por arredondamento. Usado para
+ * parcelamento: R$ 100,00 em 3x não pode virar 33,33 + 33,33 + 33,33 = 99,99.
+ * O resto da divisão vai para as PRIMEIRAS parcelas (convenção comum de
+ * parcelamento: a primeira parcela absorve a diferença, nunca a última
+ * passar despercebida).
+ * @param {number} totalCentavos
+ * @param {number} partes quantidade de parcelas (inteiro >= 1)
+ * @returns {number[]} array de `partes` valores em centavos
+ */
+export function dividirCentavos(totalCentavos, partes) {
+  const n = Math.max(1, Math.round(partes) || 1);
+  const total = Math.round(Number(totalCentavos) || 0);
+  const base = Math.trunc(total / n);
+  const resto = total - base * n;
+  const sinalResto = resto < 0 ? -1 : 1;
+  const restoAbs = Math.abs(resto);
+  const valores = new Array(n).fill(base);
+  for (let i = 0; i < restoAbs; i++) {
+    valores[i] += sinalResto;
+  }
+  return valores;
+}

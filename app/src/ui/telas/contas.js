@@ -27,7 +27,7 @@ export default criarTelaCadastro({
     { id: "saldoInicialCentavos", rotulo: "Saldo inicial", tipo: "moeda" },
     { id: "dataSaldoInicial", rotulo: "Data do saldo inicial", tipo: "data" },
     { id: "ehReserva", rotulo: "É dinheiro de reserva/segurança (§15)", tipo: "check" },
-    { id: "status", rotulo: "Encerrada", tipo: "check" },
+    { id: "status", rotulo: "Encerrada", tipo: "check", valorMarcado: "encerrada", valorDesmarcado: "ativa", padrao: "ativa" },
   ],
   exibir(dados, contexto) {
     const pessoa = (contexto.pessoas || []).find((p) => p.valor === dados.pessoaId);

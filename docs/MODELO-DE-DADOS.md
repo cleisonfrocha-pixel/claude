@@ -43,6 +43,7 @@ transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
 | Campo | Papel |
 |---|---|
 | `tipo` | `receita \| despesa \| transferencia \| pagamento_fatura` |
+| `competencia` | Sempre o mês-calendário da `data` (ou, numa parcela, da data + N meses) — é "em que mês eu gastei isso". **Deliberadamente independente** da competência da fatura: uma compra no cartão depois do fechamento cai na fatura do mês seguinte, mas continua contando como despesa do mês em que foi feita. As duas perguntas — "quanto gastei em setembro" e "o que está na minha fatura de outubro" — têm respostas diferentes de propósito |
 | `status` | `previsto \| agendado \| pago \| atrasado \| cancelado` (§6) |
 | `certeza` | `confirmado \| provavel \| incerto` (§7) |
 | `transferenciaId` | Une as duas pontas de uma transferência. **Par com este campo preenchido nunca entra em receita nem em despesa** (§3) |
