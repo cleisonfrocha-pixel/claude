@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   competenciaAtual, competenciaDeData, competenciaLabel, competenciaAbrevAno,
   somarMeses, compararCompetencia, diferencaEmMeses, diasNoMes, dataDeCompetencia,
+  somarDias, hojeISO,
 } from "../src/domain/tempo.js";
 
 test("competenciaAtual usa o relógio informado", () => {
@@ -50,4 +51,21 @@ test("dataDeCompetencia limita o dia ao último dia real do mês", () => {
   assert.equal(dataDeCompetencia("2028-02", 31), "2028-02-29");
   assert.equal(dataDeCompetencia("2026-01", 15), "2026-01-15");
   assert.equal(dataDeCompetencia("2026-01", 0), "2026-01-01");
+});
+
+test("somarDias avança dentro do mês", () => {
+  assert.equal(somarDias("2026-09-19", 10), "2026-09-29");
+});
+
+test("somarDias cruza mês e ano corretamente", () => {
+  assert.equal(somarDias("2026-09-19", 30), "2026-10-19");
+  assert.equal(somarDias("2026-12-20", 15), "2027-01-04");
+});
+
+test("somarDias aceita negativo (volta no tempo)", () => {
+  assert.equal(somarDias("2026-01-05", -10), "2025-12-26");
+});
+
+test("hojeISO usa o relógio informado", () => {
+  assert.equal(hojeISO(new Date(2026, 8, 19)), "2026-09-19");
 });

@@ -8,7 +8,7 @@
 // quitada — contar as duas seria contar o mesmo dinheiro duas vezes.
 
 import { somar, dividirCentavos } from "./dinheiro.js";
-import { somarMeses } from "./tempo.js";
+import { somarMeses, dataDeCompetencia } from "./tempo.js";
 
 /** Tipos que entram na soma de receita/despesa do período. Todo o resto —
  * transferencia, pagamento_fatura — existe na lista de transações mas nunca
@@ -110,7 +110,44 @@ export function competenciasFaltantes(recorrencia, { competenciaAtual, horizonte
 export function construirParTransferencia({ contaOrigemId, contaDestinoId, valorCentavos, data, competencia, descricao, transferenciaId }) {
   const comum = { tipo: "transferencia", valorCentavos, data, competencia, descricao: descricao || "Transferência entre contas", transferenciaId, status: "pago", certeza: "confirmado" };
   return [
-    { ...comum, contaId: contaOrigemId, cartaoId: null },
-    { ...comum, contaId: contaDestinoId, cartaoId: null },
+    { ...comum, contaId: contaOrigemId, cartaoId: null, direcao: "saida" },
+    { ...comum, contaId: contaDestinoId, cartaoId: null, direcao: "entrada" },
   ];
+}
+
+/**
+ * O efeito em centavos de uma transação sobre o saldo da SUA PRÓPRIA conta
+ * (`transacao.contaId`) — nunca sobre uma conta arbitrária. Só transações
+ * `status: "pago"` afetam saldo de verdade; previsto/agendado/atrasado
+ * ainda não aconteceram de fato (entram no *comprometido*, não no saldo —
+ * ver domain/caixa.js). `valorCentavos` é sempre uma magnitude positiva
+ * (mesma convenção de agregarPeriodo); o sinal do efeito vem do `tipo` —
+ * exceto transferência, que só sabe seu sinal pelo campo `direcao`, porque
+ * as duas pernas compartilham o mesmo valor positivo.
+ */
+export function efeitoNaConta(transacao) {
+  if (transacao.status !== "pago") return 0;
+  if (!transacao.contaId) return 0; // despesa em cartão não mexe em conta até a fatura ser paga
+  const v = Number(transacao.valorCentavos) || 0;
+  if (transacao.tipo === "receita") return v;
+  if (transacao.tipo === "despesa") return -v;
+  if (transacao.tipo === "pagamento_fatura") return -v;
+  if (transacao.tipo === "transferencia") return transacao.direcao === "entrada" ? v : -v;
+  return 0;
+}
+
+/**
+ * A quantos meses de distância da competência da fatura cai o vencimento,
+ * dado que o dia de vencimento pode ser menor que o de fechamento (cartão
+ * fecha dia 28, vence dia 5 — do mês seguinte). Convenção: vencimento no
+ * mesmo mês da fatura quando diaVencimento >= diaFechamento; mês seguinte
+ * quando é menor.
+ */
+export function competenciaVencimentoFatura(cartao, competenciaDaFatura) {
+  return cartao.diaVencimento < cartao.diaFechamento ? somarMeses(competenciaDaFatura, 1) : competenciaDaFatura;
+}
+
+/** Data (AAAA-MM-DD) em que uma fatura vence, a partir da sua competência. */
+export function dataVencimentoFatura(cartao, competenciaDaFatura) {
+  return dataDeCompetencia(competenciaVencimentoFatura(cartao, competenciaDaFatura), cartao.diaVencimento);
 }

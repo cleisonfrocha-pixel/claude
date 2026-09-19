@@ -88,6 +88,7 @@ export function padraoTransacao(dados = {}) {
     status: "pago",
     certeza: "confirmado",
     transferenciaId: null,
+    direcao: null, // "entrada" | "saida" — só usado quando tipo é transferencia
     faturaId: null,
     parcelaDe: null,
     parcelaNum: null,

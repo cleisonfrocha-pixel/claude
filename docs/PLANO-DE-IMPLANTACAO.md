@@ -124,7 +124,7 @@ registros novos, e o checkbox "Encerrada" de contas gravava um booleano num
 campo que precisa ser texto — sem `validarConta` conferir, o que deixava a
 falha passar batido.
 
-### Fase 2 · Clareza de caixa · 3 sessões — §4 + bloco Dinheiro do §25
+### Fase 2 · Clareza de caixa · 3 sessões — §4 + bloco Dinheiro do §25 — ✅ concluída (19/09/2026)
 
 Saldo atual, comprometido, livre e **seguro para gastar** — mais a margem de
 segurança que o sistema define e os compromissos próximos no horizonte escolhido.
@@ -133,6 +133,28 @@ segurança que o sistema define e os compromissos próximos no horizonte escolhi
 
 **Portão:** o painel responde "Quanto eu posso gastar sem criar um problema mais
 adiante?" com um número, e esse número é explicável linha a linha.
+
+**Entregue:** `domain/caixa.js` — saldo por conta (respeitando transferências,
+sem contar de novo o que o saldo inicial já embutia), comprometido (despesas
+previstas/agendadas/atrasadas dentro do horizonte, mais faturas de cartão em
+aberto pelo vencimento), livre e seguro para gastar. A Home (Início) virou o
+bloco Dinheiro real do §25: o número central em destaque, os três números de
+apoio, e duas listas explicando cada um — saldo por conta e compromissos
+próximos, com o rótulo "Atrasado" quando cabe. 27 testes de domínio novos
+(eram 47, agora 74). Portão verificado de ponta a ponta com Playwright.
+
+Duas decisões de design registradas em `ARQUITETURA.md`: a margem de
+segurança do §4 é a reserva que o próprio usuário já separou (D8), não um
+número inventado; e o horizonte é fixo em 30 dias até a Fase 5 trazer os
+quatro horizontes do §7 lado a lado (D9).
+
+Um bug real da Fase 0 apareceu no caminho e foi corrigido: `modal.js` focava
+o primeiro campo do formulário num `setTimeout` de 30ms sem checar se algo
+já estava em foco — quem preenchesse um segundo campo rápido demais (ou um
+teste automatizado) tinha o texto roubado de volta para o primeiro campo.
+Nunca chegou a afetar dado publicado (só sessões de teste local), mas era
+uma corrida de verdade. Corrigido trocando o timeout por
+`requestAnimationFrame` com checagem de foco ativo.
 
 ### Fase 3 · Cartões e crédito · 3 sessões — §5
 

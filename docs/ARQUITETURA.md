@@ -151,3 +151,39 @@ de produto.
 Operacionalmente: nenhuma fase P2 começa antes da Fase 7 fechar (que é o marco
 da V1-P0). Ideia boa de P2 que aparecer no meio do caminho vai para o fim do
 `PLANO-DE-IMPLANTACAO.md`, não para a fase atual.
+
+## D8 — A margem de segurança do §4 é a reserva que você já separou
+
+O §4 pede "dinheiro seguro para gastar: quanto pode ser utilizado sem
+comprometer obrigações futuras e a margem de segurança definida pelo
+sistema" — mas não diz qual deve ser essa margem. Duas opções: inventar uma
+regra (ex.: sempre deixar de lado 10% do saldo, ou um múltiplo arbitrário
+do custo essencial) ou usar o que o modelo já tem.
+
+**Decisão:** a margem de segurança são as contas marcadas `ehReserva` no
+cadastro (Fase 0, §15). "Dinheiro seguro para gastar" = saldo livre das
+contas de **operação**; as contas de reserva ficam inteiramente de fora do
+cálculo, mostradas separadamente. Não inventamos uma margem por cima disso.
+
+Por quê: qualquer número inventado agora (10%? 20%? um mês de custo
+essencial?) seria um palpite sem lastro — o produto ainda não sabe, nesta
+fase, qual é o custo essencial de ninguém (isso só chega no §13, Fase 8).
+Usar a reserva que a própria pessoa já separou é a única margem que o
+sistema pode afirmar com confiança **hoje**, sem inventar dado. Quando a
+Fase 8 trouxer custo essencial e a Fase 9 trouxer reserva com meta e
+cobertura em dias, essa margem pode — e deve — ficar mais sofisticada
+(ex.: alertar quando a reserva estiver abaixo da meta, mesmo com saldo
+"livre" positivo). Até lá, esta é a definição, registrada para não virar
+uma surpresa silenciosa quando for revista.
+
+## D9 — Horizonte fixo de 30 dias até a Fase 5 trazer os quatro horizontes
+
+"Comprometido" e "compromissos próximos" (§4) precisam de um horizonte —
+até quando olhar à frente. O §7 define quatro horizontes lado a lado (7,
+30, 90 dias e 12 meses), mas essa é uma fase inteira à frente (Fase 5).
+
+**Decisão:** a Fase 2 usa um horizonte único fixo de 30 dias corridos,
+parametrizado (`horizonteDias` em `domain/caixa.js`) para não travar o
+design quando os quatro horizontes chegarem — trocar o painel de "um
+número" para "quatro números lado a lado" é questão de chamar a mesma
+função com parâmetros diferentes, não de reescrevê-la.

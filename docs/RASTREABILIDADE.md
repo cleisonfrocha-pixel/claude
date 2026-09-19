@@ -10,7 +10,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 1 | Visão do produto — centro de comando, não registro de gastos | P0 | princípio de todas | ○ |
 | 2 | Hierarquia de prioridade + regra de escopo | — | lei do plano (D7) | ● |
 | 3 | Núcleo de dados financeiros | P0 | F0, F1 | ● |
-| 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ○ |
+| 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ● |
 | 5 | Cartões e crédito | P0 | F3 | ○ |
 | 6 | Contas, obrigações e calendário | P0 | F4 | ○ |
 | 7 | Fluxo de caixa e projeção | P0 | F5 | ○ |
@@ -31,7 +31,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 22 | Cenários e simulador de realidade | P2 | F14 | ○ |
 | 23 | Qualidade, completude e confiança dos dados | P1 | F10 | ○ |
 | 24 | Alertas e acompanhamento | P1 | F10 | ○ |
-| 25 | Experiência principal da Home | P0 | F2 (parcial), F7 (completa) | ○ |
+| 25 | Experiência principal da Home | P0 | F2 (parcial), F7 (completa) | ◐ |
 | 26 | Navegação e módulos | P0 | F0 | ● |
 | 27 | Funções de qualidade de vida | P2 | F0 (ocultar), F15 | ◐ |
 | 28 | O que NÃO deve ser prioridade | P3 | fora da V1, registrado | ● |
@@ -77,12 +77,20 @@ Duas descobertas reais no caminho, corrigidas e cobertas por teste:
   mapeamento `valorMarcado`/`valorDesmarcado` no campo, e `validarConta`
   agora rejeita qualquer status fora do enum.
 
-### §4 — Dinheiro presente, comprometido e seguro `P0`
+### §4 — Dinheiro presente, comprometido e seguro `P0` — ✅ **F2** (19/09/2026)
 
 Saldo atual · saldo comprometido · saldo livre · **dinheiro seguro para gastar**
 (com a margem de segurança definida pelo sistema) · compromissos próximos no
 horizonte escolhido. — **F2**
 Pergunta central: "Quanto eu posso gastar sem criar um problema mais adiante?"
+
+**Como foi entregue:** `domain/caixa.js`. Margem de segurança = contas
+marcadas reserva (§15), ficam fora do "posso gastar" (decisão D8 em
+`ARQUITETURA.md`). Horizonte fixo de 30 dias até a Fase 5 trazer os quatro
+horizontes do §7 (decisão D9). Cada número vem com a lista de itens que o
+compõe — nenhum é uma caixa preta. Portão verificado com Playwright: o
+painel Início responde com o número, e os detalhes batem exatamente com os
+lançamentos que os originaram.
 
 ### §5 — Cartões e crédito `P0` — **F3**
 
@@ -234,7 +242,7 @@ reserva ou patrimônio.
 
 | Bloco | Conteúdo | Fase |
 |---|---|---|
-| Dinheiro | Atual, comprometido, livre, seguro | F2 |
+| Dinheiro | Atual, comprometido, livre, seguro | ✅ F2 |
 | Situação | Estado do caixa e principal risco | F7 |
 | Próximas ações | O que merece atenção agora | F7 |
 | Fluxo | Entradas e saídas projetadas | F5 |

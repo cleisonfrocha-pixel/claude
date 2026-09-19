@@ -1,12 +1,24 @@
-// Início — versão da Fase 0. A Home completa do §25 (dinheiro, situação,
-// próximas ações, fluxo, dívidas, patrimônio) chega nas Fases 2 e 7; por
-// enquanto, esta tela confirma que os cadastros-base existem e guia para
-// onde completá-los — é o portão da Fase 0, não a experiência final.
+// Início — o bloco Dinheiro do §25, entregue pela Fase 2. Responde à
+// pergunta central do §4: "Quanto eu posso gastar sem criar um problema
+// mais adiante?" — com um número, e esse número explicável linha a linha
+// (o portão da fase), não uma caixa preta.
+//
+// Situação, próximas ações, dívidas e patrimônio (os outros blocos do §25)
+// chegam nas Fases 6, 7 e 9 — por enquanto o Início é só o painel de
+// dinheiro mais um lembrete de quem ainda falta cadastrar.
 
-import { pessoas, contas, cartoes, categorias } from "../../dados/repositorios.js";
+import { pessoas, contas } from "../../dados/repositorios.js";
+import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
+import { formatarBRL } from "../../domain/dinheiro.js";
+import { formatarData } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 
-function contadorCartao(rotulo, valor, sub) {
+const HORIZONTE_DIAS = 30;
+
+let pararAssinatura = null;
+let container = null;
+
+function itemContador(rotulo, valor, sub) {
   return `
     <div class="item-cartao">
       <div class="item-corpo">
@@ -18,37 +30,123 @@ function contadorCartao(rotulo, valor, sub) {
 }
 
 export default {
-  async montar(container) {
-    container.innerHTML = `
-      <div class="tela-head" style="margin-top:0;">
-        <div>
-          <h2 class="tela-titulo">Início</h2>
-          <p class="tela-sub">Fase 0: cadastros-base. O painel de "quanto posso gastar" chega na Fase 2.</p>
-        </div>
-      </div>
-      <div id="resumo-inicio" class="lista-cartoes"></div>
-    `;
-    const [p, c, ca, cat] = await Promise.all([
-      pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(),
-    ]);
-    const alvo = container.querySelector("#resumo-inicio");
+  async montar(alvo) {
+    container = alvo;
+    container.innerHTML = `<div class="tela-sub" style="margin-top:18px;">Carregando…</div>`;
+
+    const [p, c] = await Promise.all([pessoas.listar(), contas.listar()]);
+
     if (!p.length) {
-      alvo.innerHTML = `
-        <div class="vazio">
-          Ainda não há nenhuma pessoa cadastrada.<br>Comece por aí — tudo no sistema pertence a alguém.
-          <div><button class="btn btn-primary" id="ir-configuracoes">Cadastrar pessoas</button></div>
-        </div>`;
-      alvo.querySelector("#ir-configuracoes").addEventListener("click", () => {
-        document.querySelector('[data-modulo="configuracoes"]')?.click();
-      });
+      renderizarPedindoCadastro();
       return;
     }
-    alvo.innerHTML = [
-      contadorCartao("Pessoas", String(p.length), p.map((x) => x.dados.nome).join(", ")),
-      contadorCartao("Contas", String(c.length), c.length ? "cadastradas" : "nenhuma ainda"),
-      contadorCartao("Cartões", String(ca.length), ca.length ? "cadastrados" : "nenhum ainda"),
-      contadorCartao("Categorias", String(cat.length), cat.length ? "prontas para uso" : "nenhuma ainda"),
-    ].join("");
+    if (!c.length) {
+      renderizarPedindoConta();
+      return;
+    }
+
+    if (pararAssinatura) pararAssinatura();
+    pararAssinatura = assinarClarezaDeCaixa(renderizarPainel, HORIZONTE_DIAS);
   },
-  desmontar() {},
+  desmontar() {
+    if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
+    container = null;
+  },
 };
+
+function renderizarPedindoCadastro() {
+  container.innerHTML = `
+    <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Início</h2></div></div>
+    <div class="vazio">
+      Ainda não há nenhuma pessoa cadastrada.<br>Comece por aí — tudo no sistema pertence a alguém.
+      <div><button class="btn btn-primary" id="ir-configuracoes">Cadastrar pessoas</button></div>
+    </div>`;
+  container.querySelector("#ir-configuracoes").addEventListener("click", () => {
+    document.querySelector('[data-modulo="configuracoes"]')?.click();
+  });
+}
+
+function renderizarPedindoConta() {
+  container.innerHTML = `
+    <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Início</h2></div></div>
+    <div class="vazio">
+      Ainda não há nenhuma conta cadastrada — sem isso não dá pra saber quanto dinheiro existe.
+      <div><button class="btn btn-primary" id="ir-dinheiro">Cadastrar conta</button></div>
+    </div>`;
+  container.querySelector("#ir-dinheiro").addEventListener("click", () => {
+    document.querySelector('[data-modulo="dinheiro"]')?.click();
+  });
+}
+
+function renderizarPainel(painel, listaContas, listaCartoes) {
+  if (!container) return;
+  const {
+    saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos,
+    livreCentavos, seguroParaGastarCentavos, detalhes,
+  } = painel;
+
+  const negativo = seguroParaGastarCentavos < 0;
+
+  container.innerHTML = `
+    <div class="tela-head" style="margin-top:0;">
+      <div>
+        <h2 class="tela-titulo">Início</h2>
+        <p class="tela-sub">Sua vida financeira agora, nos próximos ${HORIZONTE_DIAS} dias.</p>
+      </div>
+    </div>
+
+    <div class="hero-caixa">
+      <div class="hero-caixa-label">Dinheiro seguro para gastar</div>
+      <div class="hero-caixa-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
+      <div class="hero-caixa-sub">O que sobra do saldo das suas contas depois de descontar tudo que já está
+        comprometido nos próximos ${HORIZONTE_DIAS} dias — sem contar o dinheiro de reserva.</div>
+    </div>
+
+    ${saldoReservaCentavos !== 0 ? `
+      <div class="reserva-nota">
+        <span>Além disso, você tem em reserva/segurança</span>
+        <b data-valor>${formatarBRL(saldoReservaCentavos)}</b>
+      </div>` : ""}
+
+    <div class="resumo-mes">
+      <div class="resumo-item"><span>Saldo atual</span><b class="mono" data-valor>${formatarBRL(saldoAtualCentavos)}</b></div>
+      <div class="resumo-item"><span>Comprometido (${HORIZONTE_DIAS} dias)</span><b class="mono valor-neg" data-valor>${formatarBRL(comprometidoCentavos)}</b></div>
+      <div class="resumo-item"><span>Livre</span><b class="mono ${livreCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(livreCentavos)}</b></div>
+    </div>
+
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Por que esse número</h3>
+      <p class="tela-sub">Saldo atual, conta por conta</p></div></div>
+    <div class="lista-cartoes" id="contas-detalhe" style="margin-bottom:20px;"></div>
+
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Compromissos próximos</h3>
+      <p class="tela-sub">O que está pressionando o caixa nos próximos ${HORIZONTE_DIAS} dias</p></div></div>
+    <div id="compromissos-detalhe"></div>
+  `;
+
+  const contasAlvo = container.querySelector("#contas-detalhe");
+  if (!detalhes.contasOperacao.length) {
+    contasAlvo.innerHTML = `<div class="vazio">Nenhuma conta de operação ativa.</div>`;
+  } else {
+    contasAlvo.innerHTML = detalhes.contasOperacao.map((x) => itemContador(
+      x.conta.nome,
+      formatarBRL(x.saldoCentavos),
+      x.conta.instituicao || "",
+    )).join("");
+  }
+
+  const compromissosAlvo = container.querySelector("#compromissos-detalhe");
+  if (!detalhes.compromissos.length) {
+    compromissosAlvo.innerHTML = `<div class="vazio">Nada previsto para os próximos ${HORIZONTE_DIAS} dias.</div>`;
+  } else {
+    compromissosAlvo.innerHTML = `<div class="item-cartao" style="display:block;">` +
+      detalhes.compromissos.map((item) => `
+        <div class="compromisso-item">
+          <div>
+            <div class="compromisso-desc">${item.atrasado ? '<span class="tag-atrasado">Atrasado</span>' : ""}${escapeHtml(item.descricao)}</div>
+            <div class="compromisso-data">${escapeHtml(formatarData(item.data))}</div>
+          </div>
+          <div class="compromisso-valor" data-valor>${formatarBRL(item.valorCentavos)}</div>
+        </div>`).join("") +
+      `</div>`;
+  }
+}

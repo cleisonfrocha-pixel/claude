@@ -9,10 +9,11 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 1 concluída (19/09/2026).** Cadastros de pessoas, contas, cartões e
-categorias, e agora toda a movimentação: transações, transferências,
-compras parceladas, recorrências e pagamento de fatura — sem duplicar
-dinheiro em nenhum dos casos. Fase 2 (clareza de caixa) ainda não começou.
+**Fase 2 concluída (19/09/2026).** A Home agora responde a pergunta central
+do produto: quanto dá pra gastar sem criar um problema mais adiante — com
+saldo atual, comprometido, livre e seguro para gastar, cada um explicado
+pelos lançamentos que o compõem. Fase 3 (cartões e crédito) ainda não
+começou.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>

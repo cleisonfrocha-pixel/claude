@@ -76,6 +76,20 @@ export function dataDeCompetencia(competencia, dia) {
   return `${competencia}-${String(diaSeguro).padStart(2, "0")}`;
 }
 
+/** "AAAA-MM-DD" + N dias -> "AAAA-MM-DD" (N pode ser negativo). Usado para
+ * o horizonte de "compromissos próximos" (§4) — soma dias corridos, não
+ * meses, diferente de somarMeses. */
+export function somarDias(dataISO, n) {
+  const [ano, mes, dia] = dataISO.split("-").map(Number);
+  const d = new Date(ano, mes - 1, dia + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** "AAAA-MM-DD" de hoje, no relógio local de quem chama. */
+export function hojeISO(agora = new Date()) {
+  return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(agora.getDate()).padStart(2, "0")}`;
+}
+
 /** Formata uma data ISO como dd/mm/aaaa. */
 export function formatarData(iso) {
   if (!iso) return "";

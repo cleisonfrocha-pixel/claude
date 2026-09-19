@@ -47,6 +47,7 @@ transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
 | `status` | `previsto \| agendado \| pago \| atrasado \| cancelado` (§6) |
 | `certeza` | `confirmado \| provavel \| incerto` (§7) |
 | `transferenciaId` | Une as duas pontas de uma transferência. **Par com este campo preenchido nunca entra em receita nem em despesa** (§3) |
+| `direcao` | `entrada \| saida` — só preenchido quando `tipo` é `transferencia`. As duas pernas compartilham o mesmo `valorCentavos` positivo; sem isto não dá para saber qual perna soma e qual subtrai do saldo da conta (precisou existir na Fase 2, para calcular saldo por conta) |
 | `faturaId` | Compra no cartão aponta para a fatura. O `pagamento_fatura` quita a fatura, **não** é uma segunda despesa (§5) |
 | `parcelaDe` | Agrupa as parcelas de uma compra; `parcelaNum/parcelaTotal` dão a visão de compromisso futuro (§3) |
 | `origem` | `manual \| planilha \| ofx \| drive \| open_finance` (§18) |

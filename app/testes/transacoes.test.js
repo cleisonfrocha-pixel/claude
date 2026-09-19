@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   agregarPeriodo, totalizarMes, competenciaFatura, gerarParcelas,
-  competenciasFaltantes, construirParTransferencia,
+  competenciasFaltantes, construirParTransferencia, efeitoNaConta,
+  competenciaVencimentoFatura, dataVencimentoFatura,
 } from "../src/domain/transacoes.js";
 
 function t(overrides) {
@@ -110,4 +111,48 @@ test("competenciasFaltantes: respeita início e fim da recorrência", () => {
     competenciasExistentes: [],
   });
   assert.deepEqual(faltam, ["2026-02"]);
+});
+
+test("efeitoNaConta: receita paga soma, despesa paga subtrai", () => {
+  assert.equal(efeitoNaConta(t({ tipo: "receita", valorCentavos: 1000, contaId: "c1", status: "pago" })), 1000);
+  assert.equal(efeitoNaConta(t({ tipo: "despesa", valorCentavos: 1000, contaId: "c1", status: "pago" })), -1000);
+});
+
+test("efeitoNaConta: nada que não esteja pago mexe no saldo", () => {
+  assert.equal(efeitoNaConta(t({ tipo: "despesa", valorCentavos: 1000, contaId: "c1", status: "previsto" })), 0);
+  assert.equal(efeitoNaConta(t({ tipo: "despesa", valorCentavos: 1000, contaId: "c1", status: "agendado" })), 0);
+});
+
+test("efeitoNaConta: despesa em cartão não mexe na conta (só a fatura, quando paga)", () => {
+  assert.equal(efeitoNaConta(t({ tipo: "despesa", valorCentavos: 1000, cartaoId: "cartao1", contaId: null, status: "pago" })), 0);
+});
+
+test("efeitoNaConta: pagamento de fatura sai da conta que pagou", () => {
+  assert.equal(efeitoNaConta(t({ tipo: "pagamento_fatura", valorCentavos: 1000, contaId: "c1", status: "pago" })), -1000);
+});
+
+test("efeitoNaConta: transferência usa a direção — cada perna soma o oposto da outra", () => {
+  const par = construirParTransferencia({
+    contaOrigemId: "a", contaDestinoId: "b", valorCentavos: 5000,
+    data: "2026-01-10", competencia: "2026-01", transferenciaId: "tr1",
+  });
+  const [origem, destino] = par;
+  assert.equal(efeitoNaConta(origem), -5000);
+  assert.equal(efeitoNaConta(destino), 5000);
+  assert.equal(efeitoNaConta(origem) + efeitoNaConta(destino), 0, "dinheiro não pode nascer nem sumir numa transferência");
+});
+
+test("competenciaVencimentoFatura: vencimento no mesmo mês quando o dia é maior ou igual ao fechamento", () => {
+  const cartao = { diaFechamento: 10, diaVencimento: 20 };
+  assert.equal(competenciaVencimentoFatura(cartao, "2026-03"), "2026-03");
+});
+
+test("competenciaVencimentoFatura: vencimento no mês seguinte quando o dia é menor que o fechamento", () => {
+  const cartao = { diaFechamento: 28, diaVencimento: 5 };
+  assert.equal(competenciaVencimentoFatura(cartao, "2026-03"), "2026-04");
+});
+
+test("dataVencimentoFatura monta a data completa", () => {
+  const cartao = { diaFechamento: 28, diaVencimento: 5 };
+  assert.equal(dataVencimentoFatura(cartao, "2026-03"), "2026-04-05");
 });
