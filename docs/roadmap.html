@@ -1,0 +1,558 @@
+<title>Do GEDI ao Painel Financeiro</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --ground:#EDF0F5; --surface:#FFFFFF; --surface-2:#F5F7FA; --border:#D7DDE7; --border-2:#C2CBD9;
+  --ink:#0D1726; --ink-2:#4A5668; --ink-3:#7A8698;
+  --accent:#175C7A; --accent-soft:#E2EDF3;
+  --w0:#BBD3DF; --w1:#8BB6C9; --w2:#4E8DA8; --w3:#2A6C88; --w4:#124E68;
+  --good:#16794F; --good-soft:#E0F0E8;
+  --warn:#8A5A12; --warn-soft:#F6EEDF;
+  --ext:#A33A2E; --ext-soft:#F7E6E3;
+  --shadow:0 1px 2px rgba(13,23,38,.05), 0 12px 28px -20px rgba(13,23,38,.35);
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0B1220; --surface:#131C2C; --surface-2:#1A2537; --border:#2A374D; --border-2:#3A4A64;
+    --ink:#E8EEF8; --ink-2:#A3B0C4; --ink-3:#71809A;
+    --accent:#6FB6D4; --accent-soft:#17303F;
+    --w0:#1E4257; --w1:#2A6182; --w2:#3E86AB; --w3:#62A8C9; --w4:#93CCE3;
+    --good:#4CC08A; --good-soft:#123528;
+    --warn:#D9A44C; --warn-soft:#332715;
+    --ext:#E8796A; --ext-soft:#3A1E1A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 28px -20px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0B1220; --surface:#131C2C; --surface-2:#1A2537; --border:#2A374D; --border-2:#3A4A64;
+  --ink:#E8EEF8; --ink-2:#A3B0C4; --ink-3:#71809A;
+  --accent:#6FB6D4; --accent-soft:#17303F;
+  --w0:#1E4257; --w1:#2A6182; --w2:#3E86AB; --w3:#62A8C9; --w4:#93CCE3;
+  --good:#4CC08A; --good-soft:#123528;
+  --warn:#D9A44C; --warn-soft:#332715;
+  --ext:#E8796A; --ext-soft:#3A1E1A;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 28px -20px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box;}
+body{margin:0; background:var(--ground); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+.page{max-width:1120px; margin:0 auto; padding-inline:20px; padding-block:40px 72px;}
+h1,h2,h3{text-wrap:balance; margin:0; letter-spacing:-.02em;}
+p{margin:0;}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums;}
+.eyebrow{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--accent);}
+
+/* ---- header ---- */
+.masthead{display:flex; flex-direction:column; gap:14px; padding-bottom:28px; border-bottom:2px solid var(--ink); margin-bottom:28px;}
+.masthead h1{font-size:clamp(32px,6.5vw,52px); font-weight:700; line-height:1.05;}
+.lede{font-size:clamp(17px,2.4vw,20px); color:var(--ink-2); max-width:62ch; line-height:1.5;}
+.origin{display:flex; flex-wrap:wrap; gap:8px 18px; font-size:14px; color:var(--ink-3);}
+.origin b{color:var(--ink-2); font-weight:600;}
+
+/* ---- kpi ---- */
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:36px;}
+.kpi{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px;}
+.kpi.flag{border-color:var(--ext); background:var(--ext-soft);}
+.kpi-num{font-family:var(--mono); font-size:38px; font-weight:600; line-height:1; letter-spacing:-.03em;}
+.kpi.flag .kpi-num{color:var(--ext);}
+.kpi-lab{font-size:13px; color:var(--ink-2); margin-top:8px; line-height:1.4;}
+
+/* ---- effort band ---- */
+.band-wrap{margin-bottom:44px;}
+.band-head{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+.band-head h2{font-size:17px; font-weight:600; color:var(--ink-2);}
+.band-head .note{font-size:13px; color:var(--ink-3);}
+.band{display:flex; gap:2px; height:38px; margin-bottom:6px;}
+.seg{border-radius:3px; display:flex; align-items:center; justify-content:center; min-width:0;}
+.axis{position:relative; height:30px; border-top:1px solid var(--border-2); margin-bottom:10px;}
+.tick{position:absolute; top:0; transform:translateX(-50%); padding-top:6px; font-family:var(--mono); font-size:11px; color:var(--ink-3);}
+.tick::before{content:""; position:absolute; top:0; left:50%; width:1px; height:5px; background:var(--border-2);}
+.tick.first{transform:translateX(0);}
+.tick.first::before{left:0;}
+.tick.last{transform:translateX(-100%);}
+.tick.last::before{left:calc(100% - 1px);}
+.tick.v1{color:var(--good); font-weight:600;}
+.tick.v1::before{height:12px; width:2px; background:var(--good);}
+.band-legend{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+.lg{display:flex; gap:9px; align-items:flex-start; font-size:13px; line-height:1.35;}
+.chip-sw{width:11px; height:11px; border-radius:2px; flex-shrink:0; margin-top:4px;}
+.lg b{display:block; font-weight:600; color:var(--ink);}
+.lg em{font-style:normal; color:var(--ink-3); font-family:var(--mono); font-size:12px;}
+
+/* ---- generic section ---- */
+section{margin-bottom:52px;}
+.sec-head{margin-bottom:18px;}
+.sec-head h2{font-size:clamp(22px,3.4vw,28px); font-weight:700; margin-top:6px;}
+.sec-head p{font-size:15px; color:var(--ink-2); max-width:70ch; margin-top:8px;}
+
+/* ---- tables ---- */
+.tbl-scroll{overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--surface);}
+table{width:100%; border-collapse:collapse; font-size:14px; min-width:520px;}
+th{text-align:left; font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); padding:12px 16px; border-bottom:1px solid var(--border); white-space:nowrap;}
+td{padding:11px 16px; border-bottom:1px solid var(--border); vertical-align:top; line-height:1.45;}
+tbody tr:last-child td{border-bottom:none;}
+td.m{font-family:var(--mono); font-size:13px; white-space:nowrap;}
+td b{font-weight:600;}
+
+/* ---- waves & phases ---- */
+.wave{margin-bottom:30px;}
+.wave-head{display:flex; align-items:center; gap:14px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border-2);}
+.wave-n{width:34px; height:34px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-weight:600; font-size:15px; background:var(--surface); color:var(--ink); border:2px solid var(--border-2); flex-shrink:0;}
+.wave-head h3{font-size:19px; font-weight:700; flex:1; min-width:0;}
+.wave-meta{font-family:var(--mono); font-size:12px; color:var(--ink-3); white-space:nowrap;}
+.wave-intro{font-size:14px; color:var(--ink-2); margin-bottom:14px; max-width:70ch;}
+.phases{display:flex; flex-direction:column; gap:12px;}
+.phase{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px; display:grid; grid-template-columns:auto 1fr; gap:4px 16px;}
+.ph-code{font-family:var(--mono); font-size:13px; font-weight:600; color:var(--accent); padding-top:2px; white-space:nowrap;}
+.ph-body{min-width:0;}
+.ph-top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;}
+.ph-top h4{margin:0; font-size:16px; font-weight:600; letter-spacing:-.01em;}
+.ph-sessions{font-family:var(--mono); font-size:12px; color:var(--ink-3); white-space:nowrap;}
+.ph-desc{font-size:14px; color:var(--ink-2); margin-top:6px;}
+.tags{display:flex; flex-wrap:wrap; gap:5px; margin-top:9px;}
+.tag{font-family:var(--mono); font-size:11px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--surface-2); border:1px solid var(--border); color:var(--ink-2);}
+.pri{font-family:var(--mono); font-size:11px; font-weight:600; padding:2px 7px; border-radius:4px;}
+.pri.p0{background:var(--ink); color:var(--surface);}
+.pri.p1{background:transparent; border:1px solid var(--accent); color:var(--accent);}
+.pri.p2{background:var(--surface-2); border:1px solid var(--border); color:var(--ink-3);}
+.gate{display:flex; gap:9px; align-items:flex-start; margin-top:11px; padding-top:11px; border-top:1px dashed var(--border-2); font-size:13.5px; color:var(--ink-2); line-height:1.45;}
+.gate-l{font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--good); flex-shrink:0; padding-top:2px;}
+.gate.ext .gate-l{color:var(--ext);}
+.phase.ext{border-color:var(--ext); background:var(--ext-soft);}
+
+/* ---- v1 gate ---- */
+.v1{background:var(--ink); color:#F2F6FC; border-radius:14px; padding:clamp(24px,4vw,36px); margin-bottom:52px;}
+.v1 .eyebrow{color:#7FC9A6;}
+.v1 h2{font-size:clamp(22px,3.6vw,30px); font-weight:700; margin:8px 0 10px; color:#FFFFFF;}
+.v1 p{font-size:15px; color:#B4C1D4; max-width:68ch;}
+.q-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:1px; background:#2C384C; border-radius:8px; overflow:hidden; margin-top:22px;}
+.q{background:#16202F; padding:12px 14px; display:flex; gap:11px; align-items:flex-start;}
+.q-n{font-family:var(--mono); font-size:11px; font-weight:600; color:#7A8698; flex-shrink:0; padding-top:3px; width:16px;}
+.q-t{flex:1; min-width:0; font-size:14px; color:#E4EAF4; line-height:1.4;}
+.q-f{font-family:var(--mono); font-size:11px; font-weight:600; color:#7FC9A6; flex-shrink:0; padding-top:3px;}
+
+/* ---- matrix ---- */
+.matrix{display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:8px;}
+.cell{background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--border-2); border-radius:7px; padding:9px 11px;}
+.cell.p0{border-left-color:var(--ink);}
+.cell.p1{border-left-color:var(--accent);}
+.cell.p2{border-left-color:var(--ink-3);}
+.cell.p3{border-left-color:var(--border-2); opacity:.62;}
+.cell.meta{border-left-color:var(--good); background:var(--good-soft);}
+.cell-top{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-family:var(--mono); font-size:11px; font-weight:600;}
+.cell-n{color:var(--ink-3);}
+.cell-f{color:var(--accent);}
+.cell.meta .cell-f{color:var(--good);}
+.cell-t{font-size:12.5px; line-height:1.32; margin-top:4px; color:var(--ink);}
+
+/* ---- decisions ---- */
+.decs{display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:12px;}
+.dec{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px;}
+.dec-n{font-family:var(--mono); font-size:11px; font-weight:600; color:var(--accent); letter-spacing:.06em;}
+.dec h4{margin:5px 0 7px; font-size:15.5px; font-weight:600; line-height:1.3;}
+.dec p{font-size:13.5px; color:var(--ink-2); line-height:1.5;}
+
+/* ---- callout ---- */
+.callout{background:var(--warn-soft); border:1px solid var(--warn); border-radius:10px; padding:20px 22px;}
+.callout .eyebrow{color:var(--warn);}
+.callout h3{font-size:18px; font-weight:700; margin:7px 0 9px;}
+.callout p{font-size:14.5px; color:var(--ink-2); line-height:1.55; max-width:72ch;}
+.callout p + p{margin-top:9px;}
+
+footer{margin-top:52px; padding-top:22px; border-top:1px solid var(--border); font-size:13px; color:var(--ink-3); display:flex; flex-wrap:wrap; gap:6px 18px;}
+
+@media (max-width:640px){
+  .phase{grid-template-columns:1fr; gap:8px;}
+  .ph-code{padding-top:0;}
+  .q-f{width:100%; padding-top:2px;}
+}
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <span class="eyebrow">Blueprint de Produto V1 · 31 seções · nenhuma de fora</span>
+    <h1>Do GEDI ao Painel Financeiro</h1>
+    <p class="lede">Plano de implantação de um centro de comando financeiro pessoal e familiar, construído sobre o Painel GEDI que já existe — não do zero.</p>
+    <div class="origin">
+      <span>Base: <b>Painel GEDI (Copy)</b>, já duplicado</span>
+      <span>Destino: <b>V1 do blueprint</b>, critérios do §29</span>
+      <span>Detalhamento: <b>repositório <span class="mono">cleisonfrocha-pixel/claude</span></b></span>
+    </div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-num">43</div><div class="kpi-lab">sessões de trabalho até a V1 completa</div></div>
+    <div class="kpi"><div class="kpi-num">16</div><div class="kpi-lab">fases, agrupadas em 5 ondas</div></div>
+    <div class="kpi"><div class="kpi-num">~40%</div><div class="kpi-lab">da interface já resolvida pelo GEDI</div></div>
+    <div class="kpi flag"><div class="kpi-num">1</div><div class="kpi-lab">única fase que exige infraestrutura externa — Open Finance</div></div>
+  </div>
+
+  <div class="band-wrap">
+    <div class="band-head">
+      <h2>Distribuição de esforço · 58 sessões no total</h2>
+      <span class="note">A V1 fecha na Fase 9. A Onda 4 é melhoria sobre um produto que já resolve o problema.</span>
+    </div>
+    <div class="band" role="img" aria-label="Distribuição das 58 sessões: Onda 0 com 2, Onda 1 com 13, Onda 2 com 13, Onda 3 com 15, Onda 4 com 15. A V1 fecha na sessão 43.">
+      <div class="seg" style="flex:2; background:var(--w0);"></div>
+      <div class="seg" style="flex:13; background:var(--w1);"></div>
+      <div class="seg" style="flex:13; background:var(--w2);"></div>
+      <div class="seg" style="flex:15; background:var(--w3);"></div>
+      <div class="seg" style="flex:15; background:var(--w4);"></div>
+    </div>
+    <div class="axis">
+      <span class="tick first" style="left:0;">0</span>
+      <span class="tick" style="left:25.9%;">15</span>
+      <span class="tick" style="left:48.3%;">28</span>
+      <span class="tick v1" style="left:74.1%;">43 · V1</span>
+      <span class="tick last" style="left:100%;">58</span>
+    </div>
+    <div class="band-legend">
+      <div class="lg"><span class="chip-sw" style="background:var(--w0);"></span><span><b>Onda 0 · Fundação</b><em>F0 · 2 sessões</em></span></div>
+      <div class="lg"><span class="chip-sw" style="background:var(--w1);"></span><span><b>Onda 1 · Ver a realidade</b><em>F1–F4 · 13 sessões</em></span></div>
+      <div class="lg"><span class="chip-sw" style="background:var(--w2);"></span><span><b>Onda 2 · Ver o futuro e decidir</b><em>F5–F7 · 13 sessões</em></span></div>
+      <div class="lg"><span class="chip-sw" style="background:var(--w3);"></span><span><b>Onda 3 · Fechar os gaps</b><em>F8–F11 · 15 sessões</em></span></div>
+      <div class="lg"><span class="chip-sw" style="background:var(--w4);"></span><span><b>Onda 4 · Automatizar e interpretar</b><em>F12–F15 · 15 sessões</em></span></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Ponto de partida</span>
+      <h2>O que o GEDI já resolveu</h2>
+      <p>O Painel GEDI não é rascunho — é um produto financeiro em funcionamento, com layout de computador e um aplicativo mobile completo por baixo. Isto atravessa para o produto novo sem ser reescrito.</p>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>O que</th><th>No GEDI</th><th>No produto novo</th></tr></thead>
+        <tbody>
+          <tr><td><b>Sistema de design</b><br>tokens, claro/escuro, tipografia</td><td class="m">~390 linhas de CSS</td><td>Direto, sem alteração</td></tr>
+          <tr><td><b>Casca mobile</b><br>barra de abas, bottom sheets, navegação por mês</td><td class="m">classes .m-*</td><td>Direto; a barra de abas cresce de 3 para os módulos do §26</td></tr>
+          <tr><td><b>Formatação pt-BR</b></td><td class="m">fmtBRL, monthLabel, addMonths</td><td>Vira <span class="mono">domain/formato.js</span></td></tr>
+          <tr><td><b>Provisionamento de meses futuros</b></td><td class="m">ensureProvisionedEntries</td><td>Vira o motor de <b>recorrências</b> (§3)</td></tr>
+          <tr><td><b>Agregação mensal e acumulada</b></td><td class="m">entryTotals, monthTotalsFor</td><td>Vira o motor de agregação</td></tr>
+          <tr><td><b>Status do lançamento</b></td><td class="m">pago · a_receber</td><td>Expande para os 5 status do §6</td></tr>
+          <tr><td><b>Custos por lançamento</b></td><td class="m">array costs[]</td><td>Vira <b>despesas</b> e <b>parcelas</b></td></tr>
+          <tr><td><b>Migração de formato</b></td><td class="m">normalizeState</td><td>Vira o versionador de schema</td></tr>
+          <tr><td><b>Persistência</b><br>republicando a página inteira</td><td class="m">fullDocument</td><td><b>Substituído</b> pelo banco do artefato, na Fase 0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">A rota · ordem de entrega do §30</span>
+      <h2>16 fases, cada uma com um portão</h2>
+      <p>Fase sem portão fechado não libera a próxima. Isso existe para evitar o modo de falha clássico deste tipo de projeto: dez módulos pela metade e nenhuma pergunta respondida.</p>
+    </div>
+
+    <div class="wave">
+      <div class="wave-head">
+        <span class="wave-n" style="border-color:var(--w0);">0</span>
+        <h3>Fundação</h3><span class="wave-meta">2 sessões</span>
+      </div>
+      <p class="wave-intro">O único momento em que se mexe em encanamento. Depois disto, só produto.</p>
+      <div class="phases">
+        <article class="phase">
+          <span class="ph-code">F0</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Esqueleto e mudança de fundação</h4><span class="ph-sessions">2 sessões</span></div>
+            <p class="ph-desc">Quebrar o arquivo único em módulos, trocar a persistência do HTML para o banco do artefato, migrar o estado antigo sem perder nada, e subir os cadastros-base: pessoas, contas, cartões e categorias. Navegação dos 11 módulos, com as telas ainda vazias. O modo de ocultar valores entra já aqui — custa 10 linhas e é o que permite abrir o painel na frente de outra pessoa desde o primeiro dia.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§3 parcial</span><span class="tag">§26</span><span class="tag">§27 ocultar</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Cadastrar pessoa, conta e cartão, fechar o navegador, abrir no celular — e os dados estarem lá.</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="wave-head">
+        <span class="wave-n" style="border-color:var(--w1);">1</span>
+        <h3>Ver a realidade</h3><span class="wave-meta">F1–F4 · 13 sessões</span>
+      </div>
+      <p class="wave-intro">O blueprint é explícito: <b>dados primeiro, decisões depois</b>. Nada de inteligência nesta onda — o objetivo é que o sistema represente a vida financeira sem mentir.</p>
+      <div class="phases">
+        <article class="phase">
+          <span class="ph-code">F1</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Núcleo financeiro</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Transações, transferências, receitas, despesas, recorrências e parcelamentos. O item que decide a qualidade de tudo que vem depois: transferência entre contas próprias não é receita nem despesa. Se isso vazar, todo indicador do produto fica errado e o usuário para de confiar.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§3</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Transferir R$ 1.000 entre duas contas próprias não altera nenhum total de receita ou despesa do mês — verificado por teste automatizado, não no olho.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F2</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Clareza de caixa</h4><span class="ph-sessions">3 sessões</span></div>
+            <p class="ph-desc">Saldo atual, comprometido, livre e <b>seguro para gastar</b> — com a margem de segurança definida pelo sistema e os compromissos próximos no horizonte escolhido. É o primeiro momento em que o produto entrega algo que uma planilha não entrega.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§4</span><span class="tag">§25 Dinheiro</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>O painel responde “quanto posso gastar sem criar um problema mais adiante?” com um número — e esse número é explicável linha a linha.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F3</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Cartões e crédito</h4><span class="ph-sessions">3 sessões</span></div>
+            <p class="ph-desc">Limite total, disponível e utilizado; fatura atual, próxima e vencimento; parceladas e comprometimento de meses futuros; alerta de aproximação de limite; cartões de mais de uma pessoa no mesmo núcleo.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§5</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Uma compra parcelada em 10x aparece como parcela no mês corrente <b>e</b> como compromisso nos 9 meses seguintes — sem contar o dinheiro duas vezes.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F4</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Compromissos e calendário</h4><span class="ph-sessions">3 sessões</span></div>
+            <p class="ph-desc">Contas futuras com valor, vencimento, recorrência e status; calendário com impacto no caixa por data; dias de maior pressão; obrigações sem cobertura; os cinco status — previsto, agendado, pago, atrasado, cancelado.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§6</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>O calendário aponta o dia do mês que aperta, e aponta qual obrigação está sem cobertura suficiente.</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="wave-head">
+        <span class="wave-n" style="border-color:var(--w2);">2</span>
+        <h3>Ver o futuro e decidir</h3><span class="wave-meta">F5–F7 · 13 sessões</span>
+      </div>
+      <p class="wave-intro">Aqui o produto deixa de ser registro e vira centro de comando. É a onda que justifica o projeto inteiro.</p>
+      <div class="phases">
+        <article class="phase">
+          <span class="ph-code">F5</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Fluxo de caixa e projeção</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Horizontes de 7, 30, 90 dias e 12 meses, cada um respondendo à sua pergunta. Estados de certeza: confirmado, provável e incerto — e <b>incerto nunca é tratado como dinheiro garantido</b>.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§7</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>A “saída crítica” do blueprint: quando o saldo projetado fica negativo, o sistema diz <b>em que data</b>, <b>qual evento provoca</b> e <b>de quanto é o gap</b>. Os três, não dois.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F6</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Dívidas e plano de saída</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Cadastro completo, saldo original e atual, parcelas pagas e restantes, juros quando conhecidos, atrasos, comprometimento mensal da renda, data estimada de quitação e visão consolidada — mais o simulador de aporte extra, quitação antecipada e comparação de ritmos.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§11</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Simular R$ 500/mês de aporte mostra prazo novo, juros economizados e impacto mensal — e ao sair da simulação <b>nada mudou de verdade</b>.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F7</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Diagnóstico, decisões e plano vivo</h4><span class="ph-sessions">5 sessões</span></div>
+            <p class="ph-desc">O diagnóstico do §8 sem moralizar — fatos e causas observáveis. A central de decisões do §9, com cada ação amarrada ao problema que a originou e histórico do que foi resolvido, ignorado ou adiado. O plano vivo do §10 — agora, esta semana, este mês, 90 dias, 12 meses — que se atualiza sozinho. E a Home completa do §25.</p>
+            <div class="tags"><span class="pri p0">P0</span><span class="tag">§8</span><span class="tag">§9</span><span class="tag">§10</span><span class="tag">§25</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Núcleo P0 do blueprint fechado. Das 14 perguntas do §29, 11 já têm resposta — as outras 3 dependem de renda, patrimônio e objetivos, que são P1 e vêm na próxima onda.</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="wave-head">
+        <span class="wave-n" style="border-color:var(--w3);">3</span>
+        <h3>Fechar os gaps</h3><span class="wave-meta">F8–F11 · 15 sessões</span>
+      </div>
+      <p class="wave-intro">O blueprint não olha só para cortar despesa — ele quer saber se o problema é de gasto, de timing, de dívida ou de renda. É aqui que essa distinção nasce.</p>
+      <div class="phases">
+        <article class="phase">
+          <span class="ph-code">F8</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Renda, gap, custo essencial e margem</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Fontes por previsibilidade e periodicidade, concentração da renda, e os três gaps: contra o custo essencial, contra o custo desejado e contra a meta de recuperação. Custo essencial, atual e ideal; margem; essencial versus discricionário; categorias que comem margem de forma crescente.</p>
+            <div class="tags"><span class="pri p1">P1</span><span class="tag">§12</span><span class="tag">§13</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Havendo déficit, o sistema diz se o problema é de <b>gasto</b>, de <b>timing de caixa</b>, de <b>dívida</b>, de <b>renda</b> ou de combinação — não apenas que existe déficit.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F9</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Patrimônio, reserva e objetivos</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Ativos, passivos, patrimônio líquido e sua evolução, variação e composição — e a relação entre reduzir dívida, aumentar ativo e crescer patrimônio. Reserva medida em <b>dias e meses de custo essencial</b>. Objetivos com verificação de compatibilidade da meta com a margem atual — o que quase nenhum aplicativo faz.</p>
+            <div class="tags"><span class="pri p1">P1</span><span class="tag">§14</span><span class="tag">§15</span><span class="tag">§16</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span><b>As 14 perguntas do §29 respondidas. V1 completa.</b></span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F10</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Confiança, alertas e anomalias</h4><span class="ph-sessions">3 sessões</span></div>
+            <p class="ph-desc">Completude da vida financeira mapeada, confiabilidade da visão e aviso quando uma conclusão se apoiar em dados incompletos. Os nove alertas do §24 e a detecção de anomalias do §17. Vem <b>depois</b> do diagnóstico de propósito: alerta sem base confiável é ruído, e ruído destrói a confiança mais rápido que a ausência do alerta.</p>
+            <div class="tags"><span class="pri p1">P1</span><span class="tag">§17</span><span class="tag">§23</span><span class="tag">§24</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Todo alerta na tela abre e mostra os lançamentos que o geraram.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F11</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Importação e reconciliação</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Planilhas, históricos, OFX e CSV — mais a planilha do Google Drive pela conexão que você já tem. Identificação de duplicatas, reconhecimento de transferências internas, revisão de lançamentos ambíguos e manutenção do histórico original. Aqui nasce o adaptador de dados que a fase seguinte vai reusar.</p>
+            <div class="tags"><span class="pri p1">P1</span><span class="tag">§18</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Importar o mesmo extrato duas vezes não cria um único lançamento duplicado.</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <div class="wave">
+      <div class="wave-head">
+        <span class="wave-n" style="border-color:var(--w4);">4</span>
+        <h3>Automatizar e interpretar</h3><span class="wave-meta">F12–F15 · 15 sessões</span>
+      </div>
+      <p class="wave-intro">Melhoria contínua sobre um produto que já resolve o problema. Por regra do §2, nada aqui atrasa o que vem antes.</p>
+      <div class="phases">
+        <article class="phase ext">
+          <span class="ph-code">F12</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Open Finance</h4><span class="ph-sessions">5 sessões + decisão de custo</span></div>
+            <p class="ph-desc">Conexão de instituições, atualização de saldos, importação de movimentações e de cartão, status e atualidade de cada conexão, tratamento de indisponibilidade e reconciliação com o que já existe. <b>É a única fase que exige servidor, certificado, redirect e webhook</b> — nada disso cabe dentro de um artefato.</p>
+            <div class="tags"><span class="pri p1">P1</span><span class="tag">§19</span></div>
+            <div class="gate ext"><span class="gate-l">Depende de você</span><span>Escolher provedor e custo. O §19 pede explicitamente “sem custo recorrente de plano comercial caro” e modelo não preso a um fornecedor — por isso o adaptador. <b>Se o custo não fechar, esta fase espera e o produto segue completo</b>, porque a F11 já cobre a entrada de dados.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F13</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Assistente de IA</h4><span class="ph-sessions">3 sessões</span></div>
+            <p class="ph-desc">Roda <b>dentro da própria página</b>, sem backend. Responde sobre a sua vida financeira, explica variações, explica por que um alerta apareceu, simula cenários e resume o mês — sempre mostrando os dados de origem e nunca alterando dado crítico sem confirmação. Só funciona porque a Fase 0 tirou os dados de dentro do HTML.</p>
+            <div class="tags"><span class="pri p2">P2</span><span class="tag">§20</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Toda resposta da IA mostra os lançamentos em que se apoiou.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F14</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Fechamento mensal e cenários</h4><span class="ph-sessions">4 sessões</span></div>
+            <p class="ph-desc">Resumo do mês, realizados, resultado, variação de dívida, reserva e patrimônio, maiores mudanças de comportamento e histórico mensal comparável. Mais os seis cenários do §22 — recuperação, aumento de renda, redução de despesa, quitação, conservador — comparados sem alterar os dados reais.</p>
+            <div class="tags"><span class="pri p2">P2</span><span class="tag">§21</span><span class="tag">§22</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Comparar dois cenários e sair sem ter tocado em nenhum dado verdadeiro.</span></div>
+          </div>
+        </article>
+        <article class="phase">
+          <span class="ph-code">F15</span>
+          <div class="ph-body">
+            <div class="ph-top"><h4>Qualidade de vida</h4><span class="ph-sessions">3 sessões</span></div>
+            <p class="ph-desc">Busca global; filtros por período, pessoa, conta, cartão e categoria; exportação completa dos próprios dados; histórico de alterações relevantes; comprovantes anexados a registros importantes.</p>
+            <div class="tags"><span class="pri p2">P2</span><span class="tag">§27</span></div>
+            <div class="gate"><span class="gate-l">Portão</span><span>Exportar tudo e conseguir reabrir os dados fora do produto.</span></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="v1">
+    <span class="eyebrow">Critério de aceite · §29</span>
+    <h2>A V1 só está pronta quando estas 14 perguntas têm resposta</h2>
+    <p>Não é “os módulos estão prontos”. É isto — e o blueprint deixa claro que vale independentemente da tecnologia escolhida.</p>
+    <div class="q-grid">
+      <div class="q"><span class="q-n">01</span><span class="q-t">Quanto dinheiro eu tenho hoje?</span><span class="q-f">F2</span></div>
+      <div class="q"><span class="q-n">02</span><span class="q-t">Quanto já está comprometido?</span><span class="q-f">F2</span></div>
+      <div class="q"><span class="q-n">03</span><span class="q-t">Quanto posso gastar com segurança?</span><span class="q-f">F2</span></div>
+      <div class="q"><span class="q-n">04</span><span class="q-t">Quais são minhas próximas obrigações?</span><span class="q-f">F4</span></div>
+      <div class="q"><span class="q-n">05</span><span class="q-t">Em que data meu caixa aperta?</span><span class="q-f">F5</span></div>
+      <div class="q"><span class="q-n">06</span><span class="q-t">Quanto eu devo no total?</span><span class="q-f">F6</span></div>
+      <div class="q"><span class="q-n">07</span><span class="q-t">Quanto as dívidas consomem por mês?</span><span class="q-f">F6</span></div>
+      <div class="q"><span class="q-n">08</span><span class="q-t">Quanto entra e quanto sai por mês?</span><span class="q-f">F1·F5</span></div>
+      <div class="q"><span class="q-n">09</span><span class="q-t">Existe um gap de renda? Qual?</span><span class="q-f">F8</span></div>
+      <div class="q"><span class="q-n">10</span><span class="q-t">O que provoca a pressão financeira?</span><span class="q-f">F7</span></div>
+      <div class="q"><span class="q-n">11</span><span class="q-t">O que precisa da minha atenção agora?</span><span class="q-f">F7</span></div>
+      <div class="q"><span class="q-n">12</span><span class="q-t">Qual é meu patrimônio líquido?</span><span class="q-f">F9</span></div>
+      <div class="q"><span class="q-n">13</span><span class="q-t">Estou melhorando ou piorando?</span><span class="q-f">F7·F9</span></div>
+      <div class="q"><span class="q-n">14</span><span class="q-t">Quais metas cabem na minha realidade?</span><span class="q-f">F9</span></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Prova de cobertura</span>
+      <h2>As 31 seções do blueprint, e onde cada uma é entregue</h2>
+      <p>Você pediu que nada ficasse de fora. Esta é a verificação — cada seção do documento apontando para a fase que a resolve. A cor da borda marca a prioridade.</p>
+    </div>
+    <div class="matrix">
+      <div class="cell meta"><div class="cell-top"><span class="cell-n">§1</span><span class="cell-f">princípio</span></div><div class="cell-t">Visão do produto</div></div>
+      <div class="cell meta"><div class="cell-top"><span class="cell-n">§2</span><span class="cell-f">lei do plano</span></div><div class="cell-t">Hierarquia de prioridade</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§3</span><span class="cell-f">F0 · F1</span></div><div class="cell-t">Núcleo de dados financeiros</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§4</span><span class="cell-f">F2</span></div><div class="cell-t">Dinheiro presente, comprometido e seguro</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§5</span><span class="cell-f">F3</span></div><div class="cell-t">Cartões e crédito</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§6</span><span class="cell-f">F4</span></div><div class="cell-t">Contas, obrigações e calendário</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§7</span><span class="cell-f">F5</span></div><div class="cell-t">Fluxo de caixa e projeção</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§8</span><span class="cell-f">F7</span></div><div class="cell-t">Diagnóstico financeiro</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§9</span><span class="cell-f">F7</span></div><div class="cell-t">Central de decisões</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§10</span><span class="cell-f">F7</span></div><div class="cell-t">Plano financeiro vivo</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§11</span><span class="cell-f">F6</span></div><div class="cell-t">Dívidas e plano de saída</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§12</span><span class="cell-f">F8</span></div><div class="cell-t">Renda e gap de renda</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§13</span><span class="cell-f">F8</span></div><div class="cell-t">Custos, orçamento e margem</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§14</span><span class="cell-f">F9</span></div><div class="cell-t">Patrimônio e construção de riqueza</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§15</span><span class="cell-f">F9</span></div><div class="cell-t">Reserva e segurança financeira</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§16</span><span class="cell-f">F9</span></div><div class="cell-t">Objetivos financeiros</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§17</span><span class="cell-f">F10</span></div><div class="cell-t">Anomalias e comportamento</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§18</span><span class="cell-f">F11</span></div><div class="cell-t">Importação e reconciliação</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§19</span><span class="cell-f">F12</span></div><div class="cell-t">Open Finance</div></div>
+      <div class="cell p2"><div class="cell-top"><span class="cell-n">§20</span><span class="cell-f">F13</span></div><div class="cell-t">Assistente de IA</div></div>
+      <div class="cell p2"><div class="cell-top"><span class="cell-n">§21</span><span class="cell-f">F14</span></div><div class="cell-t">Fechamento mensal</div></div>
+      <div class="cell p2"><div class="cell-top"><span class="cell-n">§22</span><span class="cell-f">F14</span></div><div class="cell-t">Cenários e simulador</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§23</span><span class="cell-f">F10</span></div><div class="cell-t">Qualidade e confiança dos dados</div></div>
+      <div class="cell p1"><div class="cell-top"><span class="cell-n">§24</span><span class="cell-f">F10</span></div><div class="cell-t">Alertas e acompanhamento</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§25</span><span class="cell-f">F2 · F7</span></div><div class="cell-t">Experiência principal da Home</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§26</span><span class="cell-f">F0</span></div><div class="cell-t">Navegação e módulos</div></div>
+      <div class="cell p2"><div class="cell-top"><span class="cell-n">§27</span><span class="cell-f">F0 · F15</span></div><div class="cell-t">Funções de qualidade de vida</div></div>
+      <div class="cell p3"><div class="cell-top"><span class="cell-n">§28</span><span class="cell-f">fora da V1</span></div><div class="cell-t">O que não deve ser prioridade</div></div>
+      <div class="cell p0"><div class="cell-top"><span class="cell-n">§29</span><span class="cell-f">F7 · F9</span></div><div class="cell-t">Critérios de sucesso</div></div>
+      <div class="cell meta"><div class="cell-top"><span class="cell-n">§30</span><span class="cell-f">é a rota</span></div><div class="cell-t">Ordem de entrega recomendada</div></div>
+      <div class="cell meta"><div class="cell-top"><span class="cell-n">§31</span><span class="cell-f">aceite geral</span></div><div class="cell-t">Definição final do produto</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Decisões técnicas</span>
+      <h2>Sete escolhas que valem para todas as fases</h2>
+      <p>O blueprint diz, na primeira página, que não define tecnologia. Então isto é escolha nossa — registrada com o motivo, para poder ser revista com conhecimento de causa.</p>
+    </div>
+    <div class="decs">
+      <div class="dec"><div class="dec-n">D1</div><h4>O repositório é a fonte; o artefato é o deploy</h4><p>O GEDI cabe em um arquivo de 2.000 linhas. Este produto tem 10x o escopo — em arquivo único vira intratável em semanas. O código passa a viver em módulos versionados, publicados como artefato multi-arquivo. O motor financeiro passa a ser testável fora do navegador.</p></div>
+      <div class="dec"><div class="dec-n">D2</div><h4>Os dados saem do HTML e vão para o banco</h4><p>Hoje cada alteração regenera o documento inteiro. Para uma vida financeira com anos de transações isso não escala. Com o banco do artefato: escrita por registro, sincronização entre celular e computador — e é o que torna a IA da F13 possível sem backend.</p></div>
+      <div class="dec"><div class="dec-n">D3</div><h4>O motor financeiro é puro e portátil</h4><p>Todo cálculo vive isolado da tela: entram dados, sai resultado. É a única parte que não pode ser reescrita numa eventual migração — e a parte que precisa de teste, porque R$ 0,01 de erro em “quanto posso gastar” derruba a confiança no produto inteiro.</p></div>
+      <div class="dec"><div class="dec-n">D4</div><h4>Open Finance entra por um adaptador</h4><p>Manual, planilha, OFX, Google Drive e provedor pago são implementações da mesma interface. Se o preço do provedor não fechar, o produto continua completo — só com mais digitação. É assim que o §19 é atendido sem virar o gargalo da V1.</p></div>
+      <div class="dec"><div class="dec-n">D5</div><h4>Cada recurso do artefato cobre um item do blueprint</h4><p>Banco de dados, IA na página, leitura do Drive, exportação, anexos e identidade das pessoas já existem como recursos do artefato. Consequência verificada: <b>o único item do blueprint fora do alcance é o §19</b>.</p></div>
+      <div class="dec"><div class="dec-n">D6</div><h4>Aplicativo com backend só se um gatilho disparar</h4><p>Contratar Open Finance, volume de dados além do confortável, necessidade de app nativo, ou a privacidade deixar de ser aceitável. Enquanto nenhum disparar, é custo sem retorno — e por causa do D3, se disparar, a migração é de casca, não de produto.</p></div>
+      <div class="dec"><div class="dec-n">D7</div><h4>A regra de escopo do §2 é lei</h4><p>Nenhuma fase P2 começa antes da F9 fechar. Ideia boa de P2 que aparecer no meio do caminho vai para o fim do plano, não para a fase atual. É o erro que o próprio blueprint antecipa.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Riscos</span>
+      <h2>O que pode dar errado, e o que já está previsto</h2>
+    </div>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Risco</th><th>Por que importa</th><th>O que fazer</th></tr></thead>
+        <tbody>
+          <tr><td><b>Dinheiro contado duas vezes</b><br>transferência, fatura de cartão</td><td>Erra todo indicador e mata a confiança no produto</td><td>Teste automatizado no portão das fases F1 e F3, antes de qualquer tela nova</td></tr>
+          <tr><td><b>Open Finance virar o gargalo</b></td><td>Única fase com custo e dependência externa — e é P1</td><td>Adaptador (D4); a F11 já entrega entrada de dados sem ele</td></tr>
+          <tr><td><b>Cadastro inicial grande demais</b></td><td>O produto exige a vida financeira mapeada para funcionar — é onde projetos assim morrem</td><td>Ocultar valores na F0 e medidor de completude na F10: o progresso fica visível</td></tr>
+          <tr><td><b>P2 atrair mais que P0</b><br>a IA é mais divertida que parcelamento</td><td>É exatamente o erro que o §2 antecipa</td><td>Nenhuma fase P2 antes da F9 fechar</td></tr>
+          <tr><td><b>Precisão em ponto flutuante</b></td><td>R$ 0,01 de erro destrói a confiança no número principal</td><td>Centavos em inteiro dentro do motor; formatação só na borda da tela</td></tr>
+          <tr><td><b>Privacidade dos dados</b></td><td>Dados no artefato são legíveis por quem tem acesso a ele — é painel pessoal, não cofre bancário</td><td>Artefato nasce privado; se isso deixar de bastar, o gatilho do D6 dispara</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="callout">
+    <span class="eyebrow">Precisa da sua decisão</span>
+    <h3>Uma coisa só, e ela não bloqueia o começo</h3>
+    <p><b>Open Finance (§19): qual provedor, e a que custo.</b> É o único ponto do blueprint que exige infraestrutura paga e fora do artefato. O blueprint pede “sem custo recorrente de plano comercial caro” e modelo não preso a um fornecedor — por isso ele entra atrás de um adaptador, na Fase 12, e não antes.</p>
+    <p>Até lá, 11 fases de trabalho acontecem sem depender dessa resposta. Se a resposta for “não agora”, o produto ainda fecha a V1 inteira — com entrada de dados por planilha, OFX e Drive em vez de sincronização automática.</p>
+  </div>
+
+  <footer>
+    <span>Plano derivado do <b>Blueprint de Produto V1</b> — 31 seções, todas mapeadas</span>
+    <span class="mono">detalhamento completo no repositório cleisonfrocha-pixel/claude</span>
+  </footer>
+
+</div>

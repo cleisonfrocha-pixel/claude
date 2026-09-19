@@ -13,6 +13,9 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Documentos
 
+Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>
+
+
 | Documento | O que responde |
 |---|---|
 | [`docs/PLANO-DE-IMPLANTACAO.md`](docs/PLANO-DE-IMPLANTACAO.md) | As 16 fases, o que cada uma entrega e o portão de cada uma |
