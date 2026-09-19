@@ -12,7 +12,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 3 | Núcleo de dados financeiros | P0 | F0, F1 | ● |
 | 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ● |
 | 5 | Cartões e crédito | P0 | F3 | ● |
-| 6 | Contas, obrigações e calendário | P0 | F4 | ○ |
+| 6 | Contas, obrigações e calendário | P0 | F4 | ● |
 | 7 | Fluxo de caixa e projeção | P0 | F5 | ○ |
 | 8 | Diagnóstico financeiro | P0 | F7 | ○ |
 | 9 | Central de decisões | P0 | F7 | ○ |
@@ -124,6 +124,19 @@ Contas futuras com valor, vencimento, recorrência e status · parceladas com pr
 total · recorrentes acompanhadas · calendário com impacto no caixa por data ·
 dias de maior pressão · obrigações sem cobertura suficiente · status previsto,
 agendado, pago, atrasado, cancelado.
+
+**Como foi entregue:** `domain/calendario.js` — `compromissosPorDia` agrupa
+despesa e receita diretas por data (despesa em cartão nunca entra sozinha:
+só o vencimento da fatura inteira conta, mesma regra de não duplicar
+dinheiro do §5); `calcularCoberturaDiaria` caminha o saldo dia a dia;
+`diaDeMaiorPressao` e `diasSemCobertura` identificam o aperto e a
+obrigação causadora, sempre apontando os dados de origem (§9/§17). A tela
+Planejamento (§26) traz a grade navegável por mês e um resumo preso a uma
+janela fixa de 90 dias a partir de hoje (D10) — a mesma ideia do painel da
+Home (D9): navegar de mês na grade não muda o que o resumo aponta. Os cinco
+status de transação (`STATUS_TRANSACAO`) já existiam desde a Fase 1 e são
+respeitados aqui: pago/cancelado não entram no calendário, atrasado aparece
+marcado.
 
 ### §7 — Fluxo de caixa e projeção `P0` — **F5**
 

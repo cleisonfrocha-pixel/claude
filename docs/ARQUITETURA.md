@@ -187,3 +187,20 @@ parametrizado (`horizonteDias` em `domain/caixa.js`) para não travar o
 design quando os quatro horizontes chegarem — trocar o painel de "um
 número" para "quatro números lado a lado" é questão de chamar a mesma
 função com parâmetros diferentes, não de reescrevê-la.
+
+## D10 — O resumo do calendário (§6) usa uma janela fixa de 90 dias, a grade não
+
+A tela Planejamento tem duas partes com necessidades diferentes: a **grade**,
+que o usuário navega mês a mês (é uma visão de calendário, não faz sentido
+travada em setembro), e o **resumo** — "dia de maior pressão" e "obrigações
+sem cobertura" — que precisa ser uma verdade estável, não algo que muda
+porque o usuário clicou em "próximo mês" e o app parou de olhar para o dia
+que realmente aperta.
+
+**Decisão:** `dados/calendarioRepo.js` calcula o resumo (`piorDia`,
+`semCobertura`) sempre sobre uma janela fixa de 90 dias a partir de hoje —
+o mesmo horizonte do §7 mais distante que a Fase 4 antecipa — independente
+de qual mês a grade está mostrando. A grade em si (`diasDoMesVisivel`) usa
+o mês navegado. Mesma lógica da D9 (Home) e do mesmo motivo: um painel de
+resumo que muda de resposta conforme a navegação do usuário é um painel que
+mente.

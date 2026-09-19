@@ -158,6 +158,55 @@
 .fatura-linha .rotulo small { display: block; color: var(--text-faint); font-size: 11.5px; margin-top: 1px; }
 .fatura-linha b { font-family: 'IBM Plex Mono', monospace; }
 
+/* ---- calendário financeiro (Planejamento, §6) ---- */
+.alerta-cobertura {
+  background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 14px;
+}
+.alerta-cobertura .titulo { font-weight: 700; font-size: 15px; color: var(--danger); margin-bottom: 4px; }
+.alerta-cobertura .texto { font-size: 13.5px; color: var(--text); }
+.alerta-tudo-coberto {
+  background: var(--good-bg); border: 1px solid var(--good); border-radius: var(--radius);
+  padding: 14px 20px; margin-bottom: 14px; font-size: 13.5px; color: var(--text);
+}
+.pressao-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.pressao-card .rotulo { font-size: 12.5px; color: var(--text-faint); font-weight: 600; text-transform: uppercase; letter-spacing: .02em; }
+.pressao-card .data { font-size: 15px; font-weight: 600; margin-top: 2px; }
+.pressao-card b { font-family: 'IBM Plex Mono', monospace; font-size: 18px; color: var(--danger); }
+
+.calendario-cabecalho, .calendario-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+}
+.calendario-cabecalho { margin-bottom: 6px; }
+.calendario-cabecalho span { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-faint); text-transform: uppercase; }
+.dia-celula {
+  aspect-ratio: 1; border-radius: 9px; border: 1px solid transparent; background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text);
+  padding: 0;
+}
+.dia-celula:hover { border-color: var(--text-faint); }
+.dia-celula.dia-vazio { background: transparent; cursor: default; pointer-events: none; }
+.dia-celula.dia-hoje { border-color: var(--accent); font-weight: 700; }
+.dia-celula.dia-selecionado { background: var(--accent); color: var(--accent-ink); }
+.dia-indicador { width: 6px; height: 6px; border-radius: 50%; background: transparent; }
+.dia-celula.tem-compromisso .dia-indicador { background: var(--text-faint); }
+.dia-celula.dia-pressao .dia-indicador { background: var(--warn); }
+.dia-celula.dia-sem-cobertura .dia-indicador { background: var(--danger); }
+.dia-celula.dia-sem-cobertura { background: var(--danger-bg); }
+.dia-celula.dia-selecionado .dia-indicador { background: var(--accent-ink); }
+
+.legenda-calendario { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0 18px; font-size: 12.5px; color: var(--text-muted); }
+.legenda-calendario span { display: flex; align-items: center; gap: 6px; }
+.legenda-ponto { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.dia-detalhe-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.dia-detalhe-head .data { font-weight: 700; font-size: 16px; }
+.dia-detalhe-head .saldo { font-size: 13px; color: var(--text-muted); }
+
 /* ---- estado vazio ---- */
 .vazio {
   background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);

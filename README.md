@@ -9,10 +9,12 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 3 concluída (19/09/2026).** Cartões agora mostram limite, disponível,
-utilizado (todo compromisso ainda não pago — inclusive parcelas futuras),
-fatura atual, próxima e o compromisso dos meses seguintes, com alerta de
-proximidade do limite. Fase 4 (compromissos e calendário) ainda não começou.
+**Fase 4 concluída (19/09/2026).** Novo módulo Planejamento: calendário
+financeiro navegável por mês, que aponta o dia em que o saldo projetado
+aperta e qual obrigação está sem cobertura suficiente, com um resumo preso
+a uma janela fixa de 90 dias a partir de hoje (não muda com a navegação da
+grade). Fase 5 (fluxo de caixa e projeção com os quatro horizontes) ainda
+não começou.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>
@@ -22,7 +24,7 @@ Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>
 | Documento | O que responde |
 |---|---|
 | [`docs/PLANO-DE-IMPLANTACAO.md`](docs/PLANO-DE-IMPLANTACAO.md) | As 16 fases, o que cada uma entrega e o portão de cada uma |
-| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | As 7 decisões técnicas e o porquê de cada uma |
+| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | As 10 decisões técnicas e o porquê de cada uma |
 | [`docs/RASTREABILIDADE.md`](docs/RASTREABILIDADE.md) | Onde cada uma das 31 seções do blueprint é entregue |
 | [`docs/MODELO-DE-DADOS.md`](docs/MODELO-DE-DADOS.md) | As coleções de dados e o significado de cada campo |
 | [`docs/blueprint-extraido-do-pdf.txt`](docs/blueprint-extraido-do-pdf.txt) | Texto integral do blueprint, para consulta |

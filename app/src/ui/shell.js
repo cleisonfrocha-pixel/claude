@@ -14,6 +14,7 @@ import telaTransacoes from "./telas/transacoes.js";
 import telaPessoas from "./telas/pessoas.js";
 import telaCategorias from "./telas/categorias.js";
 import telaPreferencias from "./telas/preferencias.js";
+import telaPlanejamento from "./telas/planejamento.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
@@ -37,11 +38,7 @@ const telaConfiguracoes = criarTelaComAbas({
 const MODULOS = [
   { id: "inicio", rotulo: "Início", tela: telaInicio },
   { id: "dinheiro", rotulo: "Dinheiro", tela: telaDinheiro },
-  { id: "planejamento", rotulo: "Planejamento", tela: criarTelaPlaceholder({
-      titulo: "Planejamento", descricao: "Contas futuras, calendário, fluxo e orçamento.",
-      itens: "Calendário financeiro, projeção de 7/30/90 dias e 12 meses, e orçamento por categoria.",
-      faseRef: "Fase 4 e Fase 5",
-    }), emBreve: true },
+  { id: "planejamento", rotulo: "Planejamento", tela: telaPlanejamento },
   { id: "dividas", rotulo: "Dívidas", tela: criarTelaPlaceholder({
       titulo: "Dívidas", descricao: "Central de dívidas e plano de saída.",
       itens: "Cadastro de dívidas, parcelas, juros, data estimada de quitação e simulador de aporte extra.",

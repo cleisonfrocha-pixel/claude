@@ -180,7 +180,7 @@ cadastro da Fase 0) ganhou um hook `renderExtra` genérico — item
 expansível com detalhe — em vez de duplicar a lógica de lista só para
 cartões. Fica disponível para Dívidas e Patrimônio mais adiante.
 
-### Fase 4 · Compromissos e calendário · 3 sessões — §6
+### Fase 4 · Compromissos e calendário · 3 sessões — §6 — ✅ concluída (19/09/2026)
 
 Contas futuras com valor, vencimento, recorrência e status; calendário com
 impacto no caixa por data; dias de maior pressão; obrigações sem cobertura;
@@ -188,6 +188,25 @@ os cinco status (previsto, agendado, pago, atrasado, cancelado).
 
 **Portão:** o calendário aponta o dia do mês que aperta, e aponta qual obrigação
 está sem cobertura suficiente.
+
+**Entregue:** `domain/calendario.js` — `compromissosPorDia` agrupa despesas e
+receitas diretas por data (despesa em cartão nunca entra sozinha, só via o
+vencimento da fatura inteira — mesma regra de não duplicar dinheiro das fases
+anteriores), `calcularCoberturaDiaria` caminha o saldo dia a dia a partir do
+saldo atual, `diaDeMaiorPressao` acha a maior saída líquida do período, e
+`diasSemCobertura` filtra os dias em que o saldo caminhado fica negativo. A
+tela Planejamento ganhou grade de calendário navegável por mês, com alerta
+fixo de "obrigações sem cobertura" (aponta data, valor negativo e a
+obrigação causadora) e card de "dia de maior pressão", os dois presos a uma
+janela fixa de 90 dias a partir de hoje — não mudam quando o usuário só
+navega de mês na grade, mesma ideia da Home (D9). Clicar num dia da grade
+abre o detalhe com cada item do dia e o saldo projetado após ele. 12 testes
+de domínio novos (95 no total). Portão verificado de ponta a ponta com
+Playwright: saldo inicial R$ 1.000, aluguel R$ 400 e IPTU R$ 900 previstos
+— o calendário aponta corretamente o dia do IPTU como o de maior pressão
+(-R$ 900) e como o único sem cobertura suficiente (saldo projetado
+-R$ 300), citando "IPTU anual" no alerta e no detalhe do dia; sobrevive a
+fechar e reabrir a página.
 
 ---
 
