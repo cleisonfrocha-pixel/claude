@@ -215,7 +215,7 @@ fechar e reabrir a página.
 Aqui o produto deixa de ser registro e vira centro de comando. É a onda que
 justifica o projeto.
 
-### Fase 5 · Fluxo de caixa e projeção · 4 sessões — §7
+### Fase 5 · Fluxo de caixa e projeção · 4 sessões — §7 — ✅ concluída (19/09/2026)
 
 Horizontes de 7, 30, 90 dias e 12 meses, cada um respondendo a sua pergunta.
 Estados de certeza: confirmado, provável, incerto — e incerto **nunca** é
@@ -224,6 +224,31 @@ tratado como dinheiro garantido.
 **Portão** (o blueprint chama de "saída crítica"): quando o saldo projetado fica
 negativo, o sistema diz **em que data**, **qual evento provoca** e **de quanto é
 o gap**. Os três, não dois.
+
+**Entregue:** `domain/projecao.js` — os quatro horizontes (7/30/90/365
+dias), cada evento do calendário (`domain/calendario.js`, reaproveitado da
+Fase 4) separado em duas trilhas por certeza: "segura" (confirmado +
+provável, a única que caminha o saldo) e "incerto" (só informativo, nunca
+somado — regra não negociável do CLAUDE.md). `saidaCritica` aponta a
+primeira data em que o saldo seguro caminhado fica negativo, o(s)
+evento(s) causador(es) e o gap. Planejamento virou tela com abas —
+Calendário (Fase 4) e a nova Fluxo de caixa: os quatro horizontes lado a
+lado, cada card com um ponto vermelho quando tem saída crítica, e o
+detalhe do horizonte selecionado com o alerta (data + evento + gap) ou a
+confirmação de que está tudo coberto, mais uma nota separada do que o
+saldo seria se o incerto se confirmasse. A Home ganhou o bloco "Fluxo" do
+§25 — o mesmo resumo dos quatro horizontes, mais compacto.
+
+9 testes de domínio novos (104 no total). Portão verificado de ponta a
+ponta com Playwright: saldo inicial R$ 1.000, despesa confirmada de
+R$ 3.500 em D+10 e receita **incerta** de R$ 5.000 na mesma data — a
+receita incerta não evita a saída crítica (confirmando a regra do
+CLAUDE.md); os horizontes de 30/90 dias e 12 meses apontam corretamente
+29/09/2026, "Fatura do cartão" e um gap de R$ 2.500,00, enquanto o
+horizonte de 7 dias (evento fora da janela) fica sem saída crítica; a nota
+de incerto mostra que o saldo seria positivo (R$ 2.500,00) se o bônus se
+confirmasse, sem contar isso no saldo seguro; o mesmo alerta aparece no
+bloco Fluxo da Home; sobrevive a fechar e reabrir a página.
 
 ### Fase 6 · Dívidas e plano de saída · 4 sessões — §11
 

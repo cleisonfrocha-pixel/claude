@@ -9,12 +9,12 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 4 concluída (19/09/2026).** Novo módulo Planejamento: calendário
-financeiro navegável por mês, que aponta o dia em que o saldo projetado
-aperta e qual obrigação está sem cobertura suficiente, com um resumo preso
-a uma janela fixa de 90 dias a partir de hoje (não muda com a navegação da
-grade). Fase 5 (fluxo de caixa e projeção com os quatro horizontes) ainda
-não começou.
+**Fase 5 concluída (19/09/2026).** Planejamento agora tem duas abas:
+Calendário (Fase 4) e a nova Fluxo de caixa — os quatro horizontes do §7
+(7, 30, 90 dias e 12 meses) lado a lado, cada um apontando sua própria
+saída crítica (quando, qual evento e o gap) a partir de uma trilha que
+nunca soma dinheiro incerto no saldo seguro. A Home ganhou o bloco Fluxo
+do §25. Fase 6 (dívidas e plano de saída) ainda não começou.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>

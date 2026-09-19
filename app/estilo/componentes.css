@@ -207,6 +207,26 @@
 .dia-detalhe-head .data { font-weight: 700; font-size: 16px; }
 .dia-detalhe-head .saldo { font-size: 13px; color: var(--text-muted); }
 
+/* ---- fluxo de caixa: horizontes lado a lado (§7) ---- */
+.horizontes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.horizonte-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px 16px; text-align: left; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.horizonte-card:hover { border-color: var(--text-faint); }
+.horizonte-card.ativo { border-color: var(--accent); background: var(--surface-2); }
+.horizonte-card .rotulo { font-weight: 700; font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.horizonte-card .funcao { font-size: 11.5px; color: var(--text-faint); }
+.horizonte-card .net { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; }
+.horizonte-card .ponto-critico { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+.nota-incerto {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 16px; margin: 4px 0 18px; font-size: 13.5px; color: var(--text-muted);
+}
+.nota-incerto b { color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+
 /* ---- estado vazio ---- */
 .vazio {
   background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);

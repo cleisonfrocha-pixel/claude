@@ -13,7 +13,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 4 | Dinheiro: presente, comprometido e seguro | P0 | F2 | ● |
 | 5 | Cartões e crédito | P0 | F3 | ● |
 | 6 | Contas, obrigações e calendário | P0 | F4 | ● |
-| 7 | Fluxo de caixa e projeção | P0 | F5 | ○ |
+| 7 | Fluxo de caixa e projeção | P0 | F5 | ● |
 | 8 | Diagnóstico financeiro | P0 | F7 | ○ |
 | 9 | Central de decisões | P0 | F7 | ○ |
 | 10 | Plano financeiro vivo | P0 | F7 | ○ |
@@ -151,6 +151,21 @@ Estados de certeza: confirmado · provável · **incerto (nunca tratado como
 garantido)**.
 Saída crítica: saldo negativo → **quando**, **qual evento provoca**, **tamanho do gap**.
 
+**Como foi entregue:** `domain/projecao.js` reaproveita `domain/calendario.js`
+(Fase 4) para os eventos por dia, e separa cada um em duas trilhas por
+certeza: "segura" (confirmado + provável — a única que caminha o saldo
+projetado) e "incerto" (informativo, nunca somado — é a aplicação direta
+da regra não negociável do CLAUDE.md). `saidaCritica` é a primeira data em
+que a trilha segura caminhada fica negativa, com o(s) item(ns) causador(es)
+e o gap — os três elementos exigidos pelo blueprint, não dois. A tela
+Planejamento ganhou a aba "Fluxo de caixa": os quatro horizontes lado a
+lado (cartão com ponto vermelho quando há saída crítica), e o detalhe do
+horizonte selecionado com o alerta ou a confirmação de cobertura, mais uma
+nota separada do saldo hipotético se o incerto se confirmasse — nunca
+misturada ao saldo seguro. Verificado com Playwright: uma receita incerta
+de R$ 5.000 no mesmo dia de uma despesa confirmada de R$ 3.500 **não evita**
+a saída crítica sinalizada pelos horizontes de 30/90 dias e 12 meses.
+
 ### §8 — Diagnóstico financeiro `P0` — **F7**
 
 Estado do caixa · pressão de fixas e recorrentes · peso de dívida e parcela ·
@@ -270,14 +285,14 @@ receita esperada não recebida · despesa fora do padrão · nova recorrência �
 aumento de dívida · queda relevante de margem · **evolução positiva** de dívida,
 reserva ou patrimônio.
 
-### §25 — Home `P0` — **F2 parcial, F7 completa**
+### §25 — Home `P0` — **F2, F5 parcial, F7 completa**
 
 | Bloco | Conteúdo | Fase |
 |---|---|---|
 | Dinheiro | Atual, comprometido, livre, seguro | ✅ F2 |
 | Situação | Estado do caixa e principal risco | F7 |
 | Próximas ações | O que merece atenção agora | F7 |
-| Fluxo | Entradas e saídas projetadas | F5 |
+| Fluxo | Entradas e saídas projetadas | ✅ F5 |
 | Dívidas | Saldo, parcelas, pressão sobre a renda | F6 |
 | Patrimônio | Líquido e evolução | F9 |
 

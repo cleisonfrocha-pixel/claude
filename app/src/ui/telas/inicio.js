@@ -9,6 +9,7 @@
 
 import { pessoas, contas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
+import { assinarProjecao } from "../../dados/projecaoRepo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
@@ -16,6 +17,8 @@ import { escapeHtml } from "../utilitarios.js";
 const HORIZONTE_DIAS = 30;
 
 let pararAssinatura = null;
+let pararAssinaturaProjecao = null;
+let estadoProjecao = null;
 let container = null;
 
 function itemContador(rotulo, valor, sub) {
@@ -47,9 +50,15 @@ export default {
 
     if (pararAssinatura) pararAssinatura();
     pararAssinatura = assinarClarezaDeCaixa(renderizarPainel, HORIZONTE_DIAS);
+
+    if (pararAssinaturaProjecao) pararAssinaturaProjecao();
+    estadoProjecao = null;
+    pararAssinaturaProjecao = assinarProjecao((r) => { estadoProjecao = r; renderizarFluxoResumo(); });
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
+    if (pararAssinaturaProjecao) { pararAssinaturaProjecao(); pararAssinaturaProjecao = null; }
+    estadoProjecao = null;
     container = null;
   },
 };
@@ -121,6 +130,10 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Compromissos próximos</h3>
       <p class="tela-sub">O que está pressionando o caixa nos próximos ${HORIZONTE_DIAS} dias</p></div></div>
     <div id="compromissos-detalhe"></div>
+
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Fluxo de caixa</h3>
+      <p class="tela-sub">Entradas e saídas projetadas — os quatro horizontes do §7</p></div></div>
+    <div id="fluxo-caixa-home"></div>
   `;
 
   const contasAlvo = container.querySelector("#contas-detalhe");
@@ -149,4 +162,35 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
         </div>`).join("") +
       `</div>`;
   }
+
+  renderizarFluxoResumo();
+}
+
+function renderizarFluxoResumo() {
+  if (!container) return;
+  const alvo = container.querySelector("#fluxo-caixa-home");
+  if (!alvo) return;
+
+  if (!estadoProjecao) {
+    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
+    return;
+  }
+
+  alvo.innerHTML = `<div class="horizontes-grid">` +
+    estadoProjecao.horizontes.map((h) => {
+      const net = h.entradasSeguroCentavos - h.saidasSeguroCentavos;
+      return `
+        <button class="horizonte-card" data-ir-planejamento>
+          <div class="rotulo">${h.saidaCritica ? '<span class="ponto-critico"></span>' : ""}${escapeHtml(h.rotulo)}</div>
+          <div class="funcao">${escapeHtml(h.funcao)}</div>
+          <div class="net ${net < 0 ? "valor-neg" : "valor-pos"}" data-valor>${net >= 0 ? "+" : ""}${formatarBRL(net)}</div>
+        </button>`;
+    }).join("") +
+    `</div>`;
+
+  alvo.querySelectorAll("[data-ir-planejamento]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelector('[data-modulo="planejamento"]')?.click();
+    });
+  });
 }
