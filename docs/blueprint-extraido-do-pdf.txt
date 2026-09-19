@@ -1,0 +1,471 @@
+===== PAGE 1 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 1
+SISTEMA DE GESTÃO 
+FINANCEIRA
+Blueprint de Produto - V1
+Documento de referência para construção da plataforma. Este material descreve apenas o que o 
+produto deve ter pronto e o comportamento esperado em nível de produto. Não define tecnologia, 
+arquitetura ou método de implementação.
+OBJETIVO CENTRAL
+Transformar uma vida financeira desorganizada em uma visão única, confiável e acionável: o sistema 
+precisa mostrar a realidade, revelar os problemas, projetar o futuro e deixar claro o que precisa 
+acontecer agora para recuperar caixa, eliminar dívidas e construir patrimônio.
+Princípio: dados primeiro, decisões depois.
+1. Visão do produto  [P0]
+O produto deve funcionar como um centro de comando financeiro pessoal e familiar, e não como 
+uma simples ferramenta de registro de gastos. Ele precisa consolidar dinheiro, compromissos, 
+dívidas, renda e patrimônio em uma única visão e transformar esses dados em decisões concretas.
+Resultado que precisa existir para o usuário
+ Saber exatamente quanto dinheiro existe hoje.
+ Saber quanto desse dinheiro já está comprometido.
+ Saber quanto é realmente seguro gastar.
+ Saber quais contas e dívidas pressionam o caixa.
+ Saber o que vai acontecer nos próximos dias, semanas e meses.
+ Entender o que está causando a deterioração ou melhora financeira.
+ Saber quanto de renda precisa ser gerado para fechar um eventual gap.
+ Ter um plano de ação vivo, atualizado pela realidade financeira.
+ Acompanhar a saída das dívidas e a construção de patrimônio ao longo do tempo.
+
+===== PAGE 2 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 2
+2. Hierarquia de prioridade
+Prioridade Significado Regra
+P0 Essencial Sem isso o produto não resolve o 
+problema central.
+P1 Muito alta Entrega o diferencial do sistema e 
+deve entrar logo após o núcleo.
+P2 Alta / expansão Aumenta profundidade e utilidade 
+depois do núcleo estar confiável.
+P3 Depois Importante no futuro, mas não deve 
+atrasar a transformação financeira.
+REGRA DE ESCOPO
+Uma funcionalidade de P2 ou P3 não deve atrasar a entrega de nenhuma capacidade P0 ou P1 que 
+impacte diretamente clareza, caixa, dívida, projeção ou decisão.
+3. Núcleo de dados financeiros visível ao usuário  [P0]
+A plataforma precisa representar toda a vida financeira sem forçar o usuário a pensar em linguagem 
+contábil. Para o usuário, tudo deve parecer simples; por baixo, a realidade precisa continuar 
+matematicamente consistente.
+Prioridade Módulo O que deve estar pronto
+P0 Núcleo financeiro
+O usuário deve conseguir organizar 
+uma vida financeira individual ou 
+familiar em um único espaço.
+P0 Pessoas
+Deve ser possível distinguir quem é 
+responsável por receitas, contas, 
+cartões, despesas, dívidas e ativos.
+P0 Contas
+Deve ser possível visualizar dinheiro 
+por instituição e por conta, com 
+saldo e status atuais.
+P0 Cartões
+Deve ser possível acompanhar 
+limite, utilização, fatura, vencimento 
+e compromissos futuros.
+P0 Transações
+Toda movimentação deve estar 
+registrada, identificada e classificada 
+sem duplicar dinheiro.
+P0 Transferências
+Transferências entre contas próprias 
+devem ser reconhecidas como 
+movimentação interna, não como 
+receita ou despesa.
+P0 Receitas Receitas devem ser separadas por 
+fonte, previsibilidade e status.
+P0 Despesas Despesas devem possuir categoria, 
+natureza e situação de pagamento.
+
+===== PAGE 3 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 3
+P0 Recorrências
+O sistema deve reconhecer e 
+acompanhar compromissos 
+recorrentes.
+P0 Parcelamentos
+Compras parceladas devem mostrar 
+tanto a parcela atual quanto o 
+compromisso futuro.
+4. Visão de dinheiro: presente, comprometido e seguro  
+[P0]
+Este é um dos pilares do produto. Saldo bancário não pode ser tratado como dinheiro disponível para 
+gastar.
+Indicadores obrigatórios
+ Saldo atual: quanto existe efetivamente nas contas e recursos líquidos registrados.
+ Saldo comprometido: quanto do dinheiro atual já possui destino conhecido.
+ Saldo livre: quanto sobra depois dos compromissos considerados.
+ Dinheiro seguro para gastar: quanto pode ser utilizado sem comprometer obrigações futuras e a 
+margem de segurança definida pelo sistema.
+ Compromissos próximos: valor total das obrigações que pressionarão o caixa no horizonte escolhido.
+PERGUNTA CENTRAL
+A plataforma precisa conseguir responder com clareza: "Quanto eu posso gastar sem criar um problema 
+mais adiante?"
+5. Cartões e crédito  [P0]
+Cartões precisam ser tratados como uma fonte de obrigações futuras, não apenas como uma fatura 
+mensal.
+ Visualizar limite total, limite disponível e limite utilizado.
+ Visualizar fatura atual, próxima fatura e vencimento.
+ Visualizar compras parceladas e saldo comprometido em meses futuros.
+ Diferenciar compra realizada no cartão de pagamento da fatura.
+ Evitar que uma mesma despesa seja contabilizada duas vezes.
+ Mostrar claramente o comprometimento futuro do cartão.
+ Destacar aproximação de limite ou aumento anormal de utilização.
+ Permitir acompanhar cartões de mais de uma pessoa dentro do mesmo núcleo financeiro.
+6. Contas, obrigações e calendário financeiro  [P0]
+O sistema precisa enxergar o que ainda não aconteceu, porque grande parte da ansiedade financeira 
+vem de compromissos futuros que já estão contratados.
+
+===== PAGE 4 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 4
+ Contas futuras com valor, vencimento, recorrência e status.
+ Compromissos parcelados com visão de prazo total.
+ Obrigações recorrentes identificadas e acompanhadas.
+ Calendário financeiro com impacto no caixa por data.
+ Indicação de dias de maior pressão financeira.
+ Identificação de obrigações sem cobertura suficiente.
+ Status claros: previsto, agendado, pago, atrasado, cancelado.
+7. Fluxo de caixa e projeção  [P0]
+O usuário deve conseguir olhar para frente. A plataforma precisa mostrar não apenas o passado, mas 
+a trajetória provável do caixa.
+Horizonte Função O que precisa responder
+7 dias Operação imediata Vencimentos, entradas próximas e 
+risco de falta de caixa.
+30 dias Sobrevivência mensal Capacidade de fechar o mês e cobrir 
+compromissos.
+90 dias Estabilidade Comportamento das obrigações, 
+renda e dívida no curto prazo.
+12 meses Estratégia Trajetória financeira e possibilidade 
+de recuperação/acumulação.
+Estados de certeza
+ Confirmado: receita ou compromisso com alta previsibilidade.
+ Provável: evento esperado com base em recorrência ou informação disponível.
+ Incerto: evento possível, mas que não deve ser tratado como dinheiro garantido.
+SAÍDA CRÍTICA
+Quando o saldo projetado ficar negativo, o sistema precisa indicar quando isso acontece, qual evento 
+provoca o problema e qual é o tamanho do gap.
+8. Diagnóstico financeiro  [P0]
+O diagnóstico deve explicar a situação sem moralizar. O sistema deve apresentar fatos, relações e 
+causas observáveis.
+ Estado do caixa.
+ Pressão das despesas fixas e recorrentes.
+ Peso das dívidas e parcelas.
+ Previsibilidade e concentração das receitas.
+ Evolução do custo de vida.
+ Despesas fora do padrão.
+ Alterações relevantes em relação ao mês anterior.
+ Condição da reserva financeira.
+
+===== PAGE 5 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 5
+ Evolução do patrimônio líquido.
+ Completude e confiabilidade dos dados usados no diagnóstico.
+9. Central de decisões  [P0]
+A plataforma precisa sair do modelo "aqui estão seus dados" e entrar no modelo "aqui está o que 
+merece sua atenção".
+ Lista de problemas atuais.
+ Lista de riscos futuros.
+ Lista de oportunidades de melhoria.
+ Lista de ações pendentes.
+ Priorização por urgência, impacto financeiro e prazo.
+ Cada ação vinculada ao problema que a originou.
+ Indicação do impacto esperado de uma ação quando este puder ser estimado.
+ Histórico do que foi resolvido, ignorado, adiado ou cancelado.
+10. Plano financeiro vivo  [P0]
+O plano não deve ser um documento estático. Ele precisa acompanhar a evolução da realidade 
+financeira.
+Horizonte O que o plano deve representar
+Agora Resolver o que ameaça o caixa ou gera impacto 
+imediato.
+Esta semana Atacar os principais gargalos e pendências.
+Este mês Fechar o ciclo mensal com mais margem e 
+previsibilidade.
+90 dias Reduzir pressão financeira e melhorar estabilidade.
+12 meses Construir reserva, reduzir passivos e iniciar/acelerar 
+patrimônio.
+11. Dívidas e plano de saída  [P0]
+Dívidas precisam ter uma central própria e mostrar não apenas o saldo devido, mas a pressão que 
+elas exercem sobre o fluxo mensal.
+ Cadastro completo de cada dívida.
+ Saldo original e saldo atual.
+ Valor de parcela e quantidade de parcelas.
+ Parcelas pagas e restantes.
+ Vencimentos.
+ Taxas, juros e encargos quando conhecidos.
+ Dívidas atrasadas ou em risco.
+ Comprometimento mensal da renda.
+ Data estimada de quitação.
+
+===== PAGE 6 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 6
+ Visão consolidada da dívida total.
+Simulação
+ Simular aportes adicionais.
+ Simular quitação antecipada.
+ Comparar impacto de diferentes ritmos de pagamento.
+ Mostrar prazo, juros e impacto mensal em cada cenário.
+ Manter o cenário simulado separado da situação real.
+12. Renda e gap de renda  [P1]
+O sistema não deve olhar apenas para redução de despesas. Precisa mostrar a capacidade de geração 
+de renda e o valor que falta para sustentar o plano financeiro.
+ Fontes de renda com valor e periodicidade.
+ Separação entre renda fixa, recorrente, variável e eventual.
+ Nível de previsibilidade de cada fonte.
+ Histórico de entradas por fonte.
+ Gap entre renda atual e custo essencial.
+ Gap entre renda atual e custo de vida desejado.
+ Gap entre renda atual e meta de recuperação financeira.
+ Visão da concentração da renda em poucas fontes.
+PERGUNTA CENTRAL
+Quando existir um déficit, o sistema precisa deixar claro se o problema é de gasto, de timing de caixa, de 
+dívida, de renda ou de uma combinação desses fatores.
+13. Custos essenciais, orçamento e margem  [P1]
+Orçamento deve ser usado como instrumento de clareza, não como uma prisão. O sistema precisa 
+mostrar o custo mínimo da vida, o custo atual e a margem disponível.
+ Custo essencial mensal.
+ Custo atual mensal.
+ Custo ideal ou planejado.
+ Margem financeira após compromissos.
+ Despesas essenciais versus discricionárias.
+ Despesas recorrentes versus extraordinárias.
+ Evolução das principais categorias.
+ Identificação de categorias que consomem margem de forma crescente.
+
+===== PAGE 7 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 7
+14. Patrimônio e construção de riqueza  [P1]
+O objetivo final não é apenas sair das dívidas. O sistema precisa acompanhar a transformação do 
+fluxo de caixa em patrimônio.
+ Ativos líquidos.
+ Investimentos.
+ Veículos.
+ Imóveis.
+ Participações e negócios.
+ Outros ativos relevantes.
+ Passivos.
+ Patrimônio líquido consolidado.
+ Evolução do patrimônio ao longo do tempo.
+ Variação mensal e acumulada.
+ Composição do patrimônio.
+ Relação entre redução de dívida, aumento de ativos e crescimento patrimonial.
+15. Reserva e segurança financeira  [P1]
+ Valor atual da reserva.
+ Meta de reserva em diferentes horizontes.
+ Cobertura da reserva em dias e meses de custo essencial.
+ Progresso até a meta.
+ Separação entre dinheiro de operação e dinheiro de segurança.
+16. Objetivos financeiros  [P1]
+Objetivos precisam estar conectados ao fluxo de caixa e ao patrimônio. Uma meta isolada não basta.
+ Nome, valor-alvo, valor atual e prazo.
+ Progresso percentual e financeiro.
+ Valor necessário por período para atingir o objetivo.
+ Verificação de compatibilidade da meta com a margem atual.
+ Impacto de mudanças de renda ou despesas no prazo da meta.
+ Objetivos de curto, médio e longo prazo.
+17. Anomalias e inteligência de comportamento  [P1]
+ Detectar gastos fora do padrão histórico.
+ Detectar aumento persistente de uma categoria.
+ Detectar novos compromissos recorrentes.
+ Detectar mudanças relevantes em receitas.
+ Detectar aumentos atípicos de cartão.
+
+===== PAGE 8 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 8
+ Detectar diferenças entre o padrão esperado e o realizado.
+ Explicar de onde veio um alerta e quais dados o suportam.
+18. Importação e reconciliação de dados  [P1]
+O produto precisa permitir que a realidade financeira entre de diferentes fontes sem gerar 
+duplicidade ou perder histórico.
+ Importação manual.
+ Importação de planilhas e históricos existentes.
+ Importação de formatos financeiros quando disponíveis.
+ Open Finance.
+ Identificação de possíveis duplicatas.
+ Reconhecimento de transferências internas.
+ Revisão de lançamentos ambíguos.
+ Visualização do que foi importado automaticamente e do que foi revisado pelo usuário.
+ Manutenção do histórico original dos lançamentos.
+19. Open Finance  [P1]
+Open Finance é desejado desde a V1 do produto, mas deve funcionar como uma fonte de dados, não 
+como a própria inteligência financeira.
+ Conexão de instituições financeiras compatíveis.
+ Atualização das contas conectadas.
+ Importação de movimentações.
+ Atualização de saldos.
+ Importação de dados de cartões quando disponíveis.
+ Possibilidade de acompanhar o status e a atualidade de cada conexão.
+ Tratamento de indisponibilidade ou atraso de sincronização.
+ Histórico das sincronizações.
+ Reconciliação com dados que já existam no sistema.
+ Modelo preparado para que o projeto pessoal não fique preso a um único fornecedor.
+ Objetivo da V1: viabilizar o uso pessoal sem custo recorrente de um plano comercial caro, desde que o 
+caminho escolhido permaneça compatível com esse uso.
+PRINCÍPIO
+Open Finance deve reduzir trabalho manual. Ele não pode reduzir a confiabilidade do sistema.
+20. Assistente de IA  [P2]
+A IA deve ser uma camada de interpretação sobre dados confiáveis. Seu papel é explicar, comparar, 
+simular e ajudar a agir.
+
+===== PAGE 9 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 9
+ Responder perguntas sobre a própria vida financeira do usuário.
+ Explicar variações e mudanças.
+ Explicar por que determinado alerta apareceu.
+ Simular cenários financeiros.
+ Resumir o mês.
+ Sugerir perguntas ou pontos que merecem revisão.
+ Ajudar a interpretar o plano financeiro.
+ Mostrar os dados de origem da análise sempre que possível.
+ Não alterar dados financeiros críticos sem confirmação.
+21. Fechamento mensal e evolução  [P2]
+ Resumo do mês.
+ Receitas realizadas.
+ Despesas realizadas.
+ Resultado do mês.
+ Variação das dívidas.
+ Variação da reserva.
+ Variação do patrimônio.
+ Maiores mudanças de comportamento.
+ Principais alertas e decisões do período.
+ Histórico mensal comparável.
+22. Cenários e simulador de realidade  [P2]
+ Cenário atual.
+ Cenário de recuperação.
+ Cenário de aumento de renda.
+ Cenário de redução de despesas.
+ Cenário de quitação de dívidas.
+ Cenário conservador.
+ Comparação entre cenários sem alterar os dados reais.
+ Mostrar impacto em caixa, dívida, reserva e patrimônio.
+23. Qualidade, completude e confiança dos dados  [P1]
+ Indicador de completude da vida financeira mapeada.
+ Indicador de confiabilidade da visão atual.
+ Identificação de itens que ainda precisam de confirmação.
+ Identificação de saldos ou registros que não foram conciliados.
+ Aviso quando uma conclusão estiver baseada em dados incompletos.
+ Clareza sobre a data da última atualização dos dados.
+
+===== PAGE 10 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 10
+24. Alertas e acompanhamento  [P1]
+ Risco de caixa.
+ Vencimento próximo sem cobertura suficiente.
+ Cartão próximo do limite.
+ Receita esperada ainda não recebida.
+ Despesa fora do padrão.
+ Nova recorrência identificada.
+ Aumento de dívida.
+ Diminuição relevante de margem.
+ Evolução positiva da dívida, reserva ou patrimônio.
+25. Experiência principal da Home  [P0]
+A Home precisa responder à pergunta "como está minha vida financeira agora?" em poucos 
+segundos.
+Bloco Conteúdo obrigatório
+Dinheiro Saldo atual, comprometido, livre e seguro para gastar.
+Situação Estado atual do caixa e principal risco ou pressão.
+Próximas ações O que merece atenção agora.
+Fluxo Entradas e saídas projetadas no horizonte escolhido.
+Dívidas Saldo, parcelas e pressão sobre a renda.
+Patrimônio Patrimônio líquido e evolução.
+26. Navegação e módulos  [P0]
+A experiência deve ser organizada em áreas claras, sem transformar a plataforma em uma planilha 
+gigante.
+ Início
+ Dinheiro: contas, cartões, transações e revisão.
+ Planejamento: contas futuras, calendário, fluxo, orçamento e cenários.
+ Dívidas: visão geral, dívidas, parcelas e simulação.
+ Renda: fontes de renda, receitas e gap de renda.
+ Patrimônio: ativos, passivos, investimentos e evolução.
+ Objetivos: metas e progresso.
+ Plano: diagnóstico, decisões e ações.
+ Open Finance: conexões, sincronizações e problemas.
+ IA: assistente financeiro.
+ Configurações.
+27. Funções de qualidade de vida  [P2]
+ Modo de ocultar valores para privacidade visual.
+
+===== PAGE 11 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 11
+ Busca global por transações, contas, dívidas e categorias.
+ Filtros por período, pessoa, conta, cartão e categoria.
+ Exportação completa dos próprios dados.
+ Histórico de alterações relevantes.
+ Documentos e comprovantes associados a registros importantes.
+28. O que NÃO deve ser prioridade agora  [P3]
+Estas capacidades podem existir futuramente, mas não devem competir com a missão central da V1.
+ Marketplace financeiro.
+ Compra e venda de investimentos dentro da plataforma.
+ Crédito ou empréstimos.
+ Pagamentos e movimentações bancárias pelo próprio produto.
+ Gamificação complexa.
+ Rede social financeira.
+ Comparadores sofisticados de produtos financeiros.
+ Dezenas de integrações não essenciais.
+ Aplicativo nativo antes de validar a experiência central.
+29. Critérios de sucesso do produto  [P0]
+Independentemente da tecnologia, a V1 só deve ser considerada pronta quando estas perguntas 
+puderem ser respondidas de maneira clara e confiável.
+ Quanto dinheiro eu tenho hoje?
+ Quanto desse dinheiro já está comprometido?
+ Quanto eu posso gastar com segurança?
+ Quais são minhas próximas obrigações?
+ Em que data meu caixa aperta?
+ Quanto eu devo no total?
+ Quanto minhas dívidas consomem por mês?
+ Quanto entra e quanto sai por mês?
+ Existe um gap de renda? Qual?
+ O que está provocando a pressão financeira?
+ O que precisa da minha atenção agora?
+ Qual é meu patrimônio líquido?
+ Estou melhorando ou piorando ao longo do tempo?
+ Quais metas são compatíveis com minha realidade atual?
+30. Ordem de entrega recomendada
+A prioridade abaixo representa a sequência de valor do produto. Não é uma especificação técnica de 
+implementação; é a ordem em que o resultado funcional deve ficar completo.
+
+===== PAGE 12 =====
+BLUEPRINT DE PRODUTO  |  SISTEMA FINANCEIRO PESSOAL/FAMILIAR
+Blueprint de produto  •  Página 12
+Prioridade Módulo O que deve estar pronto
+P0 Núcleo financeiro Contas, cartões, transações, 
+categorias, pessoas, transferências.
+P0 Clareza de caixa Saldo atual, comprometido, livre e 
+seguro.
+P0 Compromissos Contas futuras, recorrências, 
+parcelas e calendário.
+P0 Fluxo futuro Projeção de 7, 30, 90 dias e 12 meses.
+P0 Dívidas Central de dívidas, parcelas e 
+pressão mensal.
+P0 Diagnóstico Estado financeiro, riscos, anomalias 
+e completude.
+P0 Plano Central de decisões, ações e 
+acompanhamento.
+P1 Renda e margem Gap de renda, custo essencial e 
+margem.
+P1 Patrimônio Ativos, passivos, reserva e evolução.
+P1 Importação e Open Finance Automatização da entrada de dados 
+e reconciliação.
+P2 IA Assistente, explicações e simulações 
+conversacionais.
+P2 Cenários e fechamento Simulador e fechamento mensal 
+avançado.
+P3 Expansões Funcionalidades secundárias e 
+ecossistema.
+31. Definição final do produto
+O PRODUTO DEVE ENTREGAR
+Uma visão financeira única e confiável, capaz de conectar presente e futuro, mostrar caixa e dívida com 
+clareza, revelar os principais gargalos, quantificar gaps, acompanhar patrimônio e transformar tudo 
+isso em um plano de ação que se atualiza com a realidade.
+O valor do sistema não está na quantidade de gráficos ou integrações. Está na capacidade de reduzir 
+incerteza e transformar uma situação financeira confusa em uma sequência objetiva de decisões.
+Documento preparado como briefing de produto para execução por agente de desenvolvimento.
