@@ -227,6 +227,19 @@
 }
 .nota-incerto b { color: var(--text); font-family: 'IBM Plex Mono', monospace; }
 
+/* ---- dívidas e plano de saída (§11) ---- */
+.divida-resumo {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.divida-resumo .titulo { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+.simulador-bloco { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.simulador-titulo { font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 8px; }
+.simulador-linha { display: flex; gap: 8px; align-items: flex-end; }
+.simulador-linha .field { flex: 1; margin-bottom: 0; }
+.simulador-resultado { margin-top: 10px; }
+.simulador-aviso { font-size: 12px; color: var(--text-faint); margin-top: 6px; }
+
 /* ---- estado vazio ---- */
 .vazio {
   background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius);

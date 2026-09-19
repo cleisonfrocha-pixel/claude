@@ -17,7 +17,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 8 | Diagnóstico financeiro | P0 | F7 | ○ |
 | 9 | Central de decisões | P0 | F7 | ○ |
 | 10 | Plano financeiro vivo | P0 | F7 | ○ |
-| 11 | Dívidas e plano de saída | P0 | F6 | ○ |
+| 11 | Dívidas e plano de saída | P0 | F6 | ● |
 | 12 | Renda e gap de renda | P1 | F8 | ○ |
 | 13 | Custos essenciais, orçamento e margem | P1 | F8 | ○ |
 | 14 | Patrimônio e construção de riqueza | P1 | F9 | ○ |
@@ -195,6 +195,27 @@ quitação · visão consolidada.
 Simulação: aporte adicional · quitação antecipada · comparação de ritmos · prazo,
 juros e impacto mensal por cenário · **cenário simulado separado do real**.
 
+**Como foi entregue:** `domain/dividas.js` — saldo atual e status
+(ativa/atrasada/quitada) nunca são gravados, sempre calculados a partir do
+saldo original e das parcelas pagas ("nada de total gravado"); próximo
+vencimento e data de quitação rolam o mês mantendo o dia, mesmo padrão de
+`dataVencimentoFatura` (§5). "Em risco" é uma marcação manual (é
+julgamento, não é algo que dá pra derivar dos números). `domain/simuladorDividas.js`
+— aporte extra, quitação antecipada e comparação de ritmos, cada um
+caminhando a quitação mês a mês com juros compostos quando há taxa
+conhecida; são funções puras sem acesso a repositório nenhum, então o
+cenário simulado não tem COMO vazar para o dado real — é a mesma garantia
+estrutural que a pureza do domínio (D3) já dava para todo o resto.
+
+A tela reaproveita a fábrica de cadastro (Fase 0) com dois hooks novos: o
+simulador interativo dentro do painel expandido (`aoRenderizarExtra`, que
+liga eventos ao HTML de `renderExtra` sem duplicar a lógica de lista) e a
+visão consolidada acima da lista (`resumo`). "Comprometimento mensal da
+renda" mostra o valor em centavos até a Fase 8 trazer a renda cadastrada
+(§12) para dividir de verdade — decisão de escopo registrada, mesmo
+padrão da Fase 3 adiando "utilização anormal" para a Fase 10. Bloco
+"Dívidas" do §25 entrou na Home.
+
 ### §12 — Renda e gap de renda `P1` — **F8**
 
 Fontes com valor e periodicidade · fixa, recorrente, variável, eventual ·
@@ -285,7 +306,7 @@ receita esperada não recebida · despesa fora do padrão · nova recorrência �
 aumento de dívida · queda relevante de margem · **evolução positiva** de dívida,
 reserva ou patrimônio.
 
-### §25 — Home `P0` — **F2, F5 parcial, F7 completa**
+### §25 — Home `P0` — **F2, F5, F6 parcial, F7 completa**
 
 | Bloco | Conteúdo | Fase |
 |---|---|---|
@@ -293,7 +314,7 @@ reserva ou patrimônio.
 | Situação | Estado do caixa e principal risco | F7 |
 | Próximas ações | O que merece atenção agora | F7 |
 | Fluxo | Entradas e saídas projetadas | ✅ F5 |
-| Dívidas | Saldo, parcelas, pressão sobre a renda | F6 |
+| Dívidas | Saldo, parcelas, pressão sobre a renda | ✅ F6 |
 | Patrimônio | Líquido e evolução | F9 |
 
 ### §26 — Navegação e módulos `P0` — **F0**

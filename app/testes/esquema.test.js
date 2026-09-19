@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   padraoPessoa, padraoConta, padraoCartao, padraoCategoria,
-  padraoTransacao, padraoRecorrencia,
+  padraoTransacao, padraoRecorrencia, padraoDivida,
   validarPessoa, validarConta, validarCartao, validarCategoria,
-  validarTransacao, validarRecorrencia,
+  validarTransacao, validarRecorrencia, validarDivida,
 } from "../src/domain/esquema.js";
 
 test("padraoPessoa preenche papel e ativo, mas não inventa nome", () => {
@@ -80,4 +80,20 @@ test("validarRecorrencia exige descrição, valor, destino, categoria e periodic
 test("validarRecorrencia passa com dados completos", () => {
   const r = padraoRecorrencia({ descricao: "Aluguel", valorEstimadoCentavos: 150000, contaId: "c1", categoriaId: "cat1" });
   assert.deepEqual(validarRecorrencia(r), []);
+});
+
+test("validarDivida exige nome, responsável, saldo e parcela positivos", () => {
+  const d = padraoDivida({ nome: "", pessoaId: "", saldoOriginalCentavos: 0, valorParcelaCentavos: 0 });
+  const erros = validarDivida(d);
+  assert.ok(erros.length >= 4);
+});
+
+test("validarDivida rejeita parcelas pagas maior que o total — regressão de digitação", () => {
+  const d = padraoDivida({ nome: "Carro", pessoaId: "p1", saldoOriginalCentavos: 100000, valorParcelaCentavos: 10000, quantidadeParcelas: 5, parcelasPagas: 8 });
+  assert.ok(validarDivida(d).some((e) => e.includes("Parcelas pagas")));
+});
+
+test("validarDivida passa com dados completos e taxa de juros nula", () => {
+  const d = padraoDivida({ nome: "Financiamento", pessoaId: "p1", saldoOriginalCentavos: 1200000, valorParcelaCentavos: 100000, quantidadeParcelas: 12, parcelasPagas: 2 });
+  assert.deepEqual(validarDivida(d), []);
 });

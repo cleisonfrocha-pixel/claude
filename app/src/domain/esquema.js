@@ -25,6 +25,10 @@ export const CERTEZAS_TRANSACAO = ["confirmado", "provavel", "incerto"];
 export const PERIODICIDADES_RECORRENCIA = ["mensal"];
 export const STATUS_FATURA = ["aberta", "fechada", "paga"];
 
+// Dívidas — ver docs/MODELO-DE-DADOS.md, "Dívidas — Fase 6". Status
+// (ativa/atrasada/quitada) nunca é gravado — é sempre derivado na leitura
+// em domain/dividas.js (mesma regra "nada de total gravado" do CLAUDE.md).
+
 /** Preenche os campos que faltam de uma pessoa com valores padrão seguros. */
 export function padraoPessoa(dados = {}) {
   return {
@@ -128,6 +132,22 @@ export function padraoFatura(dados = {}) {
   };
 }
 
+export function padraoDivida(dados = {}) {
+  return {
+    pessoaId: "",
+    nome: "",
+    credor: "",
+    saldoOriginalCentavos: 0,
+    valorParcelaCentavos: 0,
+    quantidadeParcelas: 1,
+    parcelasPagas: 0,
+    dataInicio: new Date().toISOString().slice(0, 10),
+    taxaJurosMensalPct: null,
+    emRisco: false,
+    ...dados,
+  };
+}
+
 /** Valida uma pessoa; retorna lista de erros (vazia = válido). */
 export function validarPessoa(p) {
   const erros = [];
@@ -185,6 +205,20 @@ export function validarRecorrencia(r) {
   if (!r.categoriaId) erros.push("Escolha uma categoria.");
   if (!PERIODICIDADES_RECORRENCIA.includes(r.periodicidade)) erros.push("Periodicidade inválida.");
   if (r.diaBase < 1 || r.diaBase > 31) erros.push("Dia do mês inválido.");
+  return erros;
+}
+
+export function validarDivida(d) {
+  const erros = [];
+  if (!d.nome || !d.nome.trim()) erros.push("Nome da dívida é obrigatório.");
+  if (!d.pessoaId) erros.push("A dívida precisa de um responsável.");
+  if (!Number.isFinite(d.saldoOriginalCentavos) || d.saldoOriginalCentavos <= 0) erros.push("Saldo original precisa ser maior que zero.");
+  if (!Number.isFinite(d.valorParcelaCentavos) || d.valorParcelaCentavos <= 0) erros.push("Valor da parcela precisa ser maior que zero.");
+  if (!Number.isInteger(d.quantidadeParcelas) || d.quantidadeParcelas < 1) erros.push("Quantidade de parcelas inválida.");
+  if (!Number.isInteger(d.parcelasPagas) || d.parcelasPagas < 0) erros.push("Parcelas pagas inválido.");
+  if (d.parcelasPagas > d.quantidadeParcelas) erros.push("Parcelas pagas não pode ser maior que o total de parcelas.");
+  if (!d.dataInicio) erros.push("Data da primeira parcela é obrigatória.");
+  if (d.taxaJurosMensalPct != null && (!Number.isFinite(d.taxaJurosMensalPct) || d.taxaJurosMensalPct < 0)) erros.push("Taxa de juros inválida.");
   return erros;
 }
 

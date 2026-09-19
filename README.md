@@ -9,12 +9,13 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 5 concluída (19/09/2026).** Planejamento agora tem duas abas:
-Calendário (Fase 4) e a nova Fluxo de caixa — os quatro horizontes do §7
-(7, 30, 90 dias e 12 meses) lado a lado, cada um apontando sua própria
-saída crítica (quando, qual evento e o gap) a partir de uma trilha que
-nunca soma dinheiro incerto no saldo seguro. A Home ganhou o bloco Fluxo
-do §25. Fase 6 (dívidas e plano de saída) ainda não começou.
+**Fase 6 concluída (19/09/2026).** Novo módulo Dívidas: cadastro completo
+com saldo original/atual, parcelas pagas/restantes, vencimentos e juros
+quando conhecidos — nada disso gravado além dos fatos brutos, tudo
+calculado na leitura — mais o simulador (aporte extra, quitação
+antecipada), que nunca escreve na dívida real porque é feito de funções
+puras sem acesso a nenhum repositório. A Home ganhou o bloco Dívidas do
+§25. Fase 7 (diagnóstico, decisões e plano vivo) ainda não começou.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>

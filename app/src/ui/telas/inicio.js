@@ -7,18 +7,21 @@
 // chegam nas Fases 6, 7 e 9 — por enquanto o Início é só o painel de
 // dinheiro mais um lembrete de quem ainda falta cadastrar.
 
-import { pessoas, contas } from "../../dados/repositorios.js";
+import { pessoas, contas, dividas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
 import { assinarProjecao } from "../../dados/projecaoRepo.js";
+import { calcularVisaoConsolidada } from "../../domain/dividas.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
-import { formatarData } from "../../domain/tempo.js";
+import { formatarData, hojeISO } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 
 const HORIZONTE_DIAS = 30;
 
 let pararAssinatura = null;
 let pararAssinaturaProjecao = null;
+let pararAssinaturaDividas = null;
 let estadoProjecao = null;
+let estadoDividas = null;
 let container = null;
 
 function itemContador(rotulo, valor, sub) {
@@ -54,11 +57,21 @@ export default {
     if (pararAssinaturaProjecao) pararAssinaturaProjecao();
     estadoProjecao = null;
     pararAssinaturaProjecao = assinarProjecao((r) => { estadoProjecao = r; renderizarFluxoResumo(); });
+
+    if (pararAssinaturaDividas) pararAssinaturaDividas();
+    estadoDividas = null;
+    pararAssinaturaDividas = dividas.assinar((lista) => {
+      const dividasComId = lista.map((i) => ({ id: i.id, ...i.dados }));
+      estadoDividas = calcularVisaoConsolidada(dividasComId, hojeISO());
+      renderizarDividasResumo();
+    });
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
     if (pararAssinaturaProjecao) { pararAssinaturaProjecao(); pararAssinaturaProjecao = null; }
+    if (pararAssinaturaDividas) { pararAssinaturaDividas(); pararAssinaturaDividas = null; }
     estadoProjecao = null;
+    estadoDividas = null;
     container = null;
   },
 };
@@ -134,6 +147,10 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Fluxo de caixa</h3>
       <p class="tela-sub">Entradas e saídas projetadas — os quatro horizontes do §7</p></div></div>
     <div id="fluxo-caixa-home"></div>
+
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Dívidas</h3>
+      <p class="tela-sub">Saldo devido, comprometimento mensal e pressão sobre a renda — §11</p></div></div>
+    <div id="dividas-home"></div>
   `;
 
   const contasAlvo = container.querySelector("#contas-detalhe");
@@ -164,6 +181,36 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
   }
 
   renderizarFluxoResumo();
+  renderizarDividasResumo();
+}
+
+function renderizarDividasResumo() {
+  if (!container) return;
+  const alvo = container.querySelector("#dividas-home");
+  if (!alvo) return;
+
+  if (!estadoDividas) {
+    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
+    return;
+  }
+  if (estadoDividas.quantidadeAtivas === 0) {
+    alvo.innerHTML = `<div class="vazio">Nenhuma dívida ativa cadastrada.</div>`;
+    return;
+  }
+
+  alvo.innerHTML = `
+    <button class="item-cartao" data-ir-dividas style="width:100%;text-align:left;cursor:pointer;font:inherit;">
+      <div class="item-corpo">
+        <div class="item-titulo">${formatarBRL(estadoDividas.saldoTotalAtualCentavos)} devendo${estadoDividas.quantidadeAtrasadas > 0
+          ? ` · <span style="color:var(--danger);">${estadoDividas.quantidadeAtrasadas} ${estadoDividas.quantidadeAtrasadas === 1 ? "atrasada" : "atrasadas"}</span>`
+          : ""}</div>
+        <div class="item-sub">${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}/mês comprometido${estadoDividas.dataQuitacaoTotal ? ` · quita ${escapeHtml(formatarData(estadoDividas.dataQuitacaoTotal))}` : ""}</div>
+      </div>
+    </button>`;
+
+  alvo.querySelector("[data-ir-dividas]").addEventListener("click", () => {
+    document.querySelector('[data-modulo="dividas"]')?.click();
+  });
 }
 
 function renderizarFluxoResumo() {

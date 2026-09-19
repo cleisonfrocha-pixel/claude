@@ -23,6 +23,12 @@ import { ErroDeValidacao } from "../../dados/repositorios.js";
  *   cada item ganha uma seta de expandir; ao abrir, mostra o HTML retornado aqui (ex.: fatura atual/próxima
  *   de um cartão). Calculado a partir do `contexto` carregado no mount — não é ao vivo dentro do detalhe
  *   expandido; reabrir a aba atualiza.
+ * @param {(dados: object, id: string, contexto: object, elExtra: HTMLElement) => void} [config.aoRenderizarExtra] -
+ *   chamado logo depois que o HTML de `renderExtra` entra no DOM, com o próprio elemento — é onde um
+ *   cadastro liga interatividade dentro do painel expandido (ex.: o simulador de dívidas), sem duplicar
+ *   a lógica de lista/expandir desta fábrica.
+ * @param {(itens: Array, contexto: object) => string} [config.resumo] - quando presente, um bloco de
+ *   visão consolidada renderizado acima da lista, recalculado toda vez que a lista muda.
  */
 export function criarTelaCadastro(config) {
   let contexto = {};
@@ -41,6 +47,7 @@ export function criarTelaCadastro(config) {
         </div>
         <button class="btn btn-primary" data-acao="novo">+ ${escapeHtml(config.rotuloNovo)}</button>
       </div>
+      ${config.resumo ? `<div id="resumo-cadastro"></div>` : ""}
       <div class="lista-cartoes" id="lista-cadastro"></div>
     `;
     container.querySelector('[data-acao="novo"]').addEventListener("click", () => abrirFormulario(null));
@@ -66,6 +73,10 @@ export function criarTelaCadastro(config) {
     if (!containerAtual) return;
     const alvo = containerAtual.querySelector("#lista-cadastro");
     if (!alvo) return;
+    if (config.resumo) {
+      const elResumo = containerAtual.querySelector("#resumo-cadastro");
+      if (elResumo) elResumo.innerHTML = config.resumo(itens, contexto);
+    }
     if (!itens.length) {
       alvo.innerHTML = `
         <div class="vazio">
@@ -94,8 +105,15 @@ export function criarTelaCadastro(config) {
             <button class="icon-btn danger" data-acao="apagar" title="Apagar" aria-label="Apagar">✕</button>
           </div>
         </div>
-        ${aberto ? `<div class="item-extra">${config.renderExtra(item.dados, item.id, contexto)}</div>` : ""}`;
+        ${aberto ? `<div class="item-extra" data-extra-id="${escapeHtml(item.id)}">${config.renderExtra(item.dados, item.id, contexto)}</div>` : ""}`;
     }).join("");
+    if (typeof config.aoRenderizarExtra === "function") {
+      itens.forEach((item) => {
+        if (!expandidos.has(item.id)) return;
+        const elExtra = alvo.querySelector(`[data-extra-id="${item.id}"]`);
+        if (elExtra) config.aoRenderizarExtra(item.dados, item.id, contexto, elExtra);
+      });
+    }
     alvo.querySelectorAll('[data-acao="editar"]').forEach((btn) => {
       btn.addEventListener("click", (ev) => {
         const id = ev.target.closest(".item-cartao").dataset.id;
@@ -172,7 +190,7 @@ export function criarTelaCadastro(config) {
       const inicial = valorAtual != null ? formatarBRL(valorAtual).replace("R$ ", "") : "";
       controle = `<input type="text" inputmode="decimal" id="${id}" placeholder="0,00" value="${escapeHtml(inicial)}">`;
     } else if (campo.tipo === "numero") {
-      controle = `<input type="number" id="${id}" value="${valorAtual != null ? escapeHtml(valorAtual) : ""}" min="${campo.min ?? ""}" max="${campo.max ?? ""}" ${obrig}>`;
+      controle = `<input type="number" id="${id}" value="${valorAtual != null ? escapeHtml(valorAtual) : ""}" min="${campo.min ?? ""}" max="${campo.max ?? ""}" step="${campo.step ?? "any"}" ${obrig}>`;
     } else if (campo.tipo === "data") {
       controle = `<input type="date" id="${id}" value="${escapeHtml(valorAtual || "")}" ${obrig}>`;
     } else {
@@ -220,10 +238,10 @@ export function criarTelaCadastro(config) {
       try {
         if (editando) {
           await config.repo.atualizar(item.id, campos);
-          mostrarToast(`${config.singular} atualizado${config.generoFeminino ? "a" : ""}.`);
+          mostrarToast(`${config.singular} atualizad${config.generoFeminino ? "a" : "o"}.`);
         } else {
           await config.repo.criar(campos);
-          mostrarToast(`${config.singular} criado${config.generoFeminino ? "a" : ""}.`);
+          mostrarToast(`${config.singular} criad${config.generoFeminino ? "a" : "o"}.`);
         }
         fecharModal();
       } catch (erro) {

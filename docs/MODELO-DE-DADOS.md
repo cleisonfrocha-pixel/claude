@@ -74,14 +74,31 @@ Recorrência **não** cria transação até a janela de provisionamento — herd
 ## Dívidas — Fase 6
 
 ```
-dividas/<id>        { credor, tipo, pessoaId, saldoOriginal, saldoAtual,
-                      valorParcela, parcelasTotal, parcelasPagas,
-                      taxaJurosMes?, encargos?, proximoVencimento,
-                      status, contaDebitoId? }
-simulacoes/<id>     { dividaIds, tipo, parametros, resultado, criadoEm }
+dividas/<id>  { pessoaId, nome, credor, saldoOriginalCentavos,
+                valorParcelaCentavos, quantidadeParcelas, parcelasPagas,
+                dataInicio, taxaJurosMensalPct?, emRisco }
 ```
-`simulacoes` é coleção separada por exigência do §11: **cenário simulado nunca
-escreve no dado real**.
+
+`saldoAtualCentavos` e `status` (ativa/atrasada/quitada) **não são campos
+gravados** — são sempre calculados na leitura a partir de
+`saldoOriginalCentavos`, `valorParcelaCentavos` e `parcelasPagas` (regra
+"nada de total gravado" do CLAUDE.md; ver `domain/dividas.js`).
+`dataInicio` é o vencimento da 1ª parcela — próximo vencimento e data de
+quitação rolam o mês a partir dela, mesmo padrão de `dataVencimentoFatura`
+(§5). `emRisco` é uma marcação manual: é julgamento subjetivo do usuário
+(renegociação incerta, credor pressionando), não algo que dá pra derivar
+dos números — diferente de "atrasada", que é sempre derivado.
+
+Nenhuma coleção `simulacoes`: o simulador do §11 (aporte extra, quitação
+antecipada, comparação de ritmos) é implementado como funções puras em
+`domain/simuladorDividas.js` que recebem números e devolvem um resultado
+hipotético, sem acesso a nenhum repositório — o cenário simulado existe só
+como estado da tela enquanto o usuário mexe nos campos, nunca é escrito em
+lugar nenhum. Isso já cumpre a exigência do §11 ("cenário simulado nunca
+escreve no dado real") por construção, não por convenção. Uma coleção
+dedicada a **guardar** cenários nomeados para comparar depois é outra
+exigência, do §22 (Cenários e simulador de realidade, Fase 14) — se e
+quando essa fase chegar, é o lugar certo para essa coleção nascer.
 
 ## Renda, orçamento, patrimônio, objetivos — Fases 8 e 9
 

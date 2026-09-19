@@ -250,7 +250,7 @@ de incerto mostra que o saldo seria positivo (R$ 2.500,00) se o bônus se
 confirmasse, sem contar isso no saldo seguro; o mesmo alerta aparece no
 bloco Fluxo da Home; sobrevive a fechar e reabrir a página.
 
-### Fase 6 · Dívidas e plano de saída · 4 sessões — §11
+### Fase 6 · Dívidas e plano de saída · 4 sessões — §11 — ✅ concluída (19/09/2026)
 
 Cadastro completo, saldo original e atual, parcelas pagas e restantes,
 vencimentos, juros quando conhecidos, atrasos, comprometimento mensal da renda,
@@ -262,6 +262,45 @@ Simulação nunca escreve no dado verdadeiro.
 
 **Portão:** simular um aporte de R$ 500/mês mostra prazo novo, juros economizados
 e impacto mensal — e ao sair da simulação nada mudou de verdade.
+
+**Entregue:** `domain/dividas.js` — saldo atual, parcelas restantes, próximo
+vencimento e data de quitação, tudo calculado a partir do saldo original e
+das parcelas pagas (nunca gravado — "nada de total gravado"); status
+(ativa/atrasada/quitada) também é sempre derivado na leitura, nunca um
+campo salvo. `domain/simuladorDividas.js` — aporte extra, quitação
+antecipada e comparação de ritmos, cada um caminhando a quitação mês a mês
+com juros compostos quando a taxa é conhecida; são funções puras, sem
+acesso a nenhum repositório, então não há como o cenário simulado vazar
+para o dado real por construção, não só por convenção.
+
+A tela Dívidas reaproveita a fábrica de cadastro da Fase 0: o painel
+expandido (hook `renderExtra` da Fase 3) ganhou o simulador interativo —
+extensão nova, `aoRenderizarExtra`, que liga eventos dentro do HTML
+expandido sem duplicar a lógica de lista da fábrica — e uma "visão
+consolidada" acima da lista (novo hook `resumo`) com saldo devido total,
+comprometimento mensal e a quitação estimada mais distante entre as
+dívidas ativas. "Comprometimento mensal da renda" mostra por enquanto o
+valor em centavos, não o percentual da renda — dividir pela renda de
+verdade só faz sentido a partir da Fase 8 (§12), quando a renda for
+cadastrada; decisão de escopo registrada aqui, mesma lógica da Fase 3 ter
+adiado o alerta de "utilização anormal" para a Fase 10. Bloco "Dívidas" do
+§25 adicionado à Home.
+
+22 testes de domínio novos (126 no total). Portão verificado de ponta a
+ponta com Playwright: dívida de R$ 12.000 (parcela R$ 1.000/mês, 12x,
+1,5% a.m.) — simular um aporte de R$ 500/mês mostra prazo novo (9 meses,
+5 a menos que os 14 do ritmo atual), juros economizados (R$ 449,03) e
+impacto mensal (+R$ 500,00); depois de simular (aporte extra e quitação
+antecipada), a lista da dívida e o formulário de edição continuam
+idênticos a antes — nada escreveu no dado real.
+
+Bug real achado e corrigido no caminho, fora do escopo desta fase: o toast
+de sucesso de registros femininos (Conta, Categoria, Pessoa) dizia
+"criadoa"/"atualizadoa" desde a Fase 0 — o `${"a"}` era concatenado depois
+de "criado" em vez de substituir o "o" final. Existia desde o primeiro
+cadastro do produto; só ficou visível ao adicionar Dívida (também
+feminina) e conferir o texto exato do toast no Playwright. Corrigido em
+`telaCadastro.js`.
 
 ### Fase 7 · Diagnóstico, decisões e plano vivo · 5 sessões — §8, §9, §10, §25
 
