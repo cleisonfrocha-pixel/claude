@@ -9,7 +9,7 @@ const ROTULO_PAPEL = {
 export default criarTelaCadastro({
   repo: pessoas,
   titulo: "Pessoas",
-  subtitulo: "Quem faz parte do núcleo financeiro — cada conta, cartão e dívida pertence a alguém aqui.",
+  subtitulo: "Quem faz parte do núcleo financeiro. Cada conta, cartão e dívida pertence a alguém aqui.",
   rotuloNovo: "Nova pessoa",
   singular: "Pessoa",
   generoFeminino: true,

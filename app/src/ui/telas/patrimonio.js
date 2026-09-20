@@ -35,7 +35,7 @@ export default {
 };
 
 function linhaVariacao(rotulo, variacao) {
-  if (!variacao) return `<div class="resumo-item"><span>${escapeHtml(rotulo)}</span><b class="mono" data-valor>—</b></div>`;
+  if (!variacao) return `<div class="resumo-item"><span>${escapeHtml(rotulo)}</span><b class="mono" data-valor>-</b></div>`;
   return `<div class="resumo-item"><span>${escapeHtml(rotulo)}</span><b class="mono ${variacao.variacaoCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${variacao.variacaoCentavos >= 0 ? "+" : ""}${formatarBRL(variacao.variacaoCentavos)}</b></div>`;
 }
 
@@ -96,14 +96,14 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Patrimônio</h2>
-        <p class="tela-sub">A transformação do fluxo de caixa em patrimônio — não é só sair das dívidas.</p>
+        <p class="tela-sub">A transformação do fluxo de caixa em patrimônio. Não é só sair das dívidas.</p>
       </div>
     </div>
 
     <div class="hero-caixa">
       <div class="hero-caixa-label">Patrimônio líquido</div>
       <div class="hero-caixa-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(painel.liquidoCentavos)}</div>
-      <div class="hero-caixa-sub"><span data-valor>${formatarBRL(painel.ativosCentavos)}</span> em ativos, menos <span data-valor>${formatarBRL(painel.passivosCentavos)}</span> em dívidas ativas — ${escapeHtml(competenciaLabel(painel.competencia))}.</div>
+      <div class="hero-caixa-sub"><span data-valor>${formatarBRL(painel.ativosCentavos)}</span> em ativos, menos <span data-valor>${formatarBRL(painel.passivosCentavos)}</span> em dívidas ativas, em ${escapeHtml(competenciaLabel(painel.competencia))}.</div>
     </div>
 
     <div class="resumo-mes">
@@ -128,8 +128,8 @@ function renderizar() {
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Reserva</h3>
       <p class="tela-sub">${painel.reserva.coberturaMeses != null
-        ? `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados — cobre ${painel.reserva.coberturaMeses.toFixed(1)} meses (${painel.reserva.coberturaDias} dias) de custo essencial`
-        : `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados — sem custo essencial registrado ainda para calcular cobertura`}</p></div></div>
+        ? `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados. Cobre ${painel.reserva.coberturaMeses.toFixed(1)} meses (${painel.reserva.coberturaDias} dias) de custo essencial`
+        : `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados. Sem custo essencial registrado ainda para calcular cobertura`}</p></div></div>
     ${painel.reserva.metas.map(linhaMetaReserva).join("")}
   `;
 

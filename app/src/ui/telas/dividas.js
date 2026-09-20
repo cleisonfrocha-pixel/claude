@@ -31,7 +31,7 @@ function resultadoSimulacaoHtml(r) {
     </div>
     <div class="simulador-aviso">
       ${r.mesesEconomizados > 0 ? `${mesesTxt(r.mesesEconomizados)} a menos que o ritmo atual (${mesesTxt(r.base.meses)}).` : "Não muda o prazo em relação ao ritmo atual."}
-      Isto é uma simulação — nada foi alterado na dívida.
+      Isto é uma simulação. Nada foi alterado na dívida.
     </div>`;
 }
 
@@ -51,7 +51,7 @@ export default criarTelaCadastro({
     { id: "quantidadeParcelas", rotulo: "Quantidade de parcelas", tipo: "numero", min: 1, obrigatorio: true },
     { id: "parcelasPagas", rotulo: "Parcelas já pagas", tipo: "numero", min: 0, obrigatorio: true, padrao: 0 },
     { id: "dataInicio", rotulo: "Vencimento da 1ª parcela", tipo: "data", obrigatorio: true },
-    { id: "taxaJurosMensalPct", rotulo: "Juros ao mês (%) — se conhecido", tipo: "numero", min: 0, step: 0.01 },
+    { id: "taxaJurosMensalPct", rotulo: "Juros ao mês, % (opcional)", tipo: "numero", min: 0, step: 0.01 },
     { id: "emRisco", rotulo: "Em risco (renegociação incerta, credor pressionando, etc.)", tipo: "check" },
   ],
   async carregarContexto() {
@@ -69,7 +69,7 @@ export default criarTelaCadastro({
         <div class="resumo-mes" style="margin:0;">
           <div class="resumo-item"><span>Saldo devido total</span><b class="mono valor-neg" data-valor>${formatarBRL(v.saldoTotalAtualCentavos)}</b></div>
           <div class="resumo-item"><span>Comprometimento mensal</span><b class="mono" data-valor>${formatarBRL(v.comprometimentoMensalCentavos)}</b></div>
-          <div class="resumo-item"><span>Quitação estimada</span><b class="mono" data-valor>${v.dataQuitacaoTotal ? escapeHtml(formatarData(v.dataQuitacaoTotal)) : "—"}</b></div>
+          <div class="resumo-item"><span>Quitação estimada</span><b class="mono" data-valor>${v.dataQuitacaoTotal ? escapeHtml(formatarData(v.dataQuitacaoTotal)) : "-"}</b></div>
         </div>
         ${v.quantidadeAtrasadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);">${v.quantidadeAtrasadas} ${v.quantidadeAtrasadas === 1 ? "dívida atrasada" : "dívidas atrasadas"}.</div>` : ""}
         ${v.quantidadeEmRisco > 0 ? `<div class="tela-sub" style="margin-top:4px;">${v.quantidadeEmRisco} ${v.quantidadeEmRisco === 1 ? "dívida marcada" : "dívidas marcadas"} como em risco.</div>` : ""}

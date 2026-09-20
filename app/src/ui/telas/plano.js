@@ -23,7 +23,7 @@ const NOTA_HORIZONTE_VAZIO = {
   estaSemana: "Nenhum gargalo previsto para esta semana.",
   esteMes: "Nenhuma pendência para fechar o mês.",
   em90: "Nenhuma oportunidade identificada nos próximos 90 dias.",
-  em12meses: "Sem itens de longo prazo — construir reserva, reduzir passivos e iniciar patrimônio seguem como direção geral.",
+  em12meses: "Sem itens de longo prazo. Construir reserva, reduzir passivos e iniciar patrimônio seguem como direção geral.",
 };
 
 let painel = null;
@@ -83,7 +83,7 @@ function textoDiagnostico(d) {
 
   linhas.push(linhaDiagnostico("Previsibilidade e concentração da receita",
     d.receita.totalCentavos > 0
-      ? `<span data-valor>${formatarBRL(d.receita.totalCentavos)}</span> este mês — ${d.receita.previsibilidadePercentual}% confirmado${d.receita.quantidadeFontes > 0 ? `, ${d.receita.concentracaoPercentual}% concentrado na maior fonte (${d.receita.quantidadeFontes} ${d.receita.quantidadeFontes === 1 ? "fonte" : "fontes"})` : ""}.`
+      ? `<span data-valor>${formatarBRL(d.receita.totalCentavos)}</span> este mês, ${d.receita.previsibilidadePercentual}% confirmado${d.receita.quantidadeFontes > 0 ? `, ${d.receita.concentracaoPercentual}% concentrado na maior fonte (${d.receita.quantidadeFontes} ${d.receita.quantidadeFontes === 1 ? "fonte" : "fontes"})` : ""}.`
       : "Nenhuma receita registrada neste mês ainda."));
 
   linhas.push(linhaDiagnostico("Evolução do custo de vida",
@@ -93,7 +93,7 @@ function textoDiagnostico(d) {
 
   if (d.foraDoPadrao.length) {
     linhas.push(linhaDiagnostico("Despesas fora do padrão",
-      d.foraDoPadrao.map((f) => `categoria <span data-valor>${formatarBRL(f.valorCentavos)}</span> — ${f.percentualAcima}% acima da média dos últimos meses`).join("; ") + "."));
+      d.foraDoPadrao.map((f) => `categoria <span data-valor>${formatarBRL(f.valorCentavos)}</span>, ${f.percentualAcima}% acima da média dos últimos meses`).join("; ") + "."));
   }
 
   linhas.push(linhaDiagnostico("Reserva financeira",
@@ -102,7 +102,7 @@ function textoDiagnostico(d) {
       : "Nenhuma conta marcada como reserva."));
 
   linhas.push(linhaDiagnostico("Patrimônio líquido",
-    `<b class="mono${d.patrimonioLiquido.liquidoCentavos < 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(d.patrimonioLiquido.liquidoCentavos)}</b> — <span data-valor>${formatarBRL(d.patrimonioLiquido.ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(d.patrimonioLiquido.passivosCentavos)}</span> em passivos.`));
+    `<b class="mono${d.patrimonioLiquido.liquidoCentavos < 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(d.patrimonioLiquido.liquidoCentavos)}</b>: <span data-valor>${formatarBRL(d.patrimonioLiquido.ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(d.patrimonioLiquido.passivosCentavos)}</span> em passivos.`));
 
   linhas.push(linhaDiagnostico("Completude dos dados",
     d.completude.completo
@@ -170,7 +170,7 @@ function listaAchadosPorTipo(achados) {
 function avisoConfiabilidade(confiabilidade) {
   if (!confiabilidade || confiabilidade.nivel === "alta") return "";
   const resto = confiabilidade.motivos.length > 1 ? ` (+${confiabilidade.motivos.length - 1} outro${confiabilidade.motivos.length > 2 ? "s" : ""} motivo${confiabilidade.motivos.length > 2 ? "s" : ""})` : "";
-  return `<div class="erro-form" style="margin-bottom:12px;">Aviso: este diagnóstico usa dados incompletos — ${escapeHtml(confiabilidade.motivos[0])}${resto}</div>`;
+  return `<div class="erro-form" style="margin-bottom:12px;">Aviso: este diagnóstico usa dados incompletos. ${escapeHtml(confiabilidade.motivos[0])}${resto}</div>`;
 }
 
 function blocoQualidade(q) {
@@ -179,13 +179,13 @@ function blocoQualidade(q) {
   const classeNivel = confiabilidade.nivel === "alta" ? "" : confiabilidade.nivel === "media" ? " atencao" : " critico";
   return `
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Qualidade dos dados</h3>
-      <p class="tela-sub">O quanto dá pra confiar no que está sendo mostrado — §23</p></div>
+      <p class="tela-sub">O quanto dá pra confiar no que está sendo mostrado (§23)</p></div>
       <span class="item-tag${classeNivel}">confiabilidade ${escapeHtml(confiabilidade.nivel)}</span>
     </div>
     <div class="divida-resumo">
       <div class="diagnostico-linha">
         <div class="rotulo">Completude da vida financeira mapeada</div>
-        <div class="texto">${completude.percentual}%${completude.pendencias.length ? " — " + escapeHtml(completude.pendencias.join(" ")) : ", tudo cadastrado."}</div>
+        <div class="texto">${completude.percentual}%${completude.pendencias.length ? ". " + escapeHtml(completude.pendencias.join(" ")) : ", tudo cadastrado."}</div>
       </div>
       <div class="diagnostico-linha">
         <div class="rotulo">Itens a confirmar</div>
@@ -239,7 +239,7 @@ function renderizar() {
         </div>
       </div>
       <div class="vazio">
-        Ainda não há pessoa nem conta cadastrada — o Plano nasce dos seus dados reais, comece em Configurações → Pessoas e Dinheiro → Contas.
+        Ainda não há pessoa nem conta cadastrada. O Plano nasce dos seus dados reais: comece em Configurações → Pessoas e Dinheiro → Contas.
       </div>`;
     return;
   }
@@ -253,14 +253,14 @@ function renderizar() {
     </div>
 
     <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Diagnóstico</h3>
-      <p class="tela-sub">Fatos e relações observáveis nos seus dados — §8</p></div></div>
+      <p class="tela-sub">Fatos e relações observáveis nos seus dados (§8)</p></div></div>
     ${avisoConfiabilidade(qualidade?.confiabilidade)}
     <div class="divida-resumo">${textoDiagnostico(painel.diagnostico)}</div>
 
     ${blocoQualidade(qualidade)}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Central de decisões</h3>
-      <p class="tela-sub">O que merece sua atenção agora, priorizado por urgência e impacto — §9</p></div></div>
+      <p class="tela-sub">O que merece sua atenção agora, priorizado por urgência e impacto (§9)</p></div></div>
     <div id="achados-lista">
       ${painel.achadosPendentes.length ? listaAchadosPorTipo(painel.achadosPendentes) : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}
     </div>
@@ -278,7 +278,7 @@ function renderizar() {
     </div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Plano vivo</h3>
-      <p class="tela-sub">Agora, esta semana, este mês, 90 dias e 12 meses — atualizado pela realidade, não um documento estático — §10</p></div></div>
+      <p class="tela-sub">Agora, esta semana, este mês, 90 dias e 12 meses. Atualizado pela realidade, não um documento estático (§10)</p></div></div>
     ${["agora", "estaSemana", "esteMes", "em90", "em12meses"].map((chave) => listaHorizonte(chave, painel.planoVivo[chave])).join("")}
   `;
 

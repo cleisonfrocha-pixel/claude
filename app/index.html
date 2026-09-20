@@ -1,3 +1,17 @@
+<script>
+(function () {
+  // Evita o flash de tema claro antes do JS do app carregar: lê a
+  // preferência salva (mesma chave de src/ui/tema.js) e já marca o
+  // documento antes da primeira pintura. Sem escolha salva, abre escuro
+  // (referência Nubank pedida pelo usuário), não a preferência do sistema.
+  try {
+    var tema = localStorage.getItem("gedi_fin_tema");
+    document.documentElement.setAttribute("data-theme", tema === "claro" ? "light" : "dark");
+  } catch (e) {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+})();
+</script>
 <title>Vida Financeira</title>
 <link rel="stylesheet" href="estilo/tokens.css">
 <link rel="stylesheet" href="estilo/componentes.css">
@@ -19,6 +33,8 @@
 <main class="wrap">
   <div id="conteudo-principal"></div>
 </main>
+
+<nav class="bottom-nav" id="bottom-nav" role="navigation" aria-label="Navegação principal"></nav>
 
 <div class="overlay" id="overlay-modal" hidden></div>
 <div class="toast" id="toast" hidden></div>

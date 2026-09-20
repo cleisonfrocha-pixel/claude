@@ -151,7 +151,7 @@ function renderizarLista() {
         }
         const r = simularNovoPrazo(o, o.valorAtualCalculadoCentavos, novaMargem);
         resultado.innerHTML = r.atingivel
-          ? `<div class="simulador-aviso" style="font-size:13px;color:var(--text);">Com <span data-valor>${formatarBRL(novaMargem)}</span>/mês, a meta seria atingida em ${r.mesesNecessarios} ${r.mesesNecessarios === 1 ? "mês" : "meses"}. Isto é uma simulação — nada foi alterado no objetivo.</div>`
+          ? `<div class="simulador-aviso" style="font-size:13px;color:var(--text);">Com <span data-valor>${formatarBRL(novaMargem)}</span>/mês, a meta seria atingida em ${r.mesesNecessarios} ${r.mesesNecessarios === 1 ? "mês" : "meses"}. Isto é uma simulação. Nada foi alterado no objetivo.</div>`
           : `<div class="erro-form">Com essa margem, a meta nunca seria atingida.</div>`;
       });
     }
@@ -173,7 +173,7 @@ function campoObjetivoHtml(o, contasDisponiveis, pessoasDisponiveis) {
         <input type="date" id="campo-obj-prazo" value="${escapeHtml(o?.prazo || "")}" required></div>
     </div>
     <div class="field"><label for="campo-obj-conta">Conta vinculada (opcional)</label>
-      <select id="campo-obj-conta"><option value="">Nenhuma — valor atual digitado à mão</option>${contasOpts}</select></div>
+      <select id="campo-obj-conta"><option value="">Nenhuma (valor atual digitado à mão)</option>${contasOpts}</select></div>
     <div class="field"><label for="campo-obj-atual">Valor atual (se sem conta vinculada)</label>
       <input type="text" inputmode="decimal" id="campo-obj-atual" placeholder="0,00" value="${o ? formatarBRL(o.valorAtualCentavos).replace("R$ ", "") : ""}"></div>
   `;

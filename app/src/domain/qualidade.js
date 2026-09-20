@@ -12,7 +12,7 @@ const ITENS_COMPLETUDE = [
   { chave: "reserva", rotulo: "Nenhuma conta marcada como reserva.", ok: (d) => d.contas.some((c) => c.ehReserva) },
   { chave: "categoriaEssencial", rotulo: "Nenhuma categoria marcada como essencial.", ok: (d) => d.categorias.some((c) => c.essencial) },
   { chave: "renda", rotulo: "Nenhuma fonte de renda cadastrada.", ok: (d) => d.fontesRenda.length > 0 },
-  { chave: "ativo", rotulo: "Nenhum ativo cadastrado — o patrimônio líquido fica incompleto.", ok: (d) => d.ativos.length > 0 },
+  { chave: "ativo", rotulo: "Nenhum ativo cadastrado. O patrimônio líquido fica incompleto.", ok: (d) => d.ativos.length > 0 },
   { chave: "transacaoRecente", rotulo: "Nenhum lançamento nos últimos 30 dias.", ok: (d) => d.transacoes.some((t) => t.data >= d.limiteTrintaDias) },
 ];
 

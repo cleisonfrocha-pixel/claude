@@ -1,11 +1,13 @@
-// Início — dashboard (Sprint 3, referência Nubank pedida pelo usuário):
-// um número central, o que precisa de atenção AGORA em destaque, e uma
-// grade de cartões — um por módulo — pra ir clicando. Antes a Home
-// empilhava o diagnóstico inteiro (seis blocos de prosa, um embaixo do
-// outro); útil pra quem já conhece o produto, ruim pra quem só quer abrir
-// o app e resolver o que precisa. Cada bloco de prosa continua existindo,
-// só que na tela de origem — o cartão daqui é a porta de entrada pra ele,
-// não uma cópia.
+// Início — dashboard (Sprint 3, reformado no Sprint 8 pelo molde do print
+// do Nubank que o usuário anexou): zona roxa no topo com as ações rápidas
+// de sempre (ocultar valores, configurações) e o item mais urgente
+// flutuando por cima; corpo escuro com o saldo em texto puro (não mais
+// dentro de um cartão roxo — o roxo agora é só a faixa de cima, igual no
+// print); um carrossel com o que mais precisa de atenção, quando há mais
+// de um item; e a grade de cartões — um por módulo — pra ir clicando.
+// Cada bloco de prosa do diagnóstico completo continua existindo, só que
+// na tela de origem — o cartão daqui é a porta de entrada pra ele, não
+// uma cópia.
 
 import { pessoas, contas, dividas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
@@ -18,10 +20,10 @@ import { calcularVisaoConsolidada } from "../../domain/dividas.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
+import { icone } from "../icones.js";
+import * as privacidade from "../privacidade.js";
 
 const HORIZONTE_DIAS = 30;
-const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
-const CLASSE_URGENCIA = { alta: "critico", media: "atencao", baixa: "" };
 
 let pararAssinatura = null;
 let pararAssinaturaProjecao = null;
@@ -79,7 +81,8 @@ export default {
     pararAssinaturaDecisoes = assinarPainelDecisoes((r) => {
       estadoDecisoes = r;
       estadoDiagnostico = r.diagnostico;
-      renderizarAlerta();
+      renderizarBanner();
+      renderizarCarrossel();
       renderizarGrade();
     });
 
@@ -118,7 +121,7 @@ function renderizarPedindoCadastro() {
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Início</h2></div></div>
     <div class="vazio">
-      Ainda não há nenhuma pessoa cadastrada.<br>Comece por aí — tudo no sistema pertence a alguém.
+      Ainda não há nenhuma pessoa cadastrada. Comece por aí: tudo no sistema pertence a alguém.
       <div><button class="btn btn-primary" id="ir-configuracoes">Cadastrar pessoas</button></div>
     </div>`;
   container.querySelector("#ir-configuracoes").addEventListener("click", () => irPara("configuracoes"));
@@ -128,7 +131,7 @@ function renderizarPedindoConta() {
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Início</h2></div></div>
     <div class="vazio">
-      Ainda não há nenhuma conta cadastrada — sem isso não dá pra saber quanto dinheiro existe.
+      Ainda não há nenhuma conta cadastrada. Sem isso não dá pra saber quanto dinheiro existe.
       <div><button class="btn btn-primary" id="ir-dinheiro">Cadastrar conta</button></div>
     </div>`;
   container.querySelector("#ir-dinheiro").addEventListener("click", () => irPara("dinheiro"));
@@ -140,19 +143,18 @@ function renderizarPainel(painel) {
   const negativo = seguroParaGastarCentavos < 0;
 
   container.innerHTML = `
-    <div class="tela-head" style="margin-top:0;">
-      <div>
-        <h2 class="tela-titulo">Início</h2>
-        <p class="tela-sub">Sua vida financeira agora, nos próximos ${HORIZONTE_DIAS} dias.</p>
+    <div class="home-topo-roxo">
+      <div class="home-topo-acoes">
+        <button class="home-topo-acao" id="botao-ocultar-home" title="Ocultar valores" aria-label="Ocultar valores"></button>
+        <button class="home-topo-acao" id="botao-config-home" title="Configurações" aria-label="Configurações">${icone("configuracoes", 19)}</button>
       </div>
+      <div id="banner-home"></div>
     </div>
 
-    <div class="hero-caixa">
-      <div class="hero-caixa-label">Dinheiro seguro para gastar</div>
-      <div class="hero-caixa-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
-      <div class="hero-caixa-sub">O que sobra do saldo das suas contas depois de descontar tudo que já está
-        comprometido nos próximos ${HORIZONTE_DIAS} dias — sem contar o dinheiro de reserva.</div>
-    </div>
+    <button class="home-saldo-rotulo" id="ir-dinheiro-saldo">Dinheiro seguro para gastar ${icone("chevron", 15)}</button>
+    <div class="home-saldo-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
+    <div class="home-saldo-sub">O que sobra do saldo das suas contas depois de descontar tudo que já está
+      comprometido nos próximos ${HORIZONTE_DIAS} dias. Não conta o dinheiro de reserva.</div>
 
     ${saldoReservaCentavos !== 0 ? `
       <div class="reserva-nota">
@@ -166,45 +168,115 @@ function renderizarPainel(painel) {
       <div class="resumo-item"><span>Livre</span><b class="mono ${livreCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(livreCentavos)}</b></div>
     </div>
 
-    <div id="alerta-home"></div>
+    <div id="carrossel-home"></div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Tudo em um toque</h3>
       <p class="tela-sub">Cada cartão abre o módulo por trás do número</p></div></div>
     <div class="home-grid" id="grade-home"></div>
   `;
 
-  renderizarAlerta();
+  container.querySelector("#ir-dinheiro-saldo").addEventListener("click", () => irPara("dinheiro"));
+  container.querySelector("#botao-config-home").addEventListener("click", () => irPara("configuracoes"));
+  ligarBotaoOcultar();
+  renderizarBanner();
+  renderizarCarrossel();
   renderizarGrade();
 }
 
-/** O item mais urgente da Central de Decisões, em destaque logo abaixo do
- * número principal — pra quem só quer olhar e já ver o que precisa
- * resolver, sem entrar em Plano. Só aparece quando existe algo urgente de
- * verdade (nunca inventa pressão onde não há). */
-function renderizarAlerta() {
+function ligarBotaoOcultar() {
+  const botao = container?.querySelector("#botao-ocultar-home");
+  if (!botao) return;
+  const desenhar = () => {
+    const oculto = privacidade.estaOculto();
+    botao.innerHTML = icone(oculto ? "olhoFechado" : "olho", 19);
+    botao.setAttribute("title", oculto ? "Mostrar valores" : "Ocultar valores");
+  };
+  desenhar();
+  botao.addEventListener("click", () => { privacidade.alternar(); desenhar(); });
+}
+
+/** Achados pendentes ordenados por prioridade, prontos pra dividir entre o
+ * banner (só o primeiro, só se for urgente de verdade) e o carrossel (o
+ * resto, até um total de 3 pra não virar uma lista infinita na Home). */
+function achadosParaHome() {
+  const todos = estadoDecisoes?.achadosPendentes || [];
+  const bannerMostrado = todos[0] && todos[0].urgencia === "alta";
+  return {
+    banner: bannerMostrado ? todos[0] : null,
+    carrossel: (bannerMostrado ? todos.slice(1) : todos).slice(0, 3),
+  };
+}
+
+/** O item mais urgente, flutuando sobre a faixa roxa (molde do print): só
+ * aparece quando existe algo urgente de verdade, nunca inventa pressão
+ * onde não há. */
+function renderizarBanner() {
   if (!container) return;
-  const alvo = container.querySelector("#alerta-home");
+  const alvo = container.querySelector("#banner-home");
   if (!alvo) return;
-  const principal = estadoDecisoes?.achadosPendentes?.[0];
-  if (!principal || principal.urgencia !== "alta") { alvo.innerHTML = ""; return; }
+  const { banner } = achadosParaHome();
+  if (!banner) { alvo.innerHTML = ""; return; }
   alvo.innerHTML = `
-    <button class="home-alerta" data-ir="plano">
+    <button class="home-banner-flutuante" data-ir="plano">
+      <div class="icone-caixa">${icone("alerta", 19)}</div>
       <div>
-        <div class="titulo">${escapeHtml(principal.titulo)}</div>
-        <div class="sub">${escapeHtml(principal.acaoSugerida)}</div>
+        <div class="titulo">${escapeHtml(banner.titulo)}</div>
+        <div class="sub">${escapeHtml(banner.acaoSugerida)}</div>
       </div>
-      <span class="item-tag critico">urgente</span>
     </button>`;
   alvo.querySelector("[data-ir]").addEventListener("click", () => irPara("plano"));
+}
+
+/** O que mais precisa de atenção depois do banner, um cartão por vez,
+ * arrastável (scroll-snap nativo, sem biblioteca) com bolinhas de posição
+ * que acompanham o arrasto. Só aparece quando sobra algo pra mostrar. */
+function renderizarCarrossel() {
+  if (!container) return;
+  const alvo = container.querySelector("#carrossel-home");
+  if (!alvo) return;
+  const { carrossel } = achadosParaHome();
+  if (!carrossel.length) { alvo.innerHTML = ""; return; }
+
+  alvo.innerHTML = `
+    <div class="home-carrossel" id="trilha-carrossel">
+      ${carrossel.map((a) => `
+        <button class="home-carrossel-item" data-ir="plano">
+          <div class="titulo">${escapeHtml(a.titulo)}</div>
+          <div class="sub">${escapeHtml(a.acaoSugerida)}</div>
+        </button>`).join("")}
+    </div>
+    ${carrossel.length > 1 ? `<div class="home-carrossel-dots" id="dots-carrossel">
+      ${carrossel.map((_, i) => `<button data-indice="${i}" aria-label="Item ${i + 1}"${i === 0 ? ' class="ativo"' : ""}></button>`).join("")}
+    </div>` : ""}
+  `;
+
+  alvo.querySelectorAll("[data-ir]").forEach((btn) => {
+    btn.addEventListener("click", () => irPara("plano"));
+  });
+
+  const trilha = alvo.querySelector("#trilha-carrossel");
+  const dots = alvo.querySelectorAll("#dots-carrossel button");
+  if (!trilha || !dots.length) return;
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => {
+      const item = trilha.children[Number(dot.dataset.indice)];
+      if (item) item.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    });
+  });
+  trilha.addEventListener("scroll", () => {
+    const indice = Math.round(trilha.scrollLeft / (trilha.children[0]?.offsetWidth || 1));
+    dots.forEach((dot, i) => dot.classList.toggle("ativo", i === indice));
+  }, { passive: true });
 }
 
 // `valorEhDinheiro` decide se o valor do cartão entra no modo "ocultar
 // valores" (§27): um total em R$ borra, mas um rótulo como "Em dia" ou
 // "3/5 no ritmo" não é dinheiro e não deve borrar — senão o botão vira
 // ilegível à toa quando a privacidade está ligada.
-function cartaoHome({ modulo, destaque, rotulo, valor, valorClasse, valorEhDinheiro, sub }) {
+function cartaoHome({ modulo, icone: nomeIcone, destaque, rotulo, valor, valorClasse, valorEhDinheiro, sub }) {
   return `
     <button class="home-card${destaque ? " destaque" : ""}" data-ir="${escapeHtml(modulo)}">
+      <div class="home-card-icone">${icone(nomeIcone, 17)}</div>
       <div class="home-card-rotulo">${escapeHtml(rotulo)}</div>
       <div class="home-card-valor mono${valorClasse ? " " + valorClasse : ""}"${valorEhDinheiro ? " data-valor" : ""}>${valor}</div>
       <div class="home-card-sub">${sub}</div>
@@ -226,7 +298,7 @@ function renderizarGrade() {
     const receitaCentavos = estadoDiagnostico.receita.totalCentavos;
     const despesaCentavos = estadoDiagnostico.pressaoFixas.totalCentavos;
     cartoes.push(cartaoHome({
-      modulo: "dinheiro", destaque: true, rotulo: "Transações",
+      modulo: "dinheiro", icone: "dinheiro", destaque: true, rotulo: "Transações",
       valor: "Lançar", valorEhDinheiro: false,
       sub: `<span data-valor>${formatarBRL(receitaCentavos)}</span> entraram · <span data-valor>${formatarBRL(despesaCentavos)}</span> saíram este mês`,
     }));
@@ -237,7 +309,7 @@ function renderizarGrade() {
     const h7 = estadoProjecao.horizontes[0];
     const net = h7.entradasSeguroCentavos - h7.saidasSeguroCentavos;
     cartoes.push(cartaoHome({
-      modulo: "planejamento", rotulo: "Planejamento",
+      modulo: "planejamento", icone: "planejamento", rotulo: "Planejamento",
       valor: critico ? "Caixa aperta" : `${net >= 0 ? "+" : ""}${formatarBRL(net)}`,
       valorClasse: critico ? "valor-neg" : (net < 0 ? "valor-neg" : "valor-pos"),
       valorEhDinheiro: !critico,
@@ -247,7 +319,7 @@ function renderizarGrade() {
 
   if (estadoDividas) {
     cartoes.push(cartaoHome({
-      modulo: "dividas", rotulo: "Dívidas",
+      modulo: "dividas", icone: "dividas", rotulo: "Dívidas",
       valor: estadoDividas.quantidadeAtivas === 0 ? "Zerado" : formatarBRL(estadoDividas.saldoTotalAtualCentavos),
       valorClasse: estadoDividas.quantidadeAtivas > 0 ? "valor-neg" : "valor-pos",
       valorEhDinheiro: estadoDividas.quantidadeAtivas > 0,
@@ -260,7 +332,7 @@ function renderizarGrade() {
   if (estadoRenda) {
     const deficit = estadoRenda.causaDeficit?.temDeficit;
     cartoes.push(cartaoHome({
-      modulo: "renda", rotulo: "Renda",
+      modulo: "renda", icone: "renda", rotulo: "Renda",
       valor: formatarBRL(estadoRenda.rendaAtualCentavos),
       valorClasse: deficit ? "valor-neg" : "valor-pos",
       valorEhDinheiro: true,
@@ -271,11 +343,11 @@ function renderizarGrade() {
   if (estadoPatrimonio) {
     const { liquidoCentavos } = estadoPatrimonio;
     cartoes.push(cartaoHome({
-      modulo: "patrimonio", rotulo: "Patrimônio",
+      modulo: "patrimonio", icone: "patrimonio", rotulo: "Patrimônio",
       valor: formatarBRL(liquidoCentavos),
       valorClasse: liquidoCentavos < 0 ? "valor-neg" : "valor-pos",
       valorEhDinheiro: true,
-      sub: "líquido — ativos menos passivos",
+      sub: "líquido: ativos menos passivos",
     }));
   }
 
@@ -283,7 +355,7 @@ function renderizarGrade() {
     const total = estadoObjetivos.objetivos.length;
     const noRitmo = estadoObjetivos.objetivos.filter((o) => o.compativel).length;
     cartoes.push(cartaoHome({
-      modulo: "objetivos", rotulo: "Objetivos",
+      modulo: "objetivos", icone: "objetivos", rotulo: "Objetivos",
       valor: total === 0 ? "Nenhum" : `${noRitmo}/${total}`,
       valorClasse: total > 0 && noRitmo < total ? "valor-neg" : "",
       valorEhDinheiro: false,
@@ -294,7 +366,7 @@ function renderizarGrade() {
   if (estadoDecisoes) {
     const qtd = estadoDecisoes.achadosPendentes.length;
     cartoes.push(cartaoHome({
-      modulo: "plano", rotulo: "Plano",
+      modulo: "plano", icone: "plano", rotulo: "Plano",
       valor: qtd === 0 ? "Em dia" : `${qtd} ${qtd === 1 ? "pendência" : "pendências"}`,
       valorClasse: qtd > 0 ? "valor-neg" : "valor-pos",
       valorEhDinheiro: false,

@@ -1,15 +1,22 @@
 /* Tokens de design — herdados do Painel GEDI (docs/ARQUITETURA.md, seção
-   "O que já está pronto"). Claro por padrão; escuro por preferência do
-   sistema OU por escolha explícita do viewer (dois seletores, de propósito:
-   ver o contrato de tema do artifact-design).
+   "O que já está pronto"). Estrutura de tema exigida pela plataforma de
+   artifact: valores claros em :root, escuros nos dois blocos abaixo (um
+   guardado por preferência de sistema, outro por escolha explícita via
+   data-theme) — é isso que faz o alternador da própria página funcionar
+   certo. Qual dos dois abre por padrão pra cada pessoa é decidido em
+   tema.js (Sprint 5): sem escolha salva, abre escuro.
 
    Sprint 2 (auditoria de UX/UI, pós-V1): troca do preto neutro por um roxo
-   de marca — referência Nubank/Next pedida pelo usuário — para o produto
-   parecer um app de fintech, não um painel genérico. `--accent` continua
+   de marca — referência Nubank pedida pelo usuário. `--accent` continua
    reservado para marca/interação (CTA, chip ativo, foco); `--good`/`--warn`/
-   `--danger` continuam sendo só sobre dinheiro (positivo/atenção/negativo) —
+   `--danger` continuam sendo só sobre dinheiro (positivo/atenção/negativo):
    as duas linguagens de cor não se misturam, senão "saldo negativo" e
-   "botão de marca" competem pelo mesmo vermelho ou pelo mesmo roxo. */
+   "botão de marca" competem pelo mesmo vermelho ou pelo mesmo roxo.
+
+   Sprint 5: paleta escura reconstruída pra parecer o app de verdade
+   (referência: print anexado pelo usuário) — preto quase puro, não o azul-
+   marinho de painel que tínhamos antes. É essa paleta que a maioria das
+   pessoas vê agora, então recebeu mais atenção de contraste que a clara. */
 :root {
   --bg: #F4F6FA;
   --surface: #FFFFFF;
@@ -37,47 +44,47 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0B1220;
-    --surface: #121A2B;
-    --surface-2: #182337;
-    --border: #26314A;
-    --text: #EAF0FB;
-    --text-muted: #9AA7BD;
-    --text-faint: #6C7891;
-    --ink: #F2F4F8;
-    --accent: #A78BFA;
-    --accent-ink: #1B1030;
-    --accent-soft: rgba(167, 139, 250, .16);
-    --good: #1FAE63;
-    --good-bg: rgba(31, 174, 99, .18);
+    --bg: #0A0A0D;
+    --surface: #18181D;
+    --surface-2: #222228;
+    --border: #2E2E36;
+    --text: #F5F5F7;
+    --text-muted: #ADADB6;
+    --text-faint: #7C7C86;
+    --ink: #FFFFFF;
+    --accent: #A855F7;
+    --accent-ink: #170B27;
+    --accent-soft: rgba(168, 85, 247, .18);
+    --good: #22C55E;
+    --good-bg: rgba(34, 197, 94, .16);
     --warn: #F5A524;
-    --warn-bg: rgba(245, 165, 36, .14);
+    --warn-bg: rgba(245, 165, 36, .16);
     --danger: #F5504F;
-    --danger-bg: rgba(245, 80, 79, .16);
-    --shadow: 0 2px 4px rgba(0, 0, 0, .35), 0 14px 32px -16px rgba(0, 0, 0, .6);
-    --nav-fade: rgba(0, 0, 0, .45);
+    --danger-bg: rgba(245, 80, 79, .18);
+    --shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 36px -18px rgba(0, 0, 0, .7);
+    --nav-fade: rgba(0, 0, 0, .65);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0B1220;
-  --surface: #121A2B;
-  --surface-2: #182337;
-  --border: #26314A;
-  --text: #EAF0FB;
-  --text-muted: #9AA7BD;
-  --text-faint: #6C7891;
-  --ink: #F2F4F8;
-  --accent: #A78BFA;
-  --accent-ink: #1B1030;
-  --accent-soft: rgba(167, 139, 250, .16);
-  --good: #1FAE63;
-  --good-bg: rgba(31, 174, 99, .18);
+  --bg: #0A0A0D;
+  --surface: #18181D;
+  --surface-2: #222228;
+  --border: #2E2E36;
+  --text: #F5F5F7;
+  --text-muted: #ADADB6;
+  --text-faint: #7C7C86;
+  --ink: #FFFFFF;
+  --accent: #A855F7;
+  --accent-ink: #170B27;
+  --accent-soft: rgba(168, 85, 247, .18);
+  --good: #22C55E;
+  --good-bg: rgba(34, 197, 94, .16);
   --warn: #F5A524;
-  --warn-bg: rgba(245, 165, 36, .14);
+  --warn-bg: rgba(245, 165, 36, .16);
   --danger: #F5504F;
-  --danger-bg: rgba(245, 80, 79, .16);
-  --shadow: 0 2px 4px rgba(0, 0, 0, .35), 0 14px 32px -16px rgba(0, 0, 0, .6);
-  --nav-fade: rgba(0, 0, 0, .45);
+  --danger-bg: rgba(245, 80, 79, .18);
+  --shadow: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 36px -18px rgba(0, 0, 0, .7);
+  --nav-fade: rgba(0, 0, 0, .65);
 }
 * { box-sizing: border-box; }
 body {
@@ -90,6 +97,10 @@ body {
   letter-spacing: -.005em;
 }
 .mono { font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace; font-variant-numeric: tabular-nums; }
+
+/* Ícones (Sprint 6): SVG embutido (src/ui/icones.js), herda a cor do texto
+   ao redor via currentColor — nunca precisa de uma cor escolhida aqui. */
+.icone { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 
 /* Modo de ocultar valores (§27) — aplicado a qualquer elemento com
    [data-valor], sem precisar recalcular nada: só borra visualmente. */

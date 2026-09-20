@@ -60,7 +60,7 @@ export function detectarAchados({
       titulo: "O dinheiro seguro para gastar está negativo",
       acaoSugerida: "Revisar despesas previstas ou adiar compromissos não essenciais.",
       impactoCentavos: Math.abs(clareza.seguroParaGastarCentavos),
-      origem: { tipo: "clareza_caixa", id: "seguro", rotulo: "Início — Dinheiro seguro para gastar" },
+      origem: { tipo: "clareza_caixa", id: "seguro", rotulo: "Início · Dinheiro seguro para gastar" },
       dados: { lancamentos: clareza.detalhes?.compromissos || [] },
     }));
   }
@@ -72,7 +72,7 @@ export function detectarAchados({
       titulo: "Sobra dinheiro livre depois do que já está comprometido",
       acaoSugerida: "Considerar reforçar a reserva ou adiantar uma parcela de dívida.",
       impactoCentavos: clareza.livreCentavos,
-      origem: { tipo: "clareza_caixa", id: "livre", rotulo: "Início — Livre" },
+      origem: { tipo: "clareza_caixa", id: "livre", rotulo: "Início · Livre" },
     }));
   }
 
@@ -87,7 +87,7 @@ export function detectarAchados({
       acaoSugerida: "Ajustar despesas previstas antes dessa data ou garantir uma entrada extra.",
       impactoCentavos: sc.gapCentavos,
       prazo: sc.data,
-      origem: { tipo: "projecao", id: "30d", rotulo: "Planejamento — Fluxo de caixa (30 dias)" },
+      origem: { tipo: "projecao", id: "30d", rotulo: "Planejamento · Fluxo de caixa (30 dias)" },
       dados: { lancamentos: sc.itens },
     }));
   }
@@ -115,7 +115,7 @@ export function detectarAchados({
     achados.push(achado({
       chave: "divida_em_risco", origemId: d.id, tipo: "risco", urgencia: "media",
       titulo: `Dívida marcada como em risco: ${d.nome}`,
-      acaoSugerida: "Acompanhar de perto — considerar renegociar antes que atrase.",
+      acaoSugerida: "Acompanhar de perto. Considerar renegociar antes que atrase.",
       origem: { tipo: "divida", id: d.id, rotulo: d.nome },
       dados: { lancamentos: [{ descricao: `Parcela de ${d.nome}`, valorCentavos: d.valorParcelaCentavos, data: dataProximoVencimento(d) }] },
     }));
@@ -224,7 +224,7 @@ export function detectarAchados({
         ? "Considerar direcionar o excedente para reserva ou dívida."
         : "Entender a causa da queda antes de ajustar despesas.",
       impactoCentavos: Math.abs(mudancaReceita.variacaoCentavos),
-      origem: { tipo: "renda", id: "mes_atual", rotulo: "Renda — mês atual" },
+      origem: { tipo: "renda", id: "mes_atual", rotulo: "Renda · mês atual" },
     }));
   }
 
@@ -235,7 +235,7 @@ export function detectarAchados({
       titulo: `A margem mensal caiu ${Math.abs(mudancaMargem.variacaoPercentual)}% em relação ao mês anterior`,
       acaoSugerida: "Revisar custo essencial e comprometimento com dívidas antes que a margem vire déficit.",
       impactoCentavos: Math.abs(mudancaMargem.variacaoCentavos),
-      origem: { tipo: "orcamento", id: "margem_atual", rotulo: "Renda — margem mensal" },
+      origem: { tipo: "orcamento", id: "margem_atual", rotulo: "Renda · margem mensal" },
     }));
   }
 
@@ -245,9 +245,9 @@ export function detectarAchados({
     achados.push(achado({
       chave: "divida_aumentou", origemId: "passivo_total", tipo: "risco", urgencia: "media",
       titulo: "O total de dívidas aumentou em relação ao mês anterior",
-      acaoSugerida: "Conferir se foi uma dívida nova ou uma reavaliação — e se isso está no plano.",
+      acaoSugerida: "Conferir se foi uma dívida nova ou uma reavaliação, e se isso está no plano.",
       impactoCentavos: relacaoPatrimonio.variacaoPassivoCentavos,
-      origem: { tipo: "patrimonio", id: "passivo_total", rotulo: "Patrimônio — passivos" },
+      origem: { tipo: "patrimonio", id: "passivo_total", rotulo: "Patrimônio · passivos" },
     }));
   }
 
@@ -256,9 +256,9 @@ export function detectarAchados({
     achados.push(achado({
       chave: "patrimonio_evoluiu_positivo", origemId: "patrimonio_liquido", tipo: "oportunidade", urgencia: "baixa",
       titulo: "Patrimônio líquido cresceu em relação ao mês anterior",
-      acaoSugerida: "Seguir no mesmo ritmo — considerar reforçar reserva ou objetivos.",
+      acaoSugerida: "Seguir no mesmo ritmo. Considerar reforçar reserva ou objetivos.",
       impactoCentavos: relacaoPatrimonio.variacaoPatrimonioCentavos,
-      origem: { tipo: "patrimonio", id: "patrimonio_liquido", rotulo: "Patrimônio — líquido" },
+      origem: { tipo: "patrimonio", id: "patrimonio_liquido", rotulo: "Patrimônio · líquido" },
     }));
   }
 

@@ -6,6 +6,7 @@ import { garantirEsquema } from "./dados/migrador.js";
 import { categorias } from "./dados/repositorios.js";
 import { categoriasSugeridas } from "./domain/esquema.js";
 import * as privacidade from "./ui/privacidade.js";
+import * as tema from "./ui/tema.js";
 import * as modal from "./ui/modal.js";
 import * as shell from "./ui/shell.js";
 
@@ -18,6 +19,7 @@ async function semearCategoriasSeVazio() {
 }
 
 async function iniciar() {
+  tema.inicializar();
   privacidade.inicializar();
   modal.religar();
 

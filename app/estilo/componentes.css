@@ -27,7 +27,7 @@
 }
 .topbar-actions { display: flex; align-items: center; gap: 10px; }
 .modo-local-badge {
-  font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600;
   padding: 4px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn);
   white-space: nowrap;
 }
@@ -67,10 +67,33 @@
 .modulo-chip:hover { border-color: var(--text-faint); }
 .modulo-chip.ativo { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .modulo-chip .badge-em-breve {
-  font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   padding: 1px 6px; border-radius: 999px; background: var(--surface-2); color: var(--text-faint);
 }
 .modulo-chip.ativo .badge-em-breve { background: rgba(255,255,255,.18); color: inherit; }
+
+/* ---- navegação inferior fixa (Sprint 7, referência Nubank pedida pelo
+   usuário): só em tela estreita. Em tela larga não faz sentido de uso
+   (mouse e espaço sobram), então o topo continua sendo a navegação —
+   as duas árvores existem sempre no DOM, só uma aparece por vez. ---- */
+.bottom-nav { display: none; }
+@media (max-width: 860px) {
+  .modulos-nav { display: none; }
+  .wrap { padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }
+  .bottom-nav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around; gap: 2px;
+  }
+}
+.bottom-nav-item {
+  flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; background: none; border: none; color: var(--text-faint); font-family: inherit;
+  font-size: 11.5px; font-weight: 700; padding: 6px 2px; border-radius: 12px; cursor: pointer;
+}
+.bottom-nav-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bottom-nav-item.ativo { color: var(--accent); }
 
 /* ---- fileira de sub-abas (dentro de um módulo, ou dentro de um modal) ---- */
 .subabas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -113,31 +136,82 @@
 .compromisso-desc { font-size: 14px; color: var(--text); }
 .compromisso-data { font-size: 12px; color: var(--text-faint); margin-top: 1px; }
 .compromisso-valor { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; color: var(--danger); white-space: nowrap; }
-.tag-atrasado { color: var(--danger); font-weight: 700; font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; margin-right: 6px; }
+.tag-atrasado { color: var(--danger); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; margin-right: 6px; }
 
-/* ---- Home como dashboard (Sprint 3): alerta do item mais urgente +
-   grade de cartões, um por módulo, pra ir clicando (referência Nubank) ---- */
-.home-alerta {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  width: 100%; text-align: left; font-family: inherit; cursor: pointer;
-  background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius);
-  padding: 14px 18px; margin-bottom: 4px;
+/* ---- Home como dashboard (Sprint 3, reformada no Sprint 8 pelo molde do
+   print do Nubank que o usuário anexou): zona roxa de topo com ações e um
+   banner flutuante, saldo em texto puro no corpo escuro (não mais dentro
+   de um cartão roxo), e grade de cartões com ícone, um por módulo. ---- */
+.home-topo-roxo {
+  background: var(--accent); color: var(--accent-ink);
+  margin: 0 -20px 18px; padding: 14px 20px 26px; border-radius: 0 0 24px 24px;
 }
-.home-alerta .titulo { font-weight: 700; font-size: 14px; color: var(--danger); }
-.home-alerta .sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+@media (min-width: 640px) {
+  .home-topo-roxo { margin: 0 0 18px; border-radius: var(--radius); padding: 16px 22px 26px; }
+}
+.home-topo-acoes { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
+.home-topo-acao {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255, 255, 255, .16); color: inherit; display: flex; align-items: center; justify-content: center;
+  transition: background .1s ease;
+}
+.home-topo-acao:hover { background: rgba(255, 255, 255, .26); }
+.home-banner-flutuante {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font-family: inherit; cursor: pointer;
+  background: var(--surface); color: var(--text); border: none; border-radius: 16px;
+  padding: 13px 15px; box-shadow: var(--shadow);
+}
+.home-banner-flutuante .icone-caixa {
+  width: 36px; height: 36px; border-radius: 10px; background: var(--danger-bg); color: var(--danger);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.home-banner-flutuante .titulo { font-weight: 700; font-size: 14px; }
+.home-banner-flutuante .sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+.home-saldo-rotulo {
+  display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; background: none; border: none; font-family: inherit; padding: 0; margin-bottom: 4px;
+}
+.home-saldo-rotulo .icone { transition: transform .1s ease; }
+.home-saldo-rotulo:hover .icone { transform: translateX(2px); }
+.home-saldo-valor {
+  font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: clamp(32px, 8vw, 44px);
+  letter-spacing: -.02em; color: var(--text);
+}
+.home-saldo-valor.negativo { color: var(--danger); }
+.home-saldo-sub { font-size: 13.5px; color: var(--text-muted); max-width: 56ch; margin-top: 6px; }
+
+.home-carrossel { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin: 18px 0 8px; }
+.home-carrossel::-webkit-scrollbar { display: none; }
+.home-carrossel-item {
+  scroll-snap-align: start; flex: 0 0 85%; background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  padding: 14px 16px; text-align: left; cursor: pointer; font-family: inherit; color: inherit;
+}
+@media (min-width: 640px) { .home-carrossel-item { flex-basis: 340px; } }
+.home-carrossel-item .titulo { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.home-carrossel-item .sub { font-size: 12.5px; color: var(--text-muted); }
+.home-carrossel-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
+.home-carrossel-dots button { width: 6px; height: 6px; padding: 0; border-radius: 50%; background: var(--border); border: none; cursor: pointer; }
+.home-carrossel-dots button.ativo { background: var(--accent); }
+
 .home-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
 @media (min-width: 720px) { .home-grid { grid-template-columns: repeat(3, 1fr); } }
 .home-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
   padding: 16px 18px; text-align: left; cursor: pointer; font-family: inherit;
-  display: flex; flex-direction: column; gap: 6px; min-height: 104px;
+  display: flex; flex-direction: column; gap: 6px; min-height: 108px;
   transition: border-color .1s ease;
 }
 .home-card:hover { border-color: var(--accent); }
+.home-card-icone {
+  width: 30px; height: 30px; border-radius: 9px; background: var(--accent-soft); color: var(--accent);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
+}
 .home-card-rotulo { font-size: 12px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; }
 .home-card-valor { font-weight: 700; font-size: 19px; margin-top: auto; }
 .home-card-sub { font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
 .home-card.destaque { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.home-card.destaque .home-card-icone { background: rgba(255, 255, 255, .18); color: inherit; }
 .home-card.destaque .home-card-rotulo,
 .home-card.destaque .home-card-sub { color: inherit; opacity: .82; }
 .home-card.destaque .home-card-valor { color: inherit; }
@@ -183,7 +257,7 @@
 .item-valor { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; white-space: nowrap; }
 .item-acoes { display: flex; gap: 6px; flex-shrink: 0; }
 .item-tag {
-  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
   background: var(--surface-2); color: var(--text-muted); white-space: nowrap;
 }
 .item-tag.inativa { background: var(--danger-bg); color: var(--danger); }
@@ -207,7 +281,7 @@
 }
 .fatura-linha:last-child { border-bottom: none; }
 .fatura-linha .rotulo { color: var(--text-muted); }
-.fatura-linha .rotulo small { display: block; color: var(--text-faint); font-size: 11.5px; margin-top: 1px; }
+.fatura-linha .rotulo small { display: block; color: var(--text-faint); font-size: 12.5px; margin-top: 1px; }
 .fatura-linha b { font-family: 'IBM Plex Mono', monospace; }
 
 /* ---- calendário financeiro (Planejamento, §6) ---- */
@@ -233,7 +307,7 @@
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
 }
 .calendario-cabecalho { margin-bottom: 6px; }
-.calendario-cabecalho span { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-faint); text-transform: uppercase; }
+.calendario-cabecalho span { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--text-faint); text-transform: uppercase; }
 .dia-celula {
   aspect-ratio: 1; border-radius: 9px; border: 1px solid transparent; background: var(--surface);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
@@ -269,7 +343,7 @@
 .horizonte-card:hover { border-color: var(--text-faint); }
 .horizonte-card.ativo { border-color: var(--accent); background: var(--accent-soft); }
 .horizonte-card .rotulo { font-weight: 700; font-size: 14px; color: var(--text); display: flex; align-items: center; gap: 6px; }
-.horizonte-card .funcao { font-size: 11.5px; color: var(--text-faint); }
+.horizonte-card .funcao { font-size: 12.5px; color: var(--text-faint); }
 .horizonte-card .net { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; }
 .horizonte-card .ponto-critico { width: 7px; height: 7px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
 .nota-incerto {
@@ -303,7 +377,7 @@
   padding: 14px 16px; margin-bottom: 10px;
 }
 .achado-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
-.achado-origem { font-size: 11.5px; color: var(--text-faint); }
+.achado-origem { font-size: 12.5px; color: var(--text-faint); }
 .achado-titulo { font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px; }
 .achado-acao-sugerida { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
 .achado-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -319,7 +393,7 @@
 }
 .historico-item:last-child { border-bottom: none; }
 .historico-item .rotulo { color: var(--text-muted); flex: 1; }
-.historico-item .status { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-faint); }
+.historico-item .status { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-faint); }
 
 /* ---- estado vazio ---- */
 .vazio {

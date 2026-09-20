@@ -106,10 +106,10 @@ export function calcularCompletude({ pessoas, contas, categorias, transacoes }) 
   if (!(pessoas || []).length) pendencias.push("Nenhuma pessoa cadastrada.");
   if (!(contas || []).length) pendencias.push("Nenhuma conta cadastrada.");
   if ((contas || []).length && !(contas || []).some((c) => c.ehReserva)) {
-    pendencias.push("Nenhuma conta marcada como reserva — a margem de segurança fica sem separação clara.");
+    pendencias.push("Nenhuma conta marcada como reserva. A margem de segurança fica sem separação clara.");
   }
   if ((categorias || []).length && !(categorias || []).some((c) => c.essencial)) {
-    pendencias.push("Nenhuma categoria marcada como essencial — a pressão de despesas fixas não pode ser calculada.");
+    pendencias.push("Nenhuma categoria marcada como essencial. A pressão de despesas fixas não pode ser calculada.");
   }
   const semCategoria = (transacoes || []).filter((t) => (t.tipo === "despesa" || t.tipo === "receita") && !t.categoriaId).length;
   if (semCategoria > 0) pendencias.push(`${semCategoria} lançamento${semCategoria > 1 ? "s" : ""} sem categoria.`);

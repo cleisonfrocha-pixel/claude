@@ -19,7 +19,7 @@ test("detectarAchados: seguro negativo vira problema de urgência alta, apontand
   assert.equal(a.tipo, "problema");
   assert.equal(a.urgencia, "alta");
   assert.equal(a.impactoCentavos, 30000);
-  assert.equal(a.origem.rotulo, "Início — Dinheiro seguro para gastar");
+  assert.equal(a.origem.rotulo, "Início · Dinheiro seguro para gastar");
 });
 
 test("detectarAchados: sem seguro negativo, nenhum problema de caixa aparece", () => {

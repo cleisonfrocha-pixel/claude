@@ -105,7 +105,7 @@ export async function criarTransferencia({ contaOrigemId, contaDestinoId, valorC
  * e a verificação de parcelamento no portão da Fase 1). */
 export async function criarParcelamento({ valorTotalCentavos, quantidade, data, tipo = "despesa", cartaoId, contaId, categoriaId, pessoaId, descricao }) {
   if (!Number.isFinite(valorTotalCentavos) || valorTotalCentavos <= 0) throw new ErroDeValidacao(["Informe um valor total maior que zero."]);
-  if (!Number.isInteger(quantidade) || quantidade < 2) throw new ErroDeValidacao(["Parcelamento precisa de 2 ou mais parcelas — para 1x, lance como transação simples."]);
+  if (!Number.isInteger(quantidade) || quantidade < 2) throw new ErroDeValidacao(["Parcelamento precisa de 2 ou mais parcelas. Para 1x, lance como transação simples."]);
   if (!cartaoId && !contaId) throw new ErroDeValidacao(["Escolha uma conta ou um cartão."]);
 
   const competenciaInicial = competenciaDeData(data);

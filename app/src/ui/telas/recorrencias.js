@@ -38,8 +38,8 @@ async function carregarContexto() {
   contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat };
 }
 
-function nomeConta(id) { return (contexto.contas.find((c) => c.id === id) || {}).dados?.nome || "—"; }
-function nomeCartao(id) { return (contexto.cartoes.find((c) => c.id === id) || {}).dados?.apelido || "—"; }
+function nomeConta(id) { return (contexto.contas.find((c) => c.id === id) || {}).dados?.nome || "-"; }
+function nomeCartao(id) { return (contexto.cartoes.find((c) => c.id === id) || {}).dados?.apelido || "-"; }
 function nomeCategoria(id) { return (contexto.categorias.find((c) => c.id === id) || {}).dados?.nome || null; }
 
 function opcoes(lista2, valorFn, rotuloFn) {
@@ -52,7 +52,7 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Recorrências</h2>
-        <p class="tela-sub">Compromissos mensais que geram lançamentos sozinhos. Pausar interrompe os próximos meses — o que já foi lançado continua.</p>
+        <p class="tela-sub">Compromissos mensais que geram lançamentos sozinhos. Pausar interrompe os próximos meses. O que já foi lançado continua.</p>
       </div>
     </div>
     <div class="lista-cartoes" id="lista-recorrencias"></div>
@@ -217,7 +217,7 @@ function confirmarApagar(id) {
   abrirModal(`
     <div class="modal">
       <h2>Apagar esta recorrência?</h2>
-      <p class="tela-sub" style="margin-bottom:20px;">Os lançamentos já gerados continuam existindo — só para de gerar novos meses. Não pode ser desfeito.</p>
+      <p class="tela-sub" style="margin-bottom:20px;">Os lançamentos já gerados continuam existindo. Só para de gerar novos meses. Não pode ser desfeito.</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" data-acao="cancelar">Cancelar</button>
         <button class="btn btn-primary" style="background:var(--danger);" data-acao="confirmar">Apagar</button>

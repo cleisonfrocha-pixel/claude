@@ -55,7 +55,7 @@ function renderizar() {
 
     <div class="tela-head" style="margin-top:0;">
       <div>
-        <h3 class="tela-titulo" style="font-size:17px;">${escapeHtml(h.rotulo)} — ${escapeHtml(h.funcao)}</h3>
+        <h3 class="tela-titulo" style="font-size:17px;">${escapeHtml(h.rotulo)} · ${escapeHtml(h.funcao)}</h3>
         <p class="tela-sub">${escapeHtml(h.pergunta)}</p>
       </div>
     </div>
@@ -65,8 +65,8 @@ function renderizar() {
           <div class="titulo">Saída crítica em ${escapeHtml(h.rotulo)}</div>
           <div class="texto">Em ${escapeHtml(formatarData(h.saidaCritica.data))}, o saldo seguro projetado fica negativo
             (<span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}</span>) por causa de
-            ${escapeHtml(h.saidaCritica.itens.map((i) => i.descricao).join(", "))}
-            — um gap de <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.gapCentavos)}</span>.</div>
+            ${escapeHtml(h.saidaCritica.itens.map((i) => i.descricao).join(", "))},
+            um gap de <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.gapCentavos)}</span>.</div>
         </div>`
       : `<div class="alerta-tudo-coberto">Nos próximos ${escapeHtml(h.rotulo.toLowerCase())}, o saldo seguro projetado não fica negativo.</div>`}
 

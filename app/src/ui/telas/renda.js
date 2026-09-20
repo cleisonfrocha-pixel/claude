@@ -45,9 +45,9 @@ function textoCausa(c) {
     case "gasto":
       return `O gasto do mês (<span data-valor>${formatarBRL(c.dados.custoAtualCentavos)}</span>) passou <span data-valor>${formatarBRL(c.dados.excedenteCentavos)}</span> do que a renda ou o essencial sustentam.`;
     case "divida":
-      return `Depois do essencial sobram <span data-valor>${formatarBRL(c.dados.sobraAposEssencial)}</span>, mas as parcelas de dívida somam <span data-valor>${formatarBRL(c.dados.comprometimentoMensalDividasCentavos)}</span> — faltam <span data-valor>${formatarBRL(c.dados.faltaCentavos)}</span>.`;
+      return `Depois do essencial sobram <span data-valor>${formatarBRL(c.dados.sobraAposEssencial)}</span>, mas as parcelas de dívida somam <span data-valor>${formatarBRL(c.dados.comprometimentoMensalDividasCentavos)}</span>. Faltam <span data-valor>${formatarBRL(c.dados.faltaCentavos)}</span>.`;
     case "timing":
-      return `O mês fecha no papel, mas o caixa está em <span data-valor>${formatarBRL(c.dados.seguroParaGastarCentavos)}</span> agora — é questão de datas, não de dinheiro insuficiente no total.`;
+      return `O mês fecha no papel, mas o caixa está em <span data-valor>${formatarBRL(c.dados.seguroParaGastarCentavos)}</span> agora. É questão de datas, não de dinheiro insuficiente no total.`;
     default:
       return "";
   }
@@ -61,7 +61,7 @@ function blocoCausaDeficit(cd) {
     <div class="alerta-cobertura">
       <div class="titulo">${cd.causas.length > 1 ? "Déficit por combinação de causas" : "Há déficit este mês"}</div>
       ${cd.causas.map((c) => `
-        <div class="texto" style="margin-top:6px;"><b>${escapeHtml(ROTULO_CAUSA[c.tipo])}</b> — ${escapeHtml(c.titulo)}. ${textoCausa(c)}</div>
+        <div class="texto" style="margin-top:6px;"><b>${escapeHtml(ROTULO_CAUSA[c.tipo])}</b>: ${escapeHtml(c.titulo)}. ${textoCausa(c)}</div>
       `).join("")}
       ${!cd.causas.length ? `<div class="texto">O caixa fechou negativo por uma margem pequena, sem uma causa específica se destacar.</div>` : ""}
     </div>`;
@@ -104,7 +104,7 @@ function detalheFonte(f, painel) {
 }
 
 function linhaGap(rotulo, gapCentavos) {
-  if (gapCentavos == null) return `<div class="resumo-item"><span>${escapeHtml(rotulo)}</span><b class="mono" data-valor>—</b></div>`;
+  if (gapCentavos == null) return `<div class="resumo-item"><span>${escapeHtml(rotulo)}</span><b class="mono" data-valor>-</b></div>`;
   return `<div class="resumo-item"><span>${escapeHtml(rotulo)}</span><b class="mono ${gapCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(gapCentavos)}</b></div>`;
 }
 
@@ -142,7 +142,7 @@ function renderizar() {
         </div>
       </div>
       <div class="vazio">
-        Ainda não há nenhuma fonte de renda nem transação cadastrada — sem isso não dá para calcular gap, margem ou causa de déficit.
+        Ainda não há nenhuma fonte de renda nem transação cadastrada. Sem isso não dá para calcular gap, margem ou causa de déficit.
         <div><button class="btn btn-primary" data-acao="nova-fonte">+ Nova fonte de renda</button></div>
       </div>`;
     container.querySelector('[data-acao="nova-fonte"]').addEventListener("click", () => abrirFormularioFonte(null));
@@ -170,7 +170,7 @@ function renderizar() {
     <div class="lista-cartoes" id="lista-fontes" style="margin-bottom:20px;"></div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Os três gaps</h3>
-      <p class="tela-sub">Renda atual menos cada patamar de custo — positivo é sobra, negativo é falta</p></div></div>
+      <p class="tela-sub">Renda atual menos cada patamar de custo. Positivo é sobra, negativo é falta</p></div></div>
     <div class="resumo-mes">
       ${linhaGap("Contra o essencial", gaps.gapEssencialCentavos)}
       ${linhaGap("Contra o custo desejado", gaps.gapDesejadoCentavos)}
@@ -182,7 +182,7 @@ function renderizar() {
       </div>` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Metas</h3>
-      <p class="tela-sub">Custo de vida desejado e meta de recuperação — só você define, o sistema nunca inventa</p></div></div>
+      <p class="tela-sub">Custo de vida desejado e meta de recuperação. Só você define, o sistema nunca inventa</p></div></div>
     <div class="simulador-linha" style="margin-bottom:10px;">
       <div class="field"><label for="input-custo-desejado">Custo de vida desejado</label>
         <input type="text" inputmode="decimal" id="input-custo-desejado" placeholder="0,00" value="${metas.custoDesejadoCentavos != null ? formatarBRL(metas.custoDesejadoCentavos).replace("R$ ", "") : ""}"></div>
@@ -195,7 +195,7 @@ function renderizar() {
     </div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Custos e margem</h3>
-      <p class="tela-sub">§13 — orçamento como instrumento de clareza, não uma prisão</p></div></div>
+      <p class="tela-sub">Orçamento como instrumento de clareza, não uma prisão (§13)</p></div></div>
     <div class="resumo-mes">
       <div class="resumo-item"><span>Custo essencial</span><b class="mono" data-valor>${formatarBRL(custos.essencialCentavos)}</b></div>
       <div class="resumo-item"><span>Custo atual</span><b class="mono" data-valor>${formatarBRL(custos.atualCentavos)}</b></div>

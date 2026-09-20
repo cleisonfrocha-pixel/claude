@@ -165,6 +165,6 @@ function renderizarDetalhe() {
           <span class="rotulo">${item.atrasado ? '<span class="tag-atrasado">Atrasado</span>' : ""}${escapeHtml(item.descricao)}<small>${escapeHtml(ROTULO_TIPO[item.tipo] || item.tipo)}</small></span>
           <b class="${item.tipo === "receita" ? "valor-pos" : "valor-neg"}" data-valor>${item.tipo === "receita" ? "+" : "−"}${formatarBRL(item.valorCentavos)}</b>
         </div>`).join("")}
-      ${!info.coberto ? `<div class="erro-form" style="margin-top:10px;">Saldo projetado negativo neste dia — obrigação sem cobertura suficiente.</div>` : ""}
+      ${!info.coberto ? `<div class="erro-form" style="margin-top:10px;">Saldo projetado negativo neste dia: obrigação sem cobertura suficiente.</div>` : ""}
     </div>`;
 }

@@ -51,10 +51,10 @@ async function carregarContexto() {
   contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat, faturas: fa, fontesRenda: fr };
 }
 
-function nomePessoa(id) { return (contexto.pessoas.find((p) => p.id === id) || {}).dados?.nome || "—"; }
-function nomeConta(id) { return (contexto.contas.find((c) => c.id === id) || {}).dados?.nome || "—"; }
-function nomeCartao(id) { return (contexto.cartoes.find((c) => c.id === id) || {}).dados?.apelido || "—"; }
-function nomeCategoria(id) { return (contexto.categorias.find((c) => c.id === id) || {}).dados?.nome || "—"; }
+function nomePessoa(id) { return (contexto.pessoas.find((p) => p.id === id) || {}).dados?.nome || "-"; }
+function nomeConta(id) { return (contexto.contas.find((c) => c.id === id) || {}).dados?.nome || "-"; }
+function nomeCartao(id) { return (contexto.cartoes.find((c) => c.id === id) || {}).dados?.apelido || "-"; }
+function nomeCategoria(id) { return (contexto.categorias.find((c) => c.id === id) || {}).dados?.nome || "-"; }
 
 function opcoes(lista2, valorFn, rotuloFn) {
   return lista2.map((i) => ({ valor: valorFn(i), rotulo: rotuloFn(i) }));
@@ -71,7 +71,7 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Transações</h2>
-        <p class="tela-sub">Toda movimentação — receitas, despesas, transferências, parceladas e recorrências.</p>
+        <p class="tela-sub">Toda movimentação: receitas, despesas, transferências, parceladas e recorrências.</p>
       </div>
       <button class="btn btn-primary" id="btn-nova-transacao">+ Nova transação</button>
     </div>
@@ -140,7 +140,7 @@ function linhaTransacao(item) {
   let subTransferencia = destino;
   if (d.tipo === "transferencia") {
     const par = lista.find((t) => t.id !== item.id && t.dados.transferenciaId === d.transferenciaId);
-    const contraparte = par ? nomeConta(par.dados.contaId) : "—";
+    const contraparte = par ? nomeConta(par.dados.contaId) : "-";
     subTransferencia = d.direcao === "saida" ? `${destino} → ${contraparte}` : `${contraparte} → ${destino}`;
   }
   const sub = [tempo.formatarData(d.data), subTransferencia, d.categoriaId ? nomeCategoria(d.categoriaId) : null].filter(Boolean).join(" · ");
@@ -548,7 +548,7 @@ function renderCamposModo(modo) {
       <div id="r-categoria-wrap">${campoCategoria("r", "despesa")}</div>
       ${campoPessoa("r")}
       <div class="field"><label for="r-descricao">Descrição</label><input type="text" id="r-descricao" placeholder="Ex.: Aluguel" required></div>
-      <p class="tela-sub" style="margin-top:-4px; margin-bottom:14px;">Isto cadastra um compromisso mensal — o sistema já gera os próximos lançamentos como "previsto".</p>`;
+      <p class="tela-sub" style="margin-top:-4px; margin-bottom:14px;">Isto cadastra um compromisso mensal. O sistema já gera os próximos lançamentos como "previsto".</p>`;
     ligarAlternanciaOnde("r");
     document.querySelectorAll('input[name="r-tipo"]').forEach((r) => {
       r.addEventListener("change", () => { document.getElementById("r-categoria-wrap").innerHTML = campoCategoria("r", r.value); });
@@ -557,7 +557,7 @@ function renderCamposModo(modo) {
   }
   if (modo === "pagamento_fatura") {
     const abertas = contexto.faturas.filter((f) => f.dados.status !== "paga");
-    const faturasOpts = abertas.map((f) => ({ valor: f.id, rotulo: `${nomeCartao(f.dados.cartaoId)} — ${tempo.competenciaLabel(f.dados.competencia)}` }));
+    const faturasOpts = abertas.map((f) => ({ valor: f.id, rotulo: `${nomeCartao(f.dados.cartaoId)} · ${tempo.competenciaLabel(f.dados.competencia)}` }));
     const contasOpts = opcoes(contexto.contas.filter((c) => c.dados.status === "ativa"), (c) => c.id, (c) => c.dados.nome);
     if (!faturasOpts.length) {
       alvo.innerHTML = `<div class="vazio">Nenhuma fatura em aberto ainda. Uma fatura nasce automaticamente quando você lança uma despesa num cartão.</div>`;
@@ -637,7 +637,7 @@ async function onSubmitTransacao(ev) {
         pessoaId: document.getElementById("r-pessoa").value,
         inicio: tempo.competenciaAtual(),
       });
-      mostrarToast("Recorrência criada — os próximos meses já foram provisionados.");
+      mostrarToast("Recorrência criada. Os próximos meses já foram provisionados.");
     } else if (modo === "pagamento_fatura") {
       await registrarPagamentoFatura({
         faturaId: document.getElementById("f-fatura").value,

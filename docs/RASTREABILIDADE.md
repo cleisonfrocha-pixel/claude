@@ -692,3 +692,117 @@ Planejamento (Calendário — dia de hoje com tinta roxa — e Fluxo de caixa
 — horizonte ativo com tinta roxa), Renda, Objetivos, Plano e os modais de
 cadastro: tudo consistente, nada preso ao visual antigo. Fecha o plano de
 4 sprints aberto após a auditoria de UX/UI.
+
+---
+
+## Pós-Sprint 4: segunda leva de ajustes visuais (referência Nubank Empresas)
+
+O usuário anexou um print do app de verdade do Nubank Empresas e pediu que
+o produto chegasse mais perto dele: tema escuro como identidade (não só
+claro com um fallback de sistema), ícones em vez de só texto, navegação
+inferior fixa (não a fileira de chips grande no topo), textos maiores e
+sem travessão. Virou um plano de 6 sprints (5 a 10), executado inteiro
+numa sessão a pedido do usuário ("Pode iniciar").
+
+### Sprint 5 — tema escuro como identidade principal — ✅ (20/09/2026)
+
+A estrutura de tema exigida pela plataforma de artifact (`:root` claro,
+escuro nos blocos guardados por `prefers-color-scheme`/`data-theme`) foi
+mantida — é o que faz o alternador funcionar certo — mas qual tema abre
+por padrão passou a ser decisão nossa, não só do sistema operacional de
+quem acessa.
+
+- `src/ui/tema.js` (novo, mesmo padrão de `privacidade.js`): sem escolha
+  salva em localStorage, abre escuro. Quem prefere claro troca em
+  Preferências e a escolha persiste por aparelho.
+- Script inline no topo de `index.html`, antes de qualquer CSS: lê a
+  mesma chave de localStorage e já marca `data-theme` no documento antes
+  da primeira pintura, para não haver flash de tema errado.
+- Paleta escura reconstruída em `estilo/tokens.css`: preto quase puro
+  (`#0A0A0D`) no lugar do azul-marinho de painel que tínhamos antes,
+  roxo mais vívido (`#A855F7`) para ficar legível sobre o preto.
+- Nova linha em Preferências para trocar de tema a qualquer momento.
+- Testado com Playwright: abre escuro por padrão, alternar pra claro
+  funciona e sobrevive a um recarregamento (localStorage). 262 testes do
+  motor passando (mudança é só de tema/CSS).
+
+### Sprint 6 — sistema de ícones SVG inline — ✅ (20/09/2026)
+
+`src/ui/icones.js` (novo): ~25 ícones de traço (24×24, `currentColor`)
+desenhados no próprio projeto, cobrindo os módulos de navegação e as
+ações mais comuns (olho/ocultar valores, ajuda, perfil, editar, apagar,
+alerta etc.). Nenhuma fonte de ícone nem pacote externo: só scripts de
+cdnjs/jsdelivr são permitidos pelo CLAUDE.md, e um SVG embutido é arquivo
+nosso, da mesma origem. Verificado visualmente antes de integrar em
+qualquer tela (grade isolada com todos os ícones lado a lado) — inclusive
+corrigiu de saída um ícone de "dívidas" que, copiado do de "renda", tinha
+saído com a seta apontando pro lado errado (subindo, não descendo).
+
+### Sprint 7 — navegação inferior fixa (bottom tab bar) — ✅ (20/09/2026)
+
+Pedido direto do usuário: "o menu fica na parte inferior, não aquele...
+gigante" (referindo-se à fileira de chips rolável que ocupava o topo no
+celular). `src/ui/shell.js` ganhou uma segunda árvore de navegação:
+
+- Barra fixa embaixo (só abaixo de 860px de largura): Início, Dinheiro,
+  Planejamento, Plano e um "Mais" que abre uma folha (reaproveita o modal
+  existente) com os módulos secundários (Dívidas, Renda, Patrimônio,
+  Objetivos, Open Finance, IA, Configurações) — mesmo padrão do app de
+  banco de verdade, que também não cabe tudo em 5 ícones.
+- Acima de 860px, o topo continua com todos os 11 módulos — uma barra
+  fixa embaixo não faz sentido de uso em tela larga (mouse e espaço
+  sobram) — só que agora com ícone em cada chip.
+- As duas árvores existem sempre no DOM (uma função `renderizarNavegacao`
+  atualiza as duas juntas); o CSS decide qual aparece, então trocar de
+  módulo mantém o estado ativo sincronizado nas duas, sem duplicar lógica.
+- Testado com Playwright: clique na barra inferior navega certo, "Mais"
+  abre e navega certo, e o estado ativo da barra inferior reflete quando
+  o módulo aberto é um dos secundários (mostra "Mais" destacado).
+
+### Sprint 8 — Home no molde do print do Nubank — ✅ (20/09/2026)
+
+Reestruturação da Home seguindo a ordem visual do print anexado: zona
+roxa no topo com ações rápidas e um item flutuando por cima, corpo escuro
+com o saldo em texto puro (não mais dentro de um cartão roxo — o roxo
+virou só a faixa de cima), e a grade de cartões do Sprint 3 ganhando
+ícone em cada um.
+
+- `.home-topo-roxo`: ícones de "ocultar valores" (liga de verdade
+  `privacidade.alternar()`, com o ícone trocando de olho aberto/fechado
+  na hora) e "configurações" (atalho pra tela).
+- `.home-banner-flutuante`: o achado mais urgente (só quando existe um de
+  urgência alta de verdade), num cartão claro flutuando sobre o roxo —
+  o mesmo padrão do banner "Pagar DAS" do print.
+- Saldo em texto puro, direto no fundo escuro, sem cartão ao redor.
+- `.home-carrossel`: os próximos achados (até 3, descontado o que já
+  virou banner), em scroll-snap nativo com bolinhas de paginação
+  clicáveis e sincronizadas com o arrasto — sem biblioteca nenhuma.
+- Testado com Playwright: banner aparece só quando há urgência real
+  (forçado com uma despesa grande deixando o caixa negativo), ícone de
+  olho borra os valores certos e mantém rótulos de status legíveis,
+  mobile e desktop, claro e escuro. 262 testes passando (nenhuma função
+  de domínio mudou de assinatura).
+
+### Sprint 9 — revisão de texto sem travessão — ✅ (20/09/2026)
+
+Passada em toda a interface (telas e o texto gerado pelo motor que chega
+até a tela — pendências de completude, rótulos de origem dos achados,
+mensagens de validação) trocando travessão por frases diretas: ponto,
+dois-pontos ou vírgula, o que couber melhor em cada frase. Rótulos de
+navegação tipo "Início — Dinheiro seguro para gastar" viraram
+"Início · Dinheiro seguro para gastar" (ponto médio, não travessão).
+Valores de reposição para campo vazio (contraparte de transferência sem
+par, data de quitação sem dívida) trocaram de "—" para "-" (hífen simples,
+tecnicamente não é travessão). Tamanhos de texto secundário abaixo de
+12px (badges, tags, legendas) subiram um degrau para ficarem mais
+legíveis. Um teste (`decisoes.test.js`) tinha uma asserção presa ao texto
+antigo com travessão — atualizado junto. 262 testes passando.
+
+### Sprint 10 — verificação e publicação do redesign — ✅ (20/09/2026)
+
+Varredura final com Playwright em desktop e mobile, claro e escuro, todas
+as telas principais e a barra inferior/"Mais": sem erros de console, sem
+regressão visual. 262 testes do motor passando. Commit, push, artefato
+republicado e esta seção do `docs/RASTREABILIDADE.md` escrita como parte
+do mesmo commit. Fecha os 6 sprints (5–10) da segunda leva de ajustes
+visuais pedida pelo usuário depois de ver o print do Nubank Empresas.

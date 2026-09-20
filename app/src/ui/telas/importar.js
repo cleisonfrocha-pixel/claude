@@ -106,7 +106,7 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Importar</h2>
-        <p class="tela-sub">Cole um extrato (CSV ou OFX) — nada é gravado até você revisar e confirmar. §18</p>
+        <p class="tela-sub">Cole um extrato (CSV ou OFX). Nada é gravado até você revisar e confirmar (§18)</p>
       </div>
     </div>
 
@@ -141,13 +141,13 @@ function renderizar() {
 
     ${candidatos ? `
       <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Revisão</h3>
-        <p class="tela-sub">${candidatos.length} linha${candidatos.length === 1 ? "" : "s"} encontrada${candidatos.length === 1 ? "" : "s"} — desmarque o que não deve entrar</p></div></div>
+        <p class="tela-sub">${candidatos.length} linha${candidatos.length === 1 ? "" : "s"} encontrada${candidatos.length === 1 ? "" : "s"}. Desmarque o que não deve entrar</p></div></div>
       <div id="imp-lista-candidatos">${candidatos.map((c, i) => linhaCandidato(c, i)).join("")}</div>
       <button class="btn btn-primary" id="imp-confirmar" style="margin-top:12px;">Confirmar importação</button>
     ` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Já importado</h3>
-      <p class="tela-sub">Histórico dos lotes — o texto original fica guardado, mesmo que os lançamentos sejam editados depois</p></div></div>
+      <p class="tela-sub">Histórico dos lotes. O texto original fica guardado, mesmo que os lançamentos sejam editados depois</p></div></div>
     ${blocoLotes()}
   `;
 
