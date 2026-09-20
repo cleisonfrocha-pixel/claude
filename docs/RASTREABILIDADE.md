@@ -677,7 +677,18 @@ pra abrir o app e agir.
   cartão). 262 testes do motor passando (mudança é só de tela — nenhuma
   função de domínio mudou de assinatura).
 
-### Sprint 4 — pendente
+### Sprint 4 — propagar o visual para as demais telas — ✅ (20/09/2026)
 
-Propagar ajustes finos do novo visual, ponto a ponto, para as demais
-telas segue no plano.
+Nenhuma mudança de código necessária — e isso é o resultado esperado, não
+um atalho: o Sprint 2 foi feito como sistema de tokens (`estilo/tokens.css`
++ `estilo/componentes.css`), não como retoque tela por tela, então toda
+tela que já usava as classes compartilhadas (`.item-cartao`, `.btn`,
+`.modulo-chip`, `.field input`, `.resumo-item`, `.horizonte-card` etc.)
+herdou o roxo, os cantos mais arredondados e as tags em pill sozinha.
+Confirmado com `grep` (zero cor em hexadecimal ou `style="...color/
+background"` fora de `var(--...)` em qualquer tela) e com Playwright,
+varrendo Dinheiro (Transações/Recorrências/Contas/Cartões), Dívidas,
+Planejamento (Calendário — dia de hoje com tinta roxa — e Fluxo de caixa
+— horizonte ativo com tinta roxa), Renda, Objetivos, Plano e os modais de
+cadastro: tudo consistente, nada preso ao visual antigo. Fecha o plano de
+4 sprints aberto após a auditoria de UX/UI.
