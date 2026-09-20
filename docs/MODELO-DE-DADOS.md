@@ -121,18 +121,37 @@ recalcular anos de histórico a cada abertura.
 ## Inteligência — Fases 7 e 10
 
 ```
-diagnosticos/<id>   { competencia, indicadores, geradoEm }
-decisoes/<id>       { tipoItem, titulo, descricao, severidade, impactoEstimado,
-                      prazo, origemTipo, origemIds, status, historico[] }
-alertas/<id>        { tipo, severidade, titulo, explicacao, dadosDeOrigem[],
-                      competencia, status, criadoEm }
+decisoes/<id>  { status, chave, tipo, titulo, origemRotulo, impactoCentavos,
+                 prazo, decididoEm }
 ```
-`origemIds` / `dadosDeOrigem` não são opcionais: o §9 exige cada ação ligada ao
-problema que a originou, e o §17 exige que todo alerta mostre os dados que o
-sustentam. Sem esses campos, o produto vira palpite.
 
-`tipoItem`: `problema | risco | oportunidade | acao` (§9)
-`status`: `aberto | resolvido | ignorado | adiado | cancelado` (§9)
+Nenhuma coleção `diagnosticos`: o diagnóstico do §8 (`domain/diagnostico.js`)
+é recalculado do zero a cada leitura, a partir dos painéis que já existem
+(clareza de caixa, dívidas, transações) — não há indicador nenhum gravado.
+
+`decisoes` também não guarda o achado inteiro, só a disposição do usuário
+sobre ele — o achado em si (`domain/decisoes.js`, `detectarAchados`) é
+recalculado ao vivo enquanto está pendente; a existência de um documento
+aqui, com `status !== "pendente"`, é o que tira um achado da lista de
+pendentes e o coloca no histórico. `id` do documento é o **mesmo id do
+achado** (determinístico, ex.: `divida_atrasada:<dividaId>`), nunca um id
+gerado à parte — é o que faz a disposição persistir sobre o achado certo
+mesmo depois de recalculado. Apagar o documento (`reabrirDecisao`) devolve
+o achado aos pendentes.
+
+`status`: `pendente` (implícito — ausência de documento) `| resolvida |
+ignorada | adiada | cancelada` (§9)
+
+Guardar essa disposição não fere "nada de total gravado" (CLAUDE.md): não é
+um saldo nem um indicador, é o registro de uma decisão tomada — um fato
+histórico, como uma transação. `origemRotulo`/`impactoCentavos`/`prazo`
+são um retrato do achado no momento da decisão, para o histórico continuar
+legível mesmo se o achado que o originou não existir mais (ex.: a dívida
+que motivou o achado foi quitada).
+
+Nenhuma coleção `alertas` ainda: o §17 (Anomalias e inteligência de
+comportamento) é Fase 10, com histórico suficiente para julgar "anormal"
+de verdade — é o lugar certo para essa coleção nascer.
 
 ## Conexões e sistema — Fases 11, 12 e 15
 

@@ -1,27 +1,28 @@
-// Início — o bloco Dinheiro do §25, entregue pela Fase 2. Responde à
-// pergunta central do §4: "Quanto eu posso gastar sem criar um problema
-// mais adiante?" — com um número, e esse número explicável linha a linha
-// (o portão da fase), não uma caixa preta.
-//
-// Situação, próximas ações, dívidas e patrimônio (os outros blocos do §25)
-// chegam nas Fases 6, 7 e 9 — por enquanto o Início é só o painel de
-// dinheiro mais um lembrete de quem ainda falta cadastrar.
+// Início — os seis blocos do §25. "Como está minha vida financeira agora?"
+// em poucos segundos. Patrimônio (o último bloco) só chega na Fase 9 — os
+// outros cinco (Dinheiro, Situação, Próximas ações, Fluxo, Dívidas) já
+// estão todos aqui.
 
 import { pessoas, contas, dividas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
 import { assinarProjecao } from "../../dados/projecaoRepo.js";
+import { assinarPainelDecisoes } from "../../dados/decisoesRepo.js";
 import { calcularVisaoConsolidada } from "../../domain/dividas.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 
 const HORIZONTE_DIAS = 30;
+const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
+const CLASSE_URGENCIA = { alta: "critico", media: "atencao", baixa: "" };
 
 let pararAssinatura = null;
 let pararAssinaturaProjecao = null;
 let pararAssinaturaDividas = null;
+let pararAssinaturaDecisoes = null;
 let estadoProjecao = null;
 let estadoDividas = null;
+let estadoDecisoes = null;
 let container = null;
 
 function itemContador(rotulo, valor, sub) {
@@ -65,13 +66,23 @@ export default {
       estadoDividas = calcularVisaoConsolidada(dividasComId, hojeISO());
       renderizarDividasResumo();
     });
+
+    if (pararAssinaturaDecisoes) pararAssinaturaDecisoes();
+    estadoDecisoes = null;
+    pararAssinaturaDecisoes = assinarPainelDecisoes((r) => {
+      estadoDecisoes = r;
+      renderizarSituacaoResumo();
+      renderizarProximasAcoesResumo();
+    });
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
     if (pararAssinaturaProjecao) { pararAssinaturaProjecao(); pararAssinaturaProjecao = null; }
     if (pararAssinaturaDividas) { pararAssinaturaDividas(); pararAssinaturaDividas = null; }
+    if (pararAssinaturaDecisoes) { pararAssinaturaDecisoes(); pararAssinaturaDecisoes = null; }
     estadoProjecao = null;
     estadoDividas = null;
+    estadoDecisoes = null;
     container = null;
   },
 };
@@ -144,6 +155,14 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
       <p class="tela-sub">O que está pressionando o caixa nos próximos ${HORIZONTE_DIAS} dias</p></div></div>
     <div id="compromissos-detalhe"></div>
 
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Situação</h3>
+      <p class="tela-sub">Estado do caixa e o principal risco ou pressão agora — §8/§9</p></div></div>
+    <div id="situacao-home"></div>
+
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Próximas ações</h3>
+      <p class="tela-sub">O que merece sua atenção agora — §9</p></div></div>
+    <div id="proximas-acoes-home"></div>
+
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Fluxo de caixa</h3>
       <p class="tela-sub">Entradas e saídas projetadas — os quatro horizontes do §7</p></div></div>
     <div id="fluxo-caixa-home"></div>
@@ -182,6 +201,71 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
 
   renderizarFluxoResumo();
   renderizarDividasResumo();
+  renderizarSituacaoResumo();
+  renderizarProximasAcoesResumo();
+}
+
+function renderizarSituacaoResumo() {
+  if (!container) return;
+  const alvo = container.querySelector("#situacao-home");
+  if (!alvo) return;
+
+  if (!estadoDecisoes) {
+    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
+    return;
+  }
+
+  const { diagnostico, achadosPendentes } = estadoDecisoes;
+  const negativo = diagnostico.estadoCaixa.seguroParaGastarCentavos < 0;
+  const principal = achadosPendentes[0];
+
+  alvo.innerHTML = `
+    <div class="divida-resumo" style="margin-bottom:0;">
+      <div class="diagnostico-linha">
+        <div class="rotulo">Estado do caixa</div>
+        <div class="texto">${negativo
+          ? `Negativo: falta ${formatarBRL(Math.abs(diagnostico.estadoCaixa.seguroParaGastarCentavos))} para cobrir o que já está comprometido.`
+          : `${formatarBRL(diagnostico.estadoCaixa.seguroParaGastarCentavos)} seguros para gastar.`}</div>
+      </div>
+      <div class="diagnostico-linha" style="border-bottom:none;">
+        <div class="rotulo">Principal risco ou pressão</div>
+        <div class="texto">${principal ? escapeHtml(principal.titulo) : "Nenhum problema ou risco identificado agora."}</div>
+      </div>
+    </div>`;
+}
+
+function renderizarProximasAcoesResumo() {
+  if (!container) return;
+  const alvo = container.querySelector("#proximas-acoes-home");
+  if (!alvo) return;
+
+  if (!estadoDecisoes) {
+    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
+    return;
+  }
+
+  const topAchados = estadoDecisoes.achadosPendentes.slice(0, 3);
+  if (!topAchados.length) {
+    alvo.innerHTML = `<div class="vazio">Nada pedindo atenção agora.</div>`;
+    return;
+  }
+
+  alvo.innerHTML = `<div class="lista-cartoes" data-ir-plano>` +
+    topAchados.map((a) => `
+      <button class="item-cartao" style="width:100%;text-align:left;cursor:pointer;font:inherit;">
+        <div class="item-corpo">
+          <div class="item-titulo">${escapeHtml(a.titulo)}</div>
+          <div class="item-sub">${escapeHtml(a.acaoSugerida)}</div>
+        </div>
+        <span class="item-tag${CLASSE_URGENCIA[a.urgencia] ? " " + CLASSE_URGENCIA[a.urgencia] : ""}">${ROTULO_URGENCIA[a.urgencia]}</span>
+      </button>`).join("") +
+    `</div>`;
+
+  alvo.querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelector('[data-modulo="plano"]')?.click();
+    });
+  });
 }
 
 function renderizarDividasResumo() {

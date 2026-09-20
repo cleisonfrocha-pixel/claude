@@ -16,6 +16,7 @@ import telaCategorias from "./telas/categorias.js";
 import telaPreferencias from "./telas/preferencias.js";
 import telaPlanejamento from "./telas/planejamento.js";
 import telaDividas from "./telas/dividas.js";
+import telaPlano from "./telas/plano.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
@@ -56,11 +57,7 @@ const MODULOS = [
       itens: "Metas de curto, médio e longo prazo, com verificação de compatibilidade com a margem disponível.",
       faseRef: "Fase 9",
     }), emBreve: true },
-  { id: "plano", rotulo: "Plano", tela: criarTelaPlaceholder({
-      titulo: "Plano", descricao: "Diagnóstico, central de decisões e plano vivo.",
-      itens: "O que está causando a pressão financeira, o que precisa de atenção agora, e o plano que se atualiza sozinho.",
-      faseRef: "Fase 7",
-    }), emBreve: true },
+  { id: "plano", rotulo: "Plano", tela: telaPlano },
   { id: "openfinance", rotulo: "Open Finance", tela: criarTelaPlaceholder({
       titulo: "Open Finance", descricao: "Conexão automática com instituições financeiras.",
       itens: "É a única fase que depende de um provedor pago e infraestrutura fora deste painel — ver docs/ARQUITETURA.md, D4.",

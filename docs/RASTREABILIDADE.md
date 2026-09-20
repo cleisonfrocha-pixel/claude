@@ -14,9 +14,9 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 5 | Cartões e crédito | P0 | F3 | ● |
 | 6 | Contas, obrigações e calendário | P0 | F4 | ● |
 | 7 | Fluxo de caixa e projeção | P0 | F5 | ● |
-| 8 | Diagnóstico financeiro | P0 | F7 | ○ |
-| 9 | Central de decisões | P0 | F7 | ○ |
-| 10 | Plano financeiro vivo | P0 | F7 | ○ |
+| 8 | Diagnóstico financeiro | P0 | F7 | ● |
+| 9 | Central de decisões | P0 | F7 | ● |
+| 10 | Plano financeiro vivo | P0 | F7 | ● |
 | 11 | Dívidas e plano de saída | P0 | F6 | ● |
 | 12 | Renda e gap de renda | P1 | F8 | ○ |
 | 13 | Custos essenciais, orçamento e margem | P1 | F8 | ○ |
@@ -35,7 +35,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 26 | Navegação e módulos | P0 | F0 | ● |
 | 27 | Funções de qualidade de vida | P2 | F0 (ocultar), F15 | ◐ |
 | 28 | O que NÃO deve ser prioridade | P3 | fora da V1, registrado | ● |
-| 29 | Critérios de sucesso — 14 perguntas | P0 | portão em F7 e F9 | ○ |
+| 29 | Critérios de sucesso — 14 perguntas | P0 | portão em F7 e F9 | ◐ |
 | 30 | Ordem de entrega recomendada | — | é a ordem das fases | ● |
 | 31 | Definição final do produto | — | critério de aceite geral | ○ |
 
@@ -174,6 +174,22 @@ fora do padrão · mudança relevante versus mês anterior · condição da rese
 evolução do patrimônio líquido · **completude e confiabilidade dos dados usados**.
 Sem moralizar: fatos, relações e causas observáveis.
 
+**Como foi entregue:** `domain/diagnostico.js` não inventa nenhum número
+novo — cada bullet reaproveita um cálculo que já existe em outra parte do
+domínio: estado do caixa e reserva vêm da clareza de caixa (§4), peso das
+dívidas vem da visão consolidada (§11). Pressão de fixas usa
+`categoria.essencial` (já existia desde a Fase 0). Despesas fora do padrão
+comparam o gasto do mês por categoria com a média dos 3 meses anteriores
+(nunca incluindo o próprio mês na média, senão um gasto alto se esconderia
+puxando-a junto) — é uma leitura do próprio §8, diferente e mais simples
+que o motor de anomalias dedicado do §17 (Fase 10), que vai ter histórico
+suficiente para julgar "anormal" de verdade. Evolução do patrimônio
+líquido não é inventada: o diagnóstico diz explicitamente que só existe a
+partir da Fase 9 (§14, ativos e passivos consolidados). Completude dos
+dados aponta pendências concretas (nenhuma conta de reserva, nenhuma
+categoria essencial, lançamento sem categoria) — não só "dados
+incompletos" solto.
+
 ### §9 — Central de decisões `P0` — **F7**
 
 Problemas atuais · riscos futuros · oportunidades · ações pendentes ·
@@ -181,10 +197,31 @@ priorização por urgência, impacto e prazo · **cada ação ligada ao problema
 originou** · impacto esperado quando estimável · histórico do resolvido,
 ignorado, adiado ou cancelado.
 
+**Como foi entregue:** `domain/decisoes.js` — `detectarAchados` lê os
+painéis já calculados (clareza de caixa, projeção de 30 dias, dívidas,
+cartões) e gera achados tipados (problema/risco/oportunidade), cada um com
+`origem` apontando o dado exato que o gerou (regra do CLAUDE.md: "todo
+alerta e toda ação apontam os dados que os originaram") e uma
+`acaoSugerida` — a ação já nasce amarrada ao achado, não como registro
+separado. `priorizarAchados` ordena por urgência, depois impacto
+financeiro, depois prazo — os três critérios do blueprint, nessa ordem.
+O histórico (resolvida/ignorada/adiada/cancelada) é a única coisa gravada
+(`dados/decisoesRepo.js`, coleção `decisoes`) — um retrato do achado no
+momento da decisão, não o achado em si, que continua recalculado ao vivo
+enquanto pendente. Verificado com Playwright: uma dívida atrasada gera o
+achado; corrigi-la faz o achado sumir sozinho, sem nenhuma ação manual —
+prova de que a central reflete o dado real, não uma lista fixa.
+
 ### §10 — Plano financeiro vivo `P0` — **F7**
 
 Agora · esta semana · este mês · 90 dias · 12 meses — atualizado pela realidade,
 não documento estático.
+
+**Como foi entregue:** `montarPlanoVivo` (`domain/decisoes.js`) rebaixa os
+mesmos achados pendentes da central de decisões (§9) nos cinco horizontes,
+por urgência e proximidade do prazo — não é um documento separado, é uma
+segunda leitura dos mesmos dados. "12 meses" sem achado nenhum mostra uma
+orientação geral (reserva, passivos, patrimônio) em vez de ficar vazio.
 
 ### §11 — Dívidas e plano de saída `P0` — **F6**
 
@@ -306,13 +343,13 @@ receita esperada não recebida · despesa fora do padrão · nova recorrência �
 aumento de dívida · queda relevante de margem · **evolução positiva** de dívida,
 reserva ou patrimônio.
 
-### §25 — Home `P0` — **F2, F5, F6 parcial, F7 completa**
+### §25 — Home `P0` — **F2, F5, F6, F7 — só falta Patrimônio (F9)**
 
 | Bloco | Conteúdo | Fase |
 |---|---|---|
 | Dinheiro | Atual, comprometido, livre, seguro | ✅ F2 |
-| Situação | Estado do caixa e principal risco | F7 |
-| Próximas ações | O que merece atenção agora | F7 |
+| Situação | Estado do caixa e principal risco | ✅ F7 |
+| Próximas ações | O que merece atenção agora | ✅ F7 |
 | Fluxo | Entradas e saídas projetadas | ✅ F5 |
 | Dívidas | Saldo, parcelas, pressão sobre a renda | ✅ F6 |
 | Patrimônio | Líquido e evolução | F9 |

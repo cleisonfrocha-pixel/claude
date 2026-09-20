@@ -9,13 +9,14 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 6 concluída (19/09/2026).** Novo módulo Dívidas: cadastro completo
-com saldo original/atual, parcelas pagas/restantes, vencimentos e juros
-quando conhecidos — nada disso gravado além dos fatos brutos, tudo
-calculado na leitura — mais o simulador (aporte extra, quitação
-antecipada), que nunca escreve na dívida real porque é feito de funções
-puras sem acesso a nenhum repositório. A Home ganhou o bloco Dívidas do
-§25. Fase 7 (diagnóstico, decisões e plano vivo) ainda não começou.
+**Fase 7 concluída (20/09/2026).** Novo módulo Plano: diagnóstico (§8) que
+só reaproveita números já calculados em outro lugar, central de decisões
+(§9) que detecta problemas/riscos/oportunidades nos dados reais — cada um
+apontando a sua origem — e plano vivo (§10) que rebaixa esses mesmos
+achados em cinco horizontes, recalculado do zero a cada leitura. A Home
+ganhou os blocos Situação e Próximas ações do §25 — só falta Patrimônio
+(Fase 9) para os seis blocos ficarem completos. Fase 8 (renda e gap de
+renda) ainda não começou.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>

@@ -302,7 +302,7 @@ cadastro do produto; só ficou visível ao adicionar Dívida (também
 feminina) e conferir o texto exato do toast no Playwright. Corrigido em
 `telaCadastro.js`.
 
-### Fase 7 · Diagnóstico, decisões e plano vivo · 5 sessões — §8, §9, §10, §25
+### Fase 7 · Diagnóstico, decisões e plano vivo · 5 sessões — §8, §9, §10, §25 — ✅ concluída (20/09/2026)
 
 - **Diagnóstico** (§8): estado do caixa, pressão de fixas, peso da dívida,
   previsibilidade da receita, evolução do custo de vida, gastos fora do padrão,
@@ -314,6 +314,39 @@ feminina) e conferir o texto exato do toast no Playwright. Corrigido em
 - **Plano vivo** (§10): agora, esta semana, este mês, 90 dias, 12 meses —
   atualizando sozinho conforme a realidade muda.
 - **Home completa** (§25): os seis blocos obrigatórios.
+
+**Portão** (definido nesta fase — o plano original não tinha uma frase própria
+para ela): um problema real, com base em dados de verdade (ex.: uma dívida
+atrasada), aparece na central de decisões vinculado à dívida que o originou,
+com uma ação sugerida; resolver a decisão a tira dos pendentes e a guarda no
+histórico; e o achado **desaparece sozinho** quando o dado de origem deixa de
+justificá-lo, sem que o usuário precise tocar em nenhuma decisão — prova de
+que o plano é vivo, não um documento gravado.
+
+**Entregue:** `domain/diagnostico.js` — cada bullet do §8 reaproveita um
+cálculo que já existe em outro lugar do domínio (clareza de caixa, dívidas,
+transações); patrimônio líquido não é inventado, o diagnóstico diz
+explicitamente que chega na Fase 9. `domain/decisoes.js` — achados
+(problema/risco/oportunidade) nascem dos painéis já calculados (caixa,
+projeção de 30 dias, dívidas, cartões), cada um apontando a origem
+(CLAUDE.md: "todo alerta aponta os dados que o originaram"); `montarPlanoVivo`
+rebaixa os achados pendentes nos cinco horizontes do §10, recalculado do
+zero a cada leitura. `dados/decisoesRepo.js` só grava a disposição do
+usuário sobre um achado (resolvida/ignorada/adiada/cancelada), com um
+retrato do achado no momento da decisão — nunca o achado em si, que
+continua sendo recalculado ao vivo enquanto pendente. Tela Plano reúne os
+três; a Home ganhou os blocos Situação e Próximas ações (§25) — restou só
+Patrimônio (Fase 9) para os seis blocos ficarem completos.
+
+20 testes de domínio novos (146 no total). Portão verificado de ponta a
+ponta com Playwright: uma dívida atrasada gera um achado "Dívida atrasada:
+Financiamento do carro" (urgência alta, impacto R$ 500,00, ação sugerida);
+corrigir a data da dívida (deixando de estar atrasada) faz o achado sumir
+sozinho, sem nenhuma ação do usuário; resolver um achado tira-o dos
+pendentes e o registra no histórico com o status; reabrir devolve-o aos
+pendentes; os blocos Situação e Próximas ações da Home mostram o mesmo
+achado e navegam para o Plano ao serem clicados; tudo sobrevive a fechar e
+reabrir a página.
 
 ### ⛳ PORTÃO DA V1 — as 14 perguntas do §29
 
