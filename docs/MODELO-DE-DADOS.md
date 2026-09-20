@@ -36,8 +36,8 @@ categorias/<id>     { nome, grupo, natureza, essencial, ativa }
 transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
                       categoriaId, pessoaId, descricao, status, certeza,
                       transferenciaId?, faturaId?, parcelaDe?, parcelaNum?,
-                      parcelaTotal?, recorrenciaId?, origem, origemId?,
-                      revisado, criadoEm, atualizadoEm }
+                      parcelaTotal?, recorrenciaId?, fonteRendaId?, origem,
+                      origemId?, revisado, criadoEm, atualizadoEm }
 ```
 
 | Campo | Papel |
@@ -50,6 +50,7 @@ transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
 | `direcao` | `entrada \| saida` — só preenchido quando `tipo` é `transferencia`. As duas pernas compartilham o mesmo `valorCentavos` positivo; sem isto não dá para saber qual perna soma e qual subtrai do saldo da conta (precisou existir na Fase 2, para calcular saldo por conta) |
 | `faturaId` | Compra no cartão aponta para a fatura. O `pagamento_fatura` quita a fatura, **não** é uma segunda despesa (§5) |
 | `parcelaDe` | Agrupa as parcelas de uma compra; `parcelaNum/parcelaTotal` dão a visão de compromisso futuro (§3) |
+| `fonteRendaId` | Liga uma receita a uma fonte de renda cadastrada (§12) — opcional, só usado quando `tipo` é `receita`. Sem ele, a receita ainda soma no total do mês, só não entra na previsibilidade/histórico de nenhuma fonte específica |
 | `origem` | `manual \| planilha \| ofx \| drive \| open_finance` (§18) |
 | `origemId` | Chave do lançamento na fonte — é o que detecta reimportação duplicada (§18) |
 | `revisado` | Distingue o que veio automático do que você conferiu (§18) |
@@ -100,20 +101,39 @@ dedicada a **guardar** cenários nomeados para comparar depois é outra
 exigência, do §22 (Cenários e simulador de realidade, Fase 14) — se e
 quando essa fase chegar, é o lugar certo para essa coleção nascer.
 
-## Renda, orçamento, patrimônio, objetivos — Fases 8 e 9
+## Renda e orçamento — Fase 8
 
 ```
-fontes_renda/<id>   { pessoaId, nome, tipo, valorEsperado, periodicidade,
-                      previsibilidade, ativa }
-orcamentos/<id>     { competencia, categoriaId, valorPlanejado, tipo }
+fontesRenda/<id>            { pessoaId, nome, tipo, valorEsperadoCentavos, ativa }
+configuracoes/orcamento     { custoDesejadoCentavos?, metaRecuperacaoCentavos? }
+```
+
+`tipo` da fonte: `fixa | recorrente | variavel | eventual` (§12, os quatro do
+blueprint). `previsibilidade` **não é campo gravado** — é sempre calculada na
+leitura (`domain/renda.js`, `calcularPrevisibilidadeFonte`) a partir das
+transações da própria fonte, mesma regra "nada de total gravado" das dívidas
+(Fase 6). Uma receita se liga a uma fonte por `transacao.fonteRendaId`
+(opcional, campo novo em `transacoes/<id>`) — sem isso, a transação ainda
+soma no total do mês, só não entra na previsibilidade/histórico de nenhuma
+fonte específica.
+
+`configuracoes/orcamento` é documento único, não coleção: as duas únicas
+metas do §12/§13 que não vêm de lançamento nenhum — custo de vida desejado e
+meta de recuperação financeira — são decisão do usuário, não cálculo. Sem
+meta de recuperação definida, `domain/renda.js` usa um padrão honesto
+(custo essencial + parcelas de dívida) em vez de inventar um número; sem
+custo desejado definido, o gap correspondente fica `null` (a tela mostra
+"—", nunca um valor fabricado).
+
+## Patrimônio, objetivos — Fase 9
+
+```
 ativos/<id>         { pessoaId, classe, nome, valorAtual, dataAvaliacao, liquido }
 passivos/<id>       { pessoaId, tipo, valorAtual, dividaId?, dataAvaliacao }
 patrimonio_snap/<id>{ competencia, ativos, passivos, liquido, composicao }
 objetivos/<id>      { nome, valorAlvo, valorAtual, prazo, horizonte,
                       contaVinculadaId?, ativo }
 ```
-`tipo` da fonte: `fixa | recorrente | variavel | eventual` (§12)
-`previsibilidade`: `alta | media | baixa` (§12)
 `classe` do ativo: `liquido | investimento | veiculo | imovel | participacao | outro` (§14)
 `patrimonio_snap` é fotografia mensal — é o que permite a evolução do §14 sem
 recalcular anos de histórico a cada abertura.

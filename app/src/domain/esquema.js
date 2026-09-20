@@ -25,6 +25,10 @@ export const CERTEZAS_TRANSACAO = ["confirmado", "provavel", "incerto"];
 export const PERIODICIDADES_RECORRENCIA = ["mensal"];
 export const STATUS_FATURA = ["aberta", "fechada", "paga"];
 
+// Fontes de renda — ver docs/MODELO-DE-DADOS.md, "Renda — Fase 8". Os
+// quatro tipos são do próprio texto do blueprint (§12).
+export const TIPOS_FONTE_RENDA = ["fixa", "recorrente", "variavel", "eventual"];
+
 // Dívidas — ver docs/MODELO-DE-DADOS.md, "Dívidas — Fase 6". Status
 // (ativa/atrasada/quitada) nunca é gravado — é sempre derivado na leitura
 // em domain/dividas.js (mesma regra "nada de total gravado" do CLAUDE.md).
@@ -98,6 +102,7 @@ export function padraoTransacao(dados = {}) {
     parcelaNum: null,
     parcelaTotal: null,
     recorrenciaId: null,
+    fonteRendaId: null, // só usado quando tipo é receita (§12) — opcional
     origem: "manual",
     origemId: null,
     revisado: true,
@@ -144,6 +149,17 @@ export function padraoDivida(dados = {}) {
     dataInicio: new Date().toISOString().slice(0, 10),
     taxaJurosMensalPct: null,
     emRisco: false,
+    ...dados,
+  };
+}
+
+export function padraoFonteRenda(dados = {}) {
+  return {
+    pessoaId: "",
+    nome: "",
+    tipo: "fixa",
+    valorEsperadoCentavos: 0,
+    ativa: true,
     ...dados,
   };
 }
@@ -219,6 +235,15 @@ export function validarDivida(d) {
   if (d.parcelasPagas > d.quantidadeParcelas) erros.push("Parcelas pagas não pode ser maior que o total de parcelas.");
   if (!d.dataInicio) erros.push("Data da primeira parcela é obrigatória.");
   if (d.taxaJurosMensalPct != null && (!Number.isFinite(d.taxaJurosMensalPct) || d.taxaJurosMensalPct < 0)) erros.push("Taxa de juros inválida.");
+  return erros;
+}
+
+export function validarFonteRenda(f) {
+  const erros = [];
+  if (!f.nome || !f.nome.trim()) erros.push("Nome da fonte de renda é obrigatório.");
+  if (!f.pessoaId) erros.push("A fonte de renda precisa de um responsável.");
+  if (!TIPOS_FONTE_RENDA.includes(f.tipo)) erros.push("Tipo de fonte de renda inválido.");
+  if (!Number.isFinite(f.valorEsperadoCentavos) || f.valorEsperadoCentavos <= 0) erros.push("Valor esperado precisa ser maior que zero.");
   return erros;
 }
 

@@ -377,7 +377,7 @@ A V1 só está pronta quando o produto responde, com clareza e confiança:
 
 ## Onda 3 — Fechar os gaps
 
-### Fase 8 · Renda, gap, custo essencial e margem · 4 sessões — §12, §13
+### Fase 8 · Renda, gap, custo essencial e margem · 4 sessões — §12, §13 — ✅ concluída (20/09/2026)
 
 Fontes com valor e periodicidade; fixa, recorrente, variável e eventual;
 previsibilidade de cada fonte; histórico por fonte; concentração da renda.
@@ -388,6 +388,41 @@ discricionário; categorias que comem margem de forma crescente.
 **Portão** (pergunta central do §12): havendo déficit, o sistema diz se o
 problema é de **gasto**, de **timing de caixa**, de **dívida**, de **renda** ou
 de combinação — não apenas que existe déficit.
+
+**Entregue:** `domain/renda.js` — cada fonte de renda tem previsibilidade
+(fatia confirmada das entradas dos últimos meses) e histórico próprios;
+concentração é a fatia da maior fonte no total do mês; `diagnosticarCausaDeficit`
+é a pergunta central em código: quatro checks independentes (renda não
+cobre o essencial / gasto passou do que a renda ou o essencial sustentam /
+sobra após o essencial não cobre as parcelas de dívida / mês fecha no
+papel mas o caixa aperta agora) — mais de um pode disparar ao mesmo tempo,
+e é isso que a "combinação" significa, não um quinto tipo à parte.
+`domain/orcamento.js` — custo essencial/atual/discricionário, margem
+(renda menos essencial menos dívida), recorrente vs. extraordinário
+(reaproveita `recorrenciaId`, já existente desde a Fase 1), evolução das
+maiores categorias, e categorias em alta consistente (cresceram em todos
+os últimos meses, sem nenhuma queda — diferente da "fora do padrão" do
+§8, que pega um pico isolado). As únicas duas metas que não vêm de
+lançamento nenhum — custo de vida desejado e meta de recuperação — moram
+num único documento de configuração (`dados/orcamentoRepo.js`); sem meta
+de recuperação definida, o sistema usa um padrão honesto (essencial +
+parcelas de dívida) em vez de inventar um número. Tela Renda reúne tudo,
+com a causa do déficit em destaque no topo.
+
+23 testes de domínio novos (168 no total). Portão verificado de ponta a
+ponta com Playwright: renda de R$ 3.000, despesa essencial de R$ 1.000,
+despesa não essencial de R$ 2.500 e parcela de dívida de R$ 2.500 —
+o sistema aponta déficit por **combinação** de **Gasto** e **Dívida**
+(não "Renda", que estava coberta), cada causa com os números exatos que a
+sustentam. Definir o custo de vida desejado atualiza o gap correspondente
+ao vivo, sem reload.
+
+Bug real achado e corrigido no caminho: depois de salvar uma meta de
+orçamento, o gap correspondente ficava em "—" até a página ser recarregada
+— a assinatura reativa do painel só escuta coleções (contas, transações,
+dívidas, fontes de renda), e a meta mora num documento único, que `db.js`
+não sabe assinar ao vivo. Corrigido recarregando o painel manualmente
+depois de salvar uma meta.
 
 ### Fase 9 · Patrimônio, reserva e objetivos · 4 sessões — §14, §15, §16
 

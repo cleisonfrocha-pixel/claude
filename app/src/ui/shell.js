@@ -17,6 +17,7 @@ import telaPreferencias from "./telas/preferencias.js";
 import telaPlanejamento from "./telas/planejamento.js";
 import telaDividas from "./telas/dividas.js";
 import telaPlano from "./telas/plano.js";
+import telaRenda from "./telas/renda.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
@@ -42,11 +43,7 @@ const MODULOS = [
   { id: "dinheiro", rotulo: "Dinheiro", tela: telaDinheiro },
   { id: "planejamento", rotulo: "Planejamento", tela: telaPlanejamento },
   { id: "dividas", rotulo: "Dívidas", tela: telaDividas },
-  { id: "renda", rotulo: "Renda", tela: criarTelaPlaceholder({
-      titulo: "Renda", descricao: "Fontes de renda e gap de renda.",
-      itens: "Fontes por previsibilidade, e os três gaps: custo essencial, custo desejado e meta de recuperação.",
-      faseRef: "Fase 8",
-    }), emBreve: true },
+  { id: "renda", rotulo: "Renda", tela: telaRenda },
   { id: "patrimonio", rotulo: "Patrimônio", tela: criarTelaPlaceholder({
       titulo: "Patrimônio", descricao: "Ativos, passivos e evolução patrimonial.",
       itens: "Ativos líquidos, investimentos, imóveis, veículos, passivos e patrimônio líquido consolidado.",

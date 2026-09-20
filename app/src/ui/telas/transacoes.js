@@ -15,7 +15,7 @@ import {
   transacoes, criarSimples, criarTransferencia, criarParcelamento,
   registrarPagamentoFatura, ErroDeValidacao,
 } from "../../dados/transacoesRepo.js";
-import { pessoas, contas, cartoes, categorias } from "../../dados/repositorios.js";
+import { pessoas, contas, cartoes, categorias, fontesRenda } from "../../dados/repositorios.js";
 import { faturas } from "../../dados/faturasRepo.js";
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
 
@@ -25,7 +25,7 @@ const ROTULO_TIPO_TAG = { receita: "Receita", despesa: "Despesa", transferencia:
 
 let mes = tempo.competenciaAtual();
 let lista = [];
-let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [], faturas: [] };
+let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [], faturas: [], fontesRenda: [] };
 let pararAssinatura = null;
 let container = null;
 
@@ -44,10 +44,10 @@ export default {
 };
 
 async function carregarContexto() {
-  const [p, c, ca, cat, fa] = await Promise.all([
-    pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), faturas.listar(),
+  const [p, c, ca, cat, fa, fr] = await Promise.all([
+    pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), faturas.listar(), fontesRenda.listar(),
   ]);
-  contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat, faturas: fa };
+  contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat, faturas: fa, fontesRenda: fr };
 }
 
 function nomePessoa(id) { return (contexto.pessoas.find((p) => p.id === id) || {}).dados?.nome || "—"; }
@@ -240,6 +240,16 @@ function campoPessoa(idPrefixo) {
     <select id="${idPrefixo}-pessoa">${ps.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
 }
 
+// Opcional — liga a receita a uma fonte de renda cadastrada (§12). Sem
+// fonte nenhuma cadastrada, o campo nem aparece, pra não pedir algo que
+// não existe.
+function campoFonteRenda(idPrefixo) {
+  const fr = opcoes(contexto.fontesRenda.filter((f) => f.dados.ativa), (f) => f.id, (f) => f.dados.nome);
+  if (!fr.length) return "";
+  return `<div class="field"><label for="${idPrefixo}-fonteRenda">Fonte de renda (opcional)</label>
+    <select id="${idPrefixo}-fonteRenda"><option value="">Nenhuma</option>${fr.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
+}
+
 function renderCamposModo(modo) {
   const alvo = document.getElementById("campos-modo");
   const hoje = new Date().toISOString().slice(0, 10);
@@ -258,6 +268,7 @@ function renderCamposModo(modo) {
       </div>
       <div id="s-categoria-wrap">${campoCategoria("s", "despesa")}</div>
       ${campoPessoa("s")}
+      <div id="s-fonteRenda-wrap"></div>
       <div class="field"><label for="s-descricao">Descrição</label><input type="text" id="s-descricao" placeholder="Ex.: Supermercado"></div>
       <div class="row2">
         <div class="field"><label for="s-status">Status</label>
@@ -269,6 +280,7 @@ function renderCamposModo(modo) {
     document.querySelectorAll('input[name="s-tipo"]').forEach((r) => {
       r.addEventListener("change", () => {
         document.getElementById("s-categoria-wrap").innerHTML = campoCategoria("s", r.value);
+        document.getElementById("s-fonteRenda-wrap").innerHTML = r.value === "receita" ? campoFonteRenda("s") : "";
         const ondeSel = document.getElementById("s-onde");
         if (r.value === "receita") { ondeSel.value = "conta"; ondeSel.dispatchEvent(new Event("change")); ondeSel.closest(".field").style.display = "none"; document.getElementById("s-campo-cartao").hidden = true; }
         else { ondeSel.closest(".field").style.display = ""; }
@@ -374,6 +386,7 @@ async function onSubmitTransacao(ev) {
         cartaoId: onde === "cartao" ? document.getElementById("s-cartao").value : null,
         categoriaId: document.getElementById("s-categoria")?.value || "",
         pessoaId: document.getElementById("s-pessoa").value,
+        fonteRendaId: document.getElementById("s-fonteRenda")?.value || null,
         descricao: document.getElementById("s-descricao").value.trim(),
         status: document.getElementById("s-status").value,
         certeza: document.getElementById("s-certeza").value,

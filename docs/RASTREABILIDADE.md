@@ -18,8 +18,8 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 9 | Central de decisões | P0 | F7 | ● |
 | 10 | Plano financeiro vivo | P0 | F7 | ● |
 | 11 | Dívidas e plano de saída | P0 | F6 | ● |
-| 12 | Renda e gap de renda | P1 | F8 | ○ |
-| 13 | Custos essenciais, orçamento e margem | P1 | F8 | ○ |
+| 12 | Renda e gap de renda | P1 | F8 | ● |
+| 13 | Custos essenciais, orçamento e margem | P1 | F8 | ● |
 | 14 | Patrimônio e construção de riqueza | P1 | F9 | ○ |
 | 15 | Reserva e segurança financeira | P1 | F9 | ○ |
 | 16 | Objetivos financeiros | P1 | F9 | ○ |
@@ -262,12 +262,38 @@ concentração da renda em poucas fontes.
 Pergunta central: havendo déficit, dizer se é **gasto, timing, dívida, renda ou
 combinação**.
 
+**Como foi entregue:** `domain/renda.js` — cadastro de fonte com os quatro
+tipos do blueprint; `calcularPrevisibilidadeFonte` usa a fatia confirmada
+das entradas da própria fonte nos últimos meses (não inventa uma nota,
+`null` quando não há dado); `historicoFonte` lista as entradas, mais
+recente primeiro; `calcularConcentracaoRenda` é a fatia da maior fonte no
+total do mês. `diagnosticarCausaDeficit` é a pergunta central: quatro
+checks independentes (renda, gasto, dívida, timing) sobre números já
+calculados em outro lugar do domínio (clareza de caixa §4, dívidas §11) —
+mais de um dispara junto quando é combinação de fato, não é um quinto
+tipo. Transações de receita ganharam um `fonteRendaId` opcional
+(tela Transações) pra ligar a entrada à fonte.
+
 ### §13 — Custos, orçamento e margem `P1` — **F8**
 
 Custo essencial · atual · ideal ou planejado · margem após compromissos ·
 essencial versus discricionário · recorrente versus extraordinário · evolução
 das principais categorias · categorias que consomem margem de forma crescente.
 Orçamento como clareza, não como prisão.
+
+**Como foi entregue:** `domain/orcamento.js` — essencial/atual/discricionário
+a partir de `categoria.essencial` (já existia desde a Fase 0); margem =
+renda menos essencial menos parcelas de dívida; recorrente vs.
+extraordinário reaproveita `transacao.recorrenciaId` (Fase 1), não inventa
+um conceito novo; evolução por categoria compara as maiores despesas do
+mês com a média dos meses anteriores; categorias crescentes exigem alta em
+TODOS os últimos meses, sem nenhuma queda — mais estrito que "fora do
+padrão" do §8 (um pico isolado já entra lá; aqui é tendência sustentada).
+Custo de vida desejado e meta de recuperação são as únicas duas metas que
+não vêm de lançamento nenhum — moram num documento de configuração único
+(`dados/orcamentoRepo.js`); sem meta de recuperação definida, o sistema
+usa um padrão honesto (essencial + parcelas de dívida) em vez de inventar
+um número.
 
 ### §14 — Patrimônio `P1` — **F9**
 
