@@ -128,15 +128,33 @@ custo desejado definido, o gap correspondente fica `null` (a tela mostra
 ## Patrimônio, objetivos — Fase 9
 
 ```
-ativos/<id>         { pessoaId, classe, nome, valorAtual, dataAvaliacao, liquido }
-passivos/<id>       { pessoaId, tipo, valorAtual, dividaId?, dataAvaliacao }
-patrimonio_snap/<id>{ competencia, ativos, passivos, liquido, composicao }
-objetivos/<id>      { nome, valorAlvo, valorAtual, prazo, horizonte,
-                      contaVinculadaId?, ativo }
+ativos/<id>              { pessoaId, nome, classe, valorAtualCentavos, dataAvaliacao }
+patrimonioSnapshots/<id> { competencia, ativosCentavos, passivosCentavos,
+                           liquidoCentavos, composicao }
+objetivos/<id>            { pessoaId, nome, valorAlvoCentavos, valorAtualCentavos,
+                           contaVinculadaId?, prazo, ativo }
 ```
-`classe` do ativo: `liquido | investimento | veiculo | imovel | participacao | outro` (§14)
-`patrimonio_snap` é fotografia mensal — é o que permite a evolução do §14 sem
-recalcular anos de histórico a cada abertura.
+
+`classe` do ativo: `liquido | investimento | veiculo | imovel | participacao |
+outro` (§14). Sem coleção `passivos`: o §14 pede passivos consolidados, e a
+dívida do §11 (`dividas/<id>`) já é exatamente isso — duplicar o conceito só
+criaria dois lugares onde o mesmo número poderia divergir. Passivo total
+(`patrimonioRepo.js`) é `calcularVisaoConsolidada(dividas).saldoTotalAtualCentavos`,
+a mesma função que a tela Dívidas usa.
+
+`patrimonioSnapshots` é a única coisa desta fase que foge de "nada de total
+gravado" — pelo mesmo motivo de `decisoes` (Fase 7): é um retrato datado, um
+fato sobre um instante, não um saldo vivo que pudesse dessincronizar. Criado
+uma vez por competência, na primeira leitura do mês, e nunca sobrescrito
+depois — é o que permite "evolução mensal/acumulada" (§14) sem precisar de
+um scheduler, que não existe nesta arquitetura client-only.
+
+`objetivos.contaVinculadaId` é opcional: com conta vinculada, o valor atual é
+lido ao vivo do saldo da conta (`calcularSaldoConta`); sem conta, é o
+`valorAtualCentavos` digitado à mão. `horizonte` (curto/médio/longo) **não é
+campo gravado** — é sempre derivado do `prazo` na leitura
+(`domain/objetivos.js`, `calcularHorizonteObjetivo`), mesma regra do restante
+do modelo.
 
 ## Inteligência — Fases 7 e 10
 

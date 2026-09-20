@@ -424,7 +424,7 @@ dívidas, fontes de renda), e a meta mora num documento único, que `db.js`
 não sabe assinar ao vivo. Corrigido recarregando o painel manualmente
 depois de salvar uma meta.
 
-### Fase 9 · Patrimônio, reserva e objetivos · 4 sessões — §14, §15, §16
+### Fase 9 · Patrimônio, reserva e objetivos · 4 sessões — §14, §15, §16 — ✅ concluída (20/09/2026)
 
 Ativos líquidos, investimentos, veículos, imóveis, participações, outros;
 passivos; patrimônio líquido e sua evolução, variação e composição; e a relação
@@ -434,7 +434,15 @@ essencial, progresso, e separação entre dinheiro de operação e de segurança
 Objetivos: alvo, prazo, progresso, valor necessário por período e — o que quase
 nenhum app faz — **verificação de compatibilidade da meta com a margem atual**.
 
-**⛳ Portão: as 14 perguntas do §29 respondidas. V1 COMPLETA (P0 + P1 central).**
+**⛳ Portão: as 14 perguntas do §29 respondidas. V1 COMPLETA (P0 + P1 central).** ✅
+Passivo reaproveita a dívida do §11 em vez de um cadastro novo. Evolução do
+patrimônio vem de um retrato mensal (`patrimonioSnapshots`) — a única exceção
+desta fase a "nada de total gravado", pelo mesmo motivo do histórico de
+decisões da Fase 7: é um fato sobre um instante, não um saldo vivo. Verificado
+com Playwright ponta a ponta (pessoa → conta → renda → despesa → dívida →
+ativo → objetivo compatível e incompatível) — ver `docs/RASTREABILIDADE.md`,
+§29, para a tabela completa das 14 perguntas e onde cada uma é respondida no
+produto.
 
 ### Fase 10 · Confiança, alertas e anomalias · 3 sessões — §23, §24, §17
 

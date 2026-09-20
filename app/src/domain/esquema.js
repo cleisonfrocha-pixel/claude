@@ -29,6 +29,16 @@ export const STATUS_FATURA = ["aberta", "fechada", "paga"];
 // quatro tipos são do próprio texto do blueprint (§12).
 export const TIPOS_FONTE_RENDA = ["fixa", "recorrente", "variavel", "eventual"];
 
+// Ativos — ver docs/MODELO-DE-DADOS.md, "Patrimônio — Fase 9". Passivo do
+// §14 é a mesma dívida do §11 (Fase 6) reaproveitada, não um cadastro novo
+// — dívida já é passivo, duplicar o conceito só criaria dois lugares para
+// o mesmo número divergir.
+export const CLASSES_ATIVO = ["liquido", "investimento", "veiculo", "imovel", "participacao", "outro"];
+
+// Objetivos — ver docs/MODELO-DE-DADOS.md, "Objetivos — Fase 9". Horizonte
+// (curto/médio/longo) não é campo gravado — é sempre derivado do prazo na
+// leitura (domain/objetivos.js), mesma regra "nada de total gravado".
+
 // Dívidas — ver docs/MODELO-DE-DADOS.md, "Dívidas — Fase 6". Status
 // (ativa/atrasada/quitada) nunca é gravado — é sempre derivado na leitura
 // em domain/dividas.js (mesma regra "nada de total gravado" do CLAUDE.md).
@@ -164,6 +174,30 @@ export function padraoFonteRenda(dados = {}) {
   };
 }
 
+export function padraoAtivo(dados = {}) {
+  return {
+    pessoaId: "",
+    nome: "",
+    classe: "liquido",
+    valorAtualCentavos: 0,
+    dataAvaliacao: new Date().toISOString().slice(0, 10),
+    ...dados,
+  };
+}
+
+export function padraoObjetivo(dados = {}) {
+  return {
+    pessoaId: "",
+    nome: "",
+    valorAlvoCentavos: 0,
+    valorAtualCentavos: 0,
+    contaVinculadaId: null,
+    prazo: null,
+    ativo: true,
+    ...dados,
+  };
+}
+
 /** Valida uma pessoa; retorna lista de erros (vazia = válido). */
 export function validarPessoa(p) {
   const erros = [];
@@ -244,6 +278,26 @@ export function validarFonteRenda(f) {
   if (!f.pessoaId) erros.push("A fonte de renda precisa de um responsável.");
   if (!TIPOS_FONTE_RENDA.includes(f.tipo)) erros.push("Tipo de fonte de renda inválido.");
   if (!Number.isFinite(f.valorEsperadoCentavos) || f.valorEsperadoCentavos <= 0) erros.push("Valor esperado precisa ser maior que zero.");
+  return erros;
+}
+
+export function validarAtivo(a) {
+  const erros = [];
+  if (!a.nome || !a.nome.trim()) erros.push("Nome do ativo é obrigatório.");
+  if (!a.pessoaId) erros.push("O ativo precisa de um responsável.");
+  if (!CLASSES_ATIVO.includes(a.classe)) erros.push("Classe de ativo inválida.");
+  if (!Number.isFinite(a.valorAtualCentavos) || a.valorAtualCentavos < 0) erros.push("Valor atual inválido.");
+  if (!a.dataAvaliacao) erros.push("Data de avaliação é obrigatória.");
+  return erros;
+}
+
+export function validarObjetivo(o) {
+  const erros = [];
+  if (!o.nome || !o.nome.trim()) erros.push("Nome do objetivo é obrigatório.");
+  if (!o.pessoaId) erros.push("O objetivo precisa de um responsável.");
+  if (!Number.isFinite(o.valorAlvoCentavos) || o.valorAlvoCentavos <= 0) erros.push("Valor-alvo precisa ser maior que zero.");
+  if (!Number.isFinite(o.valorAtualCentavos) || o.valorAtualCentavos < 0) erros.push("Valor atual inválido.");
+  if (!o.prazo) erros.push("Prazo é obrigatório.");
   return erros;
 }
 

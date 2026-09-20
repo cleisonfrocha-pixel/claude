@@ -18,6 +18,8 @@ import telaPlanejamento from "./telas/planejamento.js";
 import telaDividas from "./telas/dividas.js";
 import telaPlano from "./telas/plano.js";
 import telaRenda from "./telas/renda.js";
+import telaPatrimonio from "./telas/patrimonio.js";
+import telaObjetivos from "./telas/objetivos.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
@@ -44,16 +46,8 @@ const MODULOS = [
   { id: "planejamento", rotulo: "Planejamento", tela: telaPlanejamento },
   { id: "dividas", rotulo: "Dívidas", tela: telaDividas },
   { id: "renda", rotulo: "Renda", tela: telaRenda },
-  { id: "patrimonio", rotulo: "Patrimônio", tela: criarTelaPlaceholder({
-      titulo: "Patrimônio", descricao: "Ativos, passivos e evolução patrimonial.",
-      itens: "Ativos líquidos, investimentos, imóveis, veículos, passivos e patrimônio líquido consolidado.",
-      faseRef: "Fase 9",
-    }), emBreve: true },
-  { id: "objetivos", rotulo: "Objetivos", tela: criarTelaPlaceholder({
-      titulo: "Objetivos", descricao: "Metas financeiras e compatibilidade com a margem atual.",
-      itens: "Metas de curto, médio e longo prazo, com verificação de compatibilidade com a margem disponível.",
-      faseRef: "Fase 9",
-    }), emBreve: true },
+  { id: "patrimonio", rotulo: "Patrimônio", tela: telaPatrimonio },
+  { id: "objetivos", rotulo: "Objetivos", tela: telaObjetivos },
   { id: "plano", rotulo: "Plano", tela: telaPlano },
   { id: "openfinance", rotulo: "Open Finance", tela: criarTelaPlaceholder({
       titulo: "Open Finance", descricao: "Conexão automática com instituições financeiras.",

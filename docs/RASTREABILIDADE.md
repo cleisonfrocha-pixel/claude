@@ -3,6 +3,11 @@
 Garantia de que nada do blueprint ficou de fora. As 31 seções, com cada
 exigência, a fase que a entrega e o estado.
 
+**V1 completa (F0–F9):** as 14 perguntas do §29 têm resposta no produto —
+ver a tabela de §29 abaixo. Todo P0 e o P1 central (§11–§16) estão
+entregues. O que resta (§17 em diante) é P1 secundário, P2 e P3 — nenhum
+deles bloqueava a V1.
+
 Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 
 | # | Seção | Prio | Fase | Estado |
@@ -20,9 +25,9 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 11 | Dívidas e plano de saída | P0 | F6 | ● |
 | 12 | Renda e gap de renda | P1 | F8 | ● |
 | 13 | Custos essenciais, orçamento e margem | P1 | F8 | ● |
-| 14 | Patrimônio e construção de riqueza | P1 | F9 | ○ |
-| 15 | Reserva e segurança financeira | P1 | F9 | ○ |
-| 16 | Objetivos financeiros | P1 | F9 | ○ |
+| 14 | Patrimônio e construção de riqueza | P1 | F9 | ● |
+| 15 | Reserva e segurança financeira | P1 | F9 | ● |
+| 16 | Objetivos financeiros | P1 | F9 | ● |
 | 17 | Anomalias e inteligência de comportamento | P1 | F10 | ○ |
 | 18 | Importação e reconciliação | P1 | F11 | ○ |
 | 19 | Open Finance | P1 | F12 | ○ |
@@ -31,11 +36,11 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 22 | Cenários e simulador de realidade | P2 | F14 | ○ |
 | 23 | Qualidade, completude e confiança dos dados | P1 | F10 | ○ |
 | 24 | Alertas e acompanhamento | P1 | F10 | ○ |
-| 25 | Experiência principal da Home | P0 | F2 (parcial), F7 (completa) | ◐ |
+| 25 | Experiência principal da Home | P0 | F2, F5, F6, F7, F9 | ● |
 | 26 | Navegação e módulos | P0 | F0 | ● |
 | 27 | Funções de qualidade de vida | P2 | F0 (ocultar), F15 | ◐ |
 | 28 | O que NÃO deve ser prioridade | P3 | fora da V1, registrado | ● |
-| 29 | Critérios de sucesso — 14 perguntas | P0 | portão em F7 e F9 | ◐ |
+| 29 | Critérios de sucesso — 14 perguntas | P0 | portão em F7 e F9 | ● |
 | 30 | Ordem de entrega recomendada | — | é a ordem das fases | ● |
 | 31 | Definição final do produto | — | critério de aceite geral | ○ |
 
@@ -295,24 +300,61 @@ não vêm de lançamento nenhum — moram num documento de configuração único
 usa um padrão honesto (essencial + parcelas de dívida) em vez de inventar
 um número.
 
-### §14 — Patrimônio `P1` — **F9**
+### §14 — Patrimônio `P1` — ✅ **F9** (20/09/2026)
 
 Ativos líquidos · investimentos · veículos · imóveis · participações e negócios ·
 outros ativos · passivos · patrimônio líquido consolidado · evolução no tempo ·
 variação mensal e acumulada · composição · **relação entre reduzir dívida,
 aumentar ativo e crescer patrimônio**.
 
-### §15 — Reserva e segurança `P1` — **F9**
+**Como foi entregue:** `domain/patrimonio.js` — patrimônio líquido é sempre
+`ativos − passivos` na leitura ("nada de total gravado"); passivo é a mesma
+dívida do §11 (`dividas`), não um cadastro novo, para não abrir dois
+lugares onde o mesmo número poderia divergir. Composição por classe
+(líquido, investimento, veículo, imóvel, participação, outro) com
+percentual. Evolução mensal/acumulada exige um número gravado num
+instante — a única exceção real desta fase à regra: `patrimonioSnapshots`
+(`dados/patrimonioRepo.js`) é um retrato datado, criado uma vez por
+competência na primeira leitura do mês e nunca sobrescrito depois, mesmo
+raciocínio já usado no histórico de decisões (§9/F7). A relação
+dívida/ativo/patrimônio compara os três sinais (passivo caiu, ativo subiu,
+patrimônio cresceu) contra o snapshot anterior. Tela bespoke (como Renda e
+Dívidas) porque a composição precisa reagir a ativo, dívida e conta
+mudando, não só à lista de ativos.
+
+### §15 — Reserva e segurança `P1` — ✅ **F9** (20/09/2026)
 
 Valor atual · meta por horizonte · **cobertura em dias e meses de custo
 essencial** · progresso até a meta · separação entre dinheiro de operação e de
 segurança.
 
-### §16 — Objetivos financeiros `P1` — **F9**
+**Como foi entregue:** `domain/reserva.js` — reaproveita
+`saldoReservaCentavos` (clareza de caixa, F2) e `custoEssencialCentavos`
+(orçamento, F8) em vez de recalcular do zero; cobertura em meses e dias é
+saldo dividido pelo custo essencial (`null` sem custo essencial
+calculado, nunca um zero enganoso). Metas nos três horizontes do
+blueprint (3, 6 e 12 meses), cada uma com valor-meta, progresso percentual
+(nunca passa de 100%) e quanto falta. A separação operação/segurança já
+existia desde a Fase 0 (`conta.ehReserva`) — esta fase é a primeira a
+mostrar o que essa marcação significa na prática.
+
+### §16 — Objetivos financeiros `P1` — ✅ **F9** (20/09/2026)
 
 Nome, valor-alvo, valor atual, prazo · progresso percentual e financeiro · valor
 necessário por período · **compatibilidade da meta com a margem atual** ·
 impacto de mudança de renda ou despesa no prazo · curto, médio e longo prazo.
+
+**Como foi entregue:** `domain/objetivos.js` — horizonte (curto/médio/longo)
+nunca é gravado, é sempre derivado do prazo na leitura (curto ≤ 12 meses,
+médio ≤ 36, longo depois disso). Progresso, falta e valor necessário por
+mês vêm de `valorAtual` (digitado à mão ou lido ao vivo de uma conta
+vinculada) contra `valorAlvo`. A verificação central do §16 —
+`verificarCompatibilidadeComMargem` — compara o valor necessário por mês
+com a margem atual (§13, já com dívidas descontadas); incompatível mostra
+exatamente quanto falta por mês. "Impacto de mudança de renda/despesa no
+prazo" é `simularNovoPrazo`, uma função pura sem acesso a repositório —
+mesma garantia estrutural do simulador de dívidas (§11/F6): o cenário
+simulado não tem como vazar para o objetivo real.
 
 ### §17 — Anomalias `P1` — **F10**
 
@@ -369,7 +411,7 @@ receita esperada não recebida · despesa fora do padrão · nova recorrência �
 aumento de dívida · queda relevante de margem · **evolução positiva** de dívida,
 reserva ou patrimônio.
 
-### §25 — Home `P0` — **F2, F5, F6, F7 — só falta Patrimônio (F9)**
+### §25 — Home `P0` — ✅ **F2, F5, F6, F7, F9 — os seis blocos completos**
 
 | Bloco | Conteúdo | Fase |
 |---|---|---|
@@ -378,7 +420,7 @@ reserva ou patrimônio.
 | Próximas ações | O que merece atenção agora | ✅ F7 |
 | Fluxo | Entradas e saídas projetadas | ✅ F5 |
 | Dívidas | Saldo, parcelas, pressão sobre a renda | ✅ F6 |
-| Patrimônio | Líquido e evolução | F9 |
+| Patrimônio | Líquido, ativos/passivos e cobertura da reserva | ✅ F9 |
 
 ### §26 — Navegação e módulos `P0` — **F0**
 
@@ -399,24 +441,32 @@ pelo produto · gamificação complexa · rede social financeira · comparadores
 sofisticados · integrações não essenciais em volume · **app nativo antes de
 validar a experiência central**.
 
-### §29 — Critérios de sucesso `P0` — portão em **F7** e **F9**
+### §29 — Critérios de sucesso `P0` — ✅ portão fechado em **F9** — **V1 completa**
 
-| # | Pergunta | Fase que responde |
-|---|---|---|
-| 1 | Quanto dinheiro eu tenho hoje? | F2 |
-| 2 | Quanto já está comprometido? | F2 |
-| 3 | Quanto posso gastar com segurança? | F2 |
-| 4 | Quais são minhas próximas obrigações? | F4 |
-| 5 | Em que data meu caixa aperta? | F5 |
-| 6 | Quanto devo no total? | F6 |
-| 7 | Quanto as dívidas consomem por mês? | F6 |
-| 8 | Quanto entra e sai por mês? | F1 · F5 |
-| 9 | Existe gap de renda? Qual? | F8 |
-| 10 | O que provoca a pressão financeira? | F7 |
-| 11 | O que precisa da minha atenção agora? | F7 |
-| 12 | Qual é meu patrimônio líquido? | F9 |
-| 13 | Estou melhorando ou piorando? | F7 · F9 |
-| 14 | Quais metas cabem na minha realidade? | F9 |
+| # | Pergunta | Fase que responde | Onde no produto |
+|---|---|---|---|
+| 1 | Quanto dinheiro eu tenho hoje? | F2 | Início — "Saldo atual" |
+| 2 | Quanto já está comprometido? | F2 | Início — "Comprometido (30 dias)" |
+| 3 | Quanto posso gastar com segurança? | F2 | Início — "Dinheiro seguro para gastar" |
+| 4 | Quais são minhas próximas obrigações? | F4 | Planejamento — calendário |
+| 5 | Em que data meu caixa aperta? | F5 | Planejamento — Fluxo de caixa (4 horizontes) |
+| 6 | Quanto devo no total? | F6 | Dívidas — visão consolidada |
+| 7 | Quanto as dívidas consomem por mês? | F6 | Dívidas — comprometimento mensal |
+| 8 | Quanto entra e sai por mês? | F1 · F5 | Transações · Planejamento |
+| 9 | Existe gap de renda? Qual? | F8 | Renda — diagnóstico de déficit |
+| 10 | O que provoca a pressão financeira? | F7 | Plano — diagnóstico + achados |
+| 11 | O que precisa da minha atenção agora? | F7 | Início — "Próximas ações" · Plano |
+| 12 | Qual é meu patrimônio líquido? | F9 | Patrimônio — hero "Patrimônio líquido" |
+| 13 | Estou melhorando ou piorando? | F7 · F9 | Plano — histórico de decisões · Patrimônio — variação mensal/acumulada e relação dívida/ativo/patrimônio |
+| 14 | Quais metas cabem na minha realidade? | F9 | Objetivos — compatibilidade com a margem atual |
+
+Verificado item a item com o produto na mão (não é uma alegação de
+completude — cada linha aponta a tela real que responde a pergunta),
+mais Playwright cobrindo o caminho ponta a ponta: pessoa → conta → renda
+→ despesa essencial → dívida → ativo → dois objetivos (um dentro e um
+fora do ritmo) → patrimônio líquido e cobertura de reserva corretos na
+tela de Patrimônio e replicados no bloco da Home. **V1 completa: P0 +
+P1 central (§3–§16) entregues.**
 
 ### §31 — Definição final — critério de aceite geral
 

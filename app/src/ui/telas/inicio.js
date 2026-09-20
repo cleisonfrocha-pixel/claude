@@ -1,12 +1,12 @@
 // Início — os seis blocos do §25. "Como está minha vida financeira agora?"
-// em poucos segundos. Patrimônio (o último bloco) só chega na Fase 9 — os
-// outros cinco (Dinheiro, Situação, Próximas ações, Fluxo, Dívidas) já
-// estão todos aqui.
+// em poucos segundos: Dinheiro, Situação, Próximas ações, Fluxo, Dívidas e
+// Patrimônio (Fase 9, o último a chegar).
 
 import { pessoas, contas, dividas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
 import { assinarProjecao } from "../../dados/projecaoRepo.js";
 import { assinarPainelDecisoes } from "../../dados/decisoesRepo.js";
+import { assinarPainelPatrimonio } from "../../dados/patrimonioRepo.js";
 import { calcularVisaoConsolidada } from "../../domain/dividas.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../../domain/tempo.js";
@@ -20,9 +20,11 @@ let pararAssinatura = null;
 let pararAssinaturaProjecao = null;
 let pararAssinaturaDividas = null;
 let pararAssinaturaDecisoes = null;
+let pararAssinaturaPatrimonio = null;
 let estadoProjecao = null;
 let estadoDividas = null;
 let estadoDecisoes = null;
+let estadoPatrimonio = null;
 let container = null;
 
 function itemContador(rotulo, valor, sub) {
@@ -74,15 +76,24 @@ export default {
       renderizarSituacaoResumo();
       renderizarProximasAcoesResumo();
     });
+
+    if (pararAssinaturaPatrimonio) pararAssinaturaPatrimonio();
+    estadoPatrimonio = null;
+    pararAssinaturaPatrimonio = assinarPainelPatrimonio((r) => {
+      estadoPatrimonio = r;
+      renderizarPatrimonioResumo();
+    });
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
     if (pararAssinaturaProjecao) { pararAssinaturaProjecao(); pararAssinaturaProjecao = null; }
     if (pararAssinaturaDividas) { pararAssinaturaDividas(); pararAssinaturaDividas = null; }
     if (pararAssinaturaDecisoes) { pararAssinaturaDecisoes(); pararAssinaturaDecisoes = null; }
+    if (pararAssinaturaPatrimonio) { pararAssinaturaPatrimonio(); pararAssinaturaPatrimonio = null; }
     estadoProjecao = null;
     estadoDividas = null;
     estadoDecisoes = null;
+    estadoPatrimonio = null;
     container = null;
   },
 };
@@ -170,6 +181,10 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Dívidas</h3>
       <p class="tela-sub">Saldo devido, comprometimento mensal e pressão sobre a renda — §11</p></div></div>
     <div id="dividas-home"></div>
+
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Patrimônio</h3>
+      <p class="tela-sub">Ativos, passivos e reserva — §14/§15</p></div></div>
+    <div id="patrimonio-home"></div>
   `;
 
   const contasAlvo = container.querySelector("#contas-detalhe");
@@ -294,6 +309,38 @@ function renderizarDividasResumo() {
 
   alvo.querySelector("[data-ir-dividas]").addEventListener("click", () => {
     document.querySelector('[data-modulo="dividas"]')?.click();
+  });
+}
+
+function renderizarPatrimonioResumo() {
+  if (!container) return;
+  const alvo = container.querySelector("#patrimonio-home");
+  if (!alvo) return;
+
+  if (!estadoPatrimonio) {
+    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
+    return;
+  }
+
+  const { liquidoCentavos, ativosCentavos, passivosCentavos, variacaoMensal, reserva } = estadoPatrimonio;
+  const variacaoTexto = variacaoMensal
+    ? `${variacaoMensal.variacaoCentavos >= 0 ? "+" : ""}${formatarBRL(variacaoMensal.variacaoCentavos)} no mês`
+    : "primeiro retrato deste mês";
+  const coberturaTexto = reserva.coberturaMeses != null
+    ? `reserva cobre ${reserva.coberturaMeses.toFixed(1)} meses de custo essencial`
+    : "sem custo essencial calculado ainda para medir a reserva";
+
+  alvo.innerHTML = `
+    <button class="item-cartao" data-ir-patrimonio style="width:100%;text-align:left;cursor:pointer;font:inherit;">
+      <div class="item-corpo">
+        <div class="item-titulo">${formatarBRL(liquidoCentavos)} de patrimônio líquido</div>
+        <div class="item-sub">${formatarBRL(ativosCentavos)} em ativos, ${formatarBRL(passivosCentavos)} em passivos · ${escapeHtml(variacaoTexto)}</div>
+        <div class="item-sub">${escapeHtml(coberturaTexto)}</div>
+      </div>
+    </button>`;
+
+  alvo.querySelector("[data-ir-patrimonio]").addEventListener("click", () => {
+    document.querySelector('[data-modulo="patrimonio"]')?.click();
   });
 }
 
