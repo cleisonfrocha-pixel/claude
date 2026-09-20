@@ -20,14 +20,16 @@ import telaPlano from "./telas/plano.js";
 import telaRenda from "./telas/renda.js";
 import telaPatrimonio from "./telas/patrimonio.js";
 import telaObjetivos from "./telas/objetivos.js";
+import telaImportar from "./telas/importar.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
-  subtitulo: "Contas, cartões e toda a movimentação. Revisão de importação chega na Fase 11.",
+  subtitulo: "Contas, cartões, toda a movimentação, e a importação de extratos.",
   abas: [
     { id: "transacoes", rotulo: "Transações", tela: telaTransacoes },
     { id: "contas", rotulo: "Contas", tela: telaContas },
     { id: "cartoes", rotulo: "Cartões", tela: telaCartoes },
+    { id: "importar", rotulo: "Importar", tela: telaImportar },
   ],
 });
 

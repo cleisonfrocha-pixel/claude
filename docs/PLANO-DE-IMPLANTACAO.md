@@ -467,7 +467,7 @@ não só os novos, agora mostram os lançamentos concretos por trás ao expandir
 Verificado com Playwright — dívida atrasada e recorrência nova, cada uma
 expandida na tela Plano, mostram exatamente o lançamento que as originou.
 
-### Fase 11 · Importação e reconciliação · 4 sessões — §18
+### Fase 11 · Importação e reconciliação · 4 sessões — §18 — ✅ concluída (20/09/2026)
 
 Importação manual, de planilhas e históricos, e de formatos financeiros (OFX/CSV);
 planilha do Google Drive pela conexão que você já tem; identificação de
@@ -479,7 +479,21 @@ Aqui nasce a interface `ConectorDeDados` (ver `ARQUITETURA.md`, D4) que a Fase 1
 vai reusar.
 
 **Portão:** importar o mesmo extrato duas vezes não cria um único lançamento
-duplicado.
+duplicado. ✅ Verificado com Playwright: reimportar o mesmo OFX marca as duas
+linhas como duplicata (pelo FITID do banco) e confirmar sem tocar em nada não
+cria lançamento nenhum.
+
+CSV e OFX entregues — cobrem "planilhas e históricos" e "formatos financeiros"
+sem precisar de nenhuma capability nova (colar o conteúdo, zero infraestrutura,
+mesma filosofia da Trilha A). A forma do candidato (`{ data, descricao,
+valorCentavos, tipo, externoId? }`, `domain/importacao.js`) já é o
+`ConectorDeDados` do D4 na prática, mesmo sem uma classe formal — não havia
+um segundo adaptador ainda para justificar extrair a interface. **Decisão de
+escopo:** planilha do Google Drive (capability `mcp`) adiada — CSV colado já
+cobre "planilha", e a Fase 12 (Open Finance, que já é o próximo adaptador de
+verdade atrás da mesma forma) é o momento certo pra decidir se vale a pena
+formalizar a interface. Mesmo padrão da Fase 3 adiando "utilização anormal" e
+da Fase 6 adiando renda-real no comprometimento — registrado, não esquecido.
 
 ---
 

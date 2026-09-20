@@ -15,6 +15,7 @@ import {
   transacoes, criarSimples, criarTransferencia, criarParcelamento,
   registrarPagamentoFatura, ErroDeValidacao,
 } from "../../dados/transacoesRepo.js";
+import { marcarRevisado } from "../../dados/importacaoRepo.js";
 import { pessoas, contas, cartoes, categorias, fontesRenda } from "../../dados/repositorios.js";
 import { faturas } from "../../dados/faturasRepo.js";
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
@@ -114,6 +115,12 @@ function renderizarLista(doMes) {
   alvo.querySelectorAll("[data-apagar]").forEach((btn) => {
     btn.addEventListener("click", () => confirmarApagar(btn.getAttribute("data-apagar")));
   });
+  alvo.querySelectorAll("[data-revisar]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await marcarRevisado(btn.getAttribute("data-revisar"));
+      mostrarToast("Lançamento marcado como revisado.");
+    });
+  });
 }
 
 function linhaTransacao(item) {
@@ -123,6 +130,9 @@ function linhaTransacao(item) {
   const classeValor = d.tipo === "receita" ? "valor-pos" : (d.tipo === "despesa" ? "valor-neg" : "");
   const sinal = d.tipo === "receita" ? "+" : (d.tipo === "despesa" ? "−" : "");
   const sub = [tempo.formatarData(d.data), destino, d.categoriaId ? nomeCategoria(d.categoriaId) : null].filter(Boolean).join(" · ");
+  // §18: lançamento importado (origem !== "manual") e ainda não conferido
+  // pelo usuário — distinção entre "veio automático" e "foi revisado".
+  const naoRevisado = d.origem && d.origem !== "manual" && d.revisado === false;
   return `
     <div class="item-cartao">
       <div class="item-corpo">
@@ -132,7 +142,9 @@ function linhaTransacao(item) {
       <div class="item-valor mono ${classeValor}" data-valor>${sinal}${formatarBRL(d.valorCentavos)}</div>
       <span class="item-tag${d.status === "cancelado" ? " inativa" : ""}">${ROTULO_STATUS[d.status] || d.status}</span>
       ${parcelaTag}
+      ${naoRevisado ? `<span class="item-tag atencao">não revisado</span>` : ""}
       <div class="item-acoes">
+        ${naoRevisado ? `<button class="icon-btn" title="Marcar como revisado" aria-label="Marcar como revisado" data-revisar="${escapeHtml(item.id)}">✓</button>` : ""}
         <button class="icon-btn danger" title="Apagar" aria-label="Apagar" data-apagar="${escapeHtml(item.id)}">✕</button>
       </div>
     </div>`;

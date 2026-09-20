@@ -51,8 +51,8 @@ transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
 | `faturaId` | Compra no cartão aponta para a fatura. O `pagamento_fatura` quita a fatura, **não** é uma segunda despesa (§5) |
 | `parcelaDe` | Agrupa as parcelas de uma compra; `parcelaNum/parcelaTotal` dão a visão de compromisso futuro (§3) |
 | `fonteRendaId` | Liga uma receita a uma fonte de renda cadastrada (§12) — opcional, só usado quando `tipo` é `receita`. Sem ele, a receita ainda soma no total do mês, só não entra na previsibilidade/histórico de nenhuma fonte específica |
-| `origem` | `manual \| planilha \| ofx \| drive \| open_finance` (§18) |
-| `origemId` | Chave do lançamento na fonte — é o que detecta reimportação duplicada (§18) |
+| `origem` | `manual \| planilha \| ofx \| drive \| open_finance` — `planilha`/`ofx` ✅ Fase 11; `drive`/`open_finance` ficam para a Fase 12 (§18) |
+| `origemId` | Chave do lançamento na fonte — FITID do banco (OFX) ou o id do lote (CSV, que não tem identificador próprio); é o que detecta reimportação duplicada (§18) |
 | `revisado` | Distingue o que veio automático do que você conferiu (§18) |
 
 ```
@@ -197,7 +197,25 @@ diferente, gasto atípico de cartão, receita esperada não recebida,
 completude/confiabilidade dos dados — tudo recalculado ao vivo a partir
 das coleções que já existem, nada novo persistido.
 
-## Conexões e sistema — Fases 11, 12 e 15
+## Importação — Fase 11
+
+```
+lotesImportacao/<id> { formato, contaId, texto, quantidadeCandidatos, criadoEm }
+```
+
+`formato`: `csv | ofx`. `texto` é o conteúdo colado, **intacto** — nunca
+editado depois de criado, é a "manutenção do histórico original" do §18: os
+lançamentos que nasceram dele podem ser editados ou apagados na tela de
+Transações, mas o retrato do que foi colado continua existindo aqui, do
+mesmo jeito que `patrimonioSnapshots` (Fase 9) e `decisoes` (Fase 7) são
+retratos que sobrevivem ao dado que os gerou. Nenhum candidato rejeitado na
+revisão é gravado — só o texto bruto de entrada e os lançamentos que o
+usuário de fato aceitou (via `transacao.origemId` apontando para este `id`,
+ou para o FITID do banco quando o OFX fornece um). `domain/importacao.js` é
+puro: `parseCSV`/`parseOFX` nunca escrevem em lugar nenhum, só
+`dados/importacaoRepo.js` grava.
+
+## Conexões e sistema — Fases 12 e 15
 
 ```
 conexoes/<id>       { provedor, instituicao, status, ultimaSync,

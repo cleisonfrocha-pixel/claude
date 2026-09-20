@@ -97,9 +97,15 @@ item do blueprint inteiro que obriga infraestrutura externa.
 | Implementação | Fase | Custo | Cobre |
 |---|---|---|---|
 | Manual | F1 | zero | tudo, com trabalho |
-| Planilha / CSV / OFX | F11 | zero | histórico e extrato bancário |
-| Google Drive (capability `mcp`) | F11 | zero | planilhas que já estão no Drive |
+| Planilha / CSV / OFX | ✅ F11 | zero | histórico e extrato bancário |
+| Google Drive (capability `mcp`) | adiado | zero | planilhas que já estão no Drive |
 | Provedor de Open Finance | F12 | pago | sincronização automática |
+
+CSV/OFX entregues na Fase 11 como texto colado, sem precisar de nenhuma
+capability nova — a forma do candidato (`domain/importacao.js`) já é o
+`ConectorDeDados` na prática. Google Drive ficou pra trás: CSV colado já
+cobre "planilha", e formalizar a interface faz mais sentido quando a Fase 12
+trouxer o segundo adaptador de verdade.
 
 O provedor pago vira **mais um adaptador**, atrás da mesma interface. Se o preço
 não fechar, o produto continua completo — só com mais digitação. É assim que o

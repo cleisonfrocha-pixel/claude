@@ -72,8 +72,11 @@ export async function criarSimples(dadosParciais) {
 }
 
 /** Transferência entre duas contas próprias — nunca receita, nunca despesa
- * (regra central do produto; ver domain/transacoes.js). */
-export async function criarTransferencia({ contaOrigemId, contaDestinoId, valorCentavos, data, descricao }) {
+ * (regra central do produto; ver domain/transacoes.js). `origem`/`origemId`
+ * passam para as duas pernas — usado pela Fase 11 (§18) quando a
+ * transferência nasce de uma importação reconciliada, não de digitação
+ * manual (padrão default preserva o comportamento de sempre). */
+export async function criarTransferencia({ contaOrigemId, contaDestinoId, valorCentavos, data, descricao, origem = "manual", origemId = null }) {
   if (!contaOrigemId || !contaDestinoId) throw new ErroDeValidacao(["Escolha as duas contas."]);
   if (contaOrigemId === contaDestinoId) throw new ErroDeValidacao(["A origem e o destino precisam ser contas diferentes."]);
   if (!Number.isFinite(valorCentavos) || valorCentavos <= 0) throw new ErroDeValidacao(["Informe um valor maior que zero."]);
@@ -82,7 +85,7 @@ export async function criarTransferencia({ contaOrigemId, contaDestinoId, valorC
   const par = construirParTransferencia({ contaOrigemId, contaDestinoId, valorCentavos, data, competencia, descricao, transferenciaId });
   const t = agora();
   for (const perna of par) {
-    await db.criar(CAMINHO, { ...padraoTransacao(perna), criadoEm: t, atualizadoEm: t });
+    await db.criar(CAMINHO, { ...padraoTransacao({ ...perna, origem, origemId }), criadoEm: t, atualizadoEm: t });
   }
   return transferenciaId;
 }

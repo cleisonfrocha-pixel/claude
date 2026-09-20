@@ -29,7 +29,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 15 | Reserva e segurança financeira | P1 | F9 | ● |
 | 16 | Objetivos financeiros | P1 | F9 | ● |
 | 17 | Anomalias e inteligência de comportamento | P1 | F10 | ● |
-| 18 | Importação e reconciliação | P1 | F11 | ○ |
+| 18 | Importação e reconciliação | P1 | F11 | ● |
 | 19 | Open Finance | P1 | F12 | ○ |
 | 20 | Assistente de IA | P2 | F13 | ○ |
 | 21 | Fechamento mensal e evolução | P2 | F14 | ○ |
@@ -382,12 +382,48 @@ lançamentos concretos por trás do número — cumprindo a exigência de
 "explicar de onde veio o alerta" ao mesmo tempo que o portão da própria
 Fase 10.
 
-### §18 — Importação e reconciliação `P1` — **F11**
+### §18 — Importação e reconciliação `P1` — ✅ **F11** (20/09/2026)
 
 Manual · planilhas e históricos · formatos financeiros (OFX/CSV) · Open Finance
 (chega na F12) · identificação de duplicatas · reconhecimento de transferências
 internas · revisão de lançamentos ambíguos · distinção entre importado
 automaticamente e revisado pelo usuário · **manutenção do histórico original**.
+
+**Como foi entregue:** `domain/importacao.js` — `parseCSV` (delimitador `;`
+ou `,` autodetectado, colunas configuráveis porque a ordem varia de banco
+pra banco, aspas com o delimitador dentro do campo tratadas por um
+divisor de linha próprio) e `parseOFX` (lê os blocos `STMTTRN` por regex,
+não por um parser de XML — OFX 1.x é SGML, bancos não fecham toda tag, e
+`DOMParser` nem existe no motor puro, CLAUDE.md/D3). Os dois reaproveitam
+`paraCentavos` (§4) pra converter o valor — a função já desambigua vírgula
+e ponto decimais, então serve tanto pro CSV brasileiro quanto pro ponto do
+OFX sem precisar de um segundo parser de dinheiro. `detectarDuplicatas`
+usa o FITID do OFX (identificador do próprio banco, guardado em
+`transacao.origemId`) quando existe — prova quase certa — e cai pra
+"mesma conta + mesmo valor + data muito próxima" quando não (CSV não tem
+id nenhum). `detectarTransferencias` cobre a regra não-negociável do
+CLAUDE.md: uma saída aqui que bate com uma entrada já existente em OUTRA
+conta própria vira sugestão de transferência, nunca duas coisas separadas
+somando receita e despesa ao mesmo tempo. `classificarAmbiguidade` marca
+pra revisão manual todo candidato sem categoria com o nome batendo na
+descrição.
+
+Nenhum campo novo no esquema da transação: `origem`/`origemId`/`revisado`
+já existiam desde a Fase 1, sem uso até agora — só passaram a ser
+preenchidos de verdade (`origem: "importado"`, `revisado: false`) na
+importação, exatamente a distinção que o §18 pede entre "veio automático"
+e "foi conferido". `lotesImportacao` (novo, `dados/importacaoRepo.js`) é
+a única coisa gravada além disso: o texto colado, intacto, nunca editado
+depois — a "manutenção do histórico original" — mesmo que os lançamentos
+que nasceram dele sejam depois editados ou apagados. A tela (aba
+"Importar", dentro de Dinheiro) separa análise (só leitura, nada
+gravado) de confirmação — duplicata nasce desmarcada por padrão.
+
+**Portão:** verificado com Playwright — importar o mesmo extrato OFX duas
+vezes marca as duas linhas como "possível duplicata" (pelo FITID) na
+segunda vez, ambas desmarcadas por padrão; confirmar sem tocar em nada
+não cria nenhum lançamento novo (a contagem de transações continua a
+mesma antes e depois).
 
 ### §19 — Open Finance `P1` — **F12** ⚠️ requer infraestrutura externa
 

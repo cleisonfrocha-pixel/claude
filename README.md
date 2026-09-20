@@ -9,21 +9,24 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 10 concluída (20/09/2026).** Confiança, alertas e anomalias:
-completude da vida financeira mapeada (checklist de sete itens, com
-percentual), itens a confirmar, saldos sem conferência recente, e um
-nível de confiabilidade que vira aviso explícito sempre que o
-Diagnóstico (Plano) se apoia em dados incompletos (§23). Nove alertas do
-§24 — três já existiam desde a Fase 7 (risco de caixa, vencimento sem
-cobertura, cartão no limite), os outros seis são novos, incluindo dois
-que reaproveitam a evolução de patrimônio da Fase 9 sem recalcular nada
-(dívida aumentando, patrimônio evoluindo). Seis detecções de anomalia do
-§17 — duas já existiam (gasto fora do padrão, categoria em alta
-persistente), quatro nasceram nesta fase (nova recorrência, recorrência
-com valor diferente do esperado, gasto atípico de cartão, mudança
-relevante em receita). Portão cumprido: todo alerta, novo ou antigo,
-mostra ao expandir os lançamentos concretos que o originaram. V1 (F0–F9)
-segue completa — Fase 10 é P1 secundário, construído sobre ela.
+**Fase 11 concluída (20/09/2026).** Importação e reconciliação: colar um
+extrato CSV ou OFX (aba "Importar", dentro de Dinheiro) e revisar antes
+de gravar — nada entra sem passar pela tela de revisão. Duplicata é
+detectada pelo identificador do próprio banco (FITID, no OFX) ou por
+data+valor+conta (sem id, no CSV) e nasce desmarcada por padrão;
+transferência entre contas próprias é reconhecida quando bate com um
+lançamento já existente em outra conta, evitando contar como receita e
+despesa ao mesmo tempo; lançamento sem categoria óbvia fica marcado para
+escolha manual. Os campos `origem`/`origemId`/`revisado` — que existiam
+na transação desde a Fase 1, sem uso até agora — passaram a valer:
+`origem: "planilha"/"ofx"` e `revisado: false` distinguem o que veio
+importado do que já foi conferido, com uma tag visível em Transações e
+uma ação rápida para marcar como revisado. O texto original de cada
+importação fica gravado intacto (`lotesImportacao`), mesmo que os
+lançamentos nascidos dele sejam depois editados. Portão verificado com
+Playwright: reimportar o mesmo extrato duas vezes não cria um único
+lançamento duplicado. V1 (F0–F9) segue completa — Fase 11 é P1
+secundário, construído sobre ela.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>
