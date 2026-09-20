@@ -1,12 +1,19 @@
-// Início — os seis blocos do §25. "Como está minha vida financeira agora?"
-// em poucos segundos: Dinheiro, Situação, Próximas ações, Fluxo, Dívidas e
-// Patrimônio (Fase 9, o último a chegar).
+// Início — dashboard (Sprint 3, referência Nubank pedida pelo usuário):
+// um número central, o que precisa de atenção AGORA em destaque, e uma
+// grade de cartões — um por módulo — pra ir clicando. Antes a Home
+// empilhava o diagnóstico inteiro (seis blocos de prosa, um embaixo do
+// outro); útil pra quem já conhece o produto, ruim pra quem só quer abrir
+// o app e resolver o que precisa. Cada bloco de prosa continua existindo,
+// só que na tela de origem — o cartão daqui é a porta de entrada pra ele,
+// não uma cópia.
 
 import { pessoas, contas, dividas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
 import { assinarProjecao } from "../../dados/projecaoRepo.js";
 import { assinarPainelDecisoes } from "../../dados/decisoesRepo.js";
 import { assinarPainelPatrimonio } from "../../dados/patrimonioRepo.js";
+import { assinarPainelRenda } from "../../dados/rendaRepo.js";
+import { assinarPainelObjetivos } from "../../dados/objetivosRepo.js";
 import { calcularVisaoConsolidada } from "../../domain/dividas.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../../domain/tempo.js";
@@ -21,21 +28,19 @@ let pararAssinaturaProjecao = null;
 let pararAssinaturaDividas = null;
 let pararAssinaturaDecisoes = null;
 let pararAssinaturaPatrimonio = null;
+let pararAssinaturaRenda = null;
+let pararAssinaturaObjetivos = null;
+let estadoDiagnostico = null;
 let estadoProjecao = null;
 let estadoDividas = null;
 let estadoDecisoes = null;
 let estadoPatrimonio = null;
+let estadoRenda = null;
+let estadoObjetivos = null;
 let container = null;
 
-function itemContador(rotulo, valor, sub) {
-  return `
-    <div class="item-cartao">
-      <div class="item-corpo">
-        <div class="item-titulo">${escapeHtml(rotulo)}</div>
-        <div class="item-sub">${escapeHtml(sub)}</div>
-      </div>
-      <div class="item-valor mono" data-valor>${valor}</div>
-    </div>`;
+function irPara(modulo) {
+  document.querySelector(`[data-modulo="${modulo}"]`)?.click();
 }
 
 export default {
@@ -59,30 +64,36 @@ export default {
 
     if (pararAssinaturaProjecao) pararAssinaturaProjecao();
     estadoProjecao = null;
-    pararAssinaturaProjecao = assinarProjecao((r) => { estadoProjecao = r; renderizarFluxoResumo(); });
+    pararAssinaturaProjecao = assinarProjecao((r) => { estadoProjecao = r; renderizarGrade(); });
 
     if (pararAssinaturaDividas) pararAssinaturaDividas();
     estadoDividas = null;
     pararAssinaturaDividas = dividas.assinar((lista) => {
       const dividasComId = lista.map((i) => ({ id: i.id, ...i.dados }));
       estadoDividas = calcularVisaoConsolidada(dividasComId, hojeISO());
-      renderizarDividasResumo();
+      renderizarGrade();
     });
 
     if (pararAssinaturaDecisoes) pararAssinaturaDecisoes();
     estadoDecisoes = null;
     pararAssinaturaDecisoes = assinarPainelDecisoes((r) => {
       estadoDecisoes = r;
-      renderizarSituacaoResumo();
-      renderizarProximasAcoesResumo();
+      estadoDiagnostico = r.diagnostico;
+      renderizarAlerta();
+      renderizarGrade();
     });
 
     if (pararAssinaturaPatrimonio) pararAssinaturaPatrimonio();
     estadoPatrimonio = null;
-    pararAssinaturaPatrimonio = assinarPainelPatrimonio((r) => {
-      estadoPatrimonio = r;
-      renderizarPatrimonioResumo();
-    });
+    pararAssinaturaPatrimonio = assinarPainelPatrimonio((r) => { estadoPatrimonio = r; renderizarGrade(); });
+
+    if (pararAssinaturaRenda) pararAssinaturaRenda();
+    estadoRenda = null;
+    pararAssinaturaRenda = assinarPainelRenda((r) => { estadoRenda = r; renderizarGrade(); });
+
+    if (pararAssinaturaObjetivos) pararAssinaturaObjetivos();
+    estadoObjetivos = null;
+    pararAssinaturaObjetivos = assinarPainelObjetivos((r) => { estadoObjetivos = r; renderizarGrade(); });
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
@@ -90,10 +101,15 @@ export default {
     if (pararAssinaturaDividas) { pararAssinaturaDividas(); pararAssinaturaDividas = null; }
     if (pararAssinaturaDecisoes) { pararAssinaturaDecisoes(); pararAssinaturaDecisoes = null; }
     if (pararAssinaturaPatrimonio) { pararAssinaturaPatrimonio(); pararAssinaturaPatrimonio = null; }
+    if (pararAssinaturaRenda) { pararAssinaturaRenda(); pararAssinaturaRenda = null; }
+    if (pararAssinaturaObjetivos) { pararAssinaturaObjetivos(); pararAssinaturaObjetivos = null; }
+    estadoDiagnostico = null;
     estadoProjecao = null;
     estadoDividas = null;
     estadoDecisoes = null;
     estadoPatrimonio = null;
+    estadoRenda = null;
+    estadoObjetivos = null;
     container = null;
   },
 };
@@ -105,9 +121,7 @@ function renderizarPedindoCadastro() {
       Ainda não há nenhuma pessoa cadastrada.<br>Comece por aí — tudo no sistema pertence a alguém.
       <div><button class="btn btn-primary" id="ir-configuracoes">Cadastrar pessoas</button></div>
     </div>`;
-  container.querySelector("#ir-configuracoes").addEventListener("click", () => {
-    document.querySelector('[data-modulo="configuracoes"]')?.click();
-  });
+  container.querySelector("#ir-configuracoes").addEventListener("click", () => irPara("configuracoes"));
 }
 
 function renderizarPedindoConta() {
@@ -117,18 +131,12 @@ function renderizarPedindoConta() {
       Ainda não há nenhuma conta cadastrada — sem isso não dá pra saber quanto dinheiro existe.
       <div><button class="btn btn-primary" id="ir-dinheiro">Cadastrar conta</button></div>
     </div>`;
-  container.querySelector("#ir-dinheiro").addEventListener("click", () => {
-    document.querySelector('[data-modulo="dinheiro"]')?.click();
-  });
+  container.querySelector("#ir-dinheiro").addEventListener("click", () => irPara("dinheiro"));
 }
 
-function renderizarPainel(painel, listaContas, listaCartoes) {
+function renderizarPainel(painel) {
   if (!container) return;
-  const {
-    saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos,
-    livreCentavos, seguroParaGastarCentavos, detalhes,
-  } = painel;
-
+  const { saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos, livreCentavos, seguroParaGastarCentavos } = painel;
   const negativo = seguroParaGastarCentavos < 0;
 
   container.innerHTML = `
@@ -158,217 +166,145 @@ function renderizarPainel(painel, listaContas, listaCartoes) {
       <div class="resumo-item"><span>Livre</span><b class="mono ${livreCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(livreCentavos)}</b></div>
     </div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Por que esse número</h3>
-      <p class="tela-sub">Saldo atual, conta por conta</p></div></div>
-    <div class="lista-cartoes" id="contas-detalhe" style="margin-bottom:20px;"></div>
+    <div id="alerta-home"></div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Compromissos próximos</h3>
-      <p class="tela-sub">O que está pressionando o caixa nos próximos ${HORIZONTE_DIAS} dias</p></div></div>
-    <div id="compromissos-detalhe"></div>
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Situação</h3>
-      <p class="tela-sub">Estado do caixa e o principal risco ou pressão agora — §8/§9</p></div></div>
-    <div id="situacao-home"></div>
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Próximas ações</h3>
-      <p class="tela-sub">O que merece sua atenção agora — §9</p></div></div>
-    <div id="proximas-acoes-home"></div>
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Fluxo de caixa</h3>
-      <p class="tela-sub">Entradas e saídas projetadas — os quatro horizontes do §7</p></div></div>
-    <div id="fluxo-caixa-home"></div>
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Dívidas</h3>
-      <p class="tela-sub">Saldo devido, comprometimento mensal e pressão sobre a renda — §11</p></div></div>
-    <div id="dividas-home"></div>
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Patrimônio</h3>
-      <p class="tela-sub">Ativos, passivos e reserva — §14/§15</p></div></div>
-    <div id="patrimonio-home"></div>
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Tudo em um toque</h3>
+      <p class="tela-sub">Cada cartão abre o módulo por trás do número</p></div></div>
+    <div class="home-grid" id="grade-home"></div>
   `;
 
-  const contasAlvo = container.querySelector("#contas-detalhe");
-  if (!detalhes.contasOperacao.length) {
-    contasAlvo.innerHTML = `<div class="vazio">Nenhuma conta de operação ativa.</div>`;
-  } else {
-    contasAlvo.innerHTML = detalhes.contasOperacao.map((x) => itemContador(
-      x.conta.nome,
-      formatarBRL(x.saldoCentavos),
-      x.conta.instituicao || "",
-    )).join("");
-  }
-
-  const compromissosAlvo = container.querySelector("#compromissos-detalhe");
-  if (!detalhes.compromissos.length) {
-    compromissosAlvo.innerHTML = `<div class="vazio">Nada previsto para os próximos ${HORIZONTE_DIAS} dias.</div>`;
-  } else {
-    compromissosAlvo.innerHTML = `<div class="item-cartao" style="display:block;">` +
-      detalhes.compromissos.map((item) => `
-        <div class="compromisso-item">
-          <div>
-            <div class="compromisso-desc">${item.atrasado ? '<span class="tag-atrasado">Atrasado</span>' : ""}${escapeHtml(item.descricao)}</div>
-            <div class="compromisso-data">${escapeHtml(formatarData(item.data))}</div>
-          </div>
-          <div class="compromisso-valor" data-valor>${formatarBRL(item.valorCentavos)}</div>
-        </div>`).join("") +
-      `</div>`;
-  }
-
-  renderizarFluxoResumo();
-  renderizarDividasResumo();
-  renderizarSituacaoResumo();
-  renderizarProximasAcoesResumo();
+  renderizarAlerta();
+  renderizarGrade();
 }
 
-function renderizarSituacaoResumo() {
+/** O item mais urgente da Central de Decisões, em destaque logo abaixo do
+ * número principal — pra quem só quer olhar e já ver o que precisa
+ * resolver, sem entrar em Plano. Só aparece quando existe algo urgente de
+ * verdade (nunca inventa pressão onde não há). */
+function renderizarAlerta() {
   if (!container) return;
-  const alvo = container.querySelector("#situacao-home");
+  const alvo = container.querySelector("#alerta-home");
   if (!alvo) return;
-
-  if (!estadoDecisoes) {
-    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
-    return;
-  }
-
-  const { diagnostico, achadosPendentes } = estadoDecisoes;
-  const negativo = diagnostico.estadoCaixa.seguroParaGastarCentavos < 0;
-  const principal = achadosPendentes[0];
-
+  const principal = estadoDecisoes?.achadosPendentes?.[0];
+  if (!principal || principal.urgencia !== "alta") { alvo.innerHTML = ""; return; }
   alvo.innerHTML = `
-    <div class="divida-resumo" style="margin-bottom:0;">
-      <div class="diagnostico-linha">
-        <div class="rotulo">Estado do caixa</div>
-        <div class="texto">${negativo
-          ? `Negativo: falta <span class="valor-neg" data-valor>${formatarBRL(Math.abs(diagnostico.estadoCaixa.seguroParaGastarCentavos))}</span> para cobrir o que já está comprometido.`
-          : `<span data-valor>${formatarBRL(diagnostico.estadoCaixa.seguroParaGastarCentavos)}</span> seguros para gastar.`}</div>
+    <button class="home-alerta" data-ir="plano">
+      <div>
+        <div class="titulo">${escapeHtml(principal.titulo)}</div>
+        <div class="sub">${escapeHtml(principal.acaoSugerida)}</div>
       </div>
-      <div class="diagnostico-linha" style="border-bottom:none;">
-        <div class="rotulo">Principal risco ou pressão</div>
-        <div class="texto">${principal ? escapeHtml(principal.titulo) : "Nenhum problema ou risco identificado agora."}</div>
-      </div>
-    </div>`;
-}
-
-function renderizarProximasAcoesResumo() {
-  if (!container) return;
-  const alvo = container.querySelector("#proximas-acoes-home");
-  if (!alvo) return;
-
-  if (!estadoDecisoes) {
-    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
-    return;
-  }
-
-  const topAchados = estadoDecisoes.achadosPendentes.slice(0, 3);
-  if (!topAchados.length) {
-    alvo.innerHTML = `<div class="vazio">Nada pedindo atenção agora.</div>`;
-    return;
-  }
-
-  alvo.innerHTML = `<div class="lista-cartoes" data-ir-plano>` +
-    topAchados.map((a) => `
-      <button class="item-cartao" style="width:100%;text-align:left;cursor:pointer;font:inherit;">
-        <div class="item-corpo">
-          <div class="item-titulo">${escapeHtml(a.titulo)}</div>
-          <div class="item-sub">${escapeHtml(a.acaoSugerida)}</div>
-        </div>
-        <span class="item-tag${CLASSE_URGENCIA[a.urgencia] ? " " + CLASSE_URGENCIA[a.urgencia] : ""}">${ROTULO_URGENCIA[a.urgencia]}</span>
-      </button>`).join("") +
-    `</div>`;
-
-  alvo.querySelectorAll("button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelector('[data-modulo="plano"]')?.click();
-    });
-  });
-}
-
-function renderizarDividasResumo() {
-  if (!container) return;
-  const alvo = container.querySelector("#dividas-home");
-  if (!alvo) return;
-
-  if (!estadoDividas) {
-    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
-    return;
-  }
-  if (estadoDividas.quantidadeAtivas === 0) {
-    alvo.innerHTML = `<div class="vazio">Nenhuma dívida ativa cadastrada.</div>`;
-    return;
-  }
-
-  alvo.innerHTML = `
-    <button class="item-cartao" data-ir-dividas style="width:100%;text-align:left;cursor:pointer;font:inherit;">
-      <div class="item-corpo">
-        <div class="item-titulo"><span class="valor-neg" data-valor>${formatarBRL(estadoDividas.saldoTotalAtualCentavos)}</span> devendo${estadoDividas.quantidadeAtrasadas > 0
-          ? ` · <span style="color:var(--danger);">${estadoDividas.quantidadeAtrasadas} ${estadoDividas.quantidadeAtrasadas === 1 ? "atrasada" : "atrasadas"}</span>`
-          : ""}</div>
-        <div class="item-sub"><span data-valor>${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}</span>/mês comprometido${estadoDividas.dataQuitacaoTotal ? ` · quita ${escapeHtml(formatarData(estadoDividas.dataQuitacaoTotal))}` : ""}</div>
-      </div>
+      <span class="item-tag critico">urgente</span>
     </button>`;
-
-  alvo.querySelector("[data-ir-dividas]").addEventListener("click", () => {
-    document.querySelector('[data-modulo="dividas"]')?.click();
-  });
+  alvo.querySelector("[data-ir]").addEventListener("click", () => irPara("plano"));
 }
 
-function renderizarPatrimonioResumo() {
-  if (!container) return;
-  const alvo = container.querySelector("#patrimonio-home");
-  if (!alvo) return;
-
-  if (!estadoPatrimonio) {
-    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
-    return;
-  }
-
-  const { liquidoCentavos, ativosCentavos, passivosCentavos, variacaoMensal, reserva } = estadoPatrimonio;
-  const variacaoTexto = variacaoMensal
-    ? `${variacaoMensal.variacaoCentavos >= 0 ? "+" : ""}${formatarBRL(variacaoMensal.variacaoCentavos)} no mês`
-    : "primeiro retrato deste mês";
-  const coberturaTexto = reserva.coberturaMeses != null
-    ? `reserva cobre ${reserva.coberturaMeses.toFixed(1)} meses de custo essencial`
-    : "sem custo essencial calculado ainda para medir a reserva";
-
-  alvo.innerHTML = `
-    <button class="item-cartao" data-ir-patrimonio style="width:100%;text-align:left;cursor:pointer;font:inherit;">
-      <div class="item-corpo">
-        <div class="item-titulo"><span class="${liquidoCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(liquidoCentavos)}</span> de patrimônio líquido</div>
-        <div class="item-sub"><span data-valor>${formatarBRL(ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(passivosCentavos)}</span> em passivos · ${escapeHtml(variacaoTexto)}</div>
-        <div class="item-sub">${escapeHtml(coberturaTexto)}</div>
-      </div>
+// `valorEhDinheiro` decide se o valor do cartão entra no modo "ocultar
+// valores" (§27): um total em R$ borra, mas um rótulo como "Em dia" ou
+// "3/5 no ritmo" não é dinheiro e não deve borrar — senão o botão vira
+// ilegível à toa quando a privacidade está ligada.
+function cartaoHome({ modulo, destaque, rotulo, valor, valorClasse, valorEhDinheiro, sub }) {
+  return `
+    <button class="home-card${destaque ? " destaque" : ""}" data-ir="${escapeHtml(modulo)}">
+      <div class="home-card-rotulo">${escapeHtml(rotulo)}</div>
+      <div class="home-card-valor mono${valorClasse ? " " + valorClasse : ""}"${valorEhDinheiro ? " data-valor" : ""}>${valor}</div>
+      <div class="home-card-sub">${sub}</div>
     </button>`;
-
-  alvo.querySelector("[data-ir-patrimonio]").addEventListener("click", () => {
-    document.querySelector('[data-modulo="patrimonio"]')?.click();
-  });
 }
 
-function renderizarFluxoResumo() {
+/** A grade inteira, um cartão por módulo — cada um lido de um painel que
+ * já existe (nenhum número novo é inventado aqui). Redesenha tudo a cada
+ * mudança em qualquer painel; é barato (é só HTML de texto) e mantém a
+ * grade sempre consistente, sem coordenar qual pedaço mudou. */
+function renderizarGrade() {
   if (!container) return;
-  const alvo = container.querySelector("#fluxo-caixa-home");
+  const alvo = container.querySelector("#grade-home");
   if (!alvo) return;
 
-  if (!estadoProjecao) {
-    alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`;
-    return;
+  const cartoes = [];
+
+  if (estadoDiagnostico) {
+    const receitaCentavos = estadoDiagnostico.receita.totalCentavos;
+    const despesaCentavos = estadoDiagnostico.pressaoFixas.totalCentavos;
+    cartoes.push(cartaoHome({
+      modulo: "dinheiro", destaque: true, rotulo: "Transações",
+      valor: "Lançar", valorEhDinheiro: false,
+      sub: `<span data-valor>${formatarBRL(receitaCentavos)}</span> entraram · <span data-valor>${formatarBRL(despesaCentavos)}</span> saíram este mês`,
+    }));
   }
 
-  alvo.innerHTML = `<div class="horizontes-grid">` +
-    estadoProjecao.horizontes.map((h) => {
-      const net = h.entradasSeguroCentavos - h.saidasSeguroCentavos;
-      return `
-        <button class="horizonte-card" data-ir-planejamento>
-          <div class="rotulo">${h.saidaCritica ? '<span class="ponto-critico"></span>' : ""}${escapeHtml(h.rotulo)}</div>
-          <div class="funcao">${escapeHtml(h.funcao)}</div>
-          <div class="net ${net < 0 ? "valor-neg" : "valor-pos"}" data-valor>${net >= 0 ? "+" : ""}${formatarBRL(net)}</div>
-        </button>`;
-    }).join("") +
-    `</div>`;
+  if (estadoProjecao) {
+    const critico = estadoProjecao.horizontes.find((h) => h.saidaCritica);
+    const h7 = estadoProjecao.horizontes[0];
+    const net = h7.entradasSeguroCentavos - h7.saidasSeguroCentavos;
+    cartoes.push(cartaoHome({
+      modulo: "planejamento", rotulo: "Planejamento",
+      valor: critico ? "Caixa aperta" : `${net >= 0 ? "+" : ""}${formatarBRL(net)}`,
+      valorClasse: critico ? "valor-neg" : (net < 0 ? "valor-neg" : "valor-pos"),
+      valorEhDinheiro: !critico,
+      sub: critico ? `previsto para ${escapeHtml(formatarData(critico.saidaCritica.data))}` : "saldo previsto em 7 dias",
+    }));
+  }
 
-  alvo.querySelectorAll("[data-ir-planejamento]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelector('[data-modulo="planejamento"]')?.click();
-    });
+  if (estadoDividas) {
+    cartoes.push(cartaoHome({
+      modulo: "dividas", rotulo: "Dívidas",
+      valor: estadoDividas.quantidadeAtivas === 0 ? "Zerado" : formatarBRL(estadoDividas.saldoTotalAtualCentavos),
+      valorClasse: estadoDividas.quantidadeAtivas > 0 ? "valor-neg" : "valor-pos",
+      valorEhDinheiro: estadoDividas.quantidadeAtivas > 0,
+      sub: estadoDividas.quantidadeAtivas === 0
+        ? "nenhuma dívida ativa"
+        : `${estadoDividas.quantidadeAtrasadas > 0 ? `${estadoDividas.quantidadeAtrasadas} atrasada${estadoDividas.quantidadeAtrasadas > 1 ? "s" : ""} · ` : ""}<span data-valor>${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}</span>/mês`,
+    }));
+  }
+
+  if (estadoRenda) {
+    const deficit = estadoRenda.causaDeficit?.temDeficit;
+    cartoes.push(cartaoHome({
+      modulo: "renda", rotulo: "Renda",
+      valor: formatarBRL(estadoRenda.rendaAtualCentavos),
+      valorClasse: deficit ? "valor-neg" : "valor-pos",
+      valorEhDinheiro: true,
+      sub: deficit ? "há déficit este mês" : "sem déficit este mês",
+    }));
+  }
+
+  if (estadoPatrimonio) {
+    const { liquidoCentavos } = estadoPatrimonio;
+    cartoes.push(cartaoHome({
+      modulo: "patrimonio", rotulo: "Patrimônio",
+      valor: formatarBRL(liquidoCentavos),
+      valorClasse: liquidoCentavos < 0 ? "valor-neg" : "valor-pos",
+      valorEhDinheiro: true,
+      sub: "líquido — ativos menos passivos",
+    }));
+  }
+
+  if (estadoObjetivos) {
+    const total = estadoObjetivos.objetivos.length;
+    const noRitmo = estadoObjetivos.objetivos.filter((o) => o.compativel).length;
+    cartoes.push(cartaoHome({
+      modulo: "objetivos", rotulo: "Objetivos",
+      valor: total === 0 ? "Nenhum" : `${noRitmo}/${total}`,
+      valorClasse: total > 0 && noRitmo < total ? "valor-neg" : "",
+      valorEhDinheiro: false,
+      sub: total === 0 ? "nenhum objetivo cadastrado" : "no ritmo da margem atual",
+    }));
+  }
+
+  if (estadoDecisoes) {
+    const qtd = estadoDecisoes.achadosPendentes.length;
+    cartoes.push(cartaoHome({
+      modulo: "plano", rotulo: "Plano",
+      valor: qtd === 0 ? "Em dia" : `${qtd} ${qtd === 1 ? "pendência" : "pendências"}`,
+      valorClasse: qtd > 0 ? "valor-neg" : "valor-pos",
+      valorEhDinheiro: false,
+      sub: qtd === 0 ? "nada pedindo atenção agora" : escapeHtml(estadoDecisoes.achadosPendentes[0].titulo),
+    }));
+  }
+
+  if (!cartoes.length) { alvo.innerHTML = `<div class="tela-sub">Carregando…</div>`; return; }
+  alvo.innerHTML = cartoes.join("");
+  alvo.querySelectorAll("[data-ir]").forEach((btn) => {
+    btn.addEventListener("click", () => irPara(btn.getAttribute("data-ir")));
   });
 }

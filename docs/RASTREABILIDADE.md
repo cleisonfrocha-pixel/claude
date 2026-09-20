@@ -644,8 +644,40 @@ compartilhadas (`.btn`, `.item-cartao`, `.hero-caixa`, `.modulo-chip`,
 - Validado com Playwright: telas populadas e vazias, claro e escuro,
   desktop e mobile. 262 testes do motor passando (mudança é só CSS).
 
-### Sprints 3–4 — pendentes
+### Sprint 3 — Home como dashboard — ✅ (20/09/2026)
 
-Sprint 3 (Home como dashboard: resumo + grid de cards clicáveis) e Sprint 4
-(propagar ajustes finos do novo visual, ponto a ponto, para as demais
-telas) seguem no plano.
+Pedido literal do usuário: "a página inicial deveria ter um resumo e uns
+botões, tipo cards, assim, pra você ir clicando... simples, pra uma pessoa
+leiga conseguir olhar e resolver tudo que ela tem que resolver... igual o
+app do Nubank faz". A Home empilhava os seis blocos do §25 inteiros, um
+embaixo do outro (por que esse número, compromissos, situação, próximas
+ações, fluxo de 4 horizontes, dívidas, patrimônio) — útil pra auditar, ruim
+pra abrir o app e agir.
+
+- Mantido: hero "dinheiro seguro para gastar" (§4) + resumo de 3 números
+  (saldo/comprometido/livre) — o "resumo" pedido, sem cortar informação
+  que já era o núcleo do §25.
+- Novo: alerta compacto do item mais urgente da Central de Decisões
+  (§9) logo abaixo do hero — só aparece quando existe urgência de verdade
+  (nunca inventa pressão), toque leva direto pra Plano.
+- Novo: grade de 7 cartões clicáveis — um por módulo (Transações em
+  destaque como atalho principal, Planejamento, Dívidas, Renda, Patrimônio,
+  Objetivos, Plano) — cada um com um número/rótulo e uma linha de contexto,
+  lidos de painéis que já existiam (nenhum cálculo novo, só uma leitura
+  compacta). Cada cartão é a porta de entrada pro bloco de prosa completo,
+  que continua existindo na tela de origem — nada de informação foi
+  perdido, só saiu da Home.
+- Cada cartão respeita §27 (ocultar valores) individualmente: um total em
+  R$ borra, um rótulo de status ("Em dia", "Zerado", "3/5 no ritmo") não
+  borra — testado com Playwright ligando o modo por CSS e conferindo que
+  só o dinheiro sumiu.
+- Testado em claro/escuro, desktop/mobile: grade em 2 colunas no celular,
+  3 no desktop. Cliques nos cartões navegam pro módulo certo (verificado
+  com Playwright — Dívidas e Objetivos abrem na tela certa a partir do
+  cartão). 262 testes do motor passando (mudança é só de tela — nenhuma
+  função de domínio mudou de assinatura).
+
+### Sprint 4 — pendente
+
+Propagar ajustes finos do novo visual, ponto a ponto, para as demais
+telas segue no plano.
