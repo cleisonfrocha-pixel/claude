@@ -1,7 +1,15 @@
 /* Tokens de design — herdados do Painel GEDI (docs/ARQUITETURA.md, seção
    "O que já está pronto"). Claro por padrão; escuro por preferência do
    sistema OU por escolha explícita do viewer (dois seletores, de propósito:
-   ver o contrato de tema do artifact-design). */
+   ver o contrato de tema do artifact-design).
+
+   Sprint 2 (auditoria de UX/UI, pós-V1): troca do preto neutro por um roxo
+   de marca — referência Nubank/Next pedida pelo usuário — para o produto
+   parecer um app de fintech, não um painel genérico. `--accent` continua
+   reservado para marca/interação (CTA, chip ativo, foco); `--good`/`--warn`/
+   `--danger` continuam sendo só sobre dinheiro (positivo/atenção/negativo) —
+   as duas linguagens de cor não se misturam, senão "saldo negativo" e
+   "botão de marca" competem pelo mesmo vermelho ou pelo mesmo roxo. */
 :root {
   --bg: #F4F6FA;
   --surface: #FFFFFF;
@@ -11,17 +19,18 @@
   --text-muted: #5B6472;
   --text-faint: #8B93A3;
   --ink: #111111;
-  --accent: #14161B;
+  --accent: #7C3AED;
   --accent-ink: #FFFFFF;
+  --accent-soft: rgba(124, 58, 237, .10);
   --good: #12B76A;
   --good-bg: #DEF5EA;
   --warn: #D97706;
   --warn-bg: #FDF3E1;
   --danger: #E4232F;
   --danger-bg: #FCE9EA;
-  --shadow: 0 1px 2px rgba(11, 18, 32, .05), 0 10px 28px -14px rgba(11, 18, 32, .16);
+  --shadow: 0 2px 4px rgba(17, 10, 40, .05), 0 14px 32px -16px rgba(17, 10, 40, .22);
   --nav-fade: rgba(11, 18, 32, .12);
-  --radius: 14px;
+  --radius: 18px;
   color-scheme: light dark;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -36,15 +45,16 @@
     --text-muted: #9AA7BD;
     --text-faint: #6C7891;
     --ink: #F2F4F8;
-    --accent: #E7E9EE;
-    --accent-ink: #0B1220;
+    --accent: #A78BFA;
+    --accent-ink: #1B1030;
+    --accent-soft: rgba(167, 139, 250, .16);
     --good: #1FAE63;
     --good-bg: rgba(31, 174, 99, .18);
     --warn: #F5A524;
     --warn-bg: rgba(245, 165, 36, .14);
     --danger: #F5504F;
     --danger-bg: rgba(245, 80, 79, .16);
-    --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px -14px rgba(0, 0, 0, .55);
+    --shadow: 0 2px 4px rgba(0, 0, 0, .35), 0 14px 32px -16px rgba(0, 0, 0, .6);
     --nav-fade: rgba(0, 0, 0, .45);
   }
 }
@@ -57,15 +67,16 @@
   --text-muted: #9AA7BD;
   --text-faint: #6C7891;
   --ink: #F2F4F8;
-  --accent: #E7E9EE;
-  --accent-ink: #0B1220;
+  --accent: #A78BFA;
+  --accent-ink: #1B1030;
+  --accent-soft: rgba(167, 139, 250, .16);
   --good: #1FAE63;
   --good-bg: rgba(31, 174, 99, .18);
   --warn: #F5A524;
   --warn-bg: rgba(245, 165, 36, .14);
   --danger: #F5504F;
   --danger-bg: rgba(245, 80, 79, .16);
-  --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px -14px rgba(0, 0, 0, .55);
+  --shadow: 0 2px 4px rgba(0, 0, 0, .35), 0 14px 32px -16px rgba(0, 0, 0, .6);
   --nav-fade: rgba(0, 0, 0, .45);
 }
 * { box-sizing: border-box; }

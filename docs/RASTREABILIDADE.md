@@ -617,9 +617,35 @@ novo do blueprint — é qualidade do que já foi entregue.
 - Testes do motor: 262 passando, incluindo os novos de `statusEfetivo` e
   `calcularConcentracaoRenda`.
 
-### Sprints 2–4 — pendentes
+### Sprint 2 — novo sistema de design (referência Nubank) — ✅ (20/09/2026)
 
-Sprint 2 (novo sistema de design, referência Nubank/Next — visual mais
-"fintech", menos genérico), Sprint 3 (Home como dashboard: resumo + grid de
-cards clicáveis) e Sprint 4 (propagar o novo visual para as demais telas)
-seguem no plano, priorizados pelo usuário em cima da referência Nubank.
+Só tokens e componentes de base (`estilo/tokens.css`,
+`estilo/componentes.css`) — nenhuma tela mudou de estrutura, todas herdam o
+visual novo automaticamente por já rodarem sobre as mesmas classes
+compartilhadas (`.btn`, `.item-cartao`, `.hero-caixa`, `.modulo-chip`,
+`.field input` etc.), confirmando que o "sistema" de fato é um sistema.
+
+- Cor de marca: preto neutro (`#14161B`) trocado por um roxo
+  (`#7C3AED` claro / `#A78BFA` escuro) — referência Nubank pedida pelo
+  usuário. Fica reservada a marca/interação (CTA, chip ativo, foco, avatar
+  com iniciais); `--good`/`--warn`/`--danger` continuam só sobre dinheiro,
+  para as duas linguagens de cor não colidirem (saldo negativo não pode
+  competir visualmente com "botão de marca").
+- Token novo `--accent-soft` (tinta roxa fraca) para estados ativos/hoje
+  sem virar um bloco cinza neutro (dia de hoje no calendário, horizonte
+  ativo no fluxo de caixa, avatar de iniciais).
+- Marca mínima no topo: quadrado roxo antes do wordmark (`.wordmark::before`,
+  puro CSS, sem asset) — acompanha o tema sozinho.
+- Cantos mais arredondados em toda a superfície de cartão (`--radius`
+  14→18px; cartões de lista, achados, horizontes de fluxo, modal, resumo
+  12→16-22px) e tags viraram pill — leitura de "app", não de painel.
+- Sombra um pouco mais presente (`--shadow`) para dar profundidade sem
+  pesar.
+- Validado com Playwright: telas populadas e vazias, claro e escuro,
+  desktop e mobile. 262 testes do motor passando (mudança é só CSS).
+
+### Sprints 3–4 — pendentes
+
+Sprint 3 (Home como dashboard: resumo + grid de cards clicáveis) e Sprint 4
+(propagar ajustes finos do novo visual, ponto a ponto, para as demais
+telas) seguem no plano.
