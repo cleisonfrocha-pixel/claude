@@ -41,13 +41,13 @@ export default {
 function textoCausa(c) {
   switch (c.tipo) {
     case "renda":
-      return `Falta ${formatarBRL(c.dados.faltaCentavos)} para a renda (${formatarBRL(c.dados.rendaAtualCentavos)}) cobrir o essencial (${formatarBRL(c.dados.custoEssencialCentavos)}).`;
+      return `Falta <span data-valor>${formatarBRL(c.dados.faltaCentavos)}</span> para a renda (<span data-valor>${formatarBRL(c.dados.rendaAtualCentavos)}</span>) cobrir o essencial (<span data-valor>${formatarBRL(c.dados.custoEssencialCentavos)}</span>).`;
     case "gasto":
-      return `O gasto do mês (${formatarBRL(c.dados.custoAtualCentavos)}) passou ${formatarBRL(c.dados.excedenteCentavos)} do que a renda ou o essencial sustentam.`;
+      return `O gasto do mês (<span data-valor>${formatarBRL(c.dados.custoAtualCentavos)}</span>) passou <span data-valor>${formatarBRL(c.dados.excedenteCentavos)}</span> do que a renda ou o essencial sustentam.`;
     case "divida":
-      return `Depois do essencial sobram ${formatarBRL(c.dados.sobraAposEssencial)}, mas as parcelas de dívida somam ${formatarBRL(c.dados.comprometimentoMensalDividasCentavos)} — faltam ${formatarBRL(c.dados.faltaCentavos)}.`;
+      return `Depois do essencial sobram <span data-valor>${formatarBRL(c.dados.sobraAposEssencial)}</span>, mas as parcelas de dívida somam <span data-valor>${formatarBRL(c.dados.comprometimentoMensalDividasCentavos)}</span> — faltam <span data-valor>${formatarBRL(c.dados.faltaCentavos)}</span>.`;
     case "timing":
-      return `O mês fecha no papel, mas o caixa está em ${formatarBRL(c.dados.seguroParaGastarCentavos)} agora — é questão de datas, não de dinheiro insuficiente no total.`;
+      return `O mês fecha no papel, mas o caixa está em <span data-valor>${formatarBRL(c.dados.seguroParaGastarCentavos)}</span> agora — é questão de datas, não de dinheiro insuficiente no total.`;
     default:
       return "";
   }
@@ -77,7 +77,7 @@ function cartaoFonte(f, painel) {
         <div class="item-titulo">${escapeHtml(f.nome)}</div>
         <div class="item-sub">${ROTULO_TIPO_FONTE[f.tipo]}${pessoa ? " · " + escapeHtml(pessoa.nome) : ""}</div>
       </div>
-      <div class="item-valor mono">${formatarBRL(f.valorEsperadoCentavos)}</div>
+      <div class="item-valor mono" data-valor>${formatarBRL(f.valorEsperadoCentavos)}</div>
       ${!f.ativa ? `<span class="item-tag inativa">inativa</span>` : ""}
       <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" data-id="${escapeHtml(f.id)}" title="Ver detalhes" aria-label="Ver detalhes">▾</button>
       <div class="item-acoes">
@@ -98,7 +98,7 @@ function detalheFonte(f, painel) {
     ${historico.length ? historico.map((t) => `
       <div class="fatura-linha">
         <span class="rotulo">${escapeHtml(formatarData(t.data))}<small>${t.certeza === "confirmado" ? "confirmado" : t.certeza === "provavel" ? "provável" : "incerto"}</small></span>
-        <b>${formatarBRL(t.valorCentavos)}</b>
+        <b data-valor>${formatarBRL(t.valorCentavos)}</b>
       </div>`).join("") : `<div class="vazio">Nenhuma entrada lançada ainda para esta fonte.</div>`}
   `;
 }
@@ -114,8 +114,8 @@ function linhaEvolucao(item, painel) {
   const diffPct = item.mediaCentavos > 0 ? Math.round(((item.valorCentavos - item.mediaCentavos) / item.mediaCentavos) * 100) : null;
   return `
     <div class="fatura-linha">
-      <span class="rotulo">${escapeHtml(nome)}<small>média dos meses anteriores: ${formatarBRL(item.mediaCentavos)}</small></span>
-      <b class="${diffPct != null && diffPct > 0 ? "valor-neg" : ""}">${formatarBRL(item.valorCentavos)}${diffPct != null ? ` <span style="font-weight:400;font-size:11px;">(${diffPct >= 0 ? "+" : ""}${diffPct}%)</span>` : ""}</b>
+      <span class="rotulo">${escapeHtml(nome)}<small>média dos meses anteriores: <span data-valor>${formatarBRL(item.mediaCentavos)}</span></small></span>
+      <b class="${diffPct != null && diffPct > 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(item.valorCentavos)}${diffPct != null ? ` <span style="font-weight:400;font-size:11px;">(${diffPct >= 0 ? "+" : ""}${diffPct}%)</span>` : ""}</b>
     </div>`;
 }
 
@@ -126,6 +126,26 @@ function renderizar() {
     container.innerHTML = `
       <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Renda</h2></div></div>
       <p class="tela-sub">Carregando…</p>`;
+    return;
+  }
+
+  // Sem fonte cadastrada e sem transação nenhuma: mostrar o diagnóstico
+  // inteiro é enganoso — os gaps em zero e o banner "sem déficit" parecem
+  // dizer que está tudo bem, quando na verdade não há nada para avaliar
+  // ainda (achado #13 da auditoria de UX).
+  if (!painel.fontes.length && !painel.transacoes.length) {
+    container.innerHTML = `
+      <div class="tela-head" style="margin-top:0;">
+        <div>
+          <h2 class="tela-titulo">Renda</h2>
+          <p class="tela-sub">Capacidade de geração de renda, os gaps que ela precisa cobrir, e por que existe déficit quando existe.</p>
+        </div>
+      </div>
+      <div class="vazio">
+        Ainda não há nenhuma fonte de renda nem transação cadastrada — sem isso não dá para calcular gap, margem ou causa de déficit.
+        <div><button class="btn btn-primary" data-acao="nova-fonte">+ Nova fonte de renda</button></div>
+      </div>`;
+    container.querySelector('[data-acao="nova-fonte"]').addEventListener("click", () => abrirFormularioFonte(null));
     return;
   }
 
@@ -142,7 +162,9 @@ function renderizar() {
     ${blocoCausaDeficit(painel.causaDeficit)}
 
     <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Renda do mês</h3>
-      <p class="tela-sub">${formatarBRL(painel.rendaAtualCentavos)} realizados · ${concentracao.concentracaoPercentual}% concentrado na maior fonte (${concentracao.quantidadeFontes} ${concentracao.quantidadeFontes === 1 ? "fonte" : "fontes"})</p></div>
+      <p class="tela-sub"><span data-valor>${formatarBRL(painel.rendaAtualCentavos)}</span> realizados${concentracao.quantidadeFontes > 0
+        ? ` · ${concentracao.concentracaoPercentual}% concentrado na maior fonte (${concentracao.quantidadeFontes} ${concentracao.quantidadeFontes === 1 ? "fonte" : "fontes"})`
+        : " · nenhuma receita ligada a uma fonte cadastrada"}</p></div>
       <button class="btn btn-primary" data-acao="nova-fonte">+ Nova fonte</button>
     </div>
     <div class="lista-cartoes" id="lista-fontes" style="margin-bottom:20px;"></div>
@@ -156,7 +178,7 @@ function renderizar() {
     </div>
     ${metas.custoDesejadoCentavos == null || metas.metaRecuperacaoCentavos == null ? `
       <div class="nota-incerto">
-        <span>${metas.custoDesejadoCentavos == null ? "Custo desejado não definido" : ""}${metas.custoDesejadoCentavos == null && metas.metaRecuperacaoCentavos == null ? " · " : ""}${metas.metaRecuperacaoCentavos == null ? `Meta de recuperação usando o padrão (essencial + parcelas de dívida): ${formatarBRL(metas.metaRecuperacaoEfetivaCentavos)}` : ""}</span>
+        <span>${metas.custoDesejadoCentavos == null ? "Custo desejado não definido" : ""}${metas.custoDesejadoCentavos == null && metas.metaRecuperacaoCentavos == null ? " · " : ""}${metas.metaRecuperacaoCentavos == null ? `Meta de recuperação usando o padrão (essencial + parcelas de dívida): <span data-valor>${formatarBRL(metas.metaRecuperacaoEfetivaCentavos)}</span>` : ""}</span>
       </div>` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Metas</h3>
@@ -289,7 +311,7 @@ function abrirFormularioFonte(f) {
     <div class="modal">
       <h2>${editando ? "Editar" : "Nova"} fonte de renda</h2>
       <div id="erro-formulario"></div>
-      <form id="form-fonte">
+      <form id="form-fonte" novalidate>
         ${campoFonteHtml(f)}
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>

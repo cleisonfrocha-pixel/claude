@@ -42,7 +42,7 @@ function cartaoObjetivo(o) {
         <div class="item-titulo">${escapeHtml(o.nome)}</div>
         <div class="item-sub">${ROTULO_HORIZONTE[o.horizonte]} · prazo ${escapeHtml(formatarData(o.prazo))} · ${o.progressoPercentual}%</div>
       </div>
-      <div class="item-valor mono">${formatarBRL(o.valorAtualCalculadoCentavos)}</div>
+      <div class="item-valor mono" data-valor>${formatarBRL(o.valorAtualCalculadoCentavos)}</div>
       <span class="item-tag${o.compativel ? "" : " critico"}">${o.compativel ? "no ritmo" : "fora do ritmo"}</span>
       <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" data-id="${escapeHtml(o.id)}" title="Ver detalhes" aria-label="Ver detalhes">▾</button>
       <div class="item-acoes">
@@ -56,15 +56,15 @@ function cartaoObjetivo(o) {
 function detalheObjetivo(o) {
   const largura = Math.min(100, o.progressoPercentual);
   return `
-    <div class="tela-sub" style="margin:0 0 4px;">${formatarBRL(o.valorAtualCalculadoCentavos)} de ${formatarBRL(o.valorAlvoCentavos)} (${o.progressoPercentual}%)</div>
+    <div class="tela-sub" style="margin:0 0 4px;"><span data-valor>${formatarBRL(o.valorAtualCalculadoCentavos)}</span> de <span data-valor>${formatarBRL(o.valorAlvoCentavos)}</span> (${o.progressoPercentual}%)</div>
     <div class="barra-limite${o.progressoPercentual >= 100 ? "" : ""}"><span style="width:${largura}%"></span></div>
-    <div class="fatura-linha"><span class="rotulo">Falta</span><b>${formatarBRL(o.faltaCentavos)}</b></div>
+    <div class="fatura-linha"><span class="rotulo">Falta</span><b data-valor>${formatarBRL(o.faltaCentavos)}</b></div>
     <div class="fatura-linha"><span class="rotulo">Meses restantes</span><b>${o.mesesRestantes}</b></div>
-    <div class="fatura-linha"><span class="rotulo">Necessário por mês</span><b>${formatarBRL(o.valorNecessarioPorMesCentavos)}</b></div>
-    <div class="fatura-linha"><span class="rotulo">Margem atual disponível</span><b>${formatarBRL(o.margemCentavos)}</b></div>
+    <div class="fatura-linha"><span class="rotulo">Necessário por mês</span><b data-valor>${formatarBRL(o.valorNecessarioPorMesCentavos)}</b></div>
+    <div class="fatura-linha"><span class="rotulo">Margem atual disponível</span><b data-valor>${formatarBRL(o.margemCentavos)}</b></div>
     ${o.compativel
       ? `<div class="alerta-tudo-coberto" style="margin-top:10px;">Essa meta cabe na sua margem atual.</div>`
-      : `<div class="erro-form" style="margin-top:10px;">Fora do ritmo: faltam ${formatarBRL(o.faltaPorMesCentavos)} por mês para chegar no prazo com a margem de hoje.</div>`}
+      : `<div class="erro-form" style="margin-top:10px;">Fora do ritmo: faltam <span data-valor>${formatarBRL(o.faltaPorMesCentavos)}</span> por mês para chegar no prazo com a margem de hoje.</div>`}
 
     <div class="simulador-bloco">
       <div class="simulador-titulo">Simular com outra margem mensal</div>
@@ -151,7 +151,7 @@ function renderizarLista() {
         }
         const r = simularNovoPrazo(o, o.valorAtualCalculadoCentavos, novaMargem);
         resultado.innerHTML = r.atingivel
-          ? `<div class="simulador-aviso" style="font-size:13px;color:var(--text);">Com ${formatarBRL(novaMargem)}/mês, a meta seria atingida em ${r.mesesNecessarios} ${r.mesesNecessarios === 1 ? "mês" : "meses"}. Isto é uma simulação — nada foi alterado no objetivo.</div>`
+          ? `<div class="simulador-aviso" style="font-size:13px;color:var(--text);">Com <span data-valor>${formatarBRL(novaMargem)}</span>/mês, a meta seria atingida em ${r.mesesNecessarios} ${r.mesesNecessarios === 1 ? "mês" : "meses"}. Isto é uma simulação — nada foi alterado no objetivo.</div>`
           : `<div class="erro-form">Com essa margem, a meta nunca seria atingida.</div>`;
       });
     }
@@ -185,7 +185,7 @@ function abrirFormularioObjetivo(o) {
     <div class="modal">
       <h2>${editando ? "Editar" : "Novo"} objetivo</h2>
       <div id="erro-formulario"></div>
-      <form id="form-objetivo">
+      <form id="form-objetivo" novalidate>
         ${campoObjetivoHtml(o, painel.contas, painel.pessoas)}
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>

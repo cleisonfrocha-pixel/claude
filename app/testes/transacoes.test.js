@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   agregarPeriodo, totalizarMes, competenciaFatura, gerarParcelas,
   competenciasFaltantes, construirParTransferencia, efeitoNaConta,
-  competenciaVencimentoFatura, dataVencimentoFatura,
+  competenciaVencimentoFatura, dataVencimentoFatura, statusEfetivo,
 } from "../src/domain/transacoes.js";
 
 function t(overrides) {
@@ -155,4 +155,35 @@ test("competenciaVencimentoFatura: vencimento no mês seguinte quando o dia é m
 test("dataVencimentoFatura monta a data completa", () => {
   const cartao = { diaFechamento: 28, diaVencimento: 5 };
   assert.equal(dataVencimentoFatura(cartao, "2026-03"), "2026-04-05");
+});
+
+// ---------- statusEfetivo ----------
+
+test("PORTÃO: previsto com data no passado vira atrasado sozinho, sem ninguém marcar", () => {
+  const r = statusEfetivo(t({ status: "previsto", data: "2026-03-01" }), "2026-03-15");
+  assert.equal(r, "atrasado");
+});
+
+test("statusEfetivo: agendado no passado também vira atrasado", () => {
+  assert.equal(statusEfetivo(t({ status: "agendado", data: "2026-03-01" }), "2026-03-15"), "atrasado");
+});
+
+test("statusEfetivo: previsto com data futura continua previsto", () => {
+  assert.equal(statusEfetivo(t({ status: "previsto", data: "2026-04-01" }), "2026-03-15"), "previsto");
+});
+
+test("statusEfetivo: pago nunca vira atrasado, mesmo com data antiga", () => {
+  assert.equal(statusEfetivo(t({ status: "pago", data: "2026-01-01" }), "2026-03-15"), "pago");
+});
+
+test("statusEfetivo: cancelado nunca vira atrasado", () => {
+  assert.equal(statusEfetivo(t({ status: "cancelado", data: "2026-01-01" }), "2026-03-15"), "cancelado");
+});
+
+test("statusEfetivo: atrasado gravado continua atrasado", () => {
+  assert.equal(statusEfetivo(t({ status: "atrasado", data: "2026-03-01" }), "2026-03-15"), "atrasado");
+});
+
+test("statusEfetivo: sem hoje pra comparar, mantém o status gravado", () => {
+  assert.equal(statusEfetivo(t({ status: "previsto", data: "2026-01-01" }), null), "previsto");
 });

@@ -138,5 +138,18 @@ test("PORTÃO DA FASE 7 (§8): o diagnóstico junta fatos observáveis, sem inve
   assert.equal(d.pesoDividas.comprometimentoMensalCentavos, 100000, "peso das dívidas reaproveita a visão consolidada da Fase 6");
   assert.equal(d.receita.totalCentavos, 400000);
   assert.equal(d.reserva.temReserva, true);
-  assert.equal(d.patrimonioLiquido.disponivel, false, "patrimônio líquido não é inventado — aponta que chega na Fase 9");
+  assert.equal(d.patrimonioLiquido.disponivel, true, "patrimônio líquido reaproveita o motor da Fase 9, não é mais um texto fixo");
+  assert.equal(d.patrimonioLiquido.ativosCentavos, 0, "sem ativos informados, ativos ficam em zero — não inventa valor");
+  assert.equal(d.patrimonioLiquido.liquidoCentavos, -500000, "líquido é ativos menos a mesma dívida já consolidada em pesoDividas");
+});
+
+test("calcularDiagnostico: patrimônio líquido soma os ativos informados", () => {
+  const d = calcularDiagnostico({
+    contas: [], transacoes: [], categorias: [], dividas: [], pessoas: [],
+    ativos: [{ classe: "liquido", valorAtualCentavos: 300000 }],
+    clareza: { seguroParaGastarCentavos: 0, livreCentavos: 0, saldoReservaCentavos: 0 },
+    competenciaAtual: "2026-03", hoje: "2026-03-15",
+  });
+  assert.equal(d.patrimonioLiquido.ativosCentavos, 300000);
+  assert.equal(d.patrimonioLiquido.liquidoCentavos, 300000);
 });

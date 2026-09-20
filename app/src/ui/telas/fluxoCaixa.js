@@ -64,9 +64,9 @@ function renderizar() {
       ? `<div class="alerta-cobertura">
           <div class="titulo">Saída crítica em ${escapeHtml(h.rotulo)}</div>
           <div class="texto">Em ${escapeHtml(formatarData(h.saidaCritica.data))}, o saldo seguro projetado fica negativo
-            (${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}) por causa de
+            (<span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}</span>) por causa de
             ${escapeHtml(h.saidaCritica.itens.map((i) => i.descricao).join(", "))}
-            — um gap de ${formatarBRL(h.saidaCritica.gapCentavos)}.</div>
+            — um gap de <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.gapCentavos)}</span>.</div>
         </div>`
       : `<div class="alerta-tudo-coberto">Nos próximos ${escapeHtml(h.rotulo.toLowerCase())}, o saldo seguro projetado não fica negativo.</div>`}
 

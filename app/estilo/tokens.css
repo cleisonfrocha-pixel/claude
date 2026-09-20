@@ -20,6 +20,7 @@
   --danger: #E4232F;
   --danger-bg: #FCE9EA;
   --shadow: 0 1px 2px rgba(11, 18, 32, .05), 0 10px 28px -14px rgba(11, 18, 32, .16);
+  --nav-fade: rgba(11, 18, 32, .12);
   --radius: 14px;
   color-scheme: light dark;
   padding-top: env(safe-area-inset-top, 0px);
@@ -44,6 +45,7 @@
     --danger: #F5504F;
     --danger-bg: rgba(245, 80, 79, .16);
     --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px -14px rgba(0, 0, 0, .55);
+    --nav-fade: rgba(0, 0, 0, .45);
   }
 }
 :root[data-theme="dark"] {
@@ -64,6 +66,7 @@
   --danger: #F5504F;
   --danger-bg: rgba(245, 80, 79, .16);
   --shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 10px 28px -14px rgba(0, 0, 0, .55);
+  --nav-fade: rgba(0, 0, 0, .45);
 }
 * { box-sizing: border-box; }
 body {

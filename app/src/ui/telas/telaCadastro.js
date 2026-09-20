@@ -219,9 +219,9 @@ export function criarTelaCadastro(config) {
     const linhas = config.campos.map((c) => campoParaHtml(c, dados[c.id])).join("");
     abrirModal(`
       <div class="modal">
-        <h2>${editando ? "Editar" : "Novo"} ${escapeHtml(config.singular)}</h2>
+        <h2>${editando ? "Editar" : config.generoFeminino ? "Nova" : "Novo"} ${escapeHtml(config.singular)}</h2>
         <div id="erro-formulario"></div>
-        <form id="form-cadastro">
+        <form id="form-cadastro" novalidate>
           ${linhas}
           <div class="modal-actions">
             <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>

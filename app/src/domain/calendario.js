@@ -5,7 +5,7 @@
 // Duas perguntas, uma depois da outra: que dias têm compromisso (e quanto),
 // e — caminhando o saldo dia a dia — em que dia isso aperta de verdade.
 
-import { dataVencimentoFatura } from "./transacoes.js";
+import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
 
 /**
  * Agrupa compromissos e receitas previstas por data, dentro de [de, ate].
@@ -17,7 +17,7 @@ import { dataVencimentoFatura } from "./transacoes.js";
  * `faturas` precisa vir com `id` embutido (cruza com `transacao.faturaId`) —
  * mesma exigência de domain/caixa.js e domain/cartoes.js.
  */
-export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate }) {
+export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje }) {
   const porDia = new Map();
   function item(data, valorComSinal, dados) {
     if (!data || data < de || data > ate) return;
@@ -33,12 +33,12 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate }) {
     if (t.tipo === "despesa" && t.contaId) {
       item(t.data, -(Number(t.valorCentavos) || 0), {
         tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: Number(t.valorCentavos) || 0,
-        atrasado: t.status === "atrasado", certeza: t.certeza,
+        atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza,
       });
     } else if (t.tipo === "receita") {
       item(t.data, Number(t.valorCentavos) || 0, {
         tipo: "receita", descricao: t.descricao || "Receita", valorCentavos: Number(t.valorCentavos) || 0,
-        atrasado: t.status === "atrasado", certeza: t.certeza,
+        atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza,
       });
     }
     // despesa em cartão: ignorada aqui de propósito — ver fatura abaixo.

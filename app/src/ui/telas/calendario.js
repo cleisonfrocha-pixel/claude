@@ -68,7 +68,7 @@ function renderizar() {
       ? `<div class="alerta-cobertura">
           <div class="titulo">${painel.semCobertura.length === 1 ? "1 dia sem cobertura suficiente" : `${painel.semCobertura.length} dias sem cobertura suficiente`} nos próximos 90 dias</div>
           <div class="texto">Em ${escapeHtml(tempo.formatarData(painel.semCobertura[0].data))}, o saldo projetado fica negativo
-            (${formatarBRL(painel.semCobertura[0].saldoDepoisCentavos)}) por causa de ${escapeHtml(painel.semCobertura[0].itens.map((i) => i.descricao).join(", "))}.</div>
+            (<span class="valor-neg" data-valor>${formatarBRL(painel.semCobertura[0].saldoDepoisCentavos)}</span>) por causa de ${escapeHtml(painel.semCobertura[0].itens.map((i) => i.descricao).join(", "))}.</div>
         </div>`
       : `<div class="alerta-tudo-coberto">Nos próximos 90 dias, tudo o que está previsto tem cobertura no saldo atual.</div>`}
 

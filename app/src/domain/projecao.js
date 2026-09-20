@@ -58,7 +58,7 @@ function separarPorCerteza(dias) {
  */
 export function calcularHorizonte({ transacoes, faturas, cartoes, saldoInicialCentavos, hoje, dias }) {
   const horizonteAte = somarDias(hoje, dias);
-  const todosOsDias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte });
+  const todosOsDias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte, hoje });
   const diasSeparados = separarPorCerteza(todosOsDias);
 
   const cobertura = calcularCoberturaDiaria(saldoInicialCentavos, diasSeparados);

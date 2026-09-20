@@ -68,40 +68,41 @@ function textoDiagnostico(d) {
 
   linhas.push(linhaDiagnostico("Estado do caixa",
     d.estadoCaixa.seguroParaGastarCentavos < 0
-      ? `Negativo: falta ${formatarBRL(Math.abs(d.estadoCaixa.seguroParaGastarCentavos))} para cobrir o que já está comprometido.`
-      : `${formatarBRL(d.estadoCaixa.seguroParaGastarCentavos)} seguros para gastar depois do que já está comprometido.`));
+      ? `Negativo: falta <span class="valor-neg" data-valor>${formatarBRL(Math.abs(d.estadoCaixa.seguroParaGastarCentavos))}</span> para cobrir o que já está comprometido.`
+      : `<span data-valor>${formatarBRL(d.estadoCaixa.seguroParaGastarCentavos)}</span> seguros para gastar depois do que já está comprometido.`));
 
   linhas.push(linhaDiagnostico("Pressão das despesas fixas",
     d.pressaoFixas.totalCentavos > 0
-      ? `${formatarBRL(d.pressaoFixas.fixasCentavos)} de ${formatarBRL(d.pressaoFixas.totalCentavos)} das despesas do mês (${d.pressaoFixas.percentual}%) são essenciais.`
+      ? `<span data-valor>${formatarBRL(d.pressaoFixas.fixasCentavos)}</span> de <span data-valor>${formatarBRL(d.pressaoFixas.totalCentavos)}</span> das despesas do mês (${d.pressaoFixas.percentual}%) são essenciais.`
       : "Nenhuma despesa paga registrada neste mês ainda."));
 
   linhas.push(linhaDiagnostico("Peso das dívidas",
     d.pesoDividas.comprometimentoMensalCentavos > 0
-      ? `${formatarBRL(d.pesoDividas.comprometimentoMensalCentavos)} por mês em parcelas${d.pesoDividas.quantidadeAtrasadas > 0 ? `, ${d.pesoDividas.quantidadeAtrasadas} ${d.pesoDividas.quantidadeAtrasadas === 1 ? "delas atrasada" : "delas atrasadas"}` : ""}.`
+      ? `<span data-valor>${formatarBRL(d.pesoDividas.comprometimentoMensalCentavos)}</span> por mês em parcelas${d.pesoDividas.quantidadeAtrasadas > 0 ? `, ${d.pesoDividas.quantidadeAtrasadas} ${d.pesoDividas.quantidadeAtrasadas === 1 ? "delas atrasada" : "delas atrasadas"}` : ""}.`
       : "Nenhuma dívida ativa cadastrada."));
 
   linhas.push(linhaDiagnostico("Previsibilidade e concentração da receita",
     d.receita.totalCentavos > 0
-      ? `${formatarBRL(d.receita.totalCentavos)} este mês — ${d.receita.previsibilidadePercentual}% confirmado, ${d.receita.concentracaoPercentual}% concentrado na maior fonte (${d.receita.quantidadeFontes} ${d.receita.quantidadeFontes === 1 ? "fonte" : "fontes"}).`
+      ? `<span data-valor>${formatarBRL(d.receita.totalCentavos)}</span> este mês — ${d.receita.previsibilidadePercentual}% confirmado${d.receita.quantidadeFontes > 0 ? `, ${d.receita.concentracaoPercentual}% concentrado na maior fonte (${d.receita.quantidadeFontes} ${d.receita.quantidadeFontes === 1 ? "fonte" : "fontes"})` : ""}.`
       : "Nenhuma receita registrada neste mês ainda."));
 
   linhas.push(linhaDiagnostico("Evolução do custo de vida",
     d.evolucaoCustoDeVida.anteriorCentavos > 0
-      ? `${formatarBRL(d.evolucaoCustoDeVida.atualCentavos)} este mês, ${d.evolucaoCustoDeVida.variacaoCentavos >= 0 ? "alta" : "queda"} de ${Math.abs(d.evolucaoCustoDeVida.variacaoPercentual)}% sobre o mês passado.`
+      ? `<span data-valor>${formatarBRL(d.evolucaoCustoDeVida.atualCentavos)}</span> este mês, ${d.evolucaoCustoDeVida.variacaoCentavos >= 0 ? "alta" : "queda"} de ${Math.abs(d.evolucaoCustoDeVida.variacaoPercentual)}% sobre o mês passado.`
       : "Sem despesa paga no mês anterior para comparar."));
 
   if (d.foraDoPadrao.length) {
     linhas.push(linhaDiagnostico("Despesas fora do padrão",
-      d.foraDoPadrao.map((f) => `categoria ${formatarBRL(f.valorCentavos)} — ${f.percentualAcima}% acima da média dos últimos meses`).join("; ") + "."));
+      d.foraDoPadrao.map((f) => `categoria <span data-valor>${formatarBRL(f.valorCentavos)}</span> — ${f.percentualAcima}% acima da média dos últimos meses`).join("; ") + "."));
   }
 
   linhas.push(linhaDiagnostico("Reserva financeira",
     d.reserva.temReserva
-      ? `${formatarBRL(d.reserva.saldoReservaCentavos)} guardados em conta de reserva.`
+      ? `<span data-valor>${formatarBRL(d.reserva.saldoReservaCentavos)}</span> guardados em conta de reserva.`
       : "Nenhuma conta marcada como reserva."));
 
-  linhas.push(linhaDiagnostico("Patrimônio líquido", escapeHtml(d.patrimonioLiquido.motivo)));
+  linhas.push(linhaDiagnostico("Patrimônio líquido",
+    `<b class="mono${d.patrimonioLiquido.liquidoCentavos < 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(d.patrimonioLiquido.liquidoCentavos)}</b> — <span data-valor>${formatarBRL(d.patrimonioLiquido.ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(d.patrimonioLiquido.passivosCentavos)}</span> em passivos.`));
 
   linhas.push(linhaDiagnostico("Completude dos dados",
     d.completude.completo
@@ -123,7 +124,7 @@ function painelLancamentos(a) {
   return lancamentos.map((l) => `
     <div class="fatura-linha">
       <span class="rotulo">${escapeHtml(l.descricao || "Lançamento")}${l.data ? `<small>${escapeHtml(formatarData(l.data))}</small>` : ""}</span>
-      ${l.valorCentavos != null ? `<b>${formatarBRL(l.valorCentavos)}</b>` : ""}
+      ${l.valorCentavos != null ? `<b data-valor>${formatarBRL(l.valorCentavos)}</b>` : ""}
     </div>`).join("");
 }
 
@@ -208,7 +209,7 @@ function listaHorizonte(chave, achados) {
     <div class="plano-horizonte">
       <div class="plano-horizonte-titulo">${ROTULO_HORIZONTE[chave]}</div>
       ${achados.length
-        ? achados.map((a) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(a.titulo)}</span>${a.impactoCentavos != null ? `<b>${formatarBRL(a.impactoCentavos)}</b>` : ""}</div>`).join("")
+        ? achados.map((a) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(a.titulo)}</span>${a.impactoCentavos != null ? `<b data-valor>${formatarBRL(a.impactoCentavos)}</b>` : ""}</div>`).join("")
         : `<div class="plano-horizonte-vazio">${NOTA_HORIZONTE_VAZIO[chave]}</div>`}
     </div>`;
 }
@@ -220,6 +221,26 @@ function renderizar() {
     container.innerHTML = `
       <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Plano</h2></div></div>
       <p class="tela-sub">Carregando…</p>`;
+    return;
+  }
+
+  // Produto recém-começado (nem pessoa, nem conta cadastrada): o
+  // diagnóstico inteiro é ruído — nenhum dos números diz nada ainda.
+  // Mostrar isso como "tudo coberto" ou uma lista de achados vazia
+  // confundiria mais do que ajudaria (achado #13 da auditoria de UX).
+  const semDadosNenhum = painel.diagnostico.completude.pendencias.includes("Nenhuma pessoa cadastrada.")
+    && painel.diagnostico.completude.pendencias.includes("Nenhuma conta cadastrada.");
+  if (semDadosNenhum) {
+    container.innerHTML = `
+      <div class="tela-head" style="margin-top:0;">
+        <div>
+          <h2 class="tela-titulo">Plano</h2>
+          <p class="tela-sub">Diagnóstico sem moralizar, o que merece sua atenção agora, e o plano que se atualiza sozinho.</p>
+        </div>
+      </div>
+      <div class="vazio">
+        Ainda não há pessoa nem conta cadastrada — o Plano nasce dos seus dados reais, comece em Configurações → Pessoas e Dinheiro → Contas.
+      </div>`;
     return;
   }
 

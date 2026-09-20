@@ -35,9 +35,9 @@ function comId(lista) {
 }
 
 async function carregarTudo() {
-  const [listaContas, listaCartoes, listaFaturas, listaTransacoes, listaDividas, listaCategorias, listaPessoas, listaFontesRenda, listaRecorrencias, listaDecisoes] = await Promise.all([
+  const [listaContas, listaCartoes, listaFaturas, listaTransacoes, listaDividas, listaCategorias, listaPessoas, listaFontesRenda, listaRecorrencias, listaAtivos, listaDecisoes] = await Promise.all([
     contas.listar(), cartoes.listar(), faturas.listar(), transacoes.listar(),
-    dividasRepoBase.listar(), categorias.listar(), pessoas.listar(), fontesRenda.listar(), recorrencias.listar(),
+    dividasRepoBase.listar(), categorias.listar(), pessoas.listar(), fontesRenda.listar(), recorrencias.listar(), ativos.listar(),
     db.listar(CAMINHO_DECISOES),
   ]);
   return {
@@ -50,6 +50,7 @@ async function carregarTudo() {
     pessoas: comId(listaPessoas),
     fontesRenda: comId(listaFontesRenda),
     recorrencias: comId(listaRecorrencias),
+    ativos: comId(listaAtivos),
     decisoes: comId(listaDecisoes),
   };
 }

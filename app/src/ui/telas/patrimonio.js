@@ -57,7 +57,7 @@ function cartaoAtivo(a) {
         <div class="item-titulo">${escapeHtml(a.nome)}</div>
         <div class="item-sub">${ROTULO_CLASSE[a.classe]} · avaliado em ${escapeHtml(formatarData(a.dataAvaliacao))}</div>
       </div>
-      <div class="item-valor mono">${formatarBRL(a.valorAtualCentavos)}</div>
+      <div class="item-valor mono" data-valor>${formatarBRL(a.valorAtualCentavos)}</div>
       <div class="item-acoes">
         <button class="icon-btn" data-acao="editar" data-id="${escapeHtml(a.id)}" title="Editar" aria-label="Editar">✎</button>
         <button class="icon-btn danger" data-acao="apagar" data-id="${escapeHtml(a.id)}" title="Apagar" aria-label="Apagar">✕</button>
@@ -73,7 +73,7 @@ function linhaMetaReserva(m) {
   return `
     <div style="margin-bottom:12px;">
       <div class="fatura-linha" style="border-bottom:none;padding-bottom:2px;">
-        <span class="rotulo">${m.meses} meses de essencial<small>meta: ${formatarBRL(m.metaCentavos)}</small></span>
+        <span class="rotulo">${m.meses} meses de essencial<small>meta: <span data-valor>${formatarBRL(m.metaCentavos)}</span></small></span>
         <b>${m.progressoPercentual}%</b>
       </div>
       <div class="barra-limite${m.progressoPercentual >= 100 ? "" : m.progressoPercentual >= 50 ? " atencao" : " critico"}"><span style="width:${largura}%"></span></div>
@@ -103,7 +103,7 @@ function renderizar() {
     <div class="hero-caixa">
       <div class="hero-caixa-label">Patrimônio líquido</div>
       <div class="hero-caixa-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(painel.liquidoCentavos)}</div>
-      <div class="hero-caixa-sub">${formatarBRL(painel.ativosCentavos)} em ativos, menos ${formatarBRL(painel.passivosCentavos)} em dívidas ativas — ${escapeHtml(competenciaLabel(painel.competencia))}.</div>
+      <div class="hero-caixa-sub"><span data-valor>${formatarBRL(painel.ativosCentavos)}</span> em ativos, menos <span data-valor>${formatarBRL(painel.passivosCentavos)}</span> em dívidas ativas — ${escapeHtml(competenciaLabel(painel.competencia))}.</div>
     </div>
 
     <div class="resumo-mes">
@@ -117,7 +117,7 @@ function renderizar() {
 
     ${painel.composicao.length ? `
       <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Composição do patrimônio</h3></div></div>
-      ${painel.composicao.map((c) => `<div class="fatura-linha"><span class="rotulo">${ROTULO_CLASSE[c.classe]}</span><b>${formatarBRL(c.valorCentavos)} <span style="font-weight:400;font-size:11px;">(${c.percentual}%)</span></b></div>`).join("")}
+      ${painel.composicao.map((c) => `<div class="fatura-linha"><span class="rotulo">${ROTULO_CLASSE[c.classe]}</span><b data-valor>${formatarBRL(c.valorCentavos)} <span style="font-weight:400;font-size:11px;">(${c.percentual}%)</span></b></div>`).join("")}
     ` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Ativos</h3>
@@ -128,8 +128,8 @@ function renderizar() {
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Reserva</h3>
       <p class="tela-sub">${painel.reserva.coberturaMeses != null
-        ? `${formatarBRL(painel.reserva.saldoReservaCentavos)} guardados — cobre ${painel.reserva.coberturaMeses.toFixed(1)} meses (${painel.reserva.coberturaDias} dias) de custo essencial`
-        : `${formatarBRL(painel.reserva.saldoReservaCentavos)} guardados — sem custo essencial registrado ainda para calcular cobertura`}</p></div></div>
+        ? `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados — cobre ${painel.reserva.coberturaMeses.toFixed(1)} meses (${painel.reserva.coberturaDias} dias) de custo essencial`
+        : `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados — sem custo essencial registrado ainda para calcular cobertura`}</p></div></div>
     ${painel.reserva.metas.map(linhaMetaReserva).join("")}
   `;
 
@@ -187,7 +187,7 @@ function abrirFormularioAtivo(a) {
     <div class="modal">
       <h2>${editando ? "Editar" : "Novo"} ativo</h2>
       <div id="erro-formulario"></div>
-      <form id="form-ativo">
+      <form id="form-ativo" novalidate>
         ${campoAtivoHtml(a)}
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>

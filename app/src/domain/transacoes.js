@@ -151,3 +151,17 @@ export function competenciaVencimentoFatura(cartao, competenciaDaFatura) {
 export function dataVencimentoFatura(cartao, competenciaDaFatura) {
   return dataDeCompetencia(competenciaVencimentoFatura(cartao, competenciaDaFatura), cartao.diaVencimento);
 }
+
+/**
+ * O status "de verdade" de uma transação agora — mesma ideia de
+ * `statusDivida` (§11, domain/dividas.js), aplicada a lançamento comum:
+ * `previsto`/`agendado` cuja data já passou vira `atrasado` na leitura,
+ * mesmo que ninguém tenha marcado assim manualmente. `pago`, `cancelado` e
+ * um `atrasado` já gravado nunca mudam — já aconteceram, ou já é o que já
+ * é. Sem isso, um compromisso vencido ficava "previsto" pra sempre.
+ */
+export function statusEfetivo(t, hoje) {
+  if (t.status === "pago" || t.status === "cancelado" || t.status === "atrasado") return t.status;
+  if (hoje && t.data && t.data < hoje) return "atrasado";
+  return t.status;
+}

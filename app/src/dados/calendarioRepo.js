@@ -47,7 +47,7 @@ export async function calcularCalendario(mesVisivel) {
   // quando o usuário navega além dos 90 dias padrão do resumo.
   const ateDoPasseio = ultimoDiaMesVisivel > horizontePadraoAte ? ultimoDiaMesVisivel : horizontePadraoAte;
 
-  const todosOsDias = compromissosPorDia({ ...dados, de: hoje, ate: ateDoPasseio });
+  const todosOsDias = compromissosPorDia({ ...dados, de: hoje, ate: ateDoPasseio, hoje });
   const cobertura = calcularCoberturaDiaria(clareza.saldoAtualCentavos, todosOsDias);
 
   const diasDoMesVisivel = cobertura.filter((d) => d.data >= primeiroDiaMesVisivel && d.data <= ultimoDiaMesVisivel);

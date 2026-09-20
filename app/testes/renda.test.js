@@ -33,11 +33,21 @@ test("calcularConcentracaoRenda: concentração é a fatia da maior fonte", () =
   assert.equal(r.quantidadeFontes, 2);
 });
 
-test("calcularConcentracaoRenda: receita sem fonte cadastrada não desaparece da conta", () => {
+test("calcularConcentracaoRenda: receita sem fonte cadastrada não desaparece do total, mas não conta como fonte", () => {
   const transacoes = [receita({ competencia: "2026-03", fonteRendaId: null, valorCentavos: 200000 })];
   const r = calcularConcentracaoRenda(transacoes, "2026-03");
-  assert.equal(r.totalCentavos, 200000);
-  assert.equal(r.quantidadeFontes, 1, "'sem-fonte' conta como uma fonte pra não sumir o dinheiro");
+  assert.equal(r.totalCentavos, 200000, "o dinheiro em si nunca some da conta");
+  assert.equal(r.concentracaoPercentual, 100, "percentual ainda reflete a fatia real, com ou sem fonte nomeada");
+  assert.equal(r.quantidadeFontes, 0, "'sem-fonte' não é uma fonte cadastrada de verdade — dizer '1 fonte' seria inventar um cadastro que não existe");
+});
+
+test("calcularConcentracaoRenda: mistura de receita com e sem fonte conta só as fontes reais", () => {
+  const transacoes = [
+    receita({ competencia: "2026-03", fonteRendaId: "f1", valorCentavos: 300000 }),
+    receita({ competencia: "2026-03", fonteRendaId: null, valorCentavos: 200000 }),
+  ];
+  const r = calcularConcentracaoRenda(transacoes, "2026-03");
+  assert.equal(r.quantidadeFontes, 1);
 });
 
 // ---------- calcularPrevisibilidadeFonte ----------

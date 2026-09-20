@@ -567,3 +567,59 @@ atualiza com a realidade."
 
 O valor não está na quantidade de gráficos ou integrações — está em reduzir
 incerteza e transformar confusão em sequência objetiva de decisões.
+
+---
+
+## Pós-V1: auditoria de UX/UI e sprints de correção
+
+Fase 12 (Open Finance) em espera — depende de agregador pago ou de virar
+Receptor de Dados certificado (D4), infraestrutura fora do escopo deste
+painel. Antes de avançar para Fase 13 (IA), auditoria de UX/UI do produto
+real (Playwright, telas populadas e vazias, desktop e mobile) levantou 14
+achados de confiança e superfície — nada de blueprint faltando, mas gaps que
+faziam o produto entregue parecer menos pronto do que o motor por trás dele.
+Vira um plano em 4 sprints, fora da numeração de Fases porque não é escopo
+novo do blueprint — é qualidade do que já foi entregue.
+
+### Sprint 1 — corrigir os 14 achados da auditoria — ✅ (20/09/2026)
+
+- Cobertura de `[data-valor]` (ocultar valores, §27) em ~50 pontos que
+  escapavam do blur: Início, Patrimônio, Objetivos, Renda, Dívidas,
+  Calendário, Fluxo de caixa, Importar, Transações.
+- Gênero do modal de cadastro ("Nova"/"Novo") corrigido por tipo cadastrado.
+- Validação nativa do navegador (inglês) desligada (`novalidate`) em favor
+  da validação em português já existente.
+- Patrimônio líquido do diagnóstico (Plano) deixou de ser texto fixo —
+  reaproveita o motor da Fase 9 (`calcularComposicaoAtivos` /
+  `calcularPatrimonioLiquido`).
+- `calcularConcentracaoRenda` parou de contar receita sem `fonteRendaId`
+  como se fosse uma fonte cadastrada — o dinheiro continua contado, a
+  contagem de fontes não inventa mais uma que não existe.
+- Edição de transação: antes só dava para apagar e relançar. Agora
+  receita/despesa simples, parcela e ocorrência de recorrência têm edição
+  completa; transferência edita as duas pernas em sincronia (mesmo valor e
+  data); pagamento de fatura edita o essencial.
+- `statusEfetivo(t, hoje)` — mesmo padrão de `statusDivida()` (Fase 6):
+  "previsto"/"agendado" com data no passado lê como atrasado na hora,
+  sem precisar ninguém marcar. Aplicado em Transações, Calendário e no
+  comprometido de Caixa.
+- Legenda de direção nas transferências da lista de Transações
+  (`Conta corrente → Poupança`), usando o par pela `transferenciaId`.
+- Tela nova "Recorrências" (aba em Dinheiro): listar, pausar/retomar,
+  editar e apagar — antes só existia `recorrencias.criar()`, sem forma de
+  gerenciar o que já tinha sido criado.
+- Estados vazios sóbrios em Renda e Plano: com zero fonte/transação ou zero
+  pessoa/conta, mostrar o diagnóstico inteiro (gaps zerados, banner "tudo
+  coberto") é enganoso — troca por uma chamada direta para cadastrar o
+  primeiro dado.
+- Indicador visual de mais módulos fora da tela na nav mobile — sombra nas
+  bordas que liga/desliga conforme a posição do scroll.
+- Testes do motor: 262 passando, incluindo os novos de `statusEfetivo` e
+  `calcularConcentracaoRenda`.
+
+### Sprints 2–4 — pendentes
+
+Sprint 2 (novo sistema de design, referência Nubank/Next — visual mais
+"fintech", menos genérico), Sprint 3 (Home como dashboard: resumo + grid de
+cards clicáveis) e Sprint 4 (propagar o novo visual para as demais telas)
+seguem no plano, priorizados pelo usuário em cima da referência Nubank.

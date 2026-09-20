@@ -7,7 +7,7 @@
 
 import * as tempo from "../../domain/tempo.js";
 import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
-import { totalizarMes } from "../../domain/transacoes.js";
+import { totalizarMes, statusEfetivo } from "../../domain/transacoes.js";
 import { STATUS_TRANSACAO, CERTEZAS_TRANSACAO } from "../../domain/esquema.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
@@ -115,6 +115,12 @@ function renderizarLista(doMes) {
   alvo.querySelectorAll("[data-apagar]").forEach((btn) => {
     btn.addEventListener("click", () => confirmarApagar(btn.getAttribute("data-apagar")));
   });
+  alvo.querySelectorAll("[data-editar]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const item = doMes.find((t) => t.id === btn.getAttribute("data-editar"));
+      if (item) abrirModalEditarTransacao(item);
+    });
+  });
   alvo.querySelectorAll("[data-revisar]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       await marcarRevisado(btn.getAttribute("data-revisar"));
@@ -129,10 +135,21 @@ function linhaTransacao(item) {
   const parcelaTag = d.parcelaTotal ? `<span class="item-tag">${d.parcelaNum}/${d.parcelaTotal}</span>` : "";
   const classeValor = d.tipo === "receita" ? "valor-pos" : (d.tipo === "despesa" ? "valor-neg" : "");
   const sinal = d.tipo === "receita" ? "+" : (d.tipo === "despesa" ? "−" : "");
-  const sub = [tempo.formatarData(d.data), destino, d.categoriaId ? nomeCategoria(d.categoriaId) : null].filter(Boolean).join(" · ");
+  // Transferência: a direção (de/para qual conta própria) precisa aparecer
+  // na lista, senão parece só mais uma saída/entrada solta — não é.
+  let subTransferencia = destino;
+  if (d.tipo === "transferencia") {
+    const par = lista.find((t) => t.id !== item.id && t.dados.transferenciaId === d.transferenciaId);
+    const contraparte = par ? nomeConta(par.dados.contaId) : "—";
+    subTransferencia = d.direcao === "saida" ? `${destino} → ${contraparte}` : `${contraparte} → ${destino}`;
+  }
+  const sub = [tempo.formatarData(d.data), subTransferencia, d.categoriaId ? nomeCategoria(d.categoriaId) : null].filter(Boolean).join(" · ");
   // §18: lançamento importado (origem !== "manual") e ainda não conferido
   // pelo usuário — distinção entre "veio automático" e "foi revisado".
   const naoRevisado = d.origem && d.origem !== "manual" && d.revisado === false;
+  // Previsto/agendado cuja data já passou aparece como atrasado de
+  // verdade, não fica "previsto" pra sempre — mesma leitura da Home.
+  const statusMostrado = statusEfetivo(d, tempo.hojeISO());
   return `
     <div class="item-cartao">
       <div class="item-corpo">
@@ -140,11 +157,12 @@ function linhaTransacao(item) {
         <div class="item-sub">${escapeHtml(sub)}</div>
       </div>
       <div class="item-valor mono ${classeValor}" data-valor>${sinal}${formatarBRL(d.valorCentavos)}</div>
-      <span class="item-tag${d.status === "cancelado" ? " inativa" : ""}">${ROTULO_STATUS[d.status] || d.status}</span>
+      <span class="item-tag${d.status === "cancelado" ? " inativa" : ""}${statusMostrado === "atrasado" ? " critico" : ""}">${ROTULO_STATUS[statusMostrado] || statusMostrado}</span>
       ${parcelaTag}
       ${naoRevisado ? `<span class="item-tag atencao">não revisado</span>` : ""}
       <div class="item-acoes">
         ${naoRevisado ? `<button class="icon-btn" title="Marcar como revisado" aria-label="Marcar como revisado" data-revisar="${escapeHtml(item.id)}">✓</button>` : ""}
+        <button class="icon-btn" title="Editar" aria-label="Editar" data-editar="${escapeHtml(item.id)}">✎</button>
         <button class="icon-btn danger" title="Apagar" aria-label="Apagar" data-apagar="${escapeHtml(item.id)}">✕</button>
       </div>
     </div>`;
@@ -168,6 +186,182 @@ async function confirmarApagar(id) {
   });
 }
 
+// ---------- modal: editar transação existente ----------
+
+/** Receita/despesa simples, parcela individual ou ocorrência gerada por
+ * recorrência — todas são o mesmo formato de documento, editáveis com o
+ * mesmo formulário da criação, só que pré-preenchido e gravando com
+ * `transacoes.atualizar` em vez de criar um novo lançamento. */
+function abrirModalEditarTransacaoSimples(item) {
+  const d = item.dados;
+  const html = `
+    <div class="modal">
+      <h2>Editar transação</h2>
+      <div id="erro-formulario"></div>
+      <form id="form-editar-transacao" novalidate>
+        <div class="field"><label>Tipo</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="e-tipo" value="despesa" ${d.tipo === "despesa" ? "checked" : ""}> Despesa</label>
+            <label class="radio-opt"><input type="radio" name="e-tipo" value="receita" ${d.tipo === "receita" ? "checked" : ""}> Receita</label>
+          </div>
+        </div>
+        ${campoOndeConta("e", true, d)}
+        <div class="row2">
+          <div class="field"><label for="e-valor">Valor</label><input type="text" inputmode="decimal" id="e-valor" placeholder="0,00" value="${formatarBRL(d.valorCentavos).replace("R$ ", "")}"></div>
+          <div class="field"><label for="e-data">Data</label><input type="date" id="e-data" value="${escapeHtml(d.data || "")}"></div>
+        </div>
+        <div id="e-categoria-wrap">${campoCategoria("e", d.tipo, d.categoriaId)}</div>
+        ${campoPessoa("e", d.pessoaId)}
+        <div id="e-fonteRenda-wrap">${d.tipo === "receita" ? campoFonteRenda("e", d.fonteRendaId) : ""}</div>
+        <div class="field"><label for="e-descricao">Descrição</label><input type="text" id="e-descricao" value="${escapeHtml(d.descricao || "")}"></div>
+        <div class="row2">
+          <div class="field"><label for="e-status">Status</label>
+            <select id="e-status">${STATUS_TRANSACAO.map((s) => `<option value="${s}" ${s === d.status ? "selected" : ""}>${ROTULO_STATUS[s]}</option>`).join("")}</select></div>
+          <div class="field"><label for="e-certeza">Certeza</label>
+            <select id="e-certeza">${CERTEZAS_TRANSACAO.map((c) => `<option value="${c}" ${c === d.certeza ? "selected" : ""}>${ROTULO_CERTEZA[c]}</option>`).join("")}</select></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>`;
+  abrirModal(html);
+  document.querySelector('[data-acao="cancelar"]').addEventListener("click", fecharModal);
+  ligarAlternanciaOnde("e");
+  document.querySelectorAll('input[name="e-tipo"]').forEach((r) => {
+    r.addEventListener("change", () => {
+      document.getElementById("e-categoria-wrap").innerHTML = campoCategoria("e", r.value);
+      document.getElementById("e-fonteRenda-wrap").innerHTML = r.value === "receita" ? campoFonteRenda("e") : "";
+    });
+  });
+  document.getElementById("form-editar-transacao").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const erroEl = document.getElementById("erro-formulario");
+    erroEl.innerHTML = "";
+    try {
+      const tipo = document.querySelector('input[name="e-tipo"]:checked').value;
+      const onde = document.getElementById("e-onde") ? document.getElementById("e-onde").value : "conta";
+      await transacoes.atualizar(item.id, {
+        tipo,
+        valorCentavos: paraCentavos(document.getElementById("e-valor").value),
+        data: document.getElementById("e-data").value,
+        competencia: tempo.competenciaDeData(document.getElementById("e-data").value),
+        contaId: onde === "conta" ? document.getElementById("e-conta").value : null,
+        cartaoId: onde === "cartao" ? document.getElementById("e-cartao").value : null,
+        categoriaId: document.getElementById("e-categoria")?.value || "",
+        pessoaId: document.getElementById("e-pessoa").value,
+        fonteRendaId: document.getElementById("e-fonteRenda")?.value || null,
+        descricao: document.getElementById("e-descricao").value.trim(),
+        status: document.getElementById("e-status").value,
+        certeza: document.getElementById("e-certeza").value,
+      });
+      mostrarToast("Transação atualizada.");
+      fecharModal();
+    } catch (erro) {
+      const msg = erro instanceof ErroDeValidacao ? erro.erros.join(" ") : "Não foi possível salvar. Tente novamente.";
+      erroEl.innerHTML = `<div class="erro-form">${escapeHtml(msg)}</div>`;
+    }
+  });
+}
+
+/** Transferência: as duas pernas precisam continuar com o mesmo valor e a
+ * mesma data — editar só uma desincronizaria o par (dinheiro "mudando de
+ * tamanho" entre sair de uma conta e entrar na outra). */
+function abrirModalEditarTransferencia(item) {
+  const d = item.dados;
+  const par = lista.find((t) => t.id !== item.id && t.dados.transferenciaId === d.transferenciaId);
+  const html = `
+    <div class="modal">
+      <h2>Editar transferência</h2>
+      <p class="tela-sub" style="margin-bottom:16px;">Valor, data e descrição valem para as duas pontas da transferência.</p>
+      <div id="erro-formulario"></div>
+      <form id="form-editar-transferencia" novalidate>
+        <div class="row2">
+          <div class="field"><label for="e-valor">Valor</label><input type="text" inputmode="decimal" id="e-valor" placeholder="0,00" value="${formatarBRL(d.valorCentavos).replace("R$ ", "")}"></div>
+          <div class="field"><label for="e-data">Data</label><input type="date" id="e-data" value="${escapeHtml(d.data || "")}"></div>
+        </div>
+        <div class="field"><label for="e-descricao">Descrição</label><input type="text" id="e-descricao" value="${escapeHtml(d.descricao || "")}"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>`;
+  abrirModal(html);
+  document.querySelector('[data-acao="cancelar"]').addEventListener("click", fecharModal);
+  document.getElementById("form-editar-transferencia").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const erroEl = document.getElementById("erro-formulario");
+    erroEl.innerHTML = "";
+    try {
+      const campos = {
+        valorCentavos: paraCentavos(document.getElementById("e-valor").value),
+        data: document.getElementById("e-data").value,
+        competencia: tempo.competenciaDeData(document.getElementById("e-data").value),
+        descricao: document.getElementById("e-descricao").value.trim(),
+      };
+      await transacoes.atualizar(item.id, campos);
+      if (par) await transacoes.atualizar(par.id, campos);
+      mostrarToast("Transferência atualizada.");
+      fecharModal();
+    } catch (erro) {
+      const msg = erro instanceof ErroDeValidacao ? erro.erros.join(" ") : "Não foi possível salvar. Tente novamente.";
+      erroEl.innerHTML = `<div class="erro-form">${escapeHtml(msg)}</div>`;
+    }
+  });
+}
+
+/** Pagamento de fatura: só o essencial (valor, data, descrição) — trocar a
+ * fatura ou a conta de um pagamento já registrado é raro o bastante pra
+ * não valer a complexidade agora; quem precisa disso apaga e relança. */
+function abrirModalEditarPagamentoFatura(item) {
+  const d = item.dados;
+  const html = `
+    <div class="modal">
+      <h2>Editar pagamento de fatura</h2>
+      <div id="erro-formulario"></div>
+      <form id="form-editar-pagamento" novalidate>
+        <div class="row2">
+          <div class="field"><label for="e-valor">Valor</label><input type="text" inputmode="decimal" id="e-valor" placeholder="0,00" value="${formatarBRL(d.valorCentavos).replace("R$ ", "")}"></div>
+          <div class="field"><label for="e-data">Data</label><input type="date" id="e-data" value="${escapeHtml(d.data || "")}"></div>
+        </div>
+        <div class="field"><label for="e-descricao">Descrição</label><input type="text" id="e-descricao" value="${escapeHtml(d.descricao || "")}"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>`;
+  abrirModal(html);
+  document.querySelector('[data-acao="cancelar"]').addEventListener("click", fecharModal);
+  document.getElementById("form-editar-pagamento").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const erroEl = document.getElementById("erro-formulario");
+    erroEl.innerHTML = "";
+    try {
+      await transacoes.atualizar(item.id, {
+        valorCentavos: paraCentavos(document.getElementById("e-valor").value),
+        data: document.getElementById("e-data").value,
+        competencia: tempo.competenciaDeData(document.getElementById("e-data").value),
+        descricao: document.getElementById("e-descricao").value.trim(),
+      });
+      mostrarToast("Pagamento atualizado.");
+      fecharModal();
+    } catch (erro) {
+      const msg = erro instanceof ErroDeValidacao ? erro.erros.join(" ") : "Não foi possível salvar. Tente novamente.";
+      erroEl.innerHTML = `<div class="erro-form">${escapeHtml(msg)}</div>`;
+    }
+  });
+}
+
+function abrirModalEditarTransacao(item) {
+  const tipo = item.dados.tipo;
+  if (tipo === "transferencia") return abrirModalEditarTransferencia(item);
+  if (tipo === "pagamento_fatura") return abrirModalEditarPagamentoFatura(item);
+  return abrirModalEditarTransacaoSimples(item);
+}
+
 // ---------- modal: nova transação (5 modos) ----------
 
 const MODOS = [
@@ -186,7 +380,7 @@ function abrirModalNovaTransacao() {
         ${MODOS.map((m, i) => `<button type="button" class="modulo-chip${i === 0 ? " ativo" : ""}" data-modo="${m.id}">${escapeHtml(m.rotulo)}</button>`).join("")}
       </div>
       <div id="erro-formulario"></div>
-      <form id="form-transacao">
+      <form id="form-transacao" novalidate>
         <div id="campos-modo"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>
@@ -211,24 +405,25 @@ function modoAtivo() {
   return el ? el.getAttribute("data-modo") : "simples";
 }
 
-function campoOndeConta(idPrefixo, permiteCartao) {
+function campoOndeConta(idPrefixo, permiteCartao, atual) {
   const contasOpts = opcoes(contexto.contas.filter((c) => c.dados.status === "ativa"), (c) => c.id, (c) => c.dados.nome);
   if (!permiteCartao) {
     return `<div class="field"><label for="${idPrefixo}-conta">Conta</label>
-      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
+      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual?.contaId === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
   }
   const cartoesOpts = opcoes(contexto.cartoes.filter((c) => c.dados.status === "ativo"), (c) => c.id, (c) => c.dados.apelido);
+  const ondeAtual = atual?.cartaoId ? "cartao" : "conta";
   return `
     <div class="field"><label for="${idPrefixo}-onde">Onde</label>
       <select id="${idPrefixo}-onde">
-        <option value="conta">Conta</option>
-        <option value="cartao">Cartão</option>
+        <option value="conta" ${ondeAtual === "conta" ? "selected" : ""}>Conta</option>
+        <option value="cartao" ${ondeAtual === "cartao" ? "selected" : ""}>Cartão</option>
       </select>
     </div>
-    <div class="field" id="${idPrefixo}-campo-conta"><label for="${idPrefixo}-conta">Conta</label>
-      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>
-    <div class="field" id="${idPrefixo}-campo-cartao" hidden><label for="${idPrefixo}-cartao">Cartão</label>
-      <select id="${idPrefixo}-cartao">${cartoesOpts.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
+    <div class="field" id="${idPrefixo}-campo-conta" ${ondeAtual === "cartao" ? "hidden" : ""}><label for="${idPrefixo}-conta">Conta</label>
+      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual?.contaId === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>
+    <div class="field" id="${idPrefixo}-campo-cartao" ${ondeAtual === "conta" ? "hidden" : ""}><label for="${idPrefixo}-cartao">Cartão</label>
+      <select id="${idPrefixo}-cartao">${cartoesOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual?.cartaoId === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
 }
 
 function ligarAlternanciaOnde(idPrefixo) {
@@ -240,26 +435,26 @@ function ligarAlternanciaOnde(idPrefixo) {
   });
 }
 
-function campoCategoria(idPrefixo, natureza) {
+function campoCategoria(idPrefixo, natureza, atual) {
   const cats = opcoes(contexto.categorias.filter((c) => c.dados.ativa && c.dados.natureza === natureza), (c) => c.id, (c) => c.dados.nome);
   return `<div class="field"><label for="${idPrefixo}-categoria">Categoria</label>
-    <select id="${idPrefixo}-categoria">${cats.length ? cats.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("") : '<option value="">Nenhuma categoria cadastrada</option>'}</select></div>`;
+    <select id="${idPrefixo}-categoria">${cats.length ? cats.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("") : '<option value="">Nenhuma categoria cadastrada</option>'}</select></div>`;
 }
 
-function campoPessoa(idPrefixo) {
+function campoPessoa(idPrefixo, atual) {
   const ps = opcoes(contexto.pessoas.filter((p) => p.dados.ativo), (p) => p.id, (p) => p.dados.nome);
   return `<div class="field"><label for="${idPrefixo}-pessoa">Pessoa</label>
-    <select id="${idPrefixo}-pessoa">${ps.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
+    <select id="${idPrefixo}-pessoa">${ps.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
 }
 
 // Opcional — liga a receita a uma fonte de renda cadastrada (§12). Sem
 // fonte nenhuma cadastrada, o campo nem aparece, pra não pedir algo que
 // não existe.
-function campoFonteRenda(idPrefixo) {
+function campoFonteRenda(idPrefixo, atual) {
   const fr = opcoes(contexto.fontesRenda.filter((f) => f.dados.ativa), (f) => f.id, (f) => f.dados.nome);
   if (!fr.length) return "";
   return `<div class="field"><label for="${idPrefixo}-fonteRenda">Fonte de renda (opcional)</label>
-    <select id="${idPrefixo}-fonteRenda"><option value="">Nenhuma</option>${fr.map((o) => `<option value="${escapeHtml(o.valor)}">${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
+    <select id="${idPrefixo}-fonteRenda"><option value="">Nenhuma</option>${fr.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
 }
 
 function renderCamposModo(modo) {

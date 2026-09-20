@@ -8,6 +8,7 @@
 import { agregarPeriodoPago } from "./transacoes.js";
 import { somarMeses } from "./tempo.js";
 import { calcularVisaoConsolidada } from "./dividas.js";
+import { calcularComposicaoAtivos, calcularPatrimonioLiquido } from "./patrimonio.js";
 
 function despesasPorCategoria(transacoes, competencia) {
   const porCategoria = new Map();
@@ -116,13 +117,14 @@ export function calcularCompletude({ pessoas, contas, categorias, transacoes }) 
 }
 
 /**
- * O diagnóstico inteiro (§8), uma leitura só. `patrimonioLiquido` ainda não
- * existe como número — ativos e passivos consolidados chegam na Fase 9
- * (§14); até lá o diagnóstico diz isso explicitamente, em vez de inventar
- * um valor.
+ * O diagnóstico inteiro (§8), uma leitura só. `patrimonioLiquido` reaproveita
+ * o motor da Fase 9 (§14) — ativos menos as mesmas dívidas já consolidadas
+ * aqui embaixo, sem recalcular passivo duas vezes.
  */
-export function calcularDiagnostico({ contas, transacoes, categorias, dividas, pessoas, clareza, competenciaAtual, hoje }) {
+export function calcularDiagnostico({ contas, transacoes, categorias, dividas, pessoas, ativos, clareza, competenciaAtual, hoje }) {
   const visaoDividas = calcularVisaoConsolidada(dividas || [], hoje);
+  const { totalCentavos: ativosCentavos } = calcularComposicaoAtivos(ativos || []);
+  const passivosCentavos = visaoDividas.saldoTotalAtualCentavos;
   const evolucaoDespesa = calcularEvolucaoCustoDeVida(transacoes, competenciaAtual);
   const evolucaoReceita = calcularEvolucaoReceita(transacoes, competenciaAtual);
 
@@ -145,7 +147,11 @@ export function calcularDiagnostico({ contas, transacoes, categorias, dividas, p
       saldoReservaCentavos: clareza.saldoReservaCentavos,
       temReserva: (contas || []).some((c) => c.ehReserva && c.status === "ativa"),
     },
-    patrimonioLiquido: { disponivel: false, motivo: "Ativos e passivos consolidados chegam na Fase 9 (§14)." },
+    patrimonioLiquido: {
+      disponivel: true,
+      liquidoCentavos: calcularPatrimonioLiquido({ ativosCentavos, passivosCentavos }),
+      ativosCentavos, passivosCentavos,
+    },
     completude: calcularCompletude({ pessoas, contas, categorias, transacoes }),
   };
 }

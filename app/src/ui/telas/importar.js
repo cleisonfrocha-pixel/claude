@@ -77,7 +77,7 @@ function linhaCandidato(c, i) {
             </select>
           </div>` : ""}
       </div>
-      <div class="item-valor mono">${formatarBRL(Math.abs(c.valorCentavos || 0))}</div>
+      <div class="item-valor mono" data-valor>${formatarBRL(Math.abs(c.valorCentavos || 0))}</div>
     </div>`;
 }
 

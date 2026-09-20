@@ -100,9 +100,9 @@ export default criarTelaCadastro({
     return `
       <div class="tela-sub" style="margin:0 0 4px;">Pago ${dados.parcelasPagas} de ${dados.quantidadeParcelas} parcelas (${Math.round(percentualPago)}%)</div>
       <div class="barra-limite"><span style="width:${percentualPago}%"></span></div>
-      <div class="fatura-linha"><span class="rotulo">Saldo original</span><b>${formatarBRL(dados.saldoOriginalCentavos)}</b></div>
-      <div class="fatura-linha"><span class="rotulo">Saldo atual</span><b>${formatarBRL(saldoAtual)}</b></div>
-      <div class="fatura-linha"><span class="rotulo">Parcela mensal</span><b>${formatarBRL(dados.valorParcelaCentavos)}</b></div>
+      <div class="fatura-linha"><span class="rotulo">Saldo original</span><b data-valor>${formatarBRL(dados.saldoOriginalCentavos)}</b></div>
+      <div class="fatura-linha"><span class="rotulo">Saldo atual</span><b data-valor>${formatarBRL(saldoAtual)}</b></div>
+      <div class="fatura-linha"><span class="rotulo">Parcela mensal</span><b data-valor>${formatarBRL(dados.valorParcelaCentavos)}</b></div>
       ${dados.taxaJurosMensalPct != null ? `<div class="fatura-linha"><span class="rotulo">Juros ao mês</span><b>${dados.taxaJurosMensalPct}%</b></div>` : ""}
       ${proximoVenc ? `<div class="fatura-linha"><span class="rotulo">Próximo vencimento</span><b>${escapeHtml(formatarData(proximoVenc))}</b></div>` : ""}
       ${dataQuitacao ? `<div class="fatura-linha"><span class="rotulo">Quitação estimada</span><b>${escapeHtml(formatarData(dataQuitacao))}</b></div>` : ""}

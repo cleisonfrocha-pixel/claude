@@ -18,7 +18,7 @@ function linhaFatura(rotulo, f, subRotulo) {
   return `
     <div class="fatura-linha">
       <span class="rotulo">${escapeHtml(rotulo)}<small>${escapeHtml(subRotulo || `Vence ${formatarData(f.vencimento)}`)}</small></span>
-      <b>${formatarBRL(f.totalCentavos)}</b>
+      <b data-valor>${formatarBRL(f.totalCentavos)}</b>
     </div>`;
 }
 
@@ -66,7 +66,7 @@ export default criarTelaCadastro({
     const barraClasse = visao.nivelAlerta !== "normal" ? ` ${visao.nivelAlerta}` : "";
     const largura = Math.min(100, visao.percentualUtilizado);
     return `
-      <div class="tela-sub" style="margin:0 0 4px;">Utilizado ${formatarBRL(visao.utilizadoCentavos)} de ${formatarBRL(visao.limiteTotalCentavos)} (${Math.round(visao.percentualUtilizado)}%)</div>
+      <div class="tela-sub" style="margin:0 0 4px;">Utilizado <span data-valor>${formatarBRL(visao.utilizadoCentavos)}</span> de <span data-valor>${formatarBRL(visao.limiteTotalCentavos)}</span> (${Math.round(visao.percentualUtilizado)}%)</div>
       <div class="barra-limite${barraClasse}"><span style="width:${largura}%"></span></div>
       ${linhaFatura("Fatura atual", visao.faturaAtual, visao.faturaAtual ? (visao.faturaAtual.fechada
         ? `Fechada · vence ${formatarData(visao.faturaAtual.vencimento)}`

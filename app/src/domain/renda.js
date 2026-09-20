@@ -28,10 +28,15 @@ export function calcularConcentracaoRenda(transacoes, competencia) {
     porFonte.set(chave, (porFonte.get(chave) || 0) + v);
   }
   const maiorFonteCentavos = porFonte.size ? Math.max(...porFonte.values()) : 0;
+  // "sem-fonte" é receita sem fonte de renda vinculada — entra na conta do
+  // percentual (é dinheiro de verdade), mas não conta como uma fonte
+  // cadastrada de verdade: dizer "concentrado em 1 fonte" quando não existe
+  // fonte nenhuma cadastrada seria inventar um cadastro que não existe.
+  const quantidadeFontes = Array.from(porFonte.keys()).filter((chave) => chave !== "sem-fonte").length;
   return {
     totalCentavos,
     concentracaoPercentual: totalCentavos > 0 ? Math.round((maiorFonteCentavos / totalCentavos) * 100) : 0,
-    quantidadeFontes: porFonte.size,
+    quantidadeFontes,
     porFonte,
   };
 }

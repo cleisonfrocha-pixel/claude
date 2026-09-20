@@ -8,7 +8,7 @@
 // compõem, nunca uma caixa preta.
 
 import { somarDias } from "./tempo.js";
-import { efeitoNaConta, dataVencimentoFatura } from "./transacoes.js";
+import { efeitoNaConta, dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
 
 /**
  * Saldo de UMA conta: saldo inicial cadastrado + o efeito de toda transação
@@ -48,7 +48,7 @@ export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horiz
     if (t.status !== "atrasado" && t.data > horizonteAte) continue;
     itens.push({
       tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: Number(t.valorCentavos) || 0,
-      data: t.data, atrasado: t.status === "atrasado",
+      data: t.data, atrasado: statusEfetivo(t, hoje) === "atrasado",
     });
   }
 

@@ -11,6 +11,7 @@ import telaInicio from "./telas/inicio.js";
 import telaContas from "./telas/contas.js";
 import telaCartoes from "./telas/cartoes.js";
 import telaTransacoes from "./telas/transacoes.js";
+import telaRecorrencias from "./telas/recorrencias.js";
 import telaPessoas from "./telas/pessoas.js";
 import telaCategorias from "./telas/categorias.js";
 import telaPreferencias from "./telas/preferencias.js";
@@ -27,6 +28,7 @@ const telaDinheiro = criarTelaComAbas({
   subtitulo: "Contas, cartões, toda a movimentação, e a importação de extratos.",
   abas: [
     { id: "transacoes", rotulo: "Transações", tela: telaTransacoes },
+    { id: "recorrencias", rotulo: "Recorrências", tela: telaRecorrencias },
     { id: "contas", rotulo: "Contas", tela: telaContas },
     { id: "cartoes", rotulo: "Cartões", tela: telaCartoes },
     { id: "importar", rotulo: "Importar", tela: telaImportar },
@@ -71,6 +73,11 @@ export function inicializar(container) {
   containerConteudo = container;
   renderizarNav();
   montarModulo(moduloAtivo);
+  const scroller = document.querySelector(".modulos-nav");
+  if (scroller) {
+    scroller.addEventListener("scroll", atualizarSombraDeRolagem, { passive: true });
+    window.addEventListener("resize", atualizarSombraDeRolagem);
+  }
 }
 
 function renderizarNav() {
@@ -83,6 +90,19 @@ function renderizarNav() {
   nav.querySelectorAll("[data-modulo]").forEach((btn) => {
     btn.addEventListener("click", () => selecionarModulo(btn.dataset.modulo));
   });
+  atualizarSombraDeRolagem();
+}
+
+// Liga/desliga as sombras de "tem mais módulo pra esse lado" conforme a
+// posição do scroll — nunca fica ligada nos dois lados ao mesmo tempo no
+// início ou no fim da lista.
+function atualizarSombraDeRolagem() {
+  const scroller = document.querySelector(".modulos-nav");
+  if (!scroller) return;
+  const podeEsq = scroller.scrollLeft > 2;
+  const podeDir = scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 2;
+  scroller.classList.toggle("pode-rolar-esq", podeEsq);
+  scroller.classList.toggle("pode-rolar-dir", podeDir);
 }
 
 function selecionarModulo(id) {

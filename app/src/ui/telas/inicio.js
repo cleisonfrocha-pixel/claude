@@ -34,7 +34,7 @@ function itemContador(rotulo, valor, sub) {
         <div class="item-titulo">${escapeHtml(rotulo)}</div>
         <div class="item-sub">${escapeHtml(sub)}</div>
       </div>
-      <div class="item-valor mono">${valor}</div>
+      <div class="item-valor mono" data-valor>${valor}</div>
     </div>`;
 }
 
@@ -239,8 +239,8 @@ function renderizarSituacaoResumo() {
       <div class="diagnostico-linha">
         <div class="rotulo">Estado do caixa</div>
         <div class="texto">${negativo
-          ? `Negativo: falta ${formatarBRL(Math.abs(diagnostico.estadoCaixa.seguroParaGastarCentavos))} para cobrir o que já está comprometido.`
-          : `${formatarBRL(diagnostico.estadoCaixa.seguroParaGastarCentavos)} seguros para gastar.`}</div>
+          ? `Negativo: falta <span class="valor-neg" data-valor>${formatarBRL(Math.abs(diagnostico.estadoCaixa.seguroParaGastarCentavos))}</span> para cobrir o que já está comprometido.`
+          : `<span data-valor>${formatarBRL(diagnostico.estadoCaixa.seguroParaGastarCentavos)}</span> seguros para gastar.`}</div>
       </div>
       <div class="diagnostico-linha" style="border-bottom:none;">
         <div class="rotulo">Principal risco ou pressão</div>
@@ -300,10 +300,10 @@ function renderizarDividasResumo() {
   alvo.innerHTML = `
     <button class="item-cartao" data-ir-dividas style="width:100%;text-align:left;cursor:pointer;font:inherit;">
       <div class="item-corpo">
-        <div class="item-titulo">${formatarBRL(estadoDividas.saldoTotalAtualCentavos)} devendo${estadoDividas.quantidadeAtrasadas > 0
+        <div class="item-titulo"><span class="valor-neg" data-valor>${formatarBRL(estadoDividas.saldoTotalAtualCentavos)}</span> devendo${estadoDividas.quantidadeAtrasadas > 0
           ? ` · <span style="color:var(--danger);">${estadoDividas.quantidadeAtrasadas} ${estadoDividas.quantidadeAtrasadas === 1 ? "atrasada" : "atrasadas"}</span>`
           : ""}</div>
-        <div class="item-sub">${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}/mês comprometido${estadoDividas.dataQuitacaoTotal ? ` · quita ${escapeHtml(formatarData(estadoDividas.dataQuitacaoTotal))}` : ""}</div>
+        <div class="item-sub"><span data-valor>${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}</span>/mês comprometido${estadoDividas.dataQuitacaoTotal ? ` · quita ${escapeHtml(formatarData(estadoDividas.dataQuitacaoTotal))}` : ""}</div>
       </div>
     </button>`;
 
@@ -333,8 +333,8 @@ function renderizarPatrimonioResumo() {
   alvo.innerHTML = `
     <button class="item-cartao" data-ir-patrimonio style="width:100%;text-align:left;cursor:pointer;font:inherit;">
       <div class="item-corpo">
-        <div class="item-titulo">${formatarBRL(liquidoCentavos)} de patrimônio líquido</div>
-        <div class="item-sub">${formatarBRL(ativosCentavos)} em ativos, ${formatarBRL(passivosCentavos)} em passivos · ${escapeHtml(variacaoTexto)}</div>
+        <div class="item-titulo"><span class="${liquidoCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(liquidoCentavos)}</span> de patrimônio líquido</div>
+        <div class="item-sub"><span data-valor>${formatarBRL(ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(passivosCentavos)}</span> em passivos · ${escapeHtml(variacaoTexto)}</div>
         <div class="item-sub">${escapeHtml(coberturaTexto)}</div>
       </div>
     </button>`;

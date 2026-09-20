@@ -28,6 +28,20 @@
   overflow-x: auto; scrollbar-width: none;
 }
 .modulos-nav::-webkit-scrollbar { display: none; }
+/* Pista visual de que há mais módulos fora da tela (achado #14 da
+   auditoria de UX): uma sombra na borda que só aparece quando ainda dá
+   para rolar naquela direção — some sozinha quando chega no fim. Filhos
+   absolutos de `.modulos-nav` (que já é `position: sticky`, servindo de
+   bloco de contenção) ficam presos na borda visível, sem rolar junto com
+   o conteúdo — exatamente o efeito de "sombra fixa na ponta" que queremos. */
+.modulos-nav::before, .modulos-nav::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 28px; z-index: 26;
+  pointer-events: none; opacity: 0; transition: opacity .15s ease;
+}
+.modulos-nav::before { left: 0; background: linear-gradient(90deg, var(--nav-fade), transparent); }
+.modulos-nav::after { right: 0; background: linear-gradient(270deg, var(--nav-fade), transparent); }
+.modulos-nav.pode-rolar-esq::before { opacity: 1; }
+.modulos-nav.pode-rolar-dir::after { opacity: 1; }
 .modulos-nav-inner {
   max-width: 1120px; margin: 0 auto; padding: 10px 20px;
   display: flex; gap: 8px; min-width: max-content;
