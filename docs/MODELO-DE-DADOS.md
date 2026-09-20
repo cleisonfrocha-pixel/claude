@@ -187,9 +187,15 @@ são um retrato do achado no momento da decisão, para o histórico continuar
 legível mesmo se o achado que o originou não existir mais (ex.: a dívida
 que motivou o achado foi quitada).
 
-Nenhuma coleção `alertas` ainda: o §17 (Anomalias e inteligência de
-comportamento) é Fase 10, com histórico suficiente para julgar "anormal"
-de verdade — é o lugar certo para essa coleção nascer.
+Nenhuma coleção `alertas`: quando a Fase 10 (§17, §23, §24) chegou, os
+alertas e anomalias viraram só mais geradores de achado em
+`domain/decisoes.js` — mesmo raciocínio de sempre, "todo alerta aponta os
+dados que o originaram" (CLAUDE.md) já era exatamente o que `decisoes`
+guarda. `domain/anomalias.js` e `domain/qualidade.js` (novos, Fase 10) são
+puros e não escrevem em lugar nenhum: recorrência nova/com valor
+diferente, gasto atípico de cartão, receita esperada não recebida,
+completude/confiabilidade dos dados — tudo recalculado ao vivo a partir
+das coleções que já existem, nada novo persistido.
 
 ## Conexões e sistema — Fases 11, 12 e 15
 

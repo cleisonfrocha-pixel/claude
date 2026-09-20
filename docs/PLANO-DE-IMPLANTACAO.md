@@ -444,7 +444,7 @@ ativo → objetivo compatível e incompatível) — ver `docs/RASTREABILIDADE.md
 §29, para a tabela completa das 14 perguntas e onde cada uma é respondida no
 produto.
 
-### Fase 10 · Confiança, alertas e anomalias · 3 sessões — §23, §24, §17
+### Fase 10 · Confiança, alertas e anomalias · 3 sessões — §23, §24, §17 — ✅ concluída (20/09/2026)
 
 Completude da vida financeira mapeada e confiabilidade da visão; itens a
 confirmar; saldos não conciliados; **aviso quando uma conclusão estiver baseada
@@ -455,7 +455,17 @@ onde veio e quais dados o sustentam.
 Vem **depois** do diagnóstico de propósito: alerta sem base de dados confiável é
 ruído, e ruído destrói a confiança no produto mais rápido que a ausência do alerta.
 
-**Portão:** todo alerta na tela abre e mostra os lançamentos que o geraram.
+**Portão:** todo alerta na tela abre e mostra os lançamentos que o geraram. ✅
+Três dos nove alertas do §24 já existiam desde a Fase 7 (risco de caixa,
+vencimento sem cobertura, cartão no limite); os outros seis são novos, e dois
+deles (dívida aumentando, patrimônio evoluindo) reaproveitam a relação
+dívida/ativo/patrimônio inteira da Fase 9, sem recalcular nada. Duas das seis
+detecções do §17 também já existiam (gasto fora do padrão — F7/§8; categoria
+em alta persistente — F8/§13); `domain/anomalias.js` só teve que nascer com
+as quatro que faltavam. Retrofit aplicado aos alertas antigos também: todos,
+não só os novos, agora mostram os lançamentos concretos por trás ao expandir.
+Verificado com Playwright — dívida atrasada e recorrência nova, cada uma
+expandida na tela Plano, mostram exatamente o lançamento que as originou.
 
 ### Fase 11 · Importação e reconciliação · 4 sessões — §18
 

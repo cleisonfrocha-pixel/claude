@@ -28,14 +28,14 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 14 | Patrimônio e construção de riqueza | P1 | F9 | ● |
 | 15 | Reserva e segurança financeira | P1 | F9 | ● |
 | 16 | Objetivos financeiros | P1 | F9 | ● |
-| 17 | Anomalias e inteligência de comportamento | P1 | F10 | ○ |
+| 17 | Anomalias e inteligência de comportamento | P1 | F10 | ● |
 | 18 | Importação e reconciliação | P1 | F11 | ○ |
 | 19 | Open Finance | P1 | F12 | ○ |
 | 20 | Assistente de IA | P2 | F13 | ○ |
 | 21 | Fechamento mensal e evolução | P2 | F14 | ○ |
 | 22 | Cenários e simulador de realidade | P2 | F14 | ○ |
-| 23 | Qualidade, completude e confiança dos dados | P1 | F10 | ○ |
-| 24 | Alertas e acompanhamento | P1 | F10 | ○ |
+| 23 | Qualidade, completude e confiança dos dados | P1 | F10 | ● |
+| 24 | Alertas e acompanhamento | P1 | F10 | ● |
 | 25 | Experiência principal da Home | P0 | F2, F5, F6, F7, F9 | ● |
 | 26 | Navegação e módulos | P0 | F0 | ● |
 | 27 | Funções de qualidade de vida | P2 | F0 (ocultar), F15 | ◐ |
@@ -356,12 +356,31 @@ prazo" é `simularNovoPrazo`, uma função pura sem acesso a repositório —
 mesma garantia estrutural do simulador de dívidas (§11/F6): o cenário
 simulado não tem como vazar para o objetivo real.
 
-### §17 — Anomalias `P1` — **F10**
+### §17 — Anomalias `P1` — ✅ **F10** (20/09/2026)
 
 Gasto fora do padrão histórico · aumento persistente de categoria · nova
 recorrência · mudança relevante em receita · aumento atípico de cartão ·
 diferença entre esperado e realizado · **explicar de onde veio o alerta e quais
 dados o sustentam**.
+
+**Como foi entregue:** as duas primeiras detecções já existiam antes desta
+fase — `calcularDespesasForaDoPadrao` (`domain/diagnostico.js`, §8) e
+`identificarCategoriasCrescentes` (`domain/orcamento.js`, §13) — e
+`dados/decisoesRepo.js` só passou a reaproveitá-las como achados; nenhuma das
+duas foi duplicada. `domain/anomalias.js` (novo) tem as quatro que ainda não
+existiam: `detectarNovaRecorrencia` (uma recorrência cujo `inicio` é a
+competência atual — sinal mais confiável que a data de criação do registro),
+`detectarRecorrenciaValorDiferente` (o lançamento real de uma recorrência
+difere do valor estimado — "diferença entre esperado e realizado"),
+`detectarAumentoCartao` (fatura de um cartão muito acima da média das
+anteriores — mesmo raciocínio de `calcularDespesasForaDoPadrao`, mas para
+gasto de cartão) e `compararComPeriodoAnterior`, um comparador genérico
+"isso mudou muito desde o mês passado?" reaproveitado tanto para "mudança
+relevante em receita" (aqui) quanto para "queda de margem" (§24). Todo
+achado gerado a partir de uma anomalia carrega `dados.lancamentos` — os
+lançamentos concretos por trás do número — cumprindo a exigência de
+"explicar de onde veio o alerta" ao mesmo tempo que o portão da própria
+Fase 10.
 
 ### §18 — Importação e reconciliação `P1` — **F11**
 
@@ -398,18 +417,53 @@ Atual · recuperação · aumento de renda · redução de despesa · quitação
 · conservador · comparação **sem alterar dados reais** · impacto em caixa,
 dívida, reserva e patrimônio.
 
-### §23 — Qualidade e confiança dos dados `P1` — **F10**
+### §23 — Qualidade e confiança dos dados `P1` — ✅ **F10** (20/09/2026)
 
 Completude da vida financeira mapeada · confiabilidade da visão atual · itens a
 confirmar · saldos ou registros não conciliados · **aviso quando a conclusão se
 apoiar em dados incompletos** · data da última atualização.
 
-### §24 — Alertas `P1` — **F10**
+**Como foi entregue:** `domain/qualidade.js` (novo) — completude é um
+checklist de sete itens (pessoa, conta, conta de reserva, categoria essencial,
+fonte de renda, ativo, lançamento nos últimos 30 dias), cada um com um
+percentual e uma pendência que já diz o que fazer, nunca só "algo está
+incompleto" (mesma regra do §9/§17). Itens a confirmar (transação marcada
+como incerta, dívida sem taxa de juros) são diferentes de completude — não é
+"dado faltando", é "dado presente mas ainda não confirmado". Saldos não
+conciliados são contas ou ativos sem confirmação (saldo inicial ou avaliação)
+há mais de 180 dias. `calcularConfiabilidade` sintetiza os três num nível só
+(alta/média/baixa) — e é esse nível que vira o aviso "esta conclusão usa
+dados incompletos" na tela de Plano, amarrado direto ao bloco de Diagnóstico
+que a conclusão pertence, não solto em outro canto da tela.
+
+### §24 — Alertas `P1` — ✅ **F10** (20/09/2026)
 
 Risco de caixa · vencimento próximo sem cobertura · cartão perto do limite ·
 receita esperada não recebida · despesa fora do padrão · nova recorrência ·
 aumento de dívida · queda relevante de margem · **evolução positiva** de dívida,
 reserva ou patrimônio.
+
+**Como foi entregue:** os três primeiros já existiam desde a Fase 7
+(`caixa_seguro_negativo`, `projecao_saida_critica`, `cartao_limite`) — nada
+mudou neles além de ganharem `dados.lancamentos`. Os seis restantes são
+novos geradores em `domain/decisoes.js`: `receita_esperada_nao_recebida`
+(fonte fixa/recorrente sem receita paga registrada, já perto do fim do mês —
+`domain/anomalias.js`), `despesa_fora_padrao` e `nova_recorrencia`
+(compartilhados com o §17), `divida_aumentou` e `patrimonio_evoluiu_positivo`
+(reaproveitam a `relacao` dívida/ativo/patrimônio inteira da Fase 9 —
+`domain/patrimonio.js`, `calcularRelacaoDividaAtivoPatrimonio` — sem
+recalcular nada) e `margem_caiu` (`compararComPeriodoAnterior` aplicado à
+margem do mês atual contra a do mês anterior, calculada com as mesmas funções
+do §13). Nenhuma dessas seis exige uma coleção nova: margem e receita do mês
+anterior são recalculadas ao vivo com os dados que já existem, e a evolução
+de dívida/patrimônio reaproveita o snapshot mensal que a Fase 9 já grava.
+**Portão da fase:** todo alerta, ao abrir (chevron no card, tela Plano),
+mostra os lançamentos concretos que o geraram — retrofit aplicado aos seis
+alertas antigos também, não só aos novos; quando não há lançamento
+individual por trás (ex.: saldo consolidado), o alerta diz isso
+explicitamente em vez de mostrar uma lista vazia sem explicação. Verificado
+com Playwright: uma dívida atrasada e uma recorrência nova, ambas expandidas,
+mostram exatamente a parcela e o lançamento que as originaram.
 
 ### §25 — Home `P0` — ✅ **F2, F5, F6, F7, F9 — os seis blocos completos**
 

@@ -9,18 +9,21 @@ Centro de comando financeiro pessoal e familiar, construído sobre a base do
 
 ## Estado
 
-**Fase 9 concluída (20/09/2026) — V1 completa.** Novos módulos Patrimônio
-e Objetivos: patrimônio líquido (ativos menos as mesmas dívidas do §11,
-nunca um cadastro de passivo separado), composição por classe, evolução
-mensal/acumulada e a relação entre reduzir dívida, aumentar ativo e
-crescer patrimônio; reserva com cobertura em dias/meses de custo
-essencial e metas por horizonte (3/6/12 meses); objetivos com progresso,
-valor necessário por mês e a verificação central do §16 — a meta cabe na
-margem atual? — mais um simulador de prazo com outra margem. A Home
-ganhou o sexto e último bloco do §25. **As 14 perguntas do §29 têm
-resposta no produto — ver `docs/RASTREABILIDADE.md`.** P0 e o P1 central
-(§3–§16) estão entregues; o que resta (§17 em diante) é P1 secundário, P2
-e P3.
+**Fase 10 concluída (20/09/2026).** Confiança, alertas e anomalias:
+completude da vida financeira mapeada (checklist de sete itens, com
+percentual), itens a confirmar, saldos sem conferência recente, e um
+nível de confiabilidade que vira aviso explícito sempre que o
+Diagnóstico (Plano) se apoia em dados incompletos (§23). Nove alertas do
+§24 — três já existiam desde a Fase 7 (risco de caixa, vencimento sem
+cobertura, cartão no limite), os outros seis são novos, incluindo dois
+que reaproveitam a evolução de patrimônio da Fase 9 sem recalcular nada
+(dívida aumentando, patrimônio evoluindo). Seis detecções de anomalia do
+§17 — duas já existiam (gasto fora do padrão, categoria em alta
+persistente), quatro nasceram nesta fase (nova recorrência, recorrência
+com valor diferente do esperado, gasto atípico de cartão, mudança
+relevante em receita). Portão cumprido: todo alerta, novo ou antigo,
+mostra ao expandir os lançamentos concretos que o originaram. V1 (F0–F9)
+segue completa — Fase 10 é P1 secundário, construído sobre ela.
 
 Produto ao vivo: <https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6>
 Roadmap visual: <https://claude.ai/artifact/GWUhPYHc3Xq44CYL1tGTah>

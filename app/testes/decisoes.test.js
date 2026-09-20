@@ -80,6 +80,104 @@ test("detectarAchados: saída crítica de 30 dias vira risco, urgência alta se 
   assert.equal(a.prazo, "2026-03-05");
 });
 
+// ---------- detectarAchados — Fase 10 (§17, §24) ----------
+
+const BASE = { clareza: { seguroParaGastarCentavos: 0, livreCentavos: 0 }, dividas: [], cartoesVisao: [], hoje: "2026-03-01" };
+
+test("PORTÃO DA FASE 10 (§9/§24): todo achado com lançamento concreto carrega dados.lancamentos", () => {
+  const achados = detectarAchados({
+    ...BASE,
+    clareza: { seguroParaGastarCentavos: -30000, livreCentavos: -30000, detalhes: { compromissos: [{ descricao: "Aluguel", valorCentavos: 30000, data: "2026-03-05" }] } },
+  });
+  const a = achados.find((x) => x.chave === "caixa_seguro_negativo");
+  assert.equal(a.dados.lancamentos.length, 1);
+  assert.equal(a.dados.lancamentos[0].descricao, "Aluguel");
+});
+
+test("detectarAchados: despesa fora do padrão vira risco apontando a categoria e os lançamentos", () => {
+  const foraDoPadrao = [{ categoriaId: "cat1", nomeCategoria: "Mercado", valorCentavos: 80000, mediaCentavos: 40000, percentualAcima: 100, lancamentos: [{ descricao: "Supermercado X", valorCentavos: 80000, data: "2026-03-10" }] }];
+  const achados = detectarAchados({ ...BASE, foraDoPadrao });
+  const a = achados.find((x) => x.chave === "despesa_fora_padrao");
+  assert.ok(a);
+  assert.equal(a.tipo, "risco");
+  assert.equal(a.origem.id, "cat1");
+  assert.equal(a.dados.lancamentos.length, 1);
+});
+
+test("detectarAchados: categoria crescente vira risco de urgência baixa", () => {
+  const categoriasCrescentes = [{ categoriaId: "cat1", nomeCategoria: "Lazer", serieCentavos: [1000, 2000, 3000], crescimentoTotalPercentual: 200, lancamentos: [] }];
+  const achados = detectarAchados({ ...BASE, categoriasCrescentes });
+  const a = achados.find((x) => x.chave === "categoria_crescente");
+  assert.ok(a);
+  assert.equal(a.urgencia, "baixa");
+});
+
+test("detectarAchados: nova recorrência de despesa vira risco; de receita vira oportunidade", () => {
+  const novaRecorrencia = [
+    { recorrenciaId: "r1", descricao: "Streaming", tipo: "despesa", valorEstimadoCentavos: 4000 },
+    { recorrenciaId: "r2", descricao: "Bico fixo", tipo: "receita", valorEstimadoCentavos: 50000 },
+  ];
+  const achados = detectarAchados({ ...BASE, novaRecorrencia });
+  const despesa = achados.find((x) => x.origem.id === "r1");
+  const receita = achados.find((x) => x.origem.id === "r2");
+  assert.equal(despesa.tipo, "risco");
+  assert.equal(receita.tipo, "oportunidade");
+});
+
+test("detectarAchados: recorrência com valor realizado maior que o esperado vira risco", () => {
+  const recorrenciaValorDiferente = [{ recorrenciaId: "r1", descricao: "Assinatura", esperadoCentavos: 4000, realizadoCentavos: 6000, percentual: 50, dataTransacao: "2026-03-05" }];
+  const achados = detectarAchados({ ...BASE, recorrenciaValorDiferente });
+  const a = achados.find((x) => x.chave === "recorrencia_valor_diferente");
+  assert.equal(a.tipo, "risco");
+  assert.equal(a.impactoCentavos, 2000);
+});
+
+test("detectarAchados: gasto atípico de cartão vira risco de urgência média, com os lançamentos da fatura", () => {
+  const aumentoCartao = [{ cartaoId: "c1", apelido: "Roxinho", atualCentavos: 300000, mediaCentavos: 100000, percentualAcima: 200, lancamentos: [{ descricao: "Compra grande", valorCentavos: 200000 }] }];
+  const achados = detectarAchados({ ...BASE, aumentoCartao });
+  const a = achados.find((x) => x.chave === "cartao_aumento_atipico");
+  assert.equal(a.urgencia, "media");
+  assert.equal(a.dados.lancamentos.length, 1);
+});
+
+test("detectarAchados: receita esperada não recebida vira problema de urgência alta", () => {
+  const receitaEsperadaNaoRecebida = [{ fonteId: "f1", nome: "Salário", valorEsperadoCentavos: 500000 }];
+  const achados = detectarAchados({ ...BASE, receitaEsperadaNaoRecebida });
+  const a = achados.find((x) => x.chave === "receita_esperada_nao_recebida");
+  assert.equal(a.tipo, "problema");
+  assert.equal(a.urgencia, "alta");
+});
+
+test("detectarAchados: receita em queda vira risco; receita em alta vira oportunidade", () => {
+  const queda = detectarAchados({ ...BASE, mudancaReceita: { subiu: false, variacaoPercentual: -40, variacaoCentavos: -40000 } });
+  const alta = detectarAchados({ ...BASE, mudancaReceita: { subiu: true, variacaoPercentual: 40, variacaoCentavos: 40000 } });
+  assert.equal(queda.find((a) => a.chave === "receita_mudou").tipo, "risco");
+  assert.equal(alta.find((a) => a.chave === "receita_mudou").tipo, "oportunidade");
+});
+
+test("detectarAchados: margem em queda vira risco; margem em alta não gera achado", () => {
+  const caiu = detectarAchados({ ...BASE, mudancaMargem: { subiu: false, variacaoPercentual: -30, variacaoCentavos: -30000 } });
+  const subiu = detectarAchados({ ...BASE, mudancaMargem: { subiu: true, variacaoPercentual: 30, variacaoCentavos: 30000 } });
+  assert.ok(caiu.find((a) => a.chave === "margem_caiu"));
+  assert.equal(subiu.some((a) => a.chave === "margem_caiu"), false);
+});
+
+test("detectarAchados: passivo aumentou vira risco de dívida aumentando", () => {
+  const relacaoPatrimonio = { passivoCaiu: false, ativoSubiu: false, patrimonioSubiu: false, variacaoPassivoCentavos: 50000, variacaoAtivoCentavos: 0, variacaoPatrimonioCentavos: -50000 };
+  const achados = detectarAchados({ ...BASE, relacaoPatrimonio });
+  assert.ok(achados.find((a) => a.chave === "divida_aumentou"));
+  assert.equal(achados.some((a) => a.chave === "patrimonio_evoluiu_positivo"), false);
+});
+
+test("detectarAchados: patrimônio líquido subiu vira oportunidade", () => {
+  const relacaoPatrimonio = { passivoCaiu: true, ativoSubiu: true, patrimonioSubiu: true, variacaoPassivoCentavos: -20000, variacaoAtivoCentavos: 30000, variacaoPatrimonioCentavos: 50000 };
+  const achados = detectarAchados({ ...BASE, relacaoPatrimonio });
+  const a = achados.find((x) => x.chave === "patrimonio_evoluiu_positivo");
+  assert.ok(a);
+  assert.equal(a.tipo, "oportunidade");
+  assert.equal(a.impactoCentavos, 50000);
+});
+
 // ---------- priorizarAchados ----------
 
 test("priorizarAchados: urgência alta vem antes de média e baixa", () => {

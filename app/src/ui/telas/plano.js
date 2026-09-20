@@ -6,6 +6,7 @@
 // gravada (dados/decisoesRepo.js).
 
 import { assinarPainelDecisoes, decidirAchado, reabrirDecisao } from "../../dados/decisoesRepo.js";
+import { assinarPainelQualidade } from "../../dados/qualidadeRepo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
@@ -26,27 +27,35 @@ const NOTA_HORIZONTE_VAZIO = {
 };
 
 let painel = null;
+let qualidade = null;
 let achadosPorId = new Map();
 let pararAssinatura = null;
+let pararAssinaturaQualidade = null;
 let container = null;
 let historicoAberto = false;
+const achadosExpandidos = new Set();
 
 export default {
   montar(alvo) {
     container = alvo;
     historicoAberto = false;
+    achadosExpandidos.clear();
     if (pararAssinatura) pararAssinatura();
     pararAssinatura = assinarPainelDecisoes((r) => {
       painel = r;
       achadosPorId = new Map(r.achadosPendentes.map((a) => [a.id, a]));
       renderizar();
     });
+    if (pararAssinaturaQualidade) pararAssinaturaQualidade();
+    pararAssinaturaQualidade = assinarPainelQualidade((r) => { qualidade = r; renderizar(); });
     renderizar();
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
+    if (pararAssinaturaQualidade) { pararAssinaturaQualidade(); pararAssinaturaQualidade = null; }
     container = null;
     painel = null;
+    qualidade = null;
   },
 };
 
@@ -102,16 +111,35 @@ function textoDiagnostico(d) {
   return linhas.join("");
 }
 
+/** O portão da Fase 10: abrir um achado mostra os lançamentos concretos
+ * que o originaram — nunca só um número solto. Quando não há lançamento
+ * individual por trás (ex.: leitura de um saldo consolidado), diz isso
+ * explicitamente em vez de mostrar uma lista vazia sem explicação. */
+function painelLancamentos(a) {
+  const lancamentos = a.dados?.lancamentos || [];
+  if (!lancamentos.length) {
+    return `<div class="tela-sub" style="margin:0;">Baseado num painel consolidado, sem lançamentos individuais por trás.</div>`;
+  }
+  return lancamentos.map((l) => `
+    <div class="fatura-linha">
+      <span class="rotulo">${escapeHtml(l.descricao || "Lançamento")}${l.data ? `<small>${escapeHtml(formatarData(l.data))}</small>` : ""}</span>
+      ${l.valorCentavos != null ? `<b>${formatarBRL(l.valorCentavos)}</b>` : ""}
+    </div>`).join("");
+}
+
 function cartaoAchado(a) {
   const urgenciaClasse = CLASSE_URGENCIA[a.urgencia];
+  const aberto = achadosExpandidos.has(a.id);
   return `
     <div class="achado-card" data-achado="${escapeHtml(a.id)}">
       <div class="achado-head">
         <span class="item-tag${urgenciaClasse ? " " + urgenciaClasse : ""}">${ROTULO_URGENCIA[a.urgencia]}</span>
         <span class="achado-origem">${escapeHtml(a.origem?.rotulo || "")}</span>
+        <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" title="Ver os lançamentos que originaram este alerta" aria-label="Ver lançamentos">▾</button>
       </div>
       <div class="achado-titulo">${escapeHtml(a.titulo)}</div>
       <div class="achado-acao-sugerida">${escapeHtml(a.acaoSugerida)}${a.prazo ? ` · prazo ${escapeHtml(formatarData(a.prazo))}` : ""}</div>
+      ${aberto ? `<div class="item-extra" style="margin:8px 0;">${painelLancamentos(a)}</div>` : ""}
       <div class="achado-rodape">
         ${a.impactoCentavos != null ? `<b class="mono" data-valor>${formatarBRL(a.impactoCentavos)}</b>` : "<span></span>"}
         <div class="achado-botoes">
@@ -133,6 +161,46 @@ function listaAchadosPorTipo(achados) {
       <div class="tela-head" style="margin:18px 0 8px;"><div><h3 class="tela-titulo" style="font-size:15px;">${ROTULO_TIPO[tipo]} <span class="tela-sub" style="display:inline;">(${doTipo.length})</span></h3></div></div>
       ${doTipo.map(cartaoAchado).join("")}`;
   }).join("");
+}
+
+/** "Aviso quando uma conclusão estiver baseada em dados incompletos"
+ * (§23) — amarrado direto ao bloco que faz a conclusão (o Diagnóstico),
+ * não um aviso solto em outro lugar da tela. */
+function avisoConfiabilidade(confiabilidade) {
+  if (!confiabilidade || confiabilidade.nivel === "alta") return "";
+  const resto = confiabilidade.motivos.length > 1 ? ` (+${confiabilidade.motivos.length - 1} outro${confiabilidade.motivos.length > 2 ? "s" : ""} motivo${confiabilidade.motivos.length > 2 ? "s" : ""})` : "";
+  return `<div class="erro-form" style="margin-bottom:12px;">Aviso: este diagnóstico usa dados incompletos — ${escapeHtml(confiabilidade.motivos[0])}${resto}</div>`;
+}
+
+function blocoQualidade(q) {
+  if (!q) return "";
+  const { completude, itensAConfirmar, saldosNaoConciliados, ultimaAtualizacao, confiabilidade } = q;
+  const classeNivel = confiabilidade.nivel === "alta" ? "" : confiabilidade.nivel === "media" ? " atencao" : " critico";
+  return `
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Qualidade dos dados</h3>
+      <p class="tela-sub">O quanto dá pra confiar no que está sendo mostrado — §23</p></div>
+      <span class="item-tag${classeNivel}">confiabilidade ${escapeHtml(confiabilidade.nivel)}</span>
+    </div>
+    <div class="divida-resumo">
+      <div class="diagnostico-linha">
+        <div class="rotulo">Completude da vida financeira mapeada</div>
+        <div class="texto">${completude.percentual}%${completude.pendencias.length ? " — " + escapeHtml(completude.pendencias.join(" ")) : ", tudo cadastrado."}</div>
+      </div>
+      <div class="diagnostico-linha">
+        <div class="rotulo">Itens a confirmar</div>
+        <div class="texto">${itensAConfirmar.length ? escapeHtml(itensAConfirmar.map((i) => i.rotulo).join(" ")) : "Nada pendente de confirmação."}</div>
+      </div>
+      <div class="diagnostico-linha">
+        <div class="rotulo">Saldos e registros sem conferência recente</div>
+        <div class="texto">${saldosNaoConciliados.length
+          ? `${saldosNaoConciliados.length} ${saldosNaoConciliados.length > 1 ? "registros" : "registro"}: ${escapeHtml(saldosNaoConciliados.map((s) => s.rotulo).join(", "))}`
+          : "Tudo conferido nos últimos 180 dias."}</div>
+      </div>
+      <div class="diagnostico-linha" style="border-bottom:none;">
+        <div class="rotulo">Última atualização</div>
+        <div class="texto">${ultimaAtualizacao ? escapeHtml(formatarData(ultimaAtualizacao.slice(0, 10))) : "Sem lançamento nenhum ainda."}</div>
+      </div>
+    </div>`;
 }
 
 function listaHorizonte(chave, achados) {
@@ -165,7 +233,10 @@ function renderizar() {
 
     <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Diagnóstico</h3>
       <p class="tela-sub">Fatos e relações observáveis nos seus dados — §8</p></div></div>
+    ${avisoConfiabilidade(qualidade?.confiabilidade)}
     <div class="divida-resumo">${textoDiagnostico(painel.diagnostico)}</div>
+
+    ${blocoQualidade(qualidade)}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Central de decisões</h3>
       <p class="tela-sub">O que merece sua atenção agora, priorizado por urgência e impacto — §9</p></div></div>
@@ -198,7 +269,14 @@ function ligarEventos() {
     const id = card.dataset.achado;
     const a = achadosPorId.get(id);
     if (!a) return;
-    card.querySelectorAll("[data-acao]").forEach((btn) => {
+    const btnExpandir = card.querySelector('[data-acao="expandir"]');
+    if (btnExpandir) {
+      btnExpandir.addEventListener("click", () => {
+        if (achadosExpandidos.has(id)) achadosExpandidos.delete(id); else achadosExpandidos.add(id);
+        renderizar();
+      });
+    }
+    card.querySelectorAll('[data-acao]:not([data-acao="expandir"])').forEach((btn) => {
       btn.addEventListener("click", async () => {
         await decidirAchado(a, btn.dataset.acao);
       });
