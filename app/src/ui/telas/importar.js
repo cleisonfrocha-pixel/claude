@@ -9,7 +9,7 @@ import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData } from "../../domain/tempo.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 
-const ROTULO_FORMATO = { csv: "Planilha (CSV)", ofx: "Extrato bancário (OFX)" };
+const ROTULO_FORMATO = { csv: "Planilha (CSV)", ofx: "Extrato bancário (OFX)", chat: "Enviado pelo chat" };
 
 let container = null;
 let ctx = { contas: [], pessoas: [], categorias: [] };

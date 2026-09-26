@@ -806,3 +806,35 @@ regressão visual. 262 testes do motor passando. Commit, push, artefato
 republicado e esta seção do `docs/RASTREABILIDADE.md` escrita como parte
 do mesmo commit. Fecha os 6 sprints (5–10) da segunda leva de ajustes
 visuais pedida pelo usuário depois de ver o print do Nubank Empresas.
+
+---
+
+## Entrada de dados pelo chat ("subir no painel") — ✅ (26/09/2026)
+
+Pedido do usuário: parar de organizar planilha e alimentar o painel mandando
+as coisas do jeito dele (texto, print, áudio ditado) pelo chat, sem confirmar
+item por item. Decisão: em vez de construir a captura por IA dentro do app
+(Fase 13 antecipada), o próprio Claude Code vira a porta de entrada, porque o
+banco do artefato (`db`) é gravável pelo `ArtifactData` numa sessão deste
+repositório. Zero código novo na página, zero custo por uso além da conversa.
+
+- `app/ferramentas/subirPainel.js`: o Claude interpreta a mensagem num
+  "pedido" com nomes (não ids); o núcleo resolve os nomes contra o estado real
+  e monta os documentos com os mesmos padrões, validações e regras do motor
+  (`src/domain/`): fatura pelo dia de fechamento, parcelamento sem perder
+  centavo, transferência em duas pernas, pagamento de fatura que não vira
+  despesa, recorrência que já gera os previstos, checagem de duplicata,
+  item tudo-ou-nada. Nada entra no banco montado à mão.
+- `app/ferramentas/subir-painel.js`: linha de comando que lê o estado baixado
+  com `out_dir` e devolve as escritas prontas para o `batch` do ArtifactData.
+- Rastreabilidade (§9, §17): cada envio grava um lote em `lotesImportacao`
+  (`formato: "chat"`) com o texto original e o que foi alterado; todo registro
+  aponta para ele (`origem: "chat"`, `origemId`). Lançamentos entram como
+  "não revisado". "Desfaz o último envio" apaga o que nasceu do lote e devolve
+  os campos alterados.
+- `.claude/skills/subir-painel/SKILL.md`: qualquer sessão nova do repositório
+  sabe fazer isso sozinha; a autorização do usuário está registrada lá e no
+  `CLAUDE.md`.
+- Tela Importar: histórico mostra "Enviado pelo chat". Artefato versão 19.
+- 16 testes novos (`testes/subirPainel.test.js`), 278 passando. Ensaio contra o
+  banco real sem gravar: 5 itens montados, 1 barrado com motivo claro.

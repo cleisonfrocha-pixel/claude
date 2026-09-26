@@ -38,6 +38,14 @@ Produto construído sobre a base do **Painel GEDI**, seguindo o
 Nenhuma funcionalidade P2 ou P3 entra antes de a Fase 9 fechar. Ideia boa que
 aparecer no meio do caminho vai para o fim do plano, não para a fase atual.
 
+## Dados do usuário chegam pelo chat
+
+Quando o Cleison mandar gastos, recebimentos, dívidas, prints ou saldos, use a
+skill `subir-painel` (`.claude/skills/subir-painel/SKILL.md`): ele autorizou
+subir direto no painel sem confirmar item por item. A ferramenta
+`app/ferramentas/subir-painel.js` monta os registros com o motor do app; nunca
+grave documentos no banco montados à mão.
+
 ## Ao fim de cada sessão
 
 1. Portão da fase verificado com o produto na mão
