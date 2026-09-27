@@ -25,7 +25,7 @@ function linhaFatura(rotulo, f, subRotulo) {
 export default criarTelaCadastro({
   repo: cartoes,
   titulo: "Cartões",
-  subtitulo: "Limite, fatura atual, próxima e o comprometimento futuro de cada cartão (§5).",
+  subtitulo: "Limite, fatura atual, próxima e o comprometimento futuro de cada cartão.",
   rotuloNovo: "Novo cartão",
   singular: "Cartão",
   campos: [

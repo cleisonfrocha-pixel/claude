@@ -56,7 +56,7 @@ const telaConfiguracoes = criarTelaComAbas({
 const MODULOS = [
   { id: "inicio", rotulo: "Início", icone: "inicio", tela: telaInicio },
   { id: "dinheiro", rotulo: "Dinheiro", icone: "dinheiro", tela: telaDinheiro },
-  { id: "planejamento", rotulo: "Planejamento", icone: "planejamento", tela: telaPlanejamento },
+  { id: "planejamento", rotulo: "Planejamento", rotuloCurto: "Agenda", icone: "planejamento", tela: telaPlanejamento },
   { id: "dividas", rotulo: "Dívidas", icone: "dividas", tela: telaDividas },
   { id: "renda", rotulo: "Renda", icone: "renda", tela: telaRenda },
   { id: "patrimonio", rotulo: "Patrimônio", icone: "patrimonio", tela: telaPatrimonio },
@@ -119,7 +119,7 @@ function renderizarNavInferior() {
   const maisAtivo = numaAbaSecundaria.some((m) => m.id === moduloAtivo);
   nav.innerHTML = principais.map((m) => `
     <button class="bottom-nav-item${m.id === moduloAtivo ? " ativo" : ""}" data-modulo="${escapeHtml(m.id)}">
-      ${icone(m.icone, 22)}<span>${escapeHtml(m.rotulo)}</span>
+      ${icone(m.icone, 22)}<span>${escapeHtml(m.rotuloCurto || m.rotulo)}</span>
     </button>
   `).join("") + `
     <button class="bottom-nav-item${maisAtivo ? " ativo" : ""}" data-mais>

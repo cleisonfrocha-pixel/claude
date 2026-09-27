@@ -117,7 +117,7 @@ function renderizar() {
 
     ${painel.composicao.length ? `
       <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Composição do patrimônio</h3></div></div>
-      ${painel.composicao.map((c) => `<div class="fatura-linha"><span class="rotulo">${ROTULO_CLASSE[c.classe]}</span><b data-valor>${formatarBRL(c.valorCentavos)} <span style="font-weight:400;font-size:11px;">(${c.percentual}%)</span></b></div>`).join("")}
+      ${painel.composicao.map((c) => `<div class="fatura-linha"><span class="rotulo">${ROTULO_CLASSE[c.classe]}</span><b data-valor>${formatarBRL(c.valorCentavos)} <span style="font-weight:400;font-size:13px;">(${c.percentual}%)</span></b></div>`).join("")}
     ` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Ativos</h3>

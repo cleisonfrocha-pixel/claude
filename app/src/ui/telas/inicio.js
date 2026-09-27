@@ -1,13 +1,14 @@
 // Início — dashboard (Sprint 3, reformado no Sprint 8 pelo molde do print
-// do Nubank que o usuário anexou): zona roxa no topo com as ações rápidas
-// de sempre (ocultar valores, configurações) e o item mais urgente
-// flutuando por cima; corpo escuro com o saldo em texto puro (não mais
-// dentro de um cartão roxo — o roxo agora é só a faixa de cima, igual no
-// print); um carrossel com o que mais precisa de atenção, quando há mais
-// de um item; e a grade de cartões — um por módulo — pra ir clicando.
-// Cada bloco de prosa do diagnóstico completo continua existindo, só que
-// na tela de origem — o cartão daqui é a porta de entrada pra ele, não
-// uma cópia.
+// do Nubank, e de novo no Sprint 14 a pedido do usuário): um único cartão
+// de saldo em degradê de marca reúne saudação, ações rápidas (ocultar
+// valores, configurações), o valor central e as três métricas de apoio —
+// não mais um roxo em cima com o saldo solto embaixo. O item mais urgente,
+// quando existe, é um cartão próprio logo abaixo (não flutua mais por cima
+// do roxo); uma fileira de atalhos redondos leva direto pras ações mais
+// comuns; um carrossel cobre o resto do que precisa de atenção; e a grade
+// de cartões — um por módulo — fecha a tela. Cada bloco de prosa do
+// diagnóstico completo continua existindo, só que na tela de origem — o
+// cartão daqui é a porta de entrada pra ele, não uma cópia.
 
 import { pessoas, contas, dividas } from "../../dados/repositorios.js";
 import { assinarClarezaDeCaixa } from "../../dados/caixaRepo.js";
@@ -143,29 +144,40 @@ function renderizarPainel(painel) {
   const negativo = seguroParaGastarCentavos < 0;
 
   container.innerHTML = `
-    <div class="home-topo-roxo">
-      <div class="home-topo-acoes">
-        <button class="home-topo-acao" id="botao-ocultar-home" title="Ocultar valores" aria-label="Ocultar valores"></button>
-        <button class="home-topo-acao" id="botao-config-home" title="Configurações" aria-label="Configurações">${icone("configuracoes", 19)}</button>
+    <div class="home-saldo-card">
+      <div class="home-saldo-topo">
+        <div class="home-saudacao">${escapeHtml(saudacao())}</div>
+        <div class="home-topo-acoes">
+          <button class="home-topo-acao" id="botao-ocultar-home" title="Ocultar valores" aria-label="Ocultar valores"></button>
+          <button class="home-topo-acao" id="botao-config-home" title="Configurações" aria-label="Configurações">${icone("configuracoes", 19)}</button>
+        </div>
       </div>
-      <div id="banner-home"></div>
+
+      <button class="home-saldo-rotulo" id="ir-dinheiro-saldo">Dinheiro seguro para gastar ${icone("chevron", 15)}</button>
+      <div class="home-saldo-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
+      <div class="home-saldo-sub">O que sobra depois de descontar tudo que já está comprometido nos
+        próximos ${HORIZONTE_DIAS} dias. Não conta a reserva.</div>
+
+      <div class="home-saldo-metricas">
+        <div class="home-metrica"><span>Saldo atual</span><b data-valor>${formatarBRL(saldoAtualCentavos)}</b></div>
+        <div class="home-metrica"><span>Comprometido</span><b data-valor>${formatarBRL(comprometidoCentavos)}</b></div>
+        <div class="home-metrica"><span>Livre</span><b data-valor>${formatarBRL(livreCentavos)}</b></div>
+      </div>
+
+      ${saldoReservaCentavos !== 0 ? `
+        <div class="home-reserva-inline">
+          <span>Em reserva/segurança</span>
+          <b data-valor>${formatarBRL(saldoReservaCentavos)}</b>
+        </div>` : ""}
     </div>
 
-    <button class="home-saldo-rotulo" id="ir-dinheiro-saldo">Dinheiro seguro para gastar ${icone("chevron", 15)}</button>
-    <div class="home-saldo-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
-    <div class="home-saldo-sub">O que sobra do saldo das suas contas depois de descontar tudo que já está
-      comprometido nos próximos ${HORIZONTE_DIAS} dias. Não conta o dinheiro de reserva.</div>
+    <div id="banner-home"></div>
 
-    ${saldoReservaCentavos !== 0 ? `
-      <div class="reserva-nota">
-        <span>Além disso, você tem em reserva/segurança</span>
-        <b data-valor>${formatarBRL(saldoReservaCentavos)}</b>
-      </div>` : ""}
-
-    <div class="resumo-mes">
-      <div class="resumo-item"><span>Saldo atual</span><b class="mono" data-valor>${formatarBRL(saldoAtualCentavos)}</b></div>
-      <div class="resumo-item"><span>Comprometido (${HORIZONTE_DIAS} dias)</span><b class="mono valor-neg" data-valor>${formatarBRL(comprometidoCentavos)}</b></div>
-      <div class="resumo-item"><span>Livre</span><b class="mono ${livreCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(livreCentavos)}</b></div>
+    <div class="home-atalhos">
+      <button class="home-atalho" data-ir="dinheiro"><span class="home-atalho-icone">${icone("dinheiro", 20)}</span><span>Lançar</span></button>
+      <button class="home-atalho" data-ir="plano"><span class="home-atalho-icone">${icone("plano", 20)}</span><span>Plano</span></button>
+      <button class="home-atalho" data-ir="dividas"><span class="home-atalho-icone">${icone("dividas", 20)}</span><span>Dívidas</span></button>
+      <button class="home-atalho" data-ir="renda"><span class="home-atalho-icone">${icone("renda", 20)}</span><span>Renda</span></button>
     </div>
 
     <div id="carrossel-home"></div>
@@ -177,10 +189,22 @@ function renderizarPainel(painel) {
 
   container.querySelector("#ir-dinheiro-saldo").addEventListener("click", () => irPara("dinheiro"));
   container.querySelector("#botao-config-home").addEventListener("click", () => irPara("configuracoes"));
+  container.querySelectorAll(".home-atalho[data-ir]").forEach((btn) => {
+    btn.addEventListener("click", () => irPara(btn.getAttribute("data-ir")));
+  });
   ligarBotaoOcultar();
   renderizarBanner();
   renderizarCarrossel();
   renderizarGrade();
+}
+
+/** Saudação simples por horário — o único texto "vivo" do cartão de saldo;
+ * puramente decorativo, não deriva de nenhum dado financeiro. */
+function saudacao() {
+  const hora = new Date().getHours();
+  if (hora < 12) return "Bom dia";
+  if (hora < 18) return "Boa tarde";
+  return "Boa noite";
 }
 
 function ligarBotaoOcultar() {
@@ -217,13 +241,15 @@ function renderizarBanner() {
   const { banner } = achadosParaHome();
   if (!banner) { alvo.innerHTML = ""; return; }
   alvo.innerHTML = `
-    <button class="home-banner-flutuante" data-ir="plano">
-      <div class="icone-caixa">${icone("alerta", 19)}</div>
-      <div>
-        <div class="titulo">${escapeHtml(banner.titulo)}</div>
-        <div class="sub">${escapeHtml(banner.acaoSugerida)}</div>
-      </div>
-    </button>`;
+    <div class="home-alerta-card">
+      <button class="home-banner-flutuante" data-ir="plano">
+        <div class="icone-caixa">${icone("alerta", 19)}</div>
+        <div>
+          <div class="titulo">${escapeHtml(banner.titulo)}</div>
+          <div class="sub">${escapeHtml(banner.acaoSugerida)}</div>
+        </div>
+      </button>
+    </div>`;
   alvo.querySelector("[data-ir]").addEventListener("click", () => irPara("plano"));
 }
 

@@ -106,7 +106,7 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Importar</h2>
-        <p class="tela-sub">Cole um extrato (CSV ou OFX). Nada é gravado até você revisar e confirmar (§18)</p>
+        <p class="tela-sub">Cole um extrato (CSV ou OFX). Nada é gravado até você revisar e confirmar</p>
       </div>
     </div>
 

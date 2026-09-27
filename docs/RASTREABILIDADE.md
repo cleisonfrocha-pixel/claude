@@ -838,3 +838,72 @@ repositório. Zero código novo na página, zero custo por uso além da conversa
 - Tela Importar: histórico mostra "Enviado pelo chat". Artefato versão 19.
 - 16 testes novos (`testes/subirPainel.test.js`), 278 passando. Ensaio contra o
   banco real sem gravar: 5 itens montados, 1 barrado com motivo claro.
+
+---
+
+## Banho de loja visual — pós "segunda leva" (26-27/09/2026)
+
+Pedido do usuário depois de ver o app pronto: contraste roxo/texto ilegível,
+visual chapado sem profundidade, logo genérico, e texto técnico demais
+(referências de seção, valores em fonte de programador). Seis sprints,
+sem mexer em domínio nem dado — só CSS, HTML e os textos das telas.
+
+### Sprint 11 — contraste — ✅ (26/09/2026)
+
+Achado real: o roxo de marca (`--accent`) tinha ~5:1 de contraste como
+TEXTO sobre fundo neutro, mas usado como FUNDO com letra em cima (botão,
+chip ativo, cartão de saldo, dia selecionado) caía pra ~4:1 — o "roxo com
+letra preta" relatado. Correção: `--accent-fill` (roxo escuro, ~9:1 com
+branco) para todo fundo que carrega texto; `--accent` continua só pra
+texto/ícone/borda. Auditoria pega de quebra dois valores de cor que também
+falhavam (`--good`/`--warn` no tema claro, 2.6:1 e 3.2:1) — escurecidos
+pra 5:1. Teste novo `testes/contraste.test.js`: lê os tokens direto de
+`estilo/tokens.css` (nunca hardcoda) e mede WCAG pra todo par texto/fundo
+real da interface, nos dois temas — 300 testes passando.
+
+### Sprint 12 — logo Cleison Rocha — ✅ (27/09/2026)
+
+3 variações de monograma CR mostradas ao usuário (selo circular, quadrado
+entrelaçado, lettermark sem caixa) — o topo do app passou de "Vida
+Financeira" genérico pra "Cleison Rocha · Painel financeiro", com o
+usuário confirmando a troca de nome antes de qualquer código. Aplicado o
+quadrado entrelaçado (consistência com o resto do sistema de cantos
+arredondados). SVG embutido, sem asset externo.
+
+### Sprint 13 — profundidade — ✅ (27/09/2026)
+
+3 níveis de sombra (`--shadow-sm/--shadow/--shadow-lg`) e um filete de luz
+(`--sheen`) — os 8 cartões que eram só superfície+borda ganharam sombra e
+filete; blocos de marca (saldo, hero de patrimônio, chip ativo, botão
+primário, dia selecionado) ganharam degradê (`--accent-fill` →
+`--accent-fill-2`) no lugar de cor chapada; botão primário responde ao
+toque (leve elevação, sombra maior no hover, compressão no active).
+
+### Sprint 14 — Home: cartão de saldo único — ✅ (27/09/2026)
+
+Bloco roxo de topo + saldo solto embaixo virou um cartão só: saudação por
+horário, ações, valor central e as três métricas de apoio (saldo,
+comprometido, livre) todos dentro do mesmo degradê. O alerta mais urgente
+saiu de dentro do roxo e virou cartão próprio logo abaixo. Nova fileira de
+atalhos redondos (Lançar, Plano, Dívidas, Renda — sem deep-link de aba
+ainda, então trocado "Importar" do pedido original por "Renda", os 4
+destinos hoje alcançáveis direto).
+
+### Sprint 15 — textos — ✅ (27/09/2026)
+
+Nenhum texto visível abaixo de 13px (24 pontos no CSS + 2 inline
+ajustados); removidas as 9 referências de seção do blueprint que
+vazavam pra tela (`(§8)`, `(§13)` etc. — as internas em comentário de
+código continuam, são pra quem lê o código, não pra quem usa o app);
+rótulo da barra inferior "Planejamento" (truncava "Planejame...") virou
+"Agenda", só ali. Valores em dinheiro trocaram `IBM Plex Mono` por
+`Poppins` com `font-variant-numeric: tabular-nums` (números ainda
+alinham) — a fonte mono ficou só pro badge "modo local" e a referência de
+fase nas telas ainda não construídas, onde o ar técnico é proposital.
+
+### Sprint 16 — verificação e publicação — ✅ (27/09/2026)
+
+Varredura com Playwright: 8 módulos em tema escuro, Início e Plano em tema
+claro, Início e o menu "Mais" em mobile — sem erro de console, sem
+regressão visual, atalhos de bottom nav lendo "Agenda" corretamente. 300
+testes do motor + contraste passando. Artefato republicado (versão 20).

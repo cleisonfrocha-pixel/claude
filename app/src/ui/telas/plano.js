@@ -179,7 +179,7 @@ function blocoQualidade(q) {
   const classeNivel = confiabilidade.nivel === "alta" ? "" : confiabilidade.nivel === "media" ? " atencao" : " critico";
   return `
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Qualidade dos dados</h3>
-      <p class="tela-sub">O quanto dá pra confiar no que está sendo mostrado (§23)</p></div>
+      <p class="tela-sub">O quanto dá pra confiar no que está sendo mostrado</p></div>
       <span class="item-tag${classeNivel}">confiabilidade ${escapeHtml(confiabilidade.nivel)}</span>
     </div>
     <div class="divida-resumo">
@@ -253,14 +253,14 @@ function renderizar() {
     </div>
 
     <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Diagnóstico</h3>
-      <p class="tela-sub">Fatos e relações observáveis nos seus dados (§8)</p></div></div>
+      <p class="tela-sub">Fatos e relações observáveis nos seus dados</p></div></div>
     ${avisoConfiabilidade(qualidade?.confiabilidade)}
     <div class="divida-resumo">${textoDiagnostico(painel.diagnostico)}</div>
 
     ${blocoQualidade(qualidade)}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Central de decisões</h3>
-      <p class="tela-sub">O que merece sua atenção agora, priorizado por urgência e impacto (§9)</p></div></div>
+      <p class="tela-sub">O que merece sua atenção agora, priorizado por urgência e impacto</p></div></div>
     <div id="achados-lista">
       ${painel.achadosPendentes.length ? listaAchadosPorTipo(painel.achadosPendentes) : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}
     </div>
@@ -278,7 +278,7 @@ function renderizar() {
     </div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Plano vivo</h3>
-      <p class="tela-sub">Agora, esta semana, este mês, 90 dias e 12 meses. Atualizado pela realidade, não um documento estático (§10)</p></div></div>
+      <p class="tela-sub">Agora, esta semana, este mês, 90 dias e 12 meses. Atualizado pela realidade, não um documento estático</p></div></div>
     ${["agora", "estaSemana", "esteMes", "em90", "em12meses"].map((chave) => listaHorizonte(chave, painel.planoVivo[chave])).join("")}
   `;
 

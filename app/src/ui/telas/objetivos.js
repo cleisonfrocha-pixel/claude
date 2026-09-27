@@ -91,7 +91,7 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Objetivos</h2>
-        <p class="tela-sub">Conectados ao fluxo de caixa: cada meta é verificada contra a margem atual (§13), não fica isolada.</p>
+        <p class="tela-sub">Conectados ao fluxo de caixa: cada meta é verificada contra a margem atual, não fica isolada.</p>
       </div>
       <button class="btn btn-primary" data-acao="novo-objetivo">+ Novo objetivo</button>
     </div>

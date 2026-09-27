@@ -11,7 +11,7 @@ const ROTULO_NATUREZA = { receita: "Receita", despesa: "Despesa", transferencia:
 export default criarTelaCadastro({
   repo: categorias,
   titulo: "Categorias",
-  subtitulo: "Como receitas e despesas se organizam. Essencial marca o que compõe o custo mínimo de vida (§13).",
+  subtitulo: "Como receitas e despesas se organizam. Essencial marca o que compõe o custo mínimo de vida.",
   rotuloNovo: "Nova categoria",
   singular: "Categoria",
   generoFeminino: true,

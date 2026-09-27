@@ -115,7 +115,7 @@ function linhaEvolucao(item, painel) {
   return `
     <div class="fatura-linha">
       <span class="rotulo">${escapeHtml(nome)}<small>média dos meses anteriores: <span data-valor>${formatarBRL(item.mediaCentavos)}</span></small></span>
-      <b class="${diffPct != null && diffPct > 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(item.valorCentavos)}${diffPct != null ? ` <span style="font-weight:400;font-size:11px;">(${diffPct >= 0 ? "+" : ""}${diffPct}%)</span>` : ""}</b>
+      <b class="${diffPct != null && diffPct > 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(item.valorCentavos)}${diffPct != null ? ` <span style="font-weight:400;font-size:13px;">(${diffPct >= 0 ? "+" : ""}${diffPct}%)</span>` : ""}</b>
     </div>`;
 }
 
@@ -195,7 +195,7 @@ function renderizar() {
     </div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Custos e margem</h3>
-      <p class="tela-sub">Orçamento como instrumento de clareza, não uma prisão (§13)</p></div></div>
+      <p class="tela-sub">Orçamento como instrumento de clareza, não uma prisão</p></div></div>
     <div class="resumo-mes">
       <div class="resumo-item"><span>Custo essencial</span><b class="mono" data-valor>${formatarBRL(custos.essencialCentavos)}</b></div>
       <div class="resumo-item"><span>Custo atual</span><b class="mono" data-valor>${formatarBRL(custos.atualCentavos)}</b></div>

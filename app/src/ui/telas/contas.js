@@ -11,7 +11,7 @@ const ROTULO_TIPO = {
 export default criarTelaCadastro({
   repo: contas,
   titulo: "Contas",
-  subtitulo: "Onde o dinheiro está, por instituição. A base da clareza de caixa (§4).",
+  subtitulo: "Onde o dinheiro está, por instituição. A base da clareza de caixa.",
   rotuloNovo: "Nova conta",
   singular: "Conta",
   generoFeminino: true,
@@ -26,7 +26,7 @@ export default criarTelaCadastro({
     { id: "tipo", rotulo: "Tipo", tipo: "select", opcoes: TIPOS_CONTA.map((t) => ({ valor: t, rotulo: ROTULO_TIPO[t] })) },
     { id: "saldoInicialCentavos", rotulo: "Saldo inicial", tipo: "moeda" },
     { id: "dataSaldoInicial", rotulo: "Data do saldo inicial", tipo: "data" },
-    { id: "ehReserva", rotulo: "É dinheiro de reserva/segurança (§15)", tipo: "check" },
+    { id: "ehReserva", rotulo: "É dinheiro de reserva/segurança", tipo: "check" },
     { id: "status", rotulo: "Encerrada", tipo: "check", valorMarcado: "encerrada", valorDesmarcado: "ativa", padrao: "ativa" },
   ],
   exibir(dados, contexto) {
