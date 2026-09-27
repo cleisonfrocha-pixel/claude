@@ -26,7 +26,7 @@ import telaCategorias from "./telas/categorias.js";
 import telaPreferencias from "./telas/preferencias.js";
 import telaPlanejamento from "./telas/planejamento.js";
 import telaDividas from "./telas/dividas.js";
-import telaPlano from "./telas/plano.js";
+import telaPlano from "./telas/planoModulo.js";
 import telaRenda from "./telas/renda.js";
 import telaPatrimonio from "./telas/patrimonio.js";
 import telaObjetivos from "./telas/objetivos.js";

@@ -159,6 +159,7 @@ export function padraoDivida(dados = {}) {
     dataInicio: new Date().toISOString().slice(0, 10),
     taxaJurosMensalPct: null,
     emRisco: false,
+    negativada: false,
     ...dados,
   };
 }
@@ -263,7 +264,12 @@ export function validarDivida(d) {
   if (!d.nome || !d.nome.trim()) erros.push("Nome da dívida é obrigatório.");
   if (!d.pessoaId) erros.push("A dívida precisa de um responsável.");
   if (!Number.isFinite(d.saldoOriginalCentavos) || d.saldoOriginalCentavos <= 0) erros.push("Saldo original precisa ser maior que zero.");
-  if (!Number.isFinite(d.valorParcelaCentavos) || d.valorParcelaCentavos <= 0) erros.push("Valor da parcela precisa ser maior que zero.");
+  // Dívida negativada ainda sem acordo (Serasa/SPC) não tem parcela: é um
+  // saldo devido parado. Só nesse caso a parcela pode ser zero.
+  const semAcordo = d.negativada && d.valorParcelaCentavos === 0;
+  if (!semAcordo && (!Number.isFinite(d.valorParcelaCentavos) || d.valorParcelaCentavos <= 0)) {
+    erros.push("Valor da parcela precisa ser maior que zero (pode ser zero só em dívida negativada ainda sem acordo).");
+  }
   if (!Number.isInteger(d.quantidadeParcelas) || d.quantidadeParcelas < 1) erros.push("Quantidade de parcelas inválida.");
   if (!Number.isInteger(d.parcelasPagas) || d.parcelasPagas < 0) erros.push("Parcelas pagas inválido.");
   if (d.parcelasPagas > d.quantidadeParcelas) erros.push("Parcelas pagas não pode ser maior que o total de parcelas.");

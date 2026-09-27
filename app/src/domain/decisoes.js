@@ -11,7 +11,7 @@
 // (dados/decisoesRepo.js), que guarda só a disposição do usuário, nunca o
 // conteúdo do achado — o achado em si é recalculado toda vez.
 
-import { statusDivida, dataProximoVencimento } from "./dividas.js";
+import { statusDivida, dataProximoVencimento, calcularSaldoAtual } from "./dividas.js";
 import { somarDias } from "./tempo.js";
 
 const PESO_URGENCIA = { alta: 3, media: 2, baixa: 1 };
@@ -92,8 +92,28 @@ export function detectarAchados({
     }));
   }
 
+  // Problema: dívida negativada (Serasa/SPC). Vem antes da "atrasada" e a
+  // substitui para a mesma dívida: é o mesmo problema, só que mais grave —
+  // nome sujo trava crédito novo, e dois cartões pro mesmo fato é ruído.
+  for (const d of dividas || []) {
+    if (!d.negativada || statusDivida(d, hoje) === "quitada") continue;
+    const semAcordo = !(Number(d.valorParcelaCentavos) > 0);
+    const saldo = calcularSaldoAtual(d);
+    achados.push(achado({
+      chave: "divida_negativada", origemId: d.id, tipo: "problema", urgencia: "alta",
+      titulo: `Nome negativado: ${d.nome}`,
+      acaoSugerida: semAcordo
+        ? "Buscar acordo com o credor. Dívida negativada costuma ter proposta de desconto para quitar, e limpar o nome destrava crédito."
+        : "Manter o acordo em dia até a baixa da negativação.",
+      impactoCentavos: saldo,
+      origem: { tipo: "divida", id: d.id, rotulo: d.nome },
+      dados: { lancamentos: [{ descricao: `Saldo devido de ${d.nome}${d.credor ? ` (${d.credor})` : ""}`, valorCentavos: saldo, data: d.dataInicio }] },
+    }));
+  }
+
   // Problema: dívida atrasada (§11).
   for (const d of dividas || []) {
+    if (d.negativada) continue;
     if (statusDivida(d, hoje) !== "atrasada") continue;
     achados.push(achado({
       chave: "divida_atrasada", origemId: d.id, tipo: "problema", urgencia: "alta",
@@ -109,7 +129,7 @@ export function detectarAchados({
   // Risco: dívida marcada manualmente como em risco (§11) — só quando
   // ainda não está atrasada, pra não duplicar o mesmo alerta duas vezes.
   for (const d of dividas || []) {
-    if (!d.emRisco) continue;
+    if (!d.emRisco || d.negativada) continue;
     if (statusDivida(d, hoje) === "atrasada") continue;
     if (statusDivida(d, hoje) === "quitada") continue;
     achados.push(achado({

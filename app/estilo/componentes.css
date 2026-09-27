@@ -430,6 +430,68 @@
 .simulador-resultado { margin-top: 10px; }
 .simulador-aviso { font-size: 13px; color: var(--text-faint); margin-top: 6px; }
 
+/* ---- Plano › Por pessoa ---- */
+.pessoas-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 760px) { .pessoas-grid { grid-template-columns: repeat(2, 1fr); } }
+.pessoa-card { margin-bottom: 0; }
+.pessoa-cabeca { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.pessoa-destaque {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  background: var(--good-bg); color: var(--text); border-radius: 12px; padding: 11px 14px; margin-bottom: 6px;
+  font-size: 13.5px; font-weight: 600;
+}
+.pessoa-destaque b { color: var(--good); font-size: 17px; white-space: nowrap; }
+.pessoa-card .fatura-linha b, .divida-resumo .fatura-linha b { white-space: nowrap; }
+.pessoa-destaque.negativo { background: var(--danger-bg); }
+.pessoa-destaque.negativo b { color: var(--danger); }
+.pessoa-negativadas { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.titulo-pequeno { font-size: 13px; font-weight: 700; color: var(--danger); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 2px; }
+
+/* ---- Plano › Caminhos (cenários, §22) ---- */
+.caminho-hero .caminho-hero-nome { font-size: clamp(22px, 5vw, 28px); font-weight: 700; margin: 6px 0 8px; letter-spacing: -.01em; }
+.caminho-hero .hero-caixa-sub { max-width: 70ch; line-height: 1.5; }
+.caminho-ajustes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 12px; }
+@media (min-width: 760px) { .caminho-ajustes { grid-template-columns: repeat(4, 1fr); } }
+.caminho-ajustes .field { margin-bottom: 10px; }
+.caminhos-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+@media (min-width: 760px) { .caminhos-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1080px) { .caminhos-grid { grid-template-columns: repeat(3, 1fr); } }
+.caminho-card { margin-bottom: 0; display: flex; flex-direction: column; }
+.caminho-card.sugerido { border-color: var(--accent); box-shadow: var(--sheen), 0 0 0 1px var(--accent), var(--shadow); }
+.caminho-cabeca { display: flex; align-items: center; gap: 10px; }
+.caminho-cor { display: inline-block; width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+.caminho-selos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.item-tag.caminho-selo-sugerido { background: linear-gradient(135deg, var(--accent-fill-2), var(--accent-fill) 70%); color: var(--accent-ink); }
+.caminho-descricao { font-size: 13.5px; color: var(--text-muted); line-height: 1.45; margin: 10px 0; }
+.caminho-status {
+  font-size: 13px; font-weight: 700; border-radius: 10px; padding: 7px 11px; margin-bottom: 4px;
+  background: var(--good-bg); color: var(--good);
+}
+.caminho-status.aperta { background: var(--danger-bg); color: var(--danger); }
+.caminho-premissas { margin: 18px 0 8px; font-size: 13.5px; color: var(--text-muted); }
+.caminho-premissas summary { cursor: pointer; font-weight: 700; color: var(--text); font-size: 14px; }
+.caminho-premissas ul { margin: 10px 0 0; padding-left: 18px; line-height: 1.55; }
+.caminho-premissas li { margin-bottom: 6px; }
+
+.grafico-legenda { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 8px; font-size: 13px; color: var(--text-muted); }
+.grafico-legenda > span { display: inline-flex; align-items: center; gap: 6px; }
+.grafico-caminhos { position: relative; }
+.grafico-caminhos { min-height: 210px; }
+.grafico-caminhos svg { display: block; touch-action: pan-y; }
+.caminho-card .fatura-linha b { white-space: nowrap; }
+.grafico-grade { stroke: var(--border); stroke-width: 1; }
+.grafico-zero { stroke: var(--text-faint); stroke-width: 1.2; }
+.grafico-eixo { fill: var(--text-faint); font-size: 13px; font-family: 'Poppins', sans-serif; }
+.grafico-cursor { stroke: var(--text-faint); stroke-width: 1; stroke-dasharray: 3 3; }
+.grafico-dica {
+  position: absolute; top: 4px; z-index: 5; min-width: 220px; pointer-events: none;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 9px 11px;
+  box-shadow: var(--sheen), var(--shadow); font-size: 13px; color: var(--text);
+}
+.grafico-dica-titulo { font-weight: 700; margin-bottom: 6px; }
+.grafico-dica-linha { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 8px; padding: 2px 0; }
+.grafico-dica-linha span:nth-child(2) { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---- diagnóstico, central de decisões e plano vivo (§8, §9, §10) ---- */
 .diagnostico-linha { padding: 10px 0; border-bottom: 1px solid var(--border); }
 .diagnostico-linha:last-child { border-bottom: none; }

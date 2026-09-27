@@ -198,3 +198,13 @@ test("desfazer recusa lote de importação de planilha", () => {
   e.lotesImportacao.push({ id: "L1", formato: "csv" });
   assert.throws(() => montarDesfazer({ estado: e, loteId: "L1" }), /só desfaço/);
 });
+
+test("criar dívida negativada sem acordo pelo chat (parcela zero)", () => {
+  const r = montar([{ acao: "criar", colecao: "dividas", dados: { nome: "Renner", credor: "Serasa", saldoOriginal: "2.400", valorParcela: 0, quantidadeParcelas: 1, dataInicio: "2025-06-01", negativada: true, taxaJurosMensalPct: 5 } }]);
+  assert.deepEqual(r.pendencias, []);
+  const [d] = sets(r, "dividas");
+  assert.equal(d.negativada, true);
+  assert.equal(d.valorParcelaCentavos, 0);
+  const semNegativar = montar([{ acao: "criar", colecao: "dividas", dados: { nome: "Outra", saldoOriginal: 100, valorParcela: 0, quantidadeParcelas: 1, dataInicio: "2026-01-01" } }]);
+  assert.match(semNegativar.pendencias[0].motivo, /parcela/);
+});

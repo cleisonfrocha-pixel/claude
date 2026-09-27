@@ -533,6 +533,10 @@ interpretação sobre dados confiáveis, não a inteligência do produto.
 
 ### Fase 14 · Fechamento mensal e cenários · 4 sessões — §21, §22
 
+**Status (27/09/2026):** cenários (§22) entregues na aba Plano › Caminhos, junto
+com a visão por pessoa (casa com duas rendas separadas). Fechamento mensal
+(§21) continua aberto.
+
 Fechamento: resumo do mês, realizados, resultado, variação de dívida, reserva e
 patrimônio, maiores mudanças de comportamento, principais alertas e decisões,
 histórico mensal comparável.

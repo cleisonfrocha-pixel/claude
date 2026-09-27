@@ -53,6 +53,7 @@ export default criarTelaCadastro({
     { id: "dataInicio", rotulo: "Vencimento da 1ª parcela", tipo: "data", obrigatorio: true },
     { id: "taxaJurosMensalPct", rotulo: "Juros ao mês, % (opcional)", tipo: "numero", min: 0, step: 0.01 },
     { id: "emRisco", rotulo: "Em risco (renegociação incerta, credor pressionando, etc.)", tipo: "check" },
+    { id: "negativada", rotulo: "Nome negativado (Serasa/SPC). Sem acordo ainda? Deixe a parcela em 0,00", tipo: "check" },
   ],
   async carregarContexto() {
     const listaPessoas = await pessoas.listar();
@@ -69,9 +70,10 @@ export default criarTelaCadastro({
         <div class="resumo-mes" style="margin:0;">
           <div class="resumo-item"><span>Saldo devido total</span><b class="mono valor-neg" data-valor>${formatarBRL(v.saldoTotalAtualCentavos)}</b></div>
           <div class="resumo-item"><span>Comprometimento mensal</span><b class="mono" data-valor>${formatarBRL(v.comprometimentoMensalCentavos)}</b></div>
-          <div class="resumo-item"><span>Quitação estimada</span><b class="mono" data-valor>${v.dataQuitacaoTotal ? escapeHtml(formatarData(v.dataQuitacaoTotal)) : "-"}</b></div>
+          <div class="resumo-item"><span>Quitação estimada</span><b class="mono" data-valor>${v.dataQuitacaoTotal ? escapeHtml(formatarData(v.dataQuitacaoTotal)) : (v.quantidadeSemAcordo ? "sem previsão" : "-")}</b></div>
         </div>
-        ${v.quantidadeAtrasadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);">${v.quantidadeAtrasadas} ${v.quantidadeAtrasadas === 1 ? "dívida atrasada" : "dívidas atrasadas"}.</div>` : ""}
+        ${v.quantidadeNegativadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);font-weight:600;">${v.quantidadeNegativadas} ${v.quantidadeNegativadas === 1 ? "dívida negativada" : "dívidas negativadas"}, somando <span data-valor>${formatarBRL(v.saldoNegativadoCentavos)}</span>.${v.quantidadeSemAcordo ? ` ${v.quantidadeSemAcordo} sem acordo: não quitam sozinhas.` : ""}</div>` : ""}
+        ${v.quantidadeSoAtrasadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);">${v.quantidadeSoAtrasadas} ${v.quantidadeSoAtrasadas === 1 ? "dívida atrasada" : "dívidas atrasadas"}${v.quantidadeNegativadas ? " (fora as negativadas)" : ""}.</div>` : ""}
         ${v.quantidadeEmRisco > 0 ? `<div class="tela-sub" style="margin-top:4px;">${v.quantidadeEmRisco} ${v.quantidadeEmRisco === 1 ? "dívida marcada" : "dívidas marcadas"} como em risco.</div>` : ""}
       </div>`;
   },
@@ -81,13 +83,15 @@ export default criarTelaCadastro({
     const hoje = hojeISO();
     const status = statusDivida(dados, hoje);
     const restantes = parcelasRestantes(dados);
+    const semAcordo = !(Number(dados.valorParcelaCentavos) > 0);
+    const negativadaAtiva = dados.negativada && status !== "quitada";
     return {
       titulo: dados.nome,
-      sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${restantes} de ${dados.quantidadeParcelas} parcelas restantes`,
+      sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}`,
       valorDireita: formatarBRL(calcularSaldoAtual(dados)),
-      tag: status !== "ativa" ? ROTULO_STATUS[status] : (dados.emRisco ? "em risco" : null),
+      tag: negativadaAtiva ? "negativada" : (status !== "ativa" ? ROTULO_STATUS[status] : (dados.emRisco ? "em risco" : null)),
       tagInativa: status === "quitada",
-      tagClasse: status === "atrasada" ? "critico" : (dados.emRisco && status === "ativa" ? "atencao" : null),
+      tagClasse: negativadaAtiva || status === "atrasada" ? "critico" : (dados.emRisco && status === "ativa" ? "atencao" : null),
     };
   },
 
@@ -97,9 +101,12 @@ export default criarTelaCadastro({
     const percentualPago = total > 0 ? Math.min(100, ((Number(dados.parcelasPagas) || 0) / total) * 100) : 0;
     const proximoVenc = dataProximoVencimento(dados);
     const dataQuitacao = dataEstimadaQuitacao(dados);
+    const semAcordo = !(Number(dados.valorParcelaCentavos) > 0);
     return `
-      <div class="tela-sub" style="margin:0 0 4px;">Pago ${dados.parcelasPagas} de ${dados.quantidadeParcelas} parcelas (${Math.round(percentualPago)}%)</div>
-      <div class="barra-limite"><span style="width:${percentualPago}%"></span></div>
+      ${semAcordo
+        ? `<div class="tela-sub" style="margin:0 0 10px;">Sem acordo: o saldo não diminui sozinho. Quando fechar um acordo, edite a dívida com a parcela e o número de parcelas combinados.</div>`
+        : `<div class="tela-sub" style="margin:0 0 4px;">Pago ${dados.parcelasPagas} de ${dados.quantidadeParcelas} parcelas (${Math.round(percentualPago)}%)</div>
+      <div class="barra-limite"><span style="width:${percentualPago}%"></span></div>`}
       <div class="fatura-linha"><span class="rotulo">Saldo original</span><b data-valor>${formatarBRL(dados.saldoOriginalCentavos)}</b></div>
       <div class="fatura-linha"><span class="rotulo">Saldo atual</span><b data-valor>${formatarBRL(saldoAtual)}</b></div>
       <div class="fatura-linha"><span class="rotulo">Parcela mensal</span><b data-valor>${formatarBRL(dados.valorParcelaCentavos)}</b></div>

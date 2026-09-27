@@ -218,9 +218,7 @@ function renderizar() {
   if (!container) return;
 
   if (!painel) {
-    container.innerHTML = `
-      <div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">Plano</h2></div></div>
-      <p class="tela-sub">Carregando…</p>`;
+    container.innerHTML = `<p class="tela-sub">Carregando…</p>`;
     return;
   }
 
@@ -232,12 +230,6 @@ function renderizar() {
     && painel.diagnostico.completude.pendencias.includes("Nenhuma conta cadastrada.");
   if (semDadosNenhum) {
     container.innerHTML = `
-      <div class="tela-head" style="margin-top:0;">
-        <div>
-          <h2 class="tela-titulo">Plano</h2>
-          <p class="tela-sub">Diagnóstico sem moralizar, o que merece sua atenção agora, e o plano que se atualiza sozinho.</p>
-        </div>
-      </div>
       <div class="vazio">
         Ainda não há pessoa nem conta cadastrada. O Plano nasce dos seus dados reais: comece em Configurações → Pessoas e Dinheiro → Contas.
       </div>`;
@@ -245,13 +237,6 @@ function renderizar() {
   }
 
   container.innerHTML = `
-    <div class="tela-head" style="margin-top:0;">
-      <div>
-        <h2 class="tela-titulo">Plano</h2>
-        <p class="tela-sub">Diagnóstico sem moralizar, o que merece sua atenção agora, e o plano que se atualiza sozinho.</p>
-      </div>
-    </div>
-
     <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Diagnóstico</h3>
       <p class="tela-sub">Fatos e relações observáveis nos seus dados</p></div></div>
     ${avisoConfiabilidade(qualidade?.confiabilidade)}

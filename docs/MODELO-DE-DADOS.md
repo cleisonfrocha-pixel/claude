@@ -77,7 +77,7 @@ Recorrência **não** cria transação até a janela de provisionamento — herd
 ```
 dividas/<id>  { pessoaId, nome, credor, saldoOriginalCentavos,
                 valorParcelaCentavos, quantidadeParcelas, parcelasPagas,
-                dataInicio, taxaJurosMensalPct?, emRisco }
+                dataInicio, taxaJurosMensalPct?, emRisco, negativada }
 ```
 
 `saldoAtualCentavos` e `status` (ativa/atrasada/quitada) **não são campos
@@ -89,6 +89,13 @@ quitação rolam o mês a partir dela, mesmo padrão de `dataVencimentoFatura`
 (§5). `emRisco` é uma marcação manual: é julgamento subjetivo do usuário
 (renegociação incerta, credor pressionando), não algo que dá pra derivar
 dos números — diferente de "atrasada", que é sempre derivado.
+
+`negativada` (27/09/2026) marca nome no Serasa/SPC — também manual, porque
+negativação é um fato externo que não sai dos números. Dívida negativada
+ainda **sem acordo** grava `valorParcelaCentavos: 0` (única situação em que
+parcela zero é válida): não quita sozinha, não tem data de quitação, e na
+simulação de caminhos (`domain/cenarios.js`) cresce com o juros informado.
+Cenários não têm coleção: a simulação roda na tela e não grava nada.
 
 Nenhuma coleção `simulacoes`: o simulador do §11 (aporte extra, quitação
 antecipada, comparação de ritmos) é implementado como funções puras em

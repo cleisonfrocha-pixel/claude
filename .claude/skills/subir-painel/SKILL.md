@@ -69,7 +69,8 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
 - `cartoes`: apelido, conta (paga a fatura), bandeira, limiteTotal, diaFechamento, diaVencimento
 - `categorias`: nome, grupo (moradia/transporte/alimentacao/saude/educacao/lazer/dividas/renda/outros), natureza (receita/despesa), essencial
 - `fontesRenda`: nome, tipo (fixa/recorrente/variavel/eventual), valorEsperado
-- `dividas`: nome, credor, saldoOriginal, valorParcela, quantidadeParcelas, parcelasPagas, dataInicio, taxaJurosMensalPct, emRisco
+- `dividas`: nome, credor, saldoOriginal, valorParcela, quantidadeParcelas, parcelasPagas, dataInicio, taxaJurosMensalPct, emRisco, negativada
+  - Dívida no Serasa/SPC: `negativada: true`. Sem acordo ainda: `valorParcela: 0`, `quantidadeParcelas: 1`, `dataInicio` = data da dívida original (ou da negativação). Juros informado (`taxaJurosMensalPct`) faz a simulação de caminhos ser honesta; se ele não souber, pergunte uma vez e siga sem.
 - `ativos`: nome, classe (liquido/investimento/veiculo/imovel/participacao/outro), valorAtual, dataAvaliacao
 - `objetivos`: nome, valorAlvo, valorAtual, prazo, conta (vinculada)
 - `recorrencias`: descricao, tipo (receita/despesa), valorEstimado, conta ou cartao, categoria, diaBase, inicio (AAAA-MM). Já gera os previstos dos próximos 3 meses.
@@ -92,6 +93,11 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
   Conta, cartão ou fonte de renda que ele citar e não existir: crie antes de usar,
   se a mensagem deixar claro o que é; senão pergunte.
 - Não invente valor, data de dívida ou número de parcelas. Faltou? Pergunte.
+- **Sempre marque de quem é** (`pessoa`): a casa tem mais de uma pessoa e a
+  aba Plano › Por pessoa depende disso. Extrato do banco dela = conta dela,
+  gastos e receitas dela. Na dúvida sobre de quem é uma dívida ou conta
+  nova, pergunte. Dinheiro de um pro outro entre contas de vocês dois é
+  `transferencia`, nunca receita nem despesa.
 - Print: leia cada linha. Etiquetas tipo "PAGO"/"RECEBIDO" = status pago;
   sem etiqueta ou "A PAGAR" = previsto. Linha "TOTAL" não é lançamento.
 - Áudio: você não recebe arquivo de áudio. Peça para ele usar o microfone do

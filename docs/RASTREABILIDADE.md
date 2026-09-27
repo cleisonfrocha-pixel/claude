@@ -33,7 +33,7 @@ Estado: `○` não iniciado · `◐` em andamento · `●` entregue
 | 19 | Open Finance | P1 | F12 | ○ |
 | 20 | Assistente de IA | P2 | F13 | ○ |
 | 21 | Fechamento mensal e evolução | P2 | F14 | ○ |
-| 22 | Cenários e simulador de realidade | P2 | F14 | ○ |
+| 22 | Cenários e simulador de realidade | P2 | F14 | ● |
 | 23 | Qualidade, completude e confiança dos dados | P1 | F10 | ● |
 | 24 | Alertas e acompanhamento | P1 | F10 | ● |
 | 25 | Experiência principal da Home | P0 | F2, F5, F6, F7, F9 | ● |
@@ -447,11 +447,22 @@ Resumo do mês · receitas e despesas realizadas · resultado · variação de d
 reserva e patrimônio · maiores mudanças de comportamento · principais alertas e
 decisões do período · histórico mensal comparável.
 
-### §22 — Cenários `P2` — **F14**
+### §22 — Cenários `P2` — ✅ **F14** (27/09/2026)
 
 Atual · recuperação · aumento de renda · redução de despesa · quitação de dívida
 · conservador · comparação **sem alterar dados reais** · impacto em caixa,
 dívida, reserva e patrimônio.
+
+**Como foi entregue:** `domain/cenarios.js` + aba Plano › Caminhos. Os seis
+caminhos simulados mês a mês (12/24/36 meses) sobre uma base tirada dos dados
+reais; cada um mostra quando o nome limpa, quando a dívida zera, quando a
+reserva fecha, sobra mensal, juros de dívida parada e patrimônio em 12 e no
+fim; um gráfico compara dívida/reserva/patrimônio de todos. Caminho sugerido
+por regra escrita (não quebrar > limpar o nome > colchão > zerar dívida >
+crescer, preferindo menos esforço quando a diferença é de até 3 meses), sempre
+com o motivo. Premissas ficam na tela. Nada é gravado: os ajustes vivem só na
+memória da tela. A outra metade da Fase 14 (§21, fechamento mensal) continua
+aberta.
 
 ### §23 — Qualidade e confiança dos dados `P1` — ✅ **F10** (20/09/2026)
 
@@ -907,3 +918,58 @@ Varredura com Playwright: 8 módulos em tema escuro, Início e Plano em tema
 claro, Início e o menu "Mais" em mobile — sem erro de console, sem
 regressão visual, atalhos de bottom nav lendo "Agenda" corretamente. 300
 testes do motor + contraste passando. Artefato republicado (versão 20).
+
+---
+
+## Casa com duas pessoas e caminhos de virada (27/09/2026)
+
+Pedido do usuário: ele e a esposa vão cadastrar contas, extratos e dívidas
+(inclusive Serasa), sem renda conjunta. O sistema precisa diferenciar cada um,
+somar a casa e gerar um plano que mostre opções de caminho, não só pendências.
+Auditoria antes de construir: `pessoaId` era gravado em tudo, mas nenhum
+cálculo o lia; e o "qual caminho seguir" era a Fase 14 (§22), nunca construída.
+
+### Sprint 17 · motor por pessoa + negativada — ✅
+
+- `domain/pessoas.js`: por pessoa (renda, gasto, essencial, parcelas,
+  cobertura do próprio mês, saldo, reserva, dívidas, negativadas, patrimônio,
+  participação na renda e no gasto da casa), a casa, o "sem responsável",
+  repasses entre contas de pessoas diferentes e o desequilíbrio (quanto da
+  falta de um a folga do outro cobre). Dono da transação: responsável marcado
+  → dono da conta → dono do cartão. Saldo é da conta, não de quem gastou.
+  Invariante testada: pessoas + sem dono = casa, campo a campo.
+- Dívida `negativada` (Serasa/SPC); sem acordo, a parcela pode ser zero — só
+  nesse caso. Sem acordo não tem data de quitação e zera a previsão do
+  conjunto. Achado "Nome negativado" (urgente) substitui o de "atrasada" pra
+  mesma dívida. Contagem de atrasadas separada das negativadas.
+
+### Sprint 18 · Plano › Por pessoa — ✅
+
+Plano virou tela com abas (Visão geral, Por pessoa, Caminhos). Por pessoa: a
+casa somada, negativadas da casa, a leitura principal ("fulano fica X abaixo;
+a folga de ciclano cobre Y"), um cartão por pessoa e quem passou dinheiro pra
+quem. Dívidas ganhou o campo e a etiqueta "negativada", e explica dívida sem
+acordo.
+
+### Sprint 19 · motor de cenários — ✅ (ver §22 acima)
+
+Modelo: dívida com acordo segue a parcela (juros já embutidos); sem acordo
+cresce com o juros informado; sobra vai pras negativadas (menor saldo
+primeiro), depois juros mais alto; falta sai da reserva e, acabando, o caminho
+"aperta". Renda garantida = fontes fixas/recorrentes (ou o pior mês).
+
+### Sprint 20 · Plano › Caminhos — ✅
+
+Caminho sugerido com motivo, ajustes (corte, renda extra, meses de reserva,
+horizonte), gráfico de linhas desenhado na largura real (texto sempre 13px),
+um eixo só, dica ao tocar com o valor de cada caminho, "seguir como está"
+tracejado (é a referência e costuma coincidir com outro), paleta categórica
+validada nos dois temas (cor segue o cenário, não o ranking), legenda + os
+cartões como tabela de números.
+
+### Sprint 21 · verificação e publicação — ✅
+
+325 testes (motor por pessoa 11, cenários 13, chat 1 novo). Prints com casal
+semeado (duas pessoas, transferência entre elas, duas negativadas sem acordo)
+em desktop e celular, claro e escuro. Skill `subir-painel` ensinada a marcar
+responsável e negativada. Artefato republicado.

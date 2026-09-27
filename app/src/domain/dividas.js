@@ -37,10 +37,12 @@ export function dataProximoVencimento(divida) {
   return dataDaParcela(divida, Number(divida.parcelasPagas) || 0);
 }
 
-/** A data da ÚLTIMA parcela — quando a dívida quita, sem nenhum aporte extra. */
+/** A data da ÚLTIMA parcela — quando a dívida quita, sem nenhum aporte extra.
+ * Dívida sem acordo (parcela zero) não tem data: não quita sozinha. */
 export function dataEstimadaQuitacao(divida) {
   const total = Number(divida.quantidadeParcelas) || 0;
   if (total <= 0) return null;
+  if (!(Number(divida.valorParcelaCentavos) > 0)) return null;
   return dataDaParcela(divida, total - 1);
 }
 
@@ -60,18 +62,28 @@ export function calcularVisaoConsolidada(dividas, hoje) {
   const ativas = todas.filter((d) => statusDivida(d, hoje) !== "quitada");
   const atrasadas = ativas.filter((d) => statusDivida(d, hoje) === "atrasada");
   const emRisco = ativas.filter((d) => d.emRisco);
+  const negativadas = ativas.filter((d) => d.negativada);
+  const semAcordo = ativas.filter((d) => !(Number(d.valorParcelaCentavos) > 0));
 
   const saldoTotalAtualCentavos = ativas.reduce((s, d) => s + calcularSaldoAtual(d), 0);
   const saldoTotalOriginalCentavos = todas.reduce((s, d) => s + (Number(d.saldoOriginalCentavos) || 0), 0);
   const comprometimentoMensalCentavos = ativas.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0);
 
+  // Uma dívida sem acordo não quita sozinha — então o conjunto também não
+  // tem data de quitação, em vez de mostrar a data só das que têm plano.
   const datasQuitacao = ativas.map((d) => dataEstimadaQuitacao(d)).filter(Boolean).sort();
-  const dataQuitacaoTotal = datasQuitacao.length ? datasQuitacao[datasQuitacao.length - 1] : null;
+  const dataQuitacaoTotal = semAcordo.length || !datasQuitacao.length ? null : datasQuitacao[datasQuitacao.length - 1];
 
   return {
     quantidadeAtivas: ativas.length,
     quantidadeAtrasadas: atrasadas.length,
     quantidadeEmRisco: emRisco.length,
+    quantidadeNegativadas: negativadas.length,
+    // Atrasadas que NÃO estão negativadas — pra não contar a mesma dívida
+    // duas vezes quando a tela mostra as duas coisas lado a lado.
+    quantidadeSoAtrasadas: atrasadas.filter((d) => !d.negativada).length,
+    saldoNegativadoCentavos: negativadas.reduce((s, d) => s + calcularSaldoAtual(d), 0),
+    quantidadeSemAcordo: semAcordo.length,
     saldoTotalAtualCentavos,
     saldoTotalOriginalCentavos,
     comprometimentoMensalCentavos,
