@@ -70,7 +70,13 @@ export async function calcularPainelPatrimonio() {
 
   const clareza = calcularClarezaDeCaixa({ ...dados, hoje, horizonteDias: 30 });
   const custos = calcularCustos(dados.transacoes, dados.categorias, competencia);
-  const reserva = calcularReserva({ saldoReservaCentavos: clareza.saldoReservaCentavos, custoEssencialCentavos: custos.essencialCentavos });
+  // Reserva precisa cobrir o essencial E a parcela de dívida (ela vence
+  // igual mesmo sem renda) — calcularCustos tira a dívida do essencial de
+  // propósito (ver orcamento.js), então soma de volta aqui.
+  const reserva = calcularReserva({
+    saldoReservaCentavos: clareza.saldoReservaCentavos,
+    custoEssencialCentavos: custos.essencialCentavos + visaoDividas.comprometimentoMensalCentavos,
+  });
 
   return {
     hoje, competencia,

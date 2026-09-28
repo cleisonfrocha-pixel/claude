@@ -133,13 +133,18 @@ test("premissas avisam quando dívida sem acordo não tem juros informado", () =
   assert.ok(premissas(b).some((p) => p.includes("sem juros informado")));
 });
 
-test("base a partir dos dados: média só dos meses com movimento e dívidas ativas", () => {
+test("base a partir dos dados: média só dos meses FECHADOS com movimento e dívidas ativas", () => {
   const transacoes = [
-    { tipo: "receita", status: "pago", competencia: "2026-09", valorCentavos: 500000 },
-    { tipo: "receita", status: "pago", competencia: "2026-08", valorCentavos: 300000 },
-    { tipo: "despesa", status: "pago", competencia: "2026-09", valorCentavos: 200000, categoriaId: "e" },
-    { tipo: "despesa", status: "pago", competencia: "2026-08", valorCentavos: 100000, categoriaId: "n" },
+    // Mês corrente (em andamento) — nunca entra na média, por maior que
+    // pareça: um mês incompleto não é comparável a um mês fechado.
+    { tipo: "receita", status: "pago", competencia: "2026-09", valorCentavos: 999999 },
+    { tipo: "despesa", status: "pago", competencia: "2026-09", valorCentavos: 999999, categoriaId: "e" },
     { tipo: "receita", status: "previsto", competencia: "2026-09", valorCentavos: 999900 },
+    // Dois meses fechados de verdade.
+    { tipo: "receita", status: "pago", competencia: "2026-08", valorCentavos: 500000 },
+    { tipo: "despesa", status: "pago", competencia: "2026-08", valorCentavos: 200000, categoriaId: "e" },
+    { tipo: "receita", status: "pago", competencia: "2026-07", valorCentavos: 300000 },
+    { tipo: "despesa", status: "pago", competencia: "2026-07", valorCentavos: 100000, categoriaId: "n" },
   ];
   const b = montarBaseCenarios({
     transacoes, categorias: [{ id: "e", essencial: true }, { id: "n" }],
@@ -147,14 +152,28 @@ test("base a partir dos dados: média só dos meses com movimento e dívidas ati
       { id: "q", nome: "Quitada", saldoOriginalCentavos: 1000, valorParcelaCentavos: 500, quantidadeParcelas: 2, parcelasPagas: 2, dataInicio: "2026-01-01" },
       { id: "s", nome: "Serasa", saldoOriginalCentavos: 80000, valorParcelaCentavos: 0, quantidadeParcelas: 1, parcelasPagas: 0, dataInicio: "2025-01-01", negativada: true },
     ],
-    fontesRenda: [], ativos: [], clareza: { livreCentavos: 1000, saldoReservaCentavos: 2000 },
+    fontesRenda: [], ativos: [], clareza: { saldoAtualCentavos: 1000, saldoReservaCentavos: 2000 },
     competencia: "2026-09", hoje: "2026-09-26",
   });
-  assert.equal(b.mesesHistorico, 2);
-  assert.equal(b.rendaMediaCentavos, 400000);
+  assert.equal(b.mesesHistorico, 2, "só os dois meses fechados, o corrente fica de fora");
+  assert.equal(b.rendaMediaCentavos, 400000, "média de 500000 e 300000 — o 999999 do mês corrente não entra");
   assert.equal(b.rendaGarantidaCentavos, 300000);
-  assert.equal(b.custoEssencialCentavos, 100000);
+  assert.equal(b.custoEssencialCentavos, 100000, "média de 200000 (essencial em 08) e 0 (nada essencial em 07)");
   assert.equal(b.custoAtualCentavos, 150000);
   assert.deepEqual(b.dividas.map((d) => d.id), ["s"]);
   assert.equal(b.dividas[0].parcelaCentavos, 0);
+});
+
+test("caixaCentavos parte do saldo em conta, não do livre (senão o mês 1 desconta o próximo compromisso duas vezes)", () => {
+  // Saldo em conta 6000; livreCentavos já desconta 2000 de um boleto que
+  // vence nos próximos 30 dias (clareza de caixa, §4). Se a base usasse
+  // livreCentavos (4000), o mês 1 da simulação subtrairia o custo médio do
+  // mês (que já inclui esse mesmo boleto) de novo, descontando duas vezes.
+  const b = montarBaseCenarios({
+    transacoes: [{ tipo: "receita", status: "pago", competencia: "2026-09", valorCentavos: 100000 }],
+    categorias: [], dividas: [], fontesRenda: [], ativos: [],
+    clareza: { saldoAtualCentavos: 6000, livreCentavos: 4000, saldoReservaCentavos: 0 },
+    competencia: "2026-09", hoje: "2026-09-26",
+  });
+  assert.equal(b.caixaCentavos, 6000);
 });

@@ -14,22 +14,57 @@ function despesasPorCategoria(transacoes, competencia) {
   return porCategoria;
 }
 
-/** Custo essencial (categoria.essencial) e atual (tudo) do mês, já pagos —
- * a diferença entre os dois é o discricionário. */
+/** Custo essencial (categoria.essencial), o que foi pago de parcela de
+ * dívida (categoria do grupo "dividas"), fatura de cartão paga sem NENHUMA
+ * compra lançada por trás (sem-detalhe) e atual (tudo) do mês, já pagos —
+ * o discricionário é o que sobra depois de tirar os três primeiros.
+ *
+ * Dívida fica FORA do essencial de propósito: quem paga uma parcela lança
+ * uma despesa na categoria "Dívidas e parcelas" (essencial:true) E atualiza
+ * a dívida (domain/dividas.js) — o mesmo pagamento nascendo em dois lugares.
+ * `calcularMargem` já soma `comprometimentoMensalDividasCentavos` (o
+ * cronograma da dívida, que cobre o mês mesmo sem a despesa lançada);
+ * deixar a despesa de parcela dentro do essencial contaria essa parcela
+ * duas vezes na margem.
+ *
+ * Fatura de cartão nunca é despesa quando as compras já foram lançadas
+ * (CLAUDE.md: compra no cartão ≠ pagamento da fatura — contar as duas
+ * coisas duplica o dinheiro). Mas quando ninguém lançou NENHUMA compra
+ * daquela fatura (só "paguei R$X da fatura"), o pagamento é a ÚNICA prova
+ * de gasto que existe — ignorá-lo também faz o dinheiro sumir, só que na
+ * direção contrária. `faturaSemDetalheCentavos` entra no atual (é gasto
+ * real) mas fica separado do essencial e do discricionário: a categoria
+ * de quem não detalhou é desconhecida, não presumida. */
 export function calcularCustos(transacoes, categorias, competencia) {
   const essenciaisIds = new Set((categorias || []).filter((c) => c.essencial).map((c) => c.id));
-  let essencialCentavos = 0, atualCentavos = 0;
+  const dividasIds = new Set((categorias || []).filter((c) => c.grupo === "dividas").map((c) => c.id));
+  const faturasComCompra = new Set((transacoes || []).filter((t) => t.tipo === "despesa" && t.faturaId).map((t) => t.faturaId));
+  let essencialCentavos = 0, dividasCentavos = 0, faturaSemDetalheCentavos = 0, atualCentavos = 0;
   for (const t of transacoes || []) {
-    if (t.tipo !== "despesa" || t.status !== "pago" || t.competencia !== competencia) continue;
+    if (t.status !== "pago" || t.competencia !== competencia) continue;
+    if (t.tipo === "pagamento_fatura") {
+      if (t.faturaId && faturasComCompra.has(t.faturaId)) continue; // compras já contadas
+      const v = Number(t.valorCentavos) || 0;
+      faturaSemDetalheCentavos += v;
+      atualCentavos += v;
+      continue;
+    }
+    if (t.tipo !== "despesa") continue;
     const v = Number(t.valorCentavos) || 0;
     atualCentavos += v;
+    if (dividasIds.has(t.categoriaId)) { dividasCentavos += v; continue; }
     if (essenciaisIds.has(t.categoriaId)) essencialCentavos += v;
   }
-  return { essencialCentavos, atualCentavos, discricionarioCentavos: atualCentavos - essencialCentavos };
+  return {
+    essencialCentavos, dividasCentavos, faturaSemDetalheCentavos, atualCentavos,
+    discricionarioCentavos: atualCentavos - essencialCentavos - dividasCentavos - faturaSemDetalheCentavos,
+  };
 }
 
 /** Margem depois de cobrir o essencial e as parcelas de dívida — o que
- * sobra pra decidir, não pra gastar sem pensar. */
+ * sobra pra decidir, não pra gastar sem pensar. `custoEssencialCentavos`
+ * deve vir de `calcularCustos` (que já tira a parcela de dívida do
+ * essencial) para não contar a mesma parcela duas vezes. */
 export function calcularMargem({ rendaAtualCentavos, custoEssencialCentavos, comprometimentoMensalDividasCentavos }) {
   return rendaAtualCentavos - custoEssencialCentavos - (comprometimentoMensalDividasCentavos || 0);
 }

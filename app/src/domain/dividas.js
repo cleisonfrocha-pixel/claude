@@ -11,10 +11,23 @@ import { somarMeses, competenciaDeData, dataDeCompetencia } from "./tempo.js";
 
 export const STATUS_DIVIDA = ["ativa", "atrasada", "quitada"];
 
-/** Saldo devido agora — original menos o que já foi pago pelas parcelas. */
+/** Saldo devido agora — original menos o que já foi pago pelas parcelas,
+ * mas NUNCA menos do que o que as parcelas que ainda faltam somam.
+ *
+ * Por quê: quando `saldoOriginalCentavos` é só o principal e os juros do
+ * contrato estão embutidos em `valorParcelaCentavos` (o normal num
+ * financiamento), `parcelasPagas × parcela` cresce mais rápido que o
+ * principal cadastrado — o cálculo ingênuo (original menos pago) chegaria
+ * a zero antes de `parcelasPagas` alcançar `quantidadeParcelas`, e a
+ * dívida sumiria do plano (Cenários só considera dívida com saldo > 0)
+ * mesmo faltando parcela real pra pagar. O piso de "parcelas que faltam ×
+ * parcela" garante que isso não acontece: você nunca deve menos do que o
+ * que ainda vai sair do bolso pelo contrato. */
 export function calcularSaldoAtual(divida) {
   const pago = (Number(divida.parcelasPagas) || 0) * (Number(divida.valorParcelaCentavos) || 0);
-  return Math.max(0, (Number(divida.saldoOriginalCentavos) || 0) - pago);
+  const saldoBruto = Math.max(0, (Number(divida.saldoOriginalCentavos) || 0) - pago);
+  const pisoParcelasRestantes = parcelasRestantes(divida) * (Number(divida.valorParcelaCentavos) || 0);
+  return Math.max(saldoBruto, pisoParcelasRestantes);
 }
 
 export function parcelasRestantes(divida) {

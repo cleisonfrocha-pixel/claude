@@ -973,3 +973,58 @@ cartões como tabela de números.
 semeado (duas pessoas, transferência entre elas, duas negativadas sem acordo)
 em desktop e celular, claro e escuro. Skill `subir-painel` ensinada a marcar
 responsável e negativada. Artefato republicado.
+
+---
+
+## Auditoria antes dos dados reais e Sprint 22 (28/09/2026)
+
+Pedido do usuário: antes de mandar o fechamento do mês com dados reais dele e
+da esposa, uma auditoria completa e a fundo no motor de plano/cenários,
+"pegue todos os possíveis problemas", pra não sair um plano genérico nem
+irreal. Auditoria feita escrevendo um script que roda o motor de verdade
+(`domain/*.js`) sobre cenários pequenos e conferíveis à mão, não só lendo o
+código — provou 5 erros de cálculo com número exato esperado vs. calculado, e
+mapeou 11 lacunas estruturais (sem plano de pagamento mensal, sem despesa
+anual/irregular, sem separação PF/PJ, etc. — viram Sprints 23+, ainda não
+construídos). Pedido de correção ("faça as correções agora") cobre os 5 erros
+de cálculo confirmados: Sprint 22.
+
+### Sprint 22 · corrigir os 5 erros de cálculo confirmados — ✅
+
+1. **Parcela de dívida contada duas vezes na margem.** Quem paga uma parcela
+   lança despesa na categoria "Dívidas e parcelas" (essencial) E atualiza a
+   dívida — o mesmo pagamento nascia em dois lugares, e a margem descontava
+   os dois. `orcamento.js#calcularCustos` agora tira o grupo `dividas` do
+   essencial e devolve num balde à parte (`dividasCentavos`); quem soma
+   `comprometimentoMensalDividasCentavos` por cima não duplica mais.
+   Efeito em cascata: `reserva.js` (via `patrimonioRepo.js`) passou a somar
+   o comprometimento de dívida no denominador da cobertura em meses — antes
+   ficava de fora quando a parcela não tinha sido lançada como despesa no
+   mês, e sobrava dentro quando tinha, inconsistente.
+2. **Fatura de cartão paga sem nenhuma compra lançada sumia do gasto.**
+   `calcularCustos` detecta pagamento de fatura sem nenhuma despesa com o
+   mesmo `faturaId` e conta esse valor à parte (`faturaSemDetalheCentavos`,
+   dentro do atual, fora do essencial e do discricionário — categoria
+   desconhecida não é presumida). Aviso novo na tela Renda quando isso
+   acontece, apontando o valor.
+3. **Caixa inicial dos Cenários descontado duas vezes.** A base partia de
+   `livreCentavos` (que já tira os compromissos dos próximos 30 dias), e o
+   mês 1 da simulação tirava de novo um mês inteiro de custo médio — o
+   mesmo boleto descontado duas vezes. Base passa a usar `saldoAtualCentavos`
+   (saldo em conta, sem desconto prévio); só a simulação mês a mês desconta,
+   uma vez.
+4. **Mês corrente incompleto entrando na média histórica com peso de mês
+   fechado.** `mesesComMovimento` incluía o mês em andamento — perto do
+   início do mês, quase sem lançamento, derrubando a média de renda e gasto.
+   Passa a olhar só meses FECHADOS (nunca o corrente).
+5. **Saldo de dívida podia zerar antes da última parcela.** Quando o
+   principal cadastrado não inclui os juros embutidos na parcela (comum em
+   financiamento), `saldoOriginal − parcelasPagas×parcela` chegava a zero
+   antes de `parcelasPagas` alcançar `quantidadeParcelas` — a dívida sumia
+   do Cenários (que só simula saldo > 0) com parcela real ainda por pagar.
+   `calcularSaldoAtual` agora nunca fica abaixo do que as parcelas que
+   faltam ainda somam.
+
+Cada correção com teste provando o número certo (e o errado, antes da
+correção, documentado no comentário do teste). 332 testes passando (327 →
++5 novos, mais os 2 recalculados que a correção do mês corrente exigiu).

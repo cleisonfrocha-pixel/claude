@@ -206,6 +206,10 @@ function renderizar() {
       <div class="resumo-item"><span>Recorrente</span><b class="mono" data-valor>${formatarBRL(recorrenteVsExtraordinario.recorrenteCentavos)}</b></div>
       <div class="resumo-item"><span>Extraordinário</span><b class="mono" data-valor>${formatarBRL(recorrenteVsExtraordinario.extraordinarioCentavos)}</b></div>
     </div>
+    ${custos.faturaSemDetalheCentavos > 0 ? `
+      <div class="nota-incerto">
+        <span><b data-valor>${formatarBRL(custos.faturaSemDetalheCentavos)}</b> de fatura de cartão paga sem nenhuma compra lançada por trás — entra no custo atual, mas sem categoria (não sabemos se é essencial ou não). Lance as compras da fatura pra esse número ficar honesto.</span>
+      </div>` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Evolução por categoria</h3>
       <p class="tela-sub">As maiores despesas do mês, comparadas com a média dos meses anteriores</p></div></div>

@@ -26,6 +26,22 @@ test("calcularSaldoAtual: nunca fica negativo mesmo com mais parcelas pagas que 
   assert.equal(calcularSaldoAtual(d), 0);
 });
 
+test("calcularSaldoAtual: não some antes da hora quando o principal cadastrado exclui juros embutidos na parcela", () => {
+  // Principal 5.000, mas o contrato tem juros: a parcela de 600, vezes 10
+  // parcelas, soma 6.000 — 1.000 de juros que não estão em saldoOriginal.
+  // Cálculo ingênuo (original menos pago) chegaria a zero na 9ª parcela
+  // paga (5000 - 9*600 = -400 -> 0), com 1 parcela ainda faltando: a
+  // dívida sumiria do plano (Cenários só simula saldo > 0) mesmo faltando
+  // pagar. O saldo tem que valer pelo menos o que falta pagar.
+  const d = divida({ saldoOriginalCentavos: 500000, valorParcelaCentavos: 60000, quantidadeParcelas: 10, parcelasPagas: 9 });
+  assert.equal(calcularSaldoAtual(d), 60000, "ainda falta 1 parcela de 600 — o saldo não pode ser 0");
+});
+
+test("calcularSaldoAtual: com o principal batendo exatamente (sem juros separados), comportamento não muda", () => {
+  const d = divida({ saldoOriginalCentavos: 1200000, valorParcelaCentavos: 100000, quantidadeParcelas: 12, parcelasPagas: 9 });
+  assert.equal(calcularSaldoAtual(d), 300000);
+});
+
 // ---------- parcelasRestantes ----------
 
 test("parcelasRestantes: total menos pagas", () => {

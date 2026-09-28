@@ -38,12 +38,17 @@ function arredondarPara(centavos, passoCentavos) {
   return Math.round(centavos / passoCentavos) * passoCentavos;
 }
 
-/** Os últimos `meses` meses que tiveram movimento, do mais recente pro
- * mais antigo. Mês zerado não entra na média, senão um histórico curto
- * (cadastro recém-começado) derrubaria a média pela metade. */
+/** Os últimos `meses` meses FECHADOS que tiveram movimento, do mais
+ * recente pro mais antigo — nunca o mês corrente. Mês zerado não entra na
+ * média, senão um histórico curto (cadastro recém-começado) derrubaria a
+ * média pela metade. O mês corrente fica de fora por definição: ele está
+ * em andamento, então tem sempre menos lançamento que um mês fechado, e
+ * entrar na média com o mesmo peso faria renda e gasto parecerem menores
+ * do que são (pior ainda perto do início do mês, quando quase nada foi
+ * lançado ainda). */
 function mesesComMovimento(transacoes, competencia, meses) {
   const lista = [];
-  for (let i = 0; i < meses; i++) {
+  for (let i = 1; i <= meses; i++) {
     const c = somarMeses(competencia, -i);
     const renda = calcularRendaAtual(transacoes, c);
     const custos = calcularCustos(transacoes, [], c);
@@ -57,7 +62,13 @@ function media(valores) {
 }
 
 /** A base de partida, tirada dos dados reais. `clareza` é o painel de
- * clareza de caixa (§4): de lá vêm o dinheiro livre e a reserva. */
+ * clareza de caixa (§4): de lá vêm o saldo em conta e a reserva.
+ *
+ * Usa `saldoAtualCentavos`, não `livreCentavos`: `livreCentavos` já desconta
+ * os compromissos dos próximos 30 dias (§4), e o mês 1 da simulação, logo
+ * abaixo, já refaz esse desconto por conta própria (renda menos o custo
+ * médio menos as parcelas do mês). Partir de `livreCentavos` descontaria o
+ * mesmo compromisso duas vezes no primeiro mês. */
 export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, ativos, clareza, competencia, hoje }) {
   const meses = mesesComMovimento(transacoes, competencia, MESES_HISTORICO);
   const rendas = meses.map((c) => calcularRendaAtual(transacoes, c));
@@ -99,7 +110,7 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
     discricionarioCentavos: Math.max(0, custoAtualCentavos - custoEssencialCentavos),
     dividas: dividasAtivas,
     reservaCentavos: Math.max(0, clareza?.saldoReservaCentavos || 0),
-    caixaCentavos: clareza?.livreCentavos || 0,
+    caixaCentavos: clareza?.saldoAtualCentavos || 0,
     ativosCentavos: calcularComposicaoAtivos(ativos || []).totalCentavos,
     suficiente: meses.length > 0 && (rendaMediaCentavos > 0 || custoAtualCentavos > 0),
   };
@@ -356,7 +367,7 @@ export function premissas(base, meses = HORIZONTE_MESES) {
       : `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}, o pior mês observado, porque não há fonte fixa cadastrada.`,
     "Dívida com acordo segue a parcela combinada; pagamento extra abate direto o saldo. Na vida real, adiantar parcela costuma vir com desconto de juros, então a quitação real tende a ser um pouco mais rápida.",
     "Dívida sem acordo não diminui sozinha e, se tem juros informado, cresce todo mês. A simulação não supõe desconto em acordo: se vier desconto, o nome limpa mais cedo.",
-    `Ponto de partida: ${formatarBRL(base.caixaCentavos)} livres hoje e ${formatarBRL(base.reservaCentavos)} em reserva. Horizonte de ${meses} meses.`,
+    `Ponto de partida: ${formatarBRL(base.caixaCentavos)} em conta hoje e ${formatarBRL(base.reservaCentavos)} em reserva. Horizonte de ${meses} meses.`,
     "Nada disso altera seus dados reais.",
   ];
   if (base.dividas.some((d) => d.parcelaCentavos === 0 && d.taxaMensalPct == null)) {
