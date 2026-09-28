@@ -18,8 +18,16 @@
 // - Sobra do mês vai, conforme a estratégia, pra dívida (negativadas
 //   primeiro, das menores pras maiores, porque é o que limpa o nome mais
 //   rápido; depois a de juros mais alto) e/ou pra reserva.
-// - Falta num mês sai da reserva; se a reserva acaba, o caminho "aperta"
-//   naquele mês e é marcado como inviável.
+// - Viver não é negociável (pedido explícito do usuário, 28/09/2026): o
+//   essencial (inclui categoria "filho") e o investimento mínimo mensal
+//   que ele definir são pagos sempre, puxando da reserva se precisar — só
+//   aí é que o caminho "aperta" de verdade (primeiroMesNegativo).
+// - Quando falta dinheiro pra pagar TODAS as parcelas do mês, o motor não
+//   inventa mais reserva nem marca o caminho inteiro como inviável: ele
+//   paga o que dá, na ordem de prioridade de cada dívida (a que o usuário
+//   define, ou — sem ela — a mais cara de deixar parada primeiro), e as
+//   outras ficam paradas naquele mês (`ordemDePagamento`). É a mesma coisa
+//   que aconteceria na vida real: algumas contas ficam pra depois.
 
 import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos } from "./orcamento.js";
@@ -71,7 +79,7 @@ function media(valores) {
  * abaixo, já refaz esse desconto por conta própria (renda menos o custo
  * médio menos as parcelas do mês). Partir de `livreCentavos` descontaria o
  * mesmo compromisso duas vezes no primeiro mês. */
-export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, ativos, clareza, competencia, hoje }) {
+export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, ativos, clareza, competencia, hoje, investimentoMinimoMensalCentavos = 0 }) {
   const meses = mesesComMovimento(transacoes, competencia, MESES_HISTORICO);
   const rendas = meses.map((c) => calcularRendaAtual(transacoes, c));
   const custos = meses.map((c) => calcularCustos(transacoes, categorias, c));
@@ -123,6 +131,7 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
         taxaMensalPct: parcela > 0 ? Math.round(taxaMensalEfetiva(d) * 1e6) / 1e4 : (informada ? Number(d.taxaJurosMensalPct) : null),
         taxaInformada: informada,
         negativada: !!d.negativada,
+        prioridadePagamento: Number.isInteger(d.prioridadePagamento) ? d.prioridadePagamento : null,
       };
     })
     .filter((d) => d.saldoCentavos > 0);
@@ -137,6 +146,10 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
     custoAtualCentavos,
     discricionarioCentavos,
     semCategoriaCentavos,
+    // Continuar investindo mesmo com dívida em aberto — decisão do
+    // usuário (CLAUDE.md-like: só ele define, o motor nunca inventa esse
+    // número). Protegido igual ao essencial: paga antes de qualquer dívida.
+    investimentoMinimoMensalCentavos: Math.max(0, Number(investimentoMinimoMensalCentavos) || 0),
     // Aperto de datas que a conta mensal não enxerga (o mês fecha, mas um
     // dia específico fica negativo) — vem da clareza de caixa (§4).
     apertoCaixa: clareza && clareza.seguroParaGastarCentavos < 0 && clareza.diaMaisApertado
@@ -207,8 +220,31 @@ function totalDividas(dividas) {
   return dividas.reduce((s, d) => s + d.saldoCentavos, 0);
 }
 
+/** Ordem de PAGAR a parcela mínima quando não dá pra pagar todas no mês
+ * (não é a ordem de mandar sobra extra — essa é `ordemDeQuitacao`, pra
+ * quitar mais rápido). Quem o usuário marcou com prioridade paga na ordem
+ * que ele definiu (1 primeiro). Sem prioridade nenhuma definida, protege
+ * primeiro a de juro mais alto — é a mais cara de ficar parada — e, empatado,
+ * a de menor saldo (evita reabrir atraso numa dívida quase quitada).
+ * Prioridade definida sempre vem antes de não definida: o usuário decidiu
+ * por alguma, e essa decisão pesa mais que qualquer heurística. */
+export function ordemDePagamento(dividas) {
+  return [...dividas].sort((a, b) => {
+    const pa = a.prioridadePagamento, pb = b.prioridadePagamento;
+    if (pa != null || pb != null) {
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      if (pa !== pb) return pa - pb;
+    }
+    const ja = a.taxaMensalPct || 0, jb = b.taxaMensalPct || 0;
+    if (ja !== jb) return jb - ja;
+    return a.saldoCentavos - b.saldoCentavos;
+  });
+}
+
 /** Um caminho, mês a mês. Devolve a série e os marcos. */
-export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaReservaMeses = 3 } = {}) {
+export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaReservaMeses = 3, investimentoMinimoMensalCentavos } = {}) {
+  const investimentoMinimo = investimentoMinimoMensalCentavos != null ? investimentoMinimoMensalCentavos : (base.investimentoMinimoMensalCentavos || 0);
   const rendaBase = cenario.renda === "garantida" ? base.rendaGarantidaCentavos : base.rendaMediaCentavos;
   const rendaCentavos = rendaBase + (cenario.aumentoCentavos || 0);
   const custoCentavos = base.custoEssencialCentavos + (base.semCategoriaCentavos || 0) + Math.round(base.discricionarioCentavos * (1 - (cenario.cortePct || 0) / 100));
@@ -220,6 +256,7 @@ export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaRes
   let reserva = base.reservaCentavos;
   let jurosAcumuladosCentavos = 0;
   let pagoExtraCentavos = 0;
+  const parcelasPuladas = []; // { mes, competencia, dividas: [{id, nome}] } — parcela que não coube no mês
 
   const temNegativadas = dividas.some((d) => d.negativada);
   const marcos = {
@@ -257,22 +294,37 @@ export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaRes
         jurosAcumuladosCentavos += j;
       }
     }
-    let parcelas = 0;
-    for (const d of dividas) {
-      if (d.saldoCentavos > 0 && d.parcelaCentavos > 0) {
-        const p = Math.min(d.parcelaCentavos, d.saldoCentavos);
-        d.saldoCentavos -= p;
-        parcelas += p;
-      }
-    }
-
-    caixa += rendaCentavos - custoCentavos - parcelas;
+    // Sobrevivência (essencial, inclui a categoria "filho") e o
+    // investimento mínimo são protegidos: saem primeiro, puxando da
+    // reserva se precisar. Só uma falta AQUI é o caminho "apertando" de
+    // verdade (primeiroMesNegativo) — não pagar uma dívida não é.
+    caixa += rendaCentavos - custoCentavos - investimentoMinimo;
     if (caixa < 0) {
       const tira = Math.min(reserva, -caixa);
       reserva -= tira;
       caixa += tira;
       if (caixa < 0 && marcos.primeiroMesNegativo == null) marcos.primeiroMesNegativo = m;
     }
+
+    // Parcelas do mês: paga na ordem de prioridade (`ordemDePagamento`) até
+    // o dinheiro que sobrou acabar. O que não coube fica parado neste mês
+    // — juro continua contando (bloco acima), mas a reserva não é drenada
+    // pra forçar pagar tudo, e o caminho não vira "inviável" só por isso.
+    let parcelas = 0;
+    let disponivelDividas = Math.max(0, caixa);
+    const puladasEsteMes = [];
+    for (const d of ordemDePagamento(dividas.filter((x) => x.saldoCentavos > 0 && x.parcelaCentavos > 0))) {
+      const p = Math.min(d.parcelaCentavos, d.saldoCentavos);
+      if (p <= disponivelDividas) {
+        d.saldoCentavos -= p;
+        disponivelDividas -= p;
+        parcelas += p;
+      } else {
+        puladasEsteMes.push({ id: d.id, nome: d.nome });
+      }
+    }
+    caixa -= parcelas;
+    if (puladasEsteMes.length) parcelasPuladas.push({ mes: m, competencia: somarMeses(base.competencia, m), dividas: puladasEsteMes });
 
     if (caixa > 0) {
       if (cenario.estrategia === "dividas") {
@@ -305,15 +357,30 @@ export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaRes
 
   const final = serie[serie.length - 1] || { dividaCentavos: totalDividas(dividas), reservaCentavos: reserva, caixaCentavos: caixa, patrimonioCentavos: base.ativosCentavos + reserva + caixa - totalDividas(dividas) };
   const doze = serie[Math.min(11, serie.length - 1)] || final;
+
+  // Resumo por dívida: quantos meses ela ficou sem pagamento neste
+  // caminho — a pergunta que o usuário faz de verdade ("quais ficam pra
+  // trás, e por quanto tempo").
+  const porDivida = new Map();
+  for (const evento of parcelasPuladas) {
+    for (const d of evento.dividas) {
+      if (!porDivida.has(d.id)) porDivida.set(d.id, { id: d.id, nome: d.nome, quantidadeMeses: 0, primeiroMes: evento.mes });
+      porDivida.get(d.id).quantidadeMeses += 1;
+    }
+  }
+  const dividasComAtraso = [...porDivida.values()].sort((a, b) => b.quantidadeMeses - a.quantidadeMeses);
+
   return {
     rendaCentavos,
     custoCentavos,
-    sobraMensalInicialCentavos: rendaCentavos - custoCentavos - base.dividas.reduce((s, d) => s + d.parcelaCentavos, 0),
+    sobraMensalInicialCentavos: rendaCentavos - custoCentavos - investimentoMinimo - base.dividas.reduce((s, d) => s + d.parcelaCentavos, 0),
     metaReservaCentavos,
     ...marcos,
     viavel: marcos.primeiroMesNegativo == null,
     jurosAcumuladosCentavos,
     pagoExtraCentavos,
+    parcelasPuladas,
+    dividasComAtraso,
     final,
     em12Meses: doze,
     serie,
@@ -341,8 +408,9 @@ function objetivoPrincipal(base) {
 export function compararCenarios(base, opcoes = {}) {
   const meses = opcoes.meses || HORIZONTE_MESES;
   const metaReservaMeses = opcoes.metaReservaMeses || 3;
+  const investimentoMinimoMensalCentavos = opcoes.investimentoMinimoMensalCentavos;
   const cenarios = cenariosPadrao(base, { ...opcoes, metaReservaMeses })
-    .map((c) => ({ ...c, resultado: simularCenario(base, c, { meses, metaReservaMeses }) }));
+    .map((c) => ({ ...c, resultado: simularCenario(base, c, { meses, metaReservaMeses, investimentoMinimoMensalCentavos }) }));
 
   const nulo = (v) => (v == null ? Infinity : v);
   const melhorPor = (lista, fn) => lista.reduce((a, b) => (fn(b) < fn(a) ? b : a), lista[0]);
@@ -387,25 +455,33 @@ export function compararCenarios(base, opcoes = {}) {
     }
   }
 
-  return { base, meses, metaReservaMeses, objetivo, cenarios, destaques, recomendado, premissas: premissas(base, meses) };
+  return { base, meses, metaReservaMeses, objetivo, cenarios, destaques, recomendado, premissas: premissas(base, meses, investimentoMinimoMensalCentavos) };
 }
 
 /** O que a simulação assume, em texto — mostrado sempre junto dos números
  * (§9/§17: todo resultado aponta de onde veio). */
-export function premissas(base, meses = HORIZONTE_MESES) {
+export function premissas(base, meses = HORIZONTE_MESES, investimentoMinimoMensalCentavos) {
+  const investimentoMinimo = investimentoMinimoMensalCentavos != null ? investimentoMinimoMensalCentavos : (base.investimentoMinimoMensalCentavos || 0);
   const lista = [
     `Renda: média dos últimos ${base.mesesHistorico} ${base.mesesHistorico === 1 ? "mês" : "meses"} com movimento, ${formatarBRL(base.rendaMediaCentavos)} por mês. Só entra dinheiro que de fato entrou.`,
-    `Gasto: média do mesmo período, ${formatarBRL(base.custoEssencialCentavos)} essencial e ${formatarBRL(base.discricionarioCentavos)} não essencial por mês${base.semCategoriaCentavos ? `, mais ${formatarBRL(base.semCategoriaCentavos)} de fatura sem compra lançada (não entra no corte)` : ""}. As parcelas de dívida saem à parte, pelo cronograma de cada uma.`,
+    `Gasto: média do mesmo período, ${formatarBRL(base.custoEssencialCentavos)} essencial (inclui filho, se cadastrado) e ${formatarBRL(base.discricionarioCentavos)} não essencial por mês${base.semCategoriaCentavos ? `, mais ${formatarBRL(base.semCategoriaCentavos)} de fatura sem compra lançada (não entra no corte)` : ""}. Essencial nunca é cortado, nem pelo caminho mais agressivo — só o não essencial.`,
     base.fonteRendaGarantida === "fontes"
       ? `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}: fontes fixas pelo valor esperado e renda variável pelo pior mês recente.`
       : `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}, o pior mês observado, porque não há fonte de renda cadastrada.`,
     "Dívida com acordo: o saldo é o valor pra quitar hoje e rende os juros do contrato (o informado ou, sem ele, o que a parcela embute). Pagar a mais abate o saldo e corta os juros dali pra frente.",
     "Dívida sem acordo não diminui sozinha e, se tem juros informado, cresce todo mês. A simulação não supõe desconto em acordo: se vier desconto, o nome limpa mais cedo.",
+    investimentoMinimo > 0
+      ? `Investimento: ${formatarBRL(investimentoMinimo)} por mês continuam saindo mesmo com dívida em aberto — protegido como o essencial, nunca vira dinheiro pra pagar dívida.`
+      : "Sem investimento mínimo definido: toda a sobra do mês pode ir pra dívida ou reserva, conforme o caminho. Defina um valor em Renda › Metas se quiser continuar investindo mesmo com dívida em aberto.",
+    "Quando falta dinheiro pra pagar todas as parcelas do mês, o essencial e o investimento mínimo continuam saindo (puxando da reserva se precisar) e a simulação paga as dívidas possíveis na ordem de prioridade — o resto fica parado naquele mês, rendendo juro, sem drenar a reserva pra forçar pagar tudo.",
     `Ponto de partida: ${formatarBRL(base.caixaCentavos)} em conta hoje e ${formatarBRL(base.reservaCentavos)} em reserva. Horizonte de ${meses} meses.`,
     "Nada disso altera seus dados reais.",
   ];
   if (base.dividas.some((d) => d.parcelaCentavos === 0 && d.taxaMensalPct == null)) {
     lista.splice(5, 0, "Alguma dívida sem acordo está sem juros informado: na simulação ela fica parada, mas na vida real costuma crescer. Informe a taxa em Dívidas pra conta ficar mais honesta.");
+  }
+  if (base.dividas.some((d) => d.prioridadePagamento == null)) {
+    lista.push("Nenhuma prioridade de pagamento definida: quando falta dinheiro pra pagar todas as parcelas, a simulação protege primeiro a de juro mais alto. Defina a prioridade em Dívidas pra decidir você mesmo quem fica pra trás.");
   }
   return lista;
 }

@@ -78,7 +78,8 @@ Recorrência **não** cria transação até a janela de provisionamento — herd
 ```
 dividas/<id>  { pessoaId, nome, credor, saldoOriginalCentavos,
                 valorParcelaCentavos, quantidadeParcelas, parcelasPagas,
-                dataInicio, taxaJurosMensalPct?, emRisco, negativada }
+                dataInicio, taxaJurosMensalPct?, emRisco, negativada,
+                prioridadePagamento? }
 ```
 
 `saldoAtualCentavos` e `status` (ativa/atrasada/quitada) **não são campos
@@ -98,6 +99,19 @@ parcela zero é válida): não quita sozinha, não tem data de quitação, e na
 simulação de caminhos (`domain/cenarios.js`) cresce com o juros informado.
 Cenários não têm coleção: a simulação roda na tela e não grava nada.
 
+`prioridadePagamento` (28/09/2026, opcional): quando a renda do mês não dá
+pra pagar a parcela de TODAS as dívidas com acordo, a simulação de caminhos
+(`domain/cenarios.js`, `ordemDePagamento`) paga primeiro quem tem o número
+menor (1 = paga sempre que possível) e deixa as de número maior sem
+pagamento naquele mês — dinheiro real, decisão real do usuário (pedido
+explícito de 28/09/2026: nem toda dívida vai ser paga em dia, e quem decide
+qual espera é ele, não o sistema). Sem prioridade definida em nenhuma
+dívida, o motor protege primeiro a de juro mais alto (é a mais cara de
+ficar parada). A dívida que fica sem pagar num mês não é gravada como
+atrasada de verdade nem altera o cadastro — é só um resultado da simulação
+(`resultado.dividasComAtraso`), a mesma regra de "simulação não escreve no
+dado real" do §11.
+
 Nenhuma coleção `simulacoes`: o simulador do §11 (aporte extra, quitação
 antecipada, comparação de ritmos) é implementado como funções puras em
 `domain/simuladorDividas.js` que recebem números e devolvem um resultado
@@ -114,7 +128,7 @@ quando essa fase chegar, é o lugar certo para essa coleção nascer.
 ```
 fontesRenda/<id>            { pessoaId, nome, tipo, valorEsperadoCentavos, diaRecebimento?, ativa }
                             # diaRecebimento: dia do mês em que costuma cair; sem ele, a agenda usa o dia do último recebimento
-configuracoes/orcamento     { custoDesejadoCentavos?, metaRecuperacaoCentavos? }
+configuracoes/orcamento     { custoDesejadoCentavos?, metaRecuperacaoCentavos?, investimentoMinimoMensalCentavos? }
 ```
 
 `tipo` da fonte: `fixa | recorrente | variavel | eventual` (§12, os quatro do
@@ -126,13 +140,20 @@ transações da própria fonte, mesma regra "nada de total gravado" das dívidas
 soma no total do mês, só não entra na previsibilidade/histórico de nenhuma
 fonte específica.
 
-`configuracoes/orcamento` é documento único, não coleção: as duas únicas
-metas do §12/§13 que não vêm de lançamento nenhum — custo de vida desejado e
-meta de recuperação financeira — são decisão do usuário, não cálculo. Sem
-meta de recuperação definida, `domain/renda.js` usa um padrão honesto
-(custo essencial + parcelas de dívida) em vez de inventar um número; sem
-custo desejado definido, o gap correspondente fica `null` (a tela mostra
-"—", nunca um valor fabricado).
+`configuracoes/orcamento` é documento único, não coleção: as três metas do
+§12/§13/§22 que não vêm de lançamento nenhum — custo de vida desejado, meta
+de recuperação financeira e investimento mínimo mensal — são decisão do
+usuário, não cálculo. Sem meta de recuperação definida, `domain/renda.js`
+usa um padrão honesto (custo essencial + parcelas de dívida) em vez de
+inventar um número; sem custo desejado definido, o gap correspondente fica
+`null` (a tela mostra "—", nunca um valor fabricado).
+
+`investimentoMinimoMensalCentavos` (28/09/2026, padrão 0): quanto continua
+saindo por mês pra investimento mesmo com dívida em aberto — pedido
+explícito do usuário: o plano de caminhos (§22) não pode assumir que ele
+para de investir só porque tem dívida. `domain/cenarios.js` protege esse
+valor igual ao custo essencial (sai antes de qualquer parcela de dívida,
+inclusive puxando da reserva se precisar) em toda simulação de caminho.
 
 ## Patrimônio, objetivos — Fase 9
 

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  montarBaseCenarios, cenariosPadrao, simularCenario, compararCenarios, ordemDeQuitacao, premissas,
+  montarBaseCenarios, cenariosPadrao, simularCenario, compararCenarios, ordemDeQuitacao, ordemDePagamento, premissas,
 } from "../src/domain/cenarios.js";
 
 // Base mínima escrita à mão: renda 5.000, essencial 3.000, 1.000 não
@@ -40,6 +40,56 @@ test("ordem de quitação: negativadas primeiro (menor saldo), depois juros mais
   assert.deepEqual(ordem, ["d", "b", "c", "a"]);
 });
 
+test("ordem de pagamento (quem paga quando falta dinheiro pro mês): prioridade do usuário manda, mesmo contra o juro", () => {
+  const ordem = ordemDePagamento([
+    { id: "a", saldoCentavos: 1000, taxaMensalPct: 9, prioridadePagamento: 2 },
+    { id: "b", saldoCentavos: 1000, taxaMensalPct: 1, prioridadePagamento: 1 },
+    { id: "c", saldoCentavos: 1000, taxaMensalPct: 5, prioridadePagamento: null },
+  ]).map((d) => d.id);
+  // b (prioridade 1) primeiro mesmo com juro baixo; a (prioridade 2) depois;
+  // c sem prioridade definida vai pro fim, mesmo com juro maior que o de a.
+  assert.deepEqual(ordem, ["b", "a", "c"]);
+});
+
+test("ordem de pagamento sem NENHUMA prioridade definida: protege primeiro quem tem juro mais alto", () => {
+  const ordem = ordemDePagamento([
+    { id: "baixo", saldoCentavos: 1000, taxaMensalPct: 1, prioridadePagamento: null },
+    { id: "alto", saldoCentavos: 1000, taxaMensalPct: 9, prioridadePagamento: null },
+    { id: "empate-maior-saldo", saldoCentavos: 2000, taxaMensalPct: 5, prioridadePagamento: null },
+    { id: "empate-menor-saldo", saldoCentavos: 500, taxaMensalPct: 5, prioridadePagamento: null },
+  ]).map((d) => d.id);
+  assert.deepEqual(ordem, ["alto", "empate-menor-saldo", "empate-maior-saldo", "baixo"]);
+});
+
+test("falta dinheiro pro mês: a dívida com prioridade pior é a que fica sem pagar, a outra é paga em dia", () => {
+  // Renda 4.500, custo 4.000: sobram 500 pra dívida, mas as duas parcelas
+  // somam 800 (500 + 300). Sem prioridade, o juro mais alto (carro, 1,5%)
+  // seria pago e a "loja" ficaria de fora — só que ela é negativada e sem
+  // acordo (parcela 0), não entra nessa disputa. Uso duas COM acordo pra
+  // testar a prioridade de verdade.
+  const b = base({
+    rendaMediaCentavos: 450000,
+    dividas: [
+      { id: "carro", nome: "Carro", saldoCentavos: 300000, parcelaCentavos: 50000, taxaMensalPct: 1.5, negativada: false, prioridadePagamento: 2 },
+      { id: "cartao", nome: "Cartão", saldoCentavos: 100000, parcelaCentavos: 30000, taxaMensalPct: 8, negativada: false, prioridadePagamento: 1 },
+    ],
+  });
+  const r = simularCenario(b, cenario("atual", b), { meses: 1 });
+  // Prioridade 1 (cartão) paga; prioridade 2 (carro) não coube (500 - 300 = 200 < 500).
+  assert.deepEqual(r.dividasComAtraso.map((d) => d.id), ["carro"]);
+});
+
+test("investimento mínimo é protegido: sai antes de qualquer dívida, mesmo que isso derrube uma parcela", () => {
+  // Renda 4.500, custo 4.000: sem investimento, sobram 500 — dá pra pagar
+  // a parcela de 500 do carro inteira. Com 500 de investimento mínimo
+  // protegido, não sobra nada pra dívida: a parcela fica de fora.
+  const b = base({ rendaMediaCentavos: 450000, dividas: [{ id: "carro", nome: "Carro", saldoCentavos: 300000, parcelaCentavos: 50000, taxaMensalPct: 1.5, negativada: false }] });
+  const semInvestimento = simularCenario(b, cenario("atual", b), { meses: 1 });
+  assert.deepEqual(semInvestimento.dividasComAtraso, []);
+  const comInvestimento = simularCenario(b, cenario("atual", b), { meses: 1, investimentoMinimoMensalCentavos: 50000 });
+  assert.deepEqual(comInvestimento.dividasComAtraso.map((d) => d.id), ["carro"]);
+});
+
 test("seguir como está: dívida com acordo rende a taxa e a parcela abate, negativada sem acordo só cresce, sobra fica no caixa", () => {
   const r = simularCenario(base(), cenario("atual"), { meses: 2 });
   // mês 1: loja 100.000 + 5% = 105.000; carro 300.000 + 1,5% − 50.000 = 254.500
@@ -68,13 +118,30 @@ test("corte no não essencial acelera: nome limpa antes da quitação simples", 
   assert.ok(corte.mesDividaZerada < quitacao.mesDividaZerada);
 });
 
-test("mês que não fecha puxa da reserva; sem reserva, o caminho aperta e é inviável", () => {
+test("essencial cobre exatamente a renda: a parcela do carro fica sem pagar, mas a reserva não é tocada e o caminho continua viável", () => {
+  // Renda 4.000 = custo (essencial 3.000 + não essencial 1.000): sobra
+  // zero pra dívida. A parcela do carro (500) não cabe — fica parada, os
+  // juros continuam contando —, mas sobreviver não depende da reserva.
   const apertado = base({ rendaMediaCentavos: 400000, reservaCentavos: 60000 });
   const r = simularCenario(apertado, cenario("atual", apertado), { meses: 3 });
-  // falta 500/mês: reserva de 600 cobre o 1º mês e parte do 2º
-  assert.equal(r.serie[0].reservaCentavos, 10000);
-  assert.equal(r.primeiroMesNegativo, 2);
+  assert.equal(r.serie[0].reservaCentavos, 60000, "reserva intocada: dívida não paga não é motivo pra sacar reserva");
+  assert.equal(r.serie[2].reservaCentavos, 60000);
+  assert.equal(r.primeiroMesNegativo, null);
+  assert.equal(r.viavel, true, "sobrevivência sempre coberta, mesmo sem pagar a dívida");
+  assert.deepEqual(r.dividasComAtraso, [{ id: "carro", nome: "Carro", quantidadeMeses: 3, primeiroMes: 1 }]);
+  assert.equal(r.parcelasPuladas.length, 3);
+});
+
+test("quando falta pra cobrir o ESSENCIAL (não só a dívida), aí sim a reserva é usada e o caminho pode apertar", () => {
+  // Renda 3.500 < custo 4.000: falta 500/mês pra viver, não pra pagar dívida.
+  const apertado = base({ rendaMediaCentavos: 350000, reservaCentavos: 60000 });
+  const r = simularCenario(apertado, cenario("atual", apertado), { meses: 3 });
+  assert.equal(r.serie[0].reservaCentavos, 10000, "reserva cobre a falta de essencial no mês 1");
+  assert.equal(r.primeiroMesNegativo, 2, "reserva não alcança o mês 2");
   assert.equal(r.viavel, false);
+  // A dívida também não é paga (não sobra nada pra ela), mas o marco que
+  // importa aqui é o essencial não fechar, não a dívida.
+  assert.equal(r.dividasComAtraso.length, 1);
 });
 
 test("conservador usa a renda garantida e monta a reserva antes da dívida", () => {

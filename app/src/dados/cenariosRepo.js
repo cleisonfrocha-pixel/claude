@@ -4,14 +4,16 @@
 // no dado real), então esta camada só lê.
 
 import { carregarBase, assinarBase } from "./base.js";
+import { obterMetas } from "./orcamentoRepo.js";
 import { calcularClarezaDeCaixa } from "../domain/caixa.js";
 import { montarBaseCenarios } from "../domain/cenarios.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
 
-function montarBase(dados) {
+async function montarBase(dados) {
   const hoje = hojeISO();
   const clareza = calcularClarezaDeCaixa({ ...dados, hoje, horizonteDias: 30 });
-  return montarBaseCenarios({ ...dados, clareza, competencia: competenciaAtual(), hoje });
+  const { investimentoMinimoMensalCentavos } = await obterMetas();
+  return montarBaseCenarios({ ...dados, clareza, competencia: competenciaAtual(), hoje, investimentoMinimoMensalCentavos });
 }
 
 export async function calcularBaseCenarios() {

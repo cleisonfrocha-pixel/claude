@@ -23,7 +23,7 @@ const METRICAS = {
 let container = null;
 let parar = null;
 let base = null;
-const ajustes = { cortePct: 30, aumentoRendaCentavos: null, metaReservaMeses: 3, meses: 24 };
+const ajustes = { cortePct: 30, aumentoRendaCentavos: null, metaReservaMeses: 3, meses: 24, investimentoMinimoMensalCentavos: null };
 let metrica = "divida";
 let comparacao = null;
 
@@ -61,7 +61,11 @@ function cartaoCaminho(c) {
       </div>
       ${selos(c) ? `<div class="caminho-selos">${selos(c)}</div>` : ""}
       <p class="caminho-descricao">${escapeHtml(c.descricao)}</p>
-      <div class="caminho-status ${r.viavel ? "ok" : "aperta"}">${r.viavel ? "Fecha todos os meses" : `Aperta no mês ${r.primeiroMesNegativo} (${competenciaAbrevAno(somarMeses(base.competencia, r.primeiroMesNegativo))})`}</div>
+      <div class="caminho-status ${r.viavel ? "ok" : "aperta"}">${r.viavel ? "Sobrevivência e investimento cobertos todo mês" : `Aperta no mês ${r.primeiroMesNegativo} (${competenciaAbrevAno(somarMeses(base.competencia, r.primeiroMesNegativo))}): nem o essencial fecha`}</div>
+      ${r.dividasComAtraso.length ? `
+        <div class="caminho-status aperta" style="margin-top:6px;">
+          ${r.dividasComAtraso.map((d) => `${escapeHtml(d.nome)} fica sem pagar por ${d.quantidadeMeses} ${d.quantidadeMeses === 1 ? "mês" : "meses"} (a partir de ${competenciaAbrevAno(somarMeses(base.competencia, d.primeiroMes))})`).join("; ")}
+        </div>` : ""}
       ${temNegativada ? linhaMarco("Nome limpo em", r.mesNomeLimpo, `não limpa em ${comparacao.meses} meses`) : ""}
       ${base.dividas.length ? linhaMarco("Dívidas zeradas em", r.mesDividaZerada, `não zera em ${comparacao.meses} meses`) : ""}
       ${r.metaReservaCentavos > 0 ? linhaMarco(`Reserva de ${comparacao.metaReservaMeses} meses em`, r.mesReservaMeta, "não chega") : ""}
@@ -91,6 +95,9 @@ function blocoAjustes() {
   const aumento = ajustes.aumentoRendaCentavos != null
     ? ajustes.aumentoRendaCentavos
     : comparacao.cenarios.find((c) => c.id === "renda").aumentoCentavos;
+  const investimento = ajustes.investimentoMinimoMensalCentavos != null
+    ? ajustes.investimentoMinimoMensalCentavos
+    : (base.investimentoMinimoMensalCentavos || 0);
   return `
     <div class="divida-resumo caminho-ajustes">
       <div class="field"><label for="aj-corte">Corte no não essencial (%)</label>
@@ -101,6 +108,8 @@ function blocoAjustes() {
         <select id="aj-reserva">${[3, 6, 12].map((m) => `<option value="${m}"${m === ajustes.metaReservaMeses ? " selected" : ""}>${m} meses</option>`).join("")}</select></div>
       <div class="field"><label for="aj-meses">Horizonte</label>
         <select id="aj-meses">${[12, 24, 36].map((m) => `<option value="${m}"${m === ajustes.meses ? " selected" : ""}>${m} meses</option>`).join("")}</select></div>
+      <div class="field"><label for="aj-investimento">Investimento mínimo por mês<small>protegido, nunca vira pagamento de dívida</small></label>
+        <input id="aj-investimento" type="text" inputmode="decimal" value="${(investimento / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}"></div>
     </div>`;
 }
 
@@ -276,10 +285,12 @@ function renderizar() {
     ajustes.aumentoRendaCentavos = renda > 0 ? renda : null;
     ajustes.metaReservaMeses = Number(container.querySelector("#aj-reserva").value) || 3;
     ajustes.meses = Number(container.querySelector("#aj-meses").value) || 24;
+    const investimento = paraCentavos(container.querySelector("#aj-investimento").value);
+    ajustes.investimentoMinimoMensalCentavos = investimento > 0 ? investimento : 0;
     recalcular();
     renderizar();
   };
-  ["#aj-corte", "#aj-renda", "#aj-reserva", "#aj-meses"].forEach((sel) => container.querySelector(sel).addEventListener("change", aoMudar));
+  ["#aj-corte", "#aj-renda", "#aj-reserva", "#aj-meses", "#aj-investimento"].forEach((sel) => container.querySelector(sel).addEventListener("change", aoMudar));
   pintarGrafico();
 }
 

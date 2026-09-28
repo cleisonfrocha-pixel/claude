@@ -67,9 +67,9 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
 
 - `contas`: nome, instituicao, tipo (corrente/poupanca/investimento/dinheiro/outra), saldoInicial, dataSaldoInicial, ehReserva
 - `cartoes`: apelido, conta (paga a fatura), bandeira, limiteTotal, diaFechamento, diaVencimento
-- `categorias`: nome, grupo (moradia/transporte/alimentacao/saude/educacao/lazer/dividas/renda/outros), natureza (receita/despesa), essencial
+- `categorias`: nome, grupo (moradia/transporte/alimentacao/saude/educacao/filho/lazer/dividas/renda/outros), natureza (receita/despesa), essencial. "Filho" já vem essencial por padrão: gasto de criança não é corte.
 - `fontesRenda`: nome, tipo (fixa/recorrente/variavel/eventual), valorEsperado, diaRecebimento (dia do mês em que cai; pergunte se ele souber, é o que a agenda usa)
-- `dividas`: nome, credor, saldoOriginal, valorParcela, quantidadeParcelas, parcelasPagas, dataInicio, taxaJurosMensalPct, emRisco, negativada
+- `dividas`: nome, credor, saldoOriginal, valorParcela, quantidadeParcelas, parcelasPagas, dataInicio, taxaJurosMensalPct, emRisco, negativada, prioridadePagamento (opcional: 1 paga primeiro se um mês não der pra pagar todas — pergunte a ordem dele se ele mencionar que vai deixar alguma conta pra depois)
   - Dívida no Serasa/SPC: `negativada: true`. Sem acordo ainda: `valorParcela: 0`, `quantidadeParcelas: 1`, `dataInicio` = data da dívida original (ou da negativação). Juros informado (`taxaJurosMensalPct`) faz a simulação de caminhos ser honesta; se ele não souber, pergunte uma vez e siga sem.
 - `ativos`: nome, classe (liquido/investimento/veiculo/imovel/participacao/outro), valorAtual, dataAvaliacao
 - `objetivos`: nome, valorAlvo, valorAtual, prazo, conta (vinculada)

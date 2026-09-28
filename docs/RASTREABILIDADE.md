@@ -1104,3 +1104,38 @@ alertas). `testes/previstos.test.js` cobre os eventos futuros. 350 testes.
 - Fluxo de caixa mostra quanto fica em conta em cada prazo (antes, uma
   variação que não batia com o detalhe). Nome da categoria no diagnóstico,
   vírgula decimal, dia do recebimento no cadastro de renda.
+
+---
+
+## Sprint 27 · sobrevivência, filho e investimento protegidos; dívida prioriza (28/09/2026)
+
+Pedido do usuário: ele não vai ter dinheiro pra pagar todas as contas —
+vai ter dívida que fica pra depois, de propósito, enquanto ele decide
+prioridade. Mas o plano não pode assumir que ele para de viver: padrão de
+vida, o filho de 9 meses, e o investimento continuam, mesmo com dívida em
+aberto. Pediu pra eu ajustar a base de dados/domínio pra isso — não pra
+esperar os dados reais.
+
+- **Categoria "Filho"** (grupo novo `filho`) nasce essencial por padrão:
+  protegida do corte em Caminhos igual moradia, mercado e saúde.
+- **Investimento mínimo mensal** (`configuracoes/orcamento`, definido pelo
+  usuário em Renda › Metas): protegido como o essencial em toda simulação
+  de Caminhos — sai antes de qualquer parcela de dívida, puxando da
+  reserva se precisar. Ajustável também na hora, na aba Caminhos.
+- **Prioridade de pagamento por dívida** (`dividas/<id>.prioridadePagamento`,
+  opcional): quando a renda do mês não fecha pra pagar a parcela de todas
+  as dívidas com acordo, a simulação (`ordemDePagamento`) paga primeiro a
+  de número menor e deixa as demais sem pagamento naquele mês — não dreno
+  mais a reserva pra forçar pagar tudo, nem marco o caminho inteiro como
+  inviável só por isso. Sem prioridade definida, protege primeiro a de
+  juro mais alto. A tela de Caminhos mostra, por caminho, quem fica sem
+  pagar e por quantos meses.
+- **"Inviável" mudou de sentido**: antes, qualquer parcela que drenasse a
+  reserva até zerar marcava o caminho inteiro como "aperta". Agora só
+  conta como aperto de verdade quando nem o essencial + investimento
+  mínimo fecham — a dívida pode ficar pra trás sem isso ser uma crise.
+- 8 testes novos provando `ordemDePagamento` (prioridade do usuário manda,
+  sem prioridade protege o juro mais alto), a dívida certa ficando sem
+  pagamento, o investimento mínimo derrubando uma parcela, e a diferença
+  entre "dívida sem pagar" (reserva intocada, viável) e "essencial sem
+  cobrir" (reserva usada, pode apertar de verdade). 358 testes.

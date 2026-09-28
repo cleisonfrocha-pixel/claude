@@ -52,6 +52,7 @@ export default criarTelaCadastro({
     { id: "parcelasPagas", rotulo: "Parcelas já pagas", tipo: "numero", min: 0, obrigatorio: true, padrao: 0 },
     { id: "dataInicio", rotulo: "Vencimento da 1ª parcela", tipo: "data", obrigatorio: true },
     { id: "taxaJurosMensalPct", rotulo: "Juros ao mês, % (opcional)", tipo: "numero", min: 0, step: 0.01 },
+    { id: "prioridadePagamento", rotulo: "Prioridade de pagamento (opcional): 1 paga primeiro se faltar dinheiro pro mês", tipo: "numero", min: 1, step: 1 },
     { id: "emRisco", rotulo: "Em risco (renegociação incerta, credor pressionando, etc.)", tipo: "check" },
     { id: "negativada", rotulo: "Nome negativado (Serasa/SPC). Sem acordo ainda? Deixe a parcela em 0,00", tipo: "check" },
   ],
@@ -87,7 +88,7 @@ export default criarTelaCadastro({
     const negativadaAtiva = dados.negativada && status !== "quitada";
     return {
       titulo: dados.nome,
-      sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}`,
+      sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}${dados.prioridadePagamento != null ? ` · prioridade ${dados.prioridadePagamento}` : ""}`,
       valorDireita: formatarBRL(calcularSaldoAtual(dados)),
       tag: negativadaAtiva ? "negativada" : (status !== "ativa" ? ROTULO_STATUS[status] : (dados.emRisco ? "em risco" : null)),
       tagInativa: status === "quitada",

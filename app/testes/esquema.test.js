@@ -5,6 +5,7 @@ import {
   padraoTransacao, padraoRecorrencia, padraoDivida,
   validarPessoa, validarConta, validarCartao, validarCategoria,
   validarTransacao, validarRecorrencia, validarDivida,
+  categoriasSugeridas, GRUPOS_CATEGORIA,
 } from "../src/domain/esquema.js";
 
 test("padraoPessoa preenche papel e ativo, mas não inventa nome", () => {
@@ -96,4 +97,22 @@ test("validarDivida rejeita parcelas pagas maior que o total — regressão de d
 test("validarDivida passa com dados completos e taxa de juros nula", () => {
   const d = padraoDivida({ nome: "Financiamento", pessoaId: "p1", saldoOriginalCentavos: 1200000, valorParcelaCentavos: 100000, quantidadeParcelas: 12, parcelasPagas: 2 });
   assert.deepEqual(validarDivida(d), []);
+});
+
+test("padraoDivida: prioridadePagamento nasce null (não classificada)", () => {
+  assert.equal(padraoDivida({}).prioridadePagamento, null);
+});
+
+test("validarDivida rejeita prioridade de pagamento inválida", () => {
+  const base = { nome: "Carro", pessoaId: "p1", saldoOriginalCentavos: 100000, valorParcelaCentavos: 10000, quantidadeParcelas: 5, parcelasPagas: 0 };
+  assert.ok(validarDivida(padraoDivida({ ...base, prioridadePagamento: 0 })).some((e) => e.includes("Prioridade")));
+  assert.ok(validarDivida(padraoDivida({ ...base, prioridadePagamento: 1.5 })).some((e) => e.includes("Prioridade")));
+  assert.deepEqual(validarDivida(padraoDivida({ ...base, prioridadePagamento: 1 })), []);
+});
+
+test("categoria Filho existe e é essencial por padrão — protegida do corte em Caminhos", () => {
+  assert.ok(GRUPOS_CATEGORIA.includes("filho"));
+  const filho = categoriasSugeridas().find((c) => c.grupo === "filho");
+  assert.ok(filho);
+  assert.equal(filho.essencial, true);
 });

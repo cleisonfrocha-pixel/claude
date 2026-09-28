@@ -182,17 +182,23 @@ function renderizar() {
       </div>` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Metas</h3>
-      <p class="tela-sub">Custo de vida desejado e meta de recuperação. Só você define, o sistema nunca inventa</p></div></div>
+      <p class="tela-sub">Custo de vida desejado, meta de recuperação e investimento mínimo. Só você define, o sistema nunca inventa</p></div></div>
     <div class="simulador-linha" style="margin-bottom:10px;">
       <div class="field"><label for="input-custo-desejado">Custo de vida desejado</label>
         <input type="text" inputmode="decimal" id="input-custo-desejado" placeholder="0,00" value="${metas.custoDesejadoCentavos != null ? formatarBRL(metas.custoDesejadoCentavos).replace("R$ ", "") : ""}"></div>
       <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-custo-desejado">Salvar</button>
     </div>
-    <div class="simulador-linha">
+    <div class="simulador-linha" style="margin-bottom:10px;">
       <div class="field"><label for="input-meta-recuperacao">Meta de recuperação (opcional)</label>
         <input type="text" inputmode="decimal" id="input-meta-recuperacao" placeholder="0,00" value="${metas.metaRecuperacaoCentavos != null ? formatarBRL(metas.metaRecuperacaoCentavos).replace("R$ ", "") : ""}"></div>
       <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-meta-recuperacao">Salvar</button>
     </div>
+    <div class="simulador-linha">
+      <div class="field"><label for="input-investimento-minimo">Investimento mínimo por mês</label>
+        <input type="text" inputmode="decimal" id="input-investimento-minimo" placeholder="0,00" value="${metas.investimentoMinimoMensalCentavos ? formatarBRL(metas.investimentoMinimoMensalCentavos).replace("R$ ", "") : ""}"></div>
+      <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-investimento-minimo">Salvar</button>
+    </div>
+    <div class="tela-sub" style="margin:6px 0 0;">Continua saindo todo mês em Plano › Caminhos, mesmo com dívida em aberto — protegido como o essencial, nunca vira dinheiro pra pagar dívida.</div>
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Custos e margem</h3>
       <p class="tela-sub">Orçamento como instrumento de clareza, não uma prisão</p></div></div>
@@ -279,6 +285,15 @@ function ligarEventosGerais() {
       const valor = container.querySelector("#input-meta-recuperacao").value;
       await definirMetas({ metaRecuperacaoCentavos: valor ? paraCentavos(valor) : null });
       mostrarToast("Meta de recuperação salva.");
+      await recarregarPainel();
+    });
+  }
+  const btnInvestimentoMinimo = container.querySelector('[data-acao="salvar-investimento-minimo"]');
+  if (btnInvestimentoMinimo) {
+    btnInvestimentoMinimo.addEventListener("click", async () => {
+      const valor = container.querySelector("#input-investimento-minimo").value;
+      await definirMetas({ investimentoMinimoMensalCentavos: valor ? paraCentavos(valor) : 0 });
+      mostrarToast("Investimento mínimo salvo.");
       await recarregarPainel();
     });
   }

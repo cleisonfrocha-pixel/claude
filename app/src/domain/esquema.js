@@ -9,7 +9,7 @@ export const TIPOS_CONTA = ["corrente", "poupanca", "investimento", "dinheiro", 
 export const STATUS_CONTA = ["ativa", "encerrada"];
 export const BANDEIRAS_CARTAO = ["visa", "mastercard", "elo", "amex", "outra"];
 export const STATUS_CARTAO = ["ativo", "cancelado", "bloqueado"];
-export const GRUPOS_CATEGORIA = ["moradia", "transporte", "alimentacao", "saude", "educacao", "lazer", "dividas", "renda", "outros"];
+export const GRUPOS_CATEGORIA = ["moradia", "transporte", "alimentacao", "saude", "educacao", "filho", "lazer", "dividas", "renda", "outros"];
 export const NATUREZAS_CATEGORIA = ["receita", "despesa", "transferencia"];
 
 // Transações — ver docs/MODELO-DE-DADOS.md, "Movimentação — Fase 1".
@@ -161,6 +161,10 @@ export function padraoDivida(dados = {}) {
     taxaJurosMensalPct: null,
     emRisco: false,
     negativada: false,
+    // Quando não dá pra pagar todas as parcelas no mês (Caminhos, §22):
+    // 1 paga primeiro, número maior atrasa primeiro. null = não definida
+    // — o motor protege pelo juro mais alto até o usuário decidir.
+    prioridadePagamento: null,
     ...dados,
   };
 }
@@ -277,6 +281,7 @@ export function validarDivida(d) {
   if (d.parcelasPagas > d.quantidadeParcelas) erros.push("Parcelas pagas não pode ser maior que o total de parcelas.");
   if (!d.dataInicio) erros.push("Data da primeira parcela é obrigatória.");
   if (d.taxaJurosMensalPct != null && (!Number.isFinite(d.taxaJurosMensalPct) || d.taxaJurosMensalPct < 0)) erros.push("Taxa de juros inválida.");
+  if (d.prioridadePagamento != null && (!Number.isInteger(d.prioridadePagamento) || d.prioridadePagamento < 1)) erros.push("Prioridade de pagamento precisa ser um número inteiro a partir de 1.");
   return erros;
 }
 
@@ -317,6 +322,7 @@ export function categoriasSugeridas() {
     { nome: "Transporte", grupo: "transporte", natureza: "despesa", essencial: true },
     { nome: "Saúde", grupo: "saude", natureza: "despesa", essencial: true },
     { nome: "Educação", grupo: "educacao", natureza: "despesa", essencial: true },
+    { nome: "Filho", grupo: "filho", natureza: "despesa", essencial: true },
     { nome: "Lazer", grupo: "lazer", natureza: "despesa", essencial: false },
     { nome: "Assinaturas", grupo: "outros", natureza: "despesa", essencial: false },
     { nome: "Dívidas e parcelas", grupo: "dividas", natureza: "despesa", essencial: true },
