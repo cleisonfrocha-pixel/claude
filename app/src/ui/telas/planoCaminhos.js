@@ -8,7 +8,7 @@
 import { assinarBaseCenarios } from "../../dados/cenariosRepo.js";
 import { compararCenarios } from "../../domain/cenarios.js";
 import { formatarBRL, formatarBRLCurto, paraCentavos } from "../../domain/dinheiro.js";
-import { somarMeses, competenciaAbrevAno } from "../../domain/tempo.js";
+import { somarMeses, competenciaAbrevAno, formatarData } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 
 // A cor segue o cenário (nunca a posição no ranking): ordem fixa.
@@ -65,8 +65,8 @@ function cartaoCaminho(c) {
       ${temNegativada ? linhaMarco("Nome limpo em", r.mesNomeLimpo, `não limpa em ${comparacao.meses} meses`) : ""}
       ${base.dividas.length ? linhaMarco("Dívidas zeradas em", r.mesDividaZerada, `não zera em ${comparacao.meses} meses`) : ""}
       ${r.metaReservaCentavos > 0 ? linhaMarco(`Reserva de ${comparacao.metaReservaMeses} meses em`, r.mesReservaMeta, "não chega") : ""}
-      <div class="fatura-linha"><span class="rotulo">Sobra por mês no início<small>renda menos gasto menos parcelas</small></span><b class="${r.sobraMensalInicialCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(r.sobraMensalInicialCentavos)}</b></div>
-      ${r.jurosAcumuladosCentavos > 0 ? `<div class="fatura-linha"><span class="rotulo">Juros de dívida parada<small>o que a dívida sem acordo cresce no período</small></span><b class="valor-neg" data-valor>${formatarBRL(r.jurosAcumuladosCentavos)}</b></div>` : ""}
+      <div class="fatura-linha"><span class="rotulo">Sobra por mês<small>média dos meses fechados: renda menos todo o gasto e as parcelas</small></span><b class="${r.sobraMensalInicialCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(r.sobraMensalInicialCentavos)}</b></div>
+      ${r.jurosAcumuladosCentavos > 0 ? `<div class="fatura-linha"><span class="rotulo">Juros pagos no período<small>das dívidas com acordo e o que as sem acordo crescem</small></span><b class="valor-neg" data-valor>${formatarBRL(r.jurosAcumuladosCentavos)}</b></div>` : ""}
       <div class="fatura-linha"><span class="rotulo">Patrimônio em 12 meses</span><b class="${r.em12Meses.patrimonioCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(r.em12Meses.patrimonioCentavos)}</b></div>
       <div class="fatura-linha"><span class="rotulo">Patrimônio em ${comparacao.meses} meses</span><b class="${r.final.patrimonioCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(r.final.patrimonioCentavos)}</b></div>
     </div>`;
@@ -79,7 +79,12 @@ function blocoSugerido() {
       <div class="hero-caixa-label">Caminho sugerido pelos números</div>
       <div class="caminho-hero-nome">${escapeHtml(c.nome)}</div>
       <div class="hero-caixa-sub">${escapeHtml(comparacao.recomendado.motivo)}</div>
-    </div>`;
+    </div>
+    ${comparacao.base.apertoCaixa ? `
+      <div class="alerta-cobertura" style="margin-top:12px;">
+        <div class="titulo">Antes de qualquer caminho: ${escapeHtml(formatarData(comparacao.base.apertoCaixa.data))}</div>
+        <div class="texto">A conta mês a mês fecha, mas nesse dia saem mais contas do que tem na conta: faltam <span class="valor-neg" data-valor>${formatarBRL(comparacao.base.apertoCaixa.faltaCentavos)}</span> até a próxima renda cair. Use a reserva ou adie um pagamento que dê pra adiar. O detalhe está em Planejamento.</div>
+      </div>` : ""}`;
 }
 
 function blocoAjustes() {

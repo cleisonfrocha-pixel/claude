@@ -9,6 +9,7 @@ import { agregarPeriodoPago } from "./transacoes.js";
 import { somarMeses } from "./tempo.js";
 import { calcularVisaoConsolidada } from "./dividas.js";
 import { calcularComposicaoAtivos, calcularPatrimonioLiquido } from "./patrimonio.js";
+import { calcularCustos, competenciasComDados } from "./orcamento.js";
 
 function despesasPorCategoria(transacoes, competencia) {
   const porCategoria = new Map();
@@ -20,19 +21,16 @@ function despesasPorCategoria(transacoes, competencia) {
   return porCategoria;
 }
 
-/** Pressão das despesas fixas: fatia das despesas pagas do mês que vem de
- * categoria marcada como essencial. */
+/** Pressão das despesas fixas: fatia do gasto do mês que é essencial ou
+ * parcela de dívida — os dois números vêm de `calcularCustos`, o mesmo
+ * cálculo da tela Renda, pra "essencial" querer dizer a mesma coisa em
+ * todo lugar. */
 export function calcularPressaoFixas(transacoes, categorias, competencia) {
-  const essenciaisIds = new Set((categorias || []).filter((c) => c.essencial).map((c) => c.id));
-  let fixasCentavos = 0, totalCentavos = 0;
-  for (const t of transacoes || []) {
-    if (t.tipo !== "despesa" || t.status !== "pago" || t.competencia !== competencia) continue;
-    const v = Number(t.valorCentavos) || 0;
-    totalCentavos += v;
-    if (essenciaisIds.has(t.categoriaId)) fixasCentavos += v;
-  }
+  const c = calcularCustos(transacoes, categorias, competencia);
+  const fixasCentavos = c.essencialCentavos + c.dividasCentavos;
+  const totalCentavos = c.atualCentavos;
   const percentual = totalCentavos > 0 ? Math.round((fixasCentavos / totalCentavos) * 100) : 0;
-  return { fixasCentavos, totalCentavos, percentual };
+  return { fixasCentavos, essencialCentavos: c.essencialCentavos, parcelasCentavos: c.dividasCentavos, totalCentavos, percentual };
 }
 
 /** Previsibilidade (fatia confirmada) e concentração (fatia da maior fonte
@@ -82,15 +80,22 @@ export function calcularEvolucaoReceita(transacoes, competencia) {
  */
 export function calcularDespesasForaDoPadrao(transacoes, competencia, { mesesBase = 3, limiarPercentual = 50 } = {}) {
   const atual = despesasPorCategoria(transacoes, competencia);
+  const comDados = competenciasComDados(transacoes);
   const somaBase = new Map();
+  let mesesComDados = 0;
   for (let i = 1; i <= mesesBase; i++) {
-    for (const [cat, v] of despesasPorCategoria(transacoes, somarMeses(competencia, -i))) {
+    const c = somarMeses(competencia, -i);
+    if (!comDados.has(c)) continue; // antes do começo do histórico: sem dado, não zero
+    mesesComDados += 1;
+    for (const [cat, v] of despesasPorCategoria(transacoes, c)) {
       somaBase.set(cat, (somaBase.get(cat) || 0) + v);
     }
   }
+  // Com menos de dois meses de base não existe "padrão" pra comparar.
+  if (mesesComDados < 2) return [];
   const achados = [];
   for (const [categoriaId, valorCentavos] of atual) {
-    const mediaCentavos = Math.round((somaBase.get(categoriaId) || 0) / mesesBase);
+    const mediaCentavos = Math.round((somaBase.get(categoriaId) || 0) / mesesComDados);
     if (mediaCentavos <= 0) continue; // sem histórico — não dá pra chamar de "fora do padrão"
     const percentualAcima = Math.round(((valorCentavos - mediaCentavos) / mediaCentavos) * 100);
     if (percentualAcima >= limiarPercentual) achados.push({ categoriaId, valorCentavos, mediaCentavos, percentualAcima });
@@ -136,7 +141,8 @@ export function calcularDiagnostico({ contas, transacoes, categorias, dividas, p
     pressaoFixas: calcularPressaoFixas(transacoes, categorias, competenciaAtual),
     pesoDividas: {
       comprometimentoMensalCentavos: visaoDividas.comprometimentoMensalCentavos,
-      quantidadeAtrasadas: visaoDividas.quantidadeAtrasadas,
+      quantidadeAtrasadas: visaoDividas.quantidadeSoAtrasadas,
+      quantidadeNegativadas: visaoDividas.quantidadeNegativadas,
       saldoTotalAtualCentavos: visaoDividas.saldoTotalAtualCentavos,
     },
     receita: calcularReceita(transacoes, competenciaAtual),

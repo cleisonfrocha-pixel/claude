@@ -148,3 +148,14 @@ test("PORTÃO DA FASE 8: déficit por combinação de causas ao mesmo tempo", ()
   assert.ok(tipos.includes("divida"));
   assert.ok(tipos.length >= 2, "mais de uma causa ao mesmo tempo é exatamente a 'combinação' que o blueprint pede");
 });
+
+test("sem falso déficit: mês com sobra e parcela de dívida paga não vira 'gasto passou do essencial'", () => {
+  // Renda 10.100; essencial (sem dívida) 3.591; gasto total 5.696,90 com
+  // 1.630 de parcelas pagas dentro. Sobra de 4.403 — não é déficit.
+  const r = diagnosticarCausaDeficit({
+    rendaAtualCentavos: 1010000, custoEssencialCentavos: 359100, custoAtualCentavos: 569690,
+    custoDividasPagasCentavos: 163000, comprometimentoMensalDividasCentavos: 163000, seguroParaGastarCentavos: 50000,
+  });
+  assert.equal(r.temDeficit, false);
+  assert.deepEqual(r.causas, []);
+});

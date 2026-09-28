@@ -36,7 +36,7 @@ categorias/<id>     { nome, grupo, natureza, essencial, ativa }
 transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
                       categoriaId, pessoaId, descricao, status, certeza,
                       transferenciaId?, faturaId?, parcelaDe?, parcelaNum?,
-                      parcelaTotal?, recorrenciaId?, fonteRendaId?, origem,
+                      parcelaTotal?, recorrenciaId?, fonteRendaId?, dividaId?, origem,
                       origemId?, revisado, criadoEm, atualizadoEm }
 ```
 
@@ -50,6 +50,7 @@ transacoes/<id>     { data, competencia, valor, tipo, contaId?, cartaoId?,
 | `direcao` | `entrada \| saida` — só preenchido quando `tipo` é `transferencia`. As duas pernas compartilham o mesmo `valorCentavos` positivo; sem isto não dá para saber qual perna soma e qual subtrai do saldo da conta (precisou existir na Fase 2, para calcular saldo por conta) |
 | `faturaId` | Compra no cartão aponta para a fatura. O `pagamento_fatura` quita a fatura, **não** é uma segunda despesa (§5) |
 | `parcelaDe` | Agrupa as parcelas de uma compra; `parcelaNum/parcelaTotal` dão a visão de compromisso futuro (§3) |
+| `dividaId` | Liga a despesa que paga uma parcela à dívida (§11). O status "atrasada" e a agenda deixam de cobrar uma parcela já paga; importar extrato antigo não conta a parcela duas vezes (ver `ferramentas/subirPainel.js`) |
 | `fonteRendaId` | Liga uma receita a uma fonte de renda cadastrada (§12) — opcional, só usado quando `tipo` é `receita`. Sem ele, a receita ainda soma no total do mês, só não entra na previsibilidade/histórico de nenhuma fonte específica |
 | `origem` | `manual \| planilha \| ofx \| drive \| open_finance` — `planilha`/`ofx` ✅ Fase 11; `drive`/`open_finance` ficam para a Fase 12 (§18) |
 | `origemId` | Chave do lançamento na fonte — FITID do banco (OFX) ou o id do lote (CSV, que não tem identificador próprio); é o que detecta reimportação duplicada (§18) |
@@ -111,7 +112,8 @@ quando essa fase chegar, é o lugar certo para essa coleção nascer.
 ## Renda e orçamento — Fase 8
 
 ```
-fontesRenda/<id>            { pessoaId, nome, tipo, valorEsperadoCentavos, ativa }
+fontesRenda/<id>            { pessoaId, nome, tipo, valorEsperadoCentavos, diaRecebimento?, ativa }
+                            # diaRecebimento: dia do mês em que costuma cair; sem ele, a agenda usa o dia do último recebimento
 configuracoes/orcamento     { custoDesejadoCentavos?, metaRecuperacaoCentavos? }
 ```
 

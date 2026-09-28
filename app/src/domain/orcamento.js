@@ -4,6 +4,16 @@
 
 import { somarMeses } from "./tempo.js";
 
+/** Meses que têm QUALQUER movimento pago registrado. Mês antes do começo
+ * do histórico não é "mês em que não se gastou nada": é mês sem dado, e
+ * não pode entrar numa média como zero — senão todo gasto normal parece
+ * "50% acima da média" quando o histórico tem só dois meses. */
+export function competenciasComDados(transacoes) {
+  const set = new Set();
+  for (const t of transacoes || []) if (t.status === "pago" && t.competencia) set.add(t.competencia);
+  return set;
+}
+
 function despesasPorCategoria(transacoes, competencia) {
   const porCategoria = new Map();
   for (const t of transacoes || []) {
@@ -70,14 +80,21 @@ export function calcularMargem({ rendaAtualCentavos, custoEssencialCentavos, com
 }
 
 /** Recorrente (ligado a uma recorrência cadastrada, §1 já existente desde
- * a Fase 1) versus extraordinário (lançamento avulso) — reaproveita o
- * campo que já existe, não inventa um conceito novo. */
-export function calcularRecorrenteVsExtraordinario(transacoes, competencia) {
+ * a Fase 1) versus extraordinário (lançamento avulso). Lançamento que veio
+ * de extrato não traz `recorrenciaId`, então também conta como recorrente
+ * quando bate com uma recorrência ativa: mesma categoria, mesma conta ou
+ * cartão e valor até 20% diferente — senão o aluguel importado do banco
+ * apareceria como gasto "extraordinário". */
+export function calcularRecorrenteVsExtraordinario(transacoes, competencia, recorrencias = []) {
+  const ativas = (recorrencias || []).filter((r) => r.ativa !== false && r.tipo === "despesa");
+  const bateComRecorrencia = (t) => ativas.some((r) => r.categoriaId === t.categoriaId
+    && ((r.contaId && r.contaId === t.contaId) || (r.cartaoId && r.cartaoId === t.cartaoId))
+    && Math.abs((Number(t.valorCentavos) || 0) - (Number(r.valorEstimadoCentavos) || 0)) <= (Number(r.valorEstimadoCentavos) || 0) * 0.2);
   let recorrenteCentavos = 0, extraordinarioCentavos = 0;
   for (const t of transacoes || []) {
     if (t.tipo !== "despesa" || t.status !== "pago" || t.competencia !== competencia) continue;
     const v = Number(t.valorCentavos) || 0;
-    if (t.recorrenciaId) recorrenteCentavos += v; else extraordinarioCentavos += v;
+    if (t.recorrenciaId || t.dividaId || bateComRecorrencia(t)) recorrenteCentavos += v; else extraordinarioCentavos += v;
   }
   return { recorrenteCentavos, extraordinarioCentavos };
 }
@@ -86,8 +103,12 @@ export function calcularRecorrenteVsExtraordinario(transacoes, competencia) {
  * média dos `mesesHistorico` meses anteriores ao lado. */
 export function calcularEvolucaoPorCategoria(transacoes, competencia, { mesesHistorico = 3, limite = 5 } = {}) {
   const atual = despesasPorCategoria(transacoes, competencia);
+  const comDados = competenciasComDados(transacoes);
   const mapasAnteriores = [];
-  for (let i = mesesHistorico; i >= 1; i--) mapasAnteriores.push(despesasPorCategoria(transacoes, somarMeses(competencia, -i)));
+  for (let i = mesesHistorico; i >= 1; i--) {
+    const c = somarMeses(competencia, -i);
+    if (comDados.has(c)) mapasAnteriores.push(despesasPorCategoria(transacoes, c));
+  }
 
   return Array.from(atual.entries())
     .sort((a, b) => b[1] - a[1])

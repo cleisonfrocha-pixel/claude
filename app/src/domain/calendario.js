@@ -17,13 +17,17 @@ import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
  * `faturas` precisa vir com `id` embutido (cruza com `transacao.faturaId`) —
  * mesma exigência de domain/caixa.js e domain/cartoes.js.
  */
-export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje }) {
+export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje, extras = [] }) {
   const porDia = new Map();
-  function item(data, valorComSinal, dados) {
+  function item(dataOriginal, valorComSinal, dados) {
+    // Compromisso vencido e não pago não some do futuro: pesa hoje.
+    const data = dados.atrasado && dataOriginal && dataOriginal < de ? de : dataOriginal;
     if (!data || data < de || data > ate) return;
     if (!porDia.has(data)) porDia.set(data, { data, entradasCentavos: 0, saidasCentavos: 0, itens: [] });
     const dia = porDia.get(data);
-    if (valorComSinal >= 0) dia.entradasCentavos += valorComSinal;
+    // Entrada incerta aparece no dia mas não cobre nada (CLAUDE.md:
+    // incerto não é dinheiro garantido). Saída incerta pesa igual.
+    if (valorComSinal >= 0) { if (dados.certeza !== "incerto") dia.entradasCentavos += valorComSinal; }
     else dia.saidasCentavos += -valorComSinal;
     dia.itens.push(dados);
   }
@@ -57,7 +61,15 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     const total = totalPorFatura.get(f.id) || 0;
     if (total <= 0) continue;
     const vencimento = dataVencimentoFatura(cartao, f.competencia);
-    item(vencimento, -total, { tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: false, certeza: "confirmado" });
+    item(vencimento, -total, { tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? vencimento < hoje : false, certeza: "confirmado" });
+  }
+
+  // Eventos derivados dos cadastros (renda fixa, parcela de dívida,
+  // recorrência ainda não gerada) — ver domain/previstos.js.
+  for (const e of extras || []) {
+    item(e.data, e.tipo === "receita" ? e.valorCentavos : -e.valorCentavos, {
+      tipo: e.tipo, descricao: e.descricao, valorCentavos: e.valorCentavos, atrasado: !!e.atrasado, certeza: e.certeza, virtual: true, origem: e.origem,
+    });
   }
 
   return Array.from(porDia.values()).sort((a, b) => a.data.localeCompare(b.data));

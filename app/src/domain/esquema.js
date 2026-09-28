@@ -113,6 +113,7 @@ export function padraoTransacao(dados = {}) {
     parcelaTotal: null,
     recorrenciaId: null,
     fonteRendaId: null, // só usado quando tipo é receita (§12) — opcional
+    dividaId: null, // despesa que paga uma parcela de dívida (§11) — opcional
     origem: "manual",
     origemId: null,
     revisado: true,
@@ -170,6 +171,7 @@ export function padraoFonteRenda(dados = {}) {
     nome: "",
     tipo: "fixa",
     valorEsperadoCentavos: 0,
+    diaRecebimento: null, // dia do mês em que costuma cair (opcional)
     ativa: true,
     ...dados,
   };

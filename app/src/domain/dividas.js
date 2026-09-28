@@ -11,23 +11,48 @@ import { somarMeses, competenciaDeData, dataDeCompetencia } from "./tempo.js";
 
 export const STATUS_DIVIDA = ["ativa", "atrasada", "quitada"];
 
-/** Saldo devido agora — original menos o que já foi pago pelas parcelas,
- * mas NUNCA menos do que o que as parcelas que ainda faltam somam.
+/** Valor presente de `n` parcelas iguais a uma taxa mensal (fração). */
+function valorPresente(parcela, n, taxa) {
+  if (n <= 0) return 0;
+  if (!(taxa > 0)) return parcela * n;
+  return parcela * (1 - (1 + taxa) ** -n) / taxa;
+}
+
+/** A taxa mensal (fração) que faz `n` parcelas de `parcela` valerem
+ * `principal` hoje — os juros que o contrato embute sem dizer. Zero quando
+ * o principal cadastrado já é a soma das parcelas (ou mais). */
+function taxaImplicita(principal, parcela, n) {
+  if (!(principal > 0) || !(parcela > 0) || n <= 0 || principal >= parcela * n) return 0;
+  let baixo = 0, alto = 1;
+  for (let i = 0; i < 80; i++) {
+    const meio = (baixo + alto) / 2;
+    if (valorPresente(parcela, n, meio) > principal) baixo = meio; else alto = meio;
+  }
+  return (baixo + alto) / 2;
+}
+
+/** Taxa mensal da dívida em fração: a informada; sem ela, a implícita no
+ * contrato (principal, parcela, quantidade). */
+export function taxaMensalEfetiva(divida) {
+  const informada = Number(divida.taxaJurosMensalPct);
+  if (divida.taxaJurosMensalPct != null && Number.isFinite(informada) && informada >= 0) return informada / 100;
+  return taxaImplicita(Number(divida.saldoOriginalCentavos) || 0, Number(divida.valorParcelaCentavos) || 0, Number(divida.quantidadeParcelas) || 0);
+}
+
+/** Saldo devido agora: o que custaria quitar hoje.
  *
- * Por quê: quando `saldoOriginalCentavos` é só o principal e os juros do
- * contrato estão embutidos em `valorParcelaCentavos` (o normal num
- * financiamento), `parcelasPagas × parcela` cresce mais rápido que o
- * principal cadastrado — o cálculo ingênuo (original menos pago) chegaria
- * a zero antes de `parcelasPagas` alcançar `quantidadeParcelas`, e a
- * dívida sumiria do plano (Cenários só considera dívida com saldo > 0)
- * mesmo faltando parcela real pra pagar. O piso de "parcelas que faltam ×
- * parcela" garante que isso não acontece: você nunca deve menos do que o
- * que ainda vai sair do bolso pelo contrato. */
+ * Com acordo (parcela > 0) é o valor presente das parcelas que faltam, na
+ * taxa do contrato — é o que o credor cobra numa quitação antecipada.
+ * Nem "original menos pago" (zera antes da última parcela quando os juros
+ * estão embutidos na parcela e a dívida sumiria do plano), nem "parcelas
+ * que faltam × parcela" (cobra juros futuros que quem quita não paga).
+ *
+ * Sem acordo (parcela zero) é o saldo cadastrado: o crescimento por juros
+ * só aparece na simulação, que diz isso em voz alta. */
 export function calcularSaldoAtual(divida) {
-  const pago = (Number(divida.parcelasPagas) || 0) * (Number(divida.valorParcelaCentavos) || 0);
-  const saldoBruto = Math.max(0, (Number(divida.saldoOriginalCentavos) || 0) - pago);
-  const pisoParcelasRestantes = parcelasRestantes(divida) * (Number(divida.valorParcelaCentavos) || 0);
-  return Math.max(saldoBruto, pisoParcelasRestantes);
+  const parcela = Number(divida.valorParcelaCentavos) || 0;
+  if (!(parcela > 0)) return Math.max(0, Number(divida.saldoOriginalCentavos) || 0);
+  return Math.round(valorPresente(parcela, parcelasRestantes(divida), taxaMensalEfetiva(divida)));
 }
 
 export function parcelasRestantes(divida) {
@@ -37,7 +62,7 @@ export function parcelasRestantes(divida) {
 /** Data de vencimento da parcela de índice `indice` (0 = primeira),
  * contando a partir de `dataInicio` — mesmo padrão de rolagem de mês que
  * `dataVencimentoFatura` usa para cartões (o dia se mantém, o mês rola). */
-function dataDaParcela(divida, indice) {
+export function dataDaParcela(divida, indice) {
   if (!divida.dataInicio) return null;
   const dia = Number(divida.dataInicio.slice(8, 10));
   const competencia = somarMeses(competenciaDeData(divida.dataInicio), indice);

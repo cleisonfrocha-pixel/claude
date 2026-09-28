@@ -96,7 +96,7 @@ function blocoCasa() {
       <div class="resumo-item"><span>Renda da casa</span><b class="mono valor-pos" data-valor>${brl(c.rendaCentavos)}</b></div>
       <div class="resumo-item"><span>Gasto da casa</span><b class="mono" data-valor>${brl(c.despesasCentavos)}</b></div>
       <div class="resumo-item"><span>Parcelas</span><b class="mono" data-valor>${brl(c.parcelasCentavos)}</b></div>
-      <div class="resumo-item"><span>Sobra da casa</span><b class="mono ${classeValor(c.coberturaCentavos)}" data-valor>${brl(c.coberturaCentavos)}</b></div>
+      <div class="resumo-item"><span>Sobra depois do essencial e das parcelas</span><b class="mono ${classeValor(c.coberturaCentavos)}" data-valor>${brl(c.coberturaCentavos)}</b></div>
     </div>
     ${c.dividasNegativadas ? `<div class="alerta-cobertura"><div class="titulo">${c.dividasNegativadas} ${c.dividasNegativadas === 1 ? "dívida negativada" : "dívidas negativadas"} na casa</div>
       <div class="texto">Somam <b data-valor>${brl(c.saldoNegativadoCentavos)}</b>. Nome sujo trava crédito e costuma ser o primeiro ponto de virada: veja em Caminhos quanto tempo cada estratégia leva pra limpar.</div></div>` : ""}`;

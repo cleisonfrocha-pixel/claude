@@ -11,7 +11,7 @@ import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../../domain/tempo.js";
 import {
   calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao,
-  statusDivida, calcularVisaoConsolidada,
+  statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva,
 } from "../../domain/dividas.js";
 import { simularAporteExtra, simularQuitacaoAntecipada } from "../../domain/simuladorDividas.js";
 import { escapeHtml } from "../utilitarios.js";
@@ -110,7 +110,10 @@ export default criarTelaCadastro({
       <div class="fatura-linha"><span class="rotulo">Saldo original</span><b data-valor>${formatarBRL(dados.saldoOriginalCentavos)}</b></div>
       <div class="fatura-linha"><span class="rotulo">Saldo atual</span><b data-valor>${formatarBRL(saldoAtual)}</b></div>
       <div class="fatura-linha"><span class="rotulo">Parcela mensal</span><b data-valor>${formatarBRL(dados.valorParcelaCentavos)}</b></div>
-      ${dados.taxaJurosMensalPct != null ? `<div class="fatura-linha"><span class="rotulo">Juros ao mês</span><b>${dados.taxaJurosMensalPct}%</b></div>` : ""}
+      ${dados.taxaJurosMensalPct != null
+        ? `<div class="fatura-linha"><span class="rotulo">Juros ao mês</span><b>${String(dados.taxaJurosMensalPct).replace(".", ",")}%</b></div>`
+        : Number(dados.valorParcelaCentavos) > 0 && taxaMensalEfetiva(dados) > 0
+          ? `<div class="fatura-linha"><span class="rotulo">Juros ao mês<small>calculado pela parcela e pelo prazo</small></span><b>${(taxaMensalEfetiva(dados) * 100).toFixed(2).replace(".", ",")}%</b></div>` : ""}
       ${proximoVenc ? `<div class="fatura-linha"><span class="rotulo">Próximo vencimento</span><b>${escapeHtml(formatarData(proximoVenc))}</b></div>` : ""}
       ${dataQuitacao ? `<div class="fatura-linha"><span class="rotulo">Quitação estimada</span><b>${escapeHtml(formatarData(dataQuitacao))}</b></div>` : ""}
 
@@ -149,7 +152,7 @@ export default criarTelaCadastro({
         }
         const r = simularAporteExtra({
           saldoAtualCentavos, valorParcelaCentavos: dados.valorParcelaCentavos,
-          taxaJurosMensalPct: dados.taxaJurosMensalPct, aporteExtraCentavos,
+          taxaJurosMensalPct: taxaMensalEfetiva(dados) * 100, aporteExtraCentavos,
         });
         resultadoAporte.innerHTML = resultadoSimulacaoHtml(r);
       });
@@ -167,7 +170,7 @@ export default criarTelaCadastro({
         }
         const r = simularQuitacaoAntecipada({
           saldoAtualCentavos, valorParcelaCentavos: dados.valorParcelaCentavos,
-          taxaJurosMensalPct: dados.taxaJurosMensalPct, valorPagamentoUnicoCentavos,
+          taxaJurosMensalPct: taxaMensalEfetiva(dados) * 100, valorPagamentoUnicoCentavos,
         });
         resultadoUnico.innerHTML = resultadoSimulacaoHtml(r);
       });

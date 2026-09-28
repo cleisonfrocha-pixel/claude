@@ -99,10 +99,10 @@ export function criarTelaCadastro(config) {
           </div>
           ${v.valorDireita != null ? `<div class="item-valor" data-valor>${escapeHtml(v.valorDireita)}</div>` : ""}
           ${v.tag ? `<span class="item-tag${v.tagInativa ? " inativa" : ""}${v.tagClasse ? " " + escapeHtml(v.tagClasse) : ""}">${escapeHtml(v.tag)}</span>` : ""}
-          ${expansivel ? `<button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" title="Ver detalhes" aria-label="Ver detalhes">▾</button>` : ""}
           <div class="item-acoes">
-            <button class="icon-btn" data-acao="editar" title="Editar" aria-label="Editar">✎</button>
-            <button class="icon-btn danger" data-acao="apagar" title="Apagar" aria-label="Apagar">✕</button>
+            ${expansivel ? `<button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" aria-expanded="${aberto}">${aberto ? "Fechar" : (config.rotuloDetalhes || "Detalhes")}</button>` : ""}
+            <button class="btn-mini" data-acao="editar">Editar</button>
+            <button class="btn-mini perigo" data-acao="apagar">Apagar</button>
           </div>
         </div>
         ${aberto ? `<div class="item-extra" data-extra-id="${escapeHtml(item.id)}">${config.renderExtra(item.dados, item.id, contexto)}</div>` : ""}`;

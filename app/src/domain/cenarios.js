@@ -8,9 +8,11 @@
 //
 // Modelo, deliberadamente simples e dito em voz alta (vira "premissas" na
 // tela):
-// - Dívida COM acordo (parcela > 0) segue a parcela combinada. Não soma
-//   juros por cima: a parcela já embute os juros do contrato. Pagamento
-//   extra abate direto o saldo.
+// - Dívida COM acordo (parcela > 0): o saldo é o valor de quitar hoje
+//   (valor presente das parcelas, domain/dividas.js) e rende a taxa do
+//   contrato — informada ou a implícita no principal/parcela/prazo. A
+//   parcela abate; pagando só ela, quita exatamente na última parcela.
+//   Pagamento extra abate o saldo e corta os juros dali pra frente.
 // - Dívida SEM acordo (parcela zero, típico de negativada parada) não
 //   diminui sozinha e, se tem juros informado, cresce todo mês.
 // - Sobra do mês vai, conforme a estratégia, pra dívida (negativadas
@@ -21,7 +23,7 @@
 
 import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos } from "./orcamento.js";
-import { calcularSaldoAtual, statusDivida } from "./dividas.js";
+import { calcularSaldoAtual, statusDivida, taxaMensalEfetiva } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
 import { somarMeses } from "./tempo.js";
 import { formatarBRL } from "./dinheiro.js";
@@ -77,26 +79,52 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
   const rendaMediaCentavos = media(rendas);
   const custoEssencialCentavos = media(custos.map((c) => c.essencialCentavos));
   const custoAtualCentavos = media(custos.map((c) => c.atualCentavos));
+  // Não essencial = o que dá pra cortar. Parcela de dívida NÃO entra aqui
+  // (a simulação paga as parcelas pelo cronograma de cada dívida — contar
+  // de novo seria a mesma parcela duas vezes). Fatura paga sem compra
+  // lançada é gasto de categoria desconhecida: conta, mas não é cortável.
+  const discricionarioCentavos = media(custos.map((c) => c.discricionarioCentavos));
+  const semCategoriaCentavos = media(custos.map((c) => c.faturaSemDetalheCentavos || 0));
 
-  // Renda garantida: o que as fontes fixas/recorrentes prometem. Sem
-  // nenhuma cadastrada, o pior mês observado (nunca inventa uma renda que
-  // os dados não mostraram).
-  const fixas = (fontesRenda || []).filter((f) => f.ativa !== false && (f.tipo === "fixa" || f.tipo === "recorrente"));
-  const somaFixas = fixas.reduce((s, f) => s + (Number(f.valorEsperadoCentavos) || 0), 0);
-  const rendaPositiva = rendas.filter((r) => r > 0);
-  const rendaGarantidaCentavos = somaFixas > 0
-    ? Math.min(somaFixas, rendaMediaCentavos || somaFixas)
-    : (rendaPositiva.length ? Math.min(...rendaPositiva) : 0);
+  // Renda garantida (caminho conservador): fonte fixa/recorrente pelo
+  // valor esperado; fonte variável pelo PIOR mês fechado dela; receita sem
+  // fonte, pelo pior mês. Sem fonte nenhuma, o pior mês da casa. Nunca
+  // inventa renda que os dados não mostraram.
+  const ativas = (fontesRenda || []).filter((f) => f.ativa !== false);
+  const porFonteNoMes = (fonteId, c) => (transacoes || [])
+    .filter((t) => t.tipo === "receita" && t.status === "pago" && t.competencia === c && (fonteId ? t.fonteRendaId === fonteId : !t.fonteRendaId))
+    .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
+  const piorMes = (valores) => (valores.length ? Math.min(...valores) : 0);
+  let rendaGarantidaCentavos;
+  if (ativas.length) {
+    rendaGarantidaCentavos = 0;
+    for (const f of ativas) {
+      if (f.tipo === "fixa" || f.tipo === "recorrente") rendaGarantidaCentavos += Number(f.valorEsperadoCentavos) || 0;
+      else if (f.tipo === "variavel") rendaGarantidaCentavos += piorMes(meses.map((c) => porFonteNoMes(f.id, c)));
+    }
+    rendaGarantidaCentavos += piorMes(meses.map((c) => porFonteNoMes(null, c)));
+    if (rendaMediaCentavos > 0) rendaGarantidaCentavos = Math.min(rendaGarantidaCentavos, rendaMediaCentavos);
+  } else {
+    rendaGarantidaCentavos = piorMes(rendas.filter((r) => r > 0));
+  }
 
   const dividasAtivas = (dividas || [])
     .filter((d) => statusDivida(d, hoje) !== "quitada")
-    .map((d) => ({
-      id: d.id, nome: d.nome, credor: d.credor || "",
-      saldoCentavos: calcularSaldoAtual(d),
-      parcelaCentavos: Number(d.valorParcelaCentavos) > 0 ? Number(d.valorParcelaCentavos) : 0,
-      taxaMensalPct: d.taxaJurosMensalPct != null && Number.isFinite(Number(d.taxaJurosMensalPct)) ? Number(d.taxaJurosMensalPct) : null,
-      negativada: !!d.negativada,
-    }))
+    .map((d) => {
+      const parcela = Number(d.valorParcelaCentavos) > 0 ? Number(d.valorParcelaCentavos) : 0;
+      const informada = d.taxaJurosMensalPct != null && Number.isFinite(Number(d.taxaJurosMensalPct));
+      return {
+        id: d.id, nome: d.nome, credor: d.credor || "",
+        saldoCentavos: calcularSaldoAtual(d),
+        parcelaCentavos: parcela,
+        // Com acordo, a taxa do contrato (informada ou implícita): o saldo
+        // é o valor presente das parcelas, então ele rende juros e a
+        // parcela abate — pagar a mais economiza juros de verdade.
+        taxaMensalPct: parcela > 0 ? Math.round(taxaMensalEfetiva(d) * 1e6) / 1e4 : (informada ? Number(d.taxaJurosMensalPct) : null),
+        taxaInformada: informada,
+        negativada: !!d.negativada,
+      };
+    })
     .filter((d) => d.saldoCentavos > 0);
 
   return {
@@ -104,10 +132,15 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
     mesesHistorico: meses.length,
     rendaMediaCentavos,
     rendaGarantidaCentavos,
-    fonteRendaGarantida: somaFixas > 0 ? "fontes" : "pior_mes",
+    fonteRendaGarantida: ativas.length ? "fontes" : "pior_mes",
     custoEssencialCentavos,
     custoAtualCentavos,
-    discricionarioCentavos: Math.max(0, custoAtualCentavos - custoEssencialCentavos),
+    discricionarioCentavos,
+    semCategoriaCentavos,
+    // Aperto de datas que a conta mensal não enxerga (o mês fecha, mas um
+    // dia específico fica negativo) — vem da clareza de caixa (§4).
+    apertoCaixa: clareza && clareza.seguroParaGastarCentavos < 0 && clareza.diaMaisApertado
+      ? { data: clareza.diaMaisApertado, faltaCentavos: -clareza.seguroParaGastarCentavos } : null,
     dividas: dividasAtivas,
     reservaCentavos: Math.max(0, clareza?.saldoReservaCentavos || 0),
     caixaCentavos: clareza?.saldoAtualCentavos || 0,
@@ -178,7 +211,7 @@ function totalDividas(dividas) {
 export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaReservaMeses = 3 } = {}) {
   const rendaBase = cenario.renda === "garantida" ? base.rendaGarantidaCentavos : base.rendaMediaCentavos;
   const rendaCentavos = rendaBase + (cenario.aumentoCentavos || 0);
-  const custoCentavos = base.custoEssencialCentavos + Math.round(base.discricionarioCentavos * (1 - (cenario.cortePct || 0) / 100));
+  const custoCentavos = base.custoEssencialCentavos + (base.semCategoriaCentavos || 0) + Math.round(base.discricionarioCentavos * (1 - (cenario.cortePct || 0) / 100));
   const metaReservaCentavos = base.custoEssencialCentavos * metaReservaMeses;
   const colchaoCentavos = base.custoEssencialCentavos;
 
@@ -215,9 +248,10 @@ export function simularCenario(base, cenario, { meses = HORIZONTE_MESES, metaRes
 
   const serie = [];
   for (let m = 1; m <= meses; m++) {
-    // Juros só em dívida sem acordo (ver cabeçalho).
+    // Juros: dívida com acordo rende na taxa do contrato e a parcela abate;
+    // sem acordo cresce se tem juros informado (ver cabeçalho).
     for (const d of dividas) {
-      if (d.saldoCentavos > 0 && d.parcelaCentavos === 0 && d.taxaMensalPct > 0) {
+      if (d.saldoCentavos > 0 && d.taxaMensalPct > 0) {
         const j = Math.round(d.saldoCentavos * d.taxaMensalPct / 100);
         d.saldoCentavos += j;
         jurosAcumuladosCentavos += j;
@@ -361,11 +395,11 @@ export function compararCenarios(base, opcoes = {}) {
 export function premissas(base, meses = HORIZONTE_MESES) {
   const lista = [
     `Renda: média dos últimos ${base.mesesHistorico} ${base.mesesHistorico === 1 ? "mês" : "meses"} com movimento, ${formatarBRL(base.rendaMediaCentavos)} por mês. Só entra dinheiro que de fato entrou.`,
-    `Gasto: média do mesmo período, ${formatarBRL(base.custoEssencialCentavos)} essencial e ${formatarBRL(base.discricionarioCentavos)} não essencial por mês.`,
+    `Gasto: média do mesmo período, ${formatarBRL(base.custoEssencialCentavos)} essencial e ${formatarBRL(base.discricionarioCentavos)} não essencial por mês${base.semCategoriaCentavos ? `, mais ${formatarBRL(base.semCategoriaCentavos)} de fatura sem compra lançada (não entra no corte)` : ""}. As parcelas de dívida saem à parte, pelo cronograma de cada uma.`,
     base.fonteRendaGarantida === "fontes"
-      ? `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}, o que as fontes fixas e recorrentes prometem.`
-      : `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}, o pior mês observado, porque não há fonte fixa cadastrada.`,
-    "Dívida com acordo segue a parcela combinada; pagamento extra abate direto o saldo. Na vida real, adiantar parcela costuma vir com desconto de juros, então a quitação real tende a ser um pouco mais rápida.",
+      ? `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}: fontes fixas pelo valor esperado e renda variável pelo pior mês recente.`
+      : `Renda garantida (caminho conservador): ${formatarBRL(base.rendaGarantidaCentavos)}, o pior mês observado, porque não há fonte de renda cadastrada.`,
+    "Dívida com acordo: o saldo é o valor pra quitar hoje e rende os juros do contrato (o informado ou, sem ele, o que a parcela embute). Pagar a mais abate o saldo e corta os juros dali pra frente.",
     "Dívida sem acordo não diminui sozinha e, se tem juros informado, cresce todo mês. A simulação não supõe desconto em acordo: se vier desconto, o nome limpa mais cedo.",
     `Ponto de partida: ${formatarBRL(base.caixaCentavos)} em conta hoje e ${formatarBRL(base.reservaCentavos)} em reserva. Horizonte de ${meses} meses.`,
     "Nada disso altera seus dados reais.",

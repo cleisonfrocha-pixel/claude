@@ -53,38 +53,44 @@ export function detectarAchados({
 }) {
   const achados = [];
 
-  // Problema: dinheiro seguro para gastar está negativo (§4).
+  // Problema: no dia mais apertado dos próximos 30 dias o saldo fica
+  // negativo, mesmo contando o que entra (§4).
   if (clareza && clareza.seguroParaGastarCentavos < 0) {
+    const dia = clareza.diaMaisApertado;
     achados.push(achado({
       chave: "caixa_seguro_negativo", origemId: "seguro", tipo: "problema", urgencia: "alta",
-      titulo: "O dinheiro seguro para gastar está negativo",
-      acaoSugerida: "Revisar despesas previstas ou adiar compromissos não essenciais.",
+      titulo: dia ? `Vai faltar dinheiro em ${dia.slice(8, 10)}/${dia.slice(5, 7)}` : "O dinheiro seguro para gastar está negativo",
+      acaoSugerida: "Antecipar uma entrada, adiar um pagamento que dê pra adiar, ou cobrir com a reserva até a próxima renda cair.",
       impactoCentavos: Math.abs(clareza.seguroParaGastarCentavos),
+      prazo: dia || undefined,
       origem: { tipo: "clareza_caixa", id: "seguro", rotulo: "Início · Dinheiro seguro para gastar" },
-      dados: { lancamentos: clareza.detalhes?.compromissos || [] },
+      dados: { lancamentos: (clareza.detalhes?.compromissos || []).filter((c) => !dia || (c.data || "") <= dia) },
     }));
   }
 
-  // Oportunidade: sobra dinheiro livre além do comprometido (§4).
-  if (clareza && clareza.livreCentavos > 10000) {
+  // Oportunidade: mesmo no dia mais apertado sobra dinheiro (§4) — só
+  // aqui dá pra sugerir usar a sobra sem faltar pra conta do mês.
+  if (clareza && clareza.seguroParaGastarCentavos > 10000) {
     achados.push(achado({
       chave: "caixa_sobra_livre", origemId: "livre", tipo: "oportunidade", urgencia: "baixa",
-      titulo: "Sobra dinheiro livre depois do que já está comprometido",
+      titulo: "Sobra dinheiro mesmo no dia mais apertado do mês",
       acaoSugerida: "Considerar reforçar a reserva ou adiantar uma parcela de dívida.",
-      impactoCentavos: clareza.livreCentavos,
-      origem: { tipo: "clareza_caixa", id: "livre", rotulo: "Início · Livre" },
+      impactoCentavos: clareza.seguroParaGastarCentavos,
+      origem: { tipo: "clareza_caixa", id: "livre", rotulo: "Início · Dinheiro seguro para gastar" },
     }));
   }
 
   // Risco: saída de caixa crítica prevista no horizonte de 30 dias (§7).
-  if (horizonte30d && horizonte30d.saidaCritica) {
+  // Mesmo aperto que o achado acima já mostra (mesma trajetória de 30
+  // dias): só aparece quando a clareza não o pegou.
+  if (horizonte30d && horizonte30d.saidaCritica && !(clareza && clareza.seguroParaGastarCentavos < 0)) {
     const sc = horizonte30d.saidaCritica;
     const diasAteAperto = hoje ? Math.round((new Date(sc.data) - new Date(hoje)) / 86400000) : null;
     achados.push(achado({
       chave: "projecao_saida_critica", origemId: "30d", tipo: "risco",
       urgencia: diasAteAperto !== null && diasAteAperto <= 7 ? "alta" : "media",
-      titulo: "O saldo seguro projetado fica negativo dentro de 30 dias",
-      acaoSugerida: "Ajustar despesas previstas antes dessa data ou garantir uma entrada extra.",
+      titulo: "No ritmo de gasto dos últimos meses, o saldo fica negativo em até 30 dias",
+      acaoSugerida: "Segurar o gasto do dia a dia até essa data, ou garantir uma entrada extra antes dela.",
       impactoCentavos: sc.gapCentavos,
       prazo: sc.data,
       origem: { tipo: "projecao", id: "30d", rotulo: "Planejamento · Fluxo de caixa (30 dias)" },

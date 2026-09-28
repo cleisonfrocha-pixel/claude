@@ -92,7 +92,7 @@ function blocoLotes() {
           <div class="item-titulo">${escapeHtml(ROTULO_FORMATO[l.formato] || l.formato)}${conta ? ` · ${escapeHtml(conta.nome)}` : ""}</div>
           <div class="item-sub">${escapeHtml(formatarData((l.criadoEm || "").slice(0, 10)))} · ${l.quantidadeCandidatos} lançamento${l.quantidadeCandidatos === 1 ? "" : "s"}</div>
         </div>
-        <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir-lote" data-id="${escapeHtml(l.id)}" title="Ver o texto original" aria-label="Ver o texto original">▾</button>
+        <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir-lote" data-id="${escapeHtml(l.id)}" aria-expanded="${aberto}">${aberto ? "Fechar" : "Texto original"}</button>
       </div>
       ${aberto ? `<div class="item-extra"><pre style="white-space:pre-wrap;word-break:break-word;font-family:inherit;margin:0;">${escapeHtml(l.texto)}</pre></div>` : ""}
     `;

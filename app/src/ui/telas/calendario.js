@@ -70,12 +70,12 @@ function renderizar() {
           <div class="texto">Em ${escapeHtml(tempo.formatarData(painel.semCobertura[0].data))}, o saldo projetado fica negativo
             (<span class="valor-neg" data-valor>${formatarBRL(painel.semCobertura[0].saldoDepoisCentavos)}</span>) por causa de ${escapeHtml(painel.semCobertura[0].itens.map((i) => i.descricao).join(", "))}.</div>
         </div>`
-      : `<div class="alerta-tudo-coberto">Nos próximos 90 dias, tudo o que está previsto tem cobertura no saldo atual.</div>`}
+      : `<div class="alerta-tudo-coberto">Nos próximos 90 dias, o dinheiro cobre tudo que está marcado pra sair, contando o que vai entrar.</div>`}
 
     ${painel.piorDia ? `
       <div class="pressao-card">
         <div>
-          <div class="rotulo">Dia de maior pressão</div>
+          <div class="rotulo">Dia que mais sai dinheiro</div>
           <div class="data">${escapeHtml(tempo.formatarData(painel.piorDia.data))}</div>
         </div>
         <b data-valor>-${formatarBRL(painel.piorDia.saidasCentavos - painel.piorDia.entradasCentavos)}</b>
@@ -92,7 +92,7 @@ function renderizar() {
 
     <div class="legenda-calendario">
       <span><span class="legenda-ponto" style="background:var(--text-faint);"></span>Tem compromisso</span>
-      <span><span class="legenda-ponto" style="background:var(--warn);"></span>Dia de maior pressão</span>
+      <span><span class="legenda-ponto" style="background:var(--warn);"></span>Dia que mais sai dinheiro</span>
       <span><span class="legenda-ponto" style="background:var(--danger);"></span>Sem cobertura</span>
     </div>
 

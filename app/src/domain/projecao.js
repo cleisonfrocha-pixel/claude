@@ -9,6 +9,7 @@
 
 import { compromissosPorDia, calcularCoberturaDiaria } from "./calendario.js";
 import { somarDias } from "./tempo.js";
+import { eventosFuturos } from "./previstos.js";
 
 export const HORIZONTES = [
   { chave: "7d", dias: 7, rotulo: "7 dias", funcao: "Operação imediata", pergunta: "Vencimentos, entradas próximas e risco de falta de caixa." },
@@ -56,9 +57,12 @@ function separarPorCerteza(dias) {
  * evento causador e o tamanho do gap. `null` quando não há saída crítica
  * dentro do horizonte.
  */
-export function calcularHorizonte({ transacoes, faturas, cartoes, saldoInicialCentavos, hoje, dias }) {
+export function calcularHorizonte({ transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, gastoDiaADiaMensalCentavos = 0, saldoInicialCentavos, hoje, dias }) {
   const horizonteAte = somarDias(hoje, dias);
-  const todosOsDias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte, hoje });
+  // Renda cadastrada, parcela de dívida e conta mensal ainda não gerada
+  // também são futuro — ver domain/previstos.js.
+  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: horizonteAte, hoje, gastoDiaADiaMensalCentavos });
+  const todosOsDias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte, hoje, extras });
   const diasSeparados = separarPorCerteza(todosOsDias);
 
   const cobertura = calcularCoberturaDiaria(saldoInicialCentavos, diasSeparados);
@@ -94,12 +98,13 @@ export function calcularHorizonte({ transacoes, faturas, cartoes, saldoInicialCe
 }
 
 /** Os quatro horizontes do §7, lado a lado, a partir do mesmo saldo inicial. */
-export function calcularProjecao({ transacoes, faturas, cartoes, saldoInicialCentavos, hoje }) {
+export function calcularProjecao({ transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, gastoDiaADiaMensalCentavos = 0, saldoInicialCentavos, hoje }) {
   return {
     hoje,
+    gastoDiaADiaMensalCentavos,
     horizontes: HORIZONTES.map((meta) => ({
       ...meta,
-      ...calcularHorizonte({ transacoes, faturas, cartoes, saldoInicialCentavos, hoje, dias: meta.dias }),
+      ...calcularHorizonte({ transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, gastoDiaADiaMensalCentavos, saldoInicialCentavos, hoje, dias: meta.dias }),
     })),
   };
 }

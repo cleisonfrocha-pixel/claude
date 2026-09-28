@@ -27,6 +27,18 @@ export function faturaFechada(cartao, fatura, hoje) {
   return hoje > dataFechamentoFatura(cartao, fatura.competencia);
 }
 
+/** Qual fatura em aberto um pagamento feito em `dataPagamento` quita: a
+ * mais recente que JÁ FECHOU até essa data (é ela que está vencendo). Só
+ * se nenhuma fechou ainda (pagamento adiantado), a mais antiga em aberto.
+ * Escolher pela competência do mês do pagamento erra em cartão que fecha
+ * no fim do mês e vence no começo do seguinte (fecha 25, vence 5): o
+ * pagamento de 5/8 é da fatura de julho, não da de agosto. */
+export function faturaParaPagamento(cartao, faturasEmAberto, dataPagamento) {
+  const ordenadas = [...(faturasEmAberto || [])].sort((a, b) => a.competencia.localeCompare(b.competencia));
+  const fechadas = ordenadas.filter((f) => dataFechamentoFatura(cartao, f.competencia) <= dataPagamento);
+  return fechadas.length ? fechadas[fechadas.length - 1] : ordenadas[0] || null;
+}
+
 /**
  * A visão completa de um cartão: limite, utilizado (todo compromisso ainda
  * não pago, incluindo parcelas futuras — "comprometimento futuro" do §5),

@@ -250,7 +250,7 @@
 @media (min-width: 720px) { .home-grid { grid-template-columns: repeat(3, 1fr); } }
 .home-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--sheen), var(--shadow-sm);
-  padding: 16px 18px; text-align: left; cursor: pointer; font-family: inherit;
+  padding: 16px 18px; text-align: left; cursor: pointer; font-family: inherit; color: var(--text);
   display: flex; flex-direction: column; gap: 6px; min-height: 108px;
   transition: border-color .1s ease, box-shadow .15s ease, transform .1s ease;
 }
@@ -321,6 +321,17 @@
   font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
   background: var(--surface-2); color: var(--text-muted); white-space: nowrap;
 }
+/* Botão de ação da lista: sempre com palavra, nunca só um símbolo (um
+   leigo não adivinha o que ✎, ✕ ou ▾ fazem). */
+.btn-mini {
+  font: inherit; font-size: 13px; font-weight: 600; line-height: 1;
+  padding: 8px 11px; min-height: 32px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border);
+}
+.btn-mini:hover { color: var(--text); border-color: var(--text-faint); }
+.btn-mini.ativo { color: var(--accent); border-color: var(--accent); }
+.btn-mini.perigo:hover { color: var(--danger); border-color: var(--danger); }
+.valor-neutro { color: var(--text-muted); }
 .item-tag.inativa { background: var(--danger-bg); color: var(--danger); }
 .item-tag.atencao { background: var(--warn-bg); color: var(--warn); }
 .item-tag.critico { background: var(--danger-bg); color: var(--danger); }
@@ -509,6 +520,25 @@
 .achado-rodape { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .achado-botoes { display: flex; gap: 6px; flex-wrap: wrap; }
 
+/* Bloco que abre e fecha: a tela começa curta, o detalhe está a um toque. */
+.bloco-recolhivel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  box-shadow: var(--sheen), var(--shadow-sm); margin-top: 12px;
+}
+.bloco-recolhivel > summary {
+  list-style: none; cursor: pointer; padding: 14px 72px 14px 16px; position: relative;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.bloco-recolhivel > summary::-webkit-details-marker { display: none; }
+.bloco-recolhivel > summary::after {
+  content: "Abrir"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 12px; font-weight: 600; color: var(--accent);
+}
+.bloco-recolhivel[open] > summary::after { content: "Fechar"; }
+.bloco-recolhivel > summary .titulo { font-weight: 700; font-size: 15px; color: var(--text); }
+.bloco-recolhivel > summary .resumo { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+.bloco-recolhivel > .conteudo { padding: 0 16px 16px; }
+.bloco-recolhivel > .conteudo > .divida-resumo { box-shadow: none; }
 .plano-horizonte { margin-bottom: 18px; }
 .plano-horizonte-titulo { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
 .plano-horizonte-vazio { font-size: 13px; color: var(--text-faint); }
@@ -588,6 +618,18 @@
   }
   .overlay { align-items: flex-end; padding: 0; }
   .item-acoes .btn-texto-desktop { display: none; }
+  /* Lista no celular: nome e descrição ocupam a primeira linha inteira;
+     valor, etiquetas e botões descem pra segunda. Numa linha só, o nome
+     era espremido até sumir (largura zero) e a tela rolava pro lado. */
+  .item-cartao { flex-wrap: wrap; row-gap: 10px; column-gap: 12px; padding: 14px; }
+  .item-corpo { flex: 1 1 calc(100% - 56px); }
+  .item-cartao > .item-corpo:first-child { flex-basis: 100%; }
+  .item-titulo { white-space: normal; overflow-wrap: anywhere; }
+  .item-valor { margin-right: auto; }
+  .item-cartao > .item-avatar + .item-corpo ~ .item-valor { margin-left: 52px; }
+  .item-acoes { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+  .achado-botoes { width: 100%; flex-wrap: nowrap; }
+  .achado-botoes .btn-mini { flex: 1; padding: 8px 6px; font-size: 12.5px; }
 }
 @media (max-width: 480px) {
   .item-valor { font-size: 13.5px; }

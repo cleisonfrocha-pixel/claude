@@ -44,10 +44,10 @@ function cartaoObjetivo(o) {
       </div>
       <div class="item-valor mono" data-valor>${formatarBRL(o.valorAtualCalculadoCentavos)}</div>
       <span class="item-tag${o.compativel ? "" : " critico"}">${o.compativel ? "no ritmo" : "fora do ritmo"}</span>
-      <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" data-id="${escapeHtml(o.id)}" title="Ver detalhes" aria-label="Ver detalhes">▾</button>
+      <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" data-id="${escapeHtml(o.id)}" aria-expanded="${aberto}">${aberto ? "Fechar" : "Detalhes"}</button>
       <div class="item-acoes">
-        <button class="icon-btn" data-acao="editar" data-id="${escapeHtml(o.id)}" title="Editar" aria-label="Editar">✎</button>
-        <button class="icon-btn danger" data-acao="apagar" data-id="${escapeHtml(o.id)}" title="Apagar" aria-label="Apagar">✕</button>
+        <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(o.id)}" >Editar</button>
+        <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(o.id)}" >Apagar</button>
       </div>
     </div>
     ${aberto ? `<div class="item-extra" data-extra-id="${escapeHtml(o.id)}">${detalheObjetivo(o)}</div>` : ""}`;

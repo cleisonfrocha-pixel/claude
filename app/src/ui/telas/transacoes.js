@@ -111,7 +111,21 @@ function renderizarLista(doMes) {
     return;
   }
   const ordenada = doMes.slice().sort((a, b) => (b.dados.data || "").localeCompare(a.dados.data || ""));
-  alvo.innerHTML = ordenada.map((t) => linhaTransacao(t)).join("");
+  // Transferência tem duas pernas gravadas (saída e entrada), mas é UM
+  // movimento pra quem lê: mostra só a saída quando a entrada existe.
+  const visiveis = ordenada.filter((t) => !(t.dados.tipo === "transferencia" && t.dados.direcao === "entrada"
+    && ordenada.some((o) => o.id !== t.id && o.dados.transferenciaId === t.dados.transferenciaId)));
+  const aConferir = ordenada.filter((t) => t.dados.origem && t.dados.origem !== "manual" && t.dados.revisado === false);
+  alvo.innerHTML = (aConferir.length > 1 ? `
+    <div class="nota-incerto" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span>${aConferir.length} lançamentos deste mês vieram do chat ou de extrato e ainda não foram conferidos por você.</span>
+      <button class="btn-mini" id="conferir-todos">✓ Conferi todos</button>
+    </div>` : "") + visiveis.map((t) => linhaTransacao(t)).join("");
+  const btnTodos = alvo.querySelector("#conferir-todos");
+  if (btnTodos) btnTodos.addEventListener("click", async () => {
+    for (const t of aConferir) await marcarRevisado(t.id);
+    mostrarToast(`${aConferir.length} lançamentos marcados como conferidos.`);
+  });
   alvo.querySelectorAll("[data-apagar]").forEach((btn) => {
     btn.addEventListener("click", () => confirmarApagar(btn.getAttribute("data-apagar")));
   });
@@ -124,7 +138,7 @@ function renderizarLista(doMes) {
   alvo.querySelectorAll("[data-revisar]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       await marcarRevisado(btn.getAttribute("data-revisar"));
-      mostrarToast("Lançamento marcado como revisado.");
+      mostrarToast("Lançamento marcado como conferido.");
     });
   });
 }
@@ -133,7 +147,7 @@ function linhaTransacao(item) {
   const d = item.dados;
   const destino = d.cartaoId ? nomeCartao(d.cartaoId) : (d.contaId ? nomeConta(d.contaId) : "");
   const parcelaTag = d.parcelaTotal ? `<span class="item-tag">${d.parcelaNum}/${d.parcelaTotal}</span>` : "";
-  const classeValor = d.tipo === "receita" ? "valor-pos" : (d.tipo === "despesa" ? "valor-neg" : "");
+  const classeValor = d.tipo === "receita" ? "valor-pos" : (d.tipo === "despesa" ? "valor-neg" : "valor-neutro");
   const sinal = d.tipo === "receita" ? "+" : (d.tipo === "despesa" ? "−" : "");
   // Transferência: a direção (de/para qual conta própria) precisa aparecer
   // na lista, senão parece só mais uma saída/entrada solta — não é.
@@ -143,7 +157,12 @@ function linhaTransacao(item) {
     const contraparte = par ? nomeConta(par.dados.contaId) : "-";
     subTransferencia = d.direcao === "saida" ? `${destino} → ${contraparte}` : `${contraparte} → ${destino}`;
   }
-  const sub = [tempo.formatarData(d.data), subTransferencia, d.categoriaId ? nomeCategoria(d.categoriaId) : null].filter(Boolean).join(" · ");
+  const titulo = d.tipo === "transferencia" ? `Transferência · ${d.descricao || "entre contas"}`
+    : d.tipo === "pagamento_fatura" ? (d.descricao && d.descricao !== "Pagamento de fatura" ? d.descricao : "Pagamento de fatura")
+    : (d.descricao || ROTULO_TIPO_TAG[d.tipo] || d.tipo);
+  const explicacao = d.tipo === "transferencia" ? "entre contas de vocês, não é gasto"
+    : d.tipo === "pagamento_fatura" ? "as compras já contaram, não é gasto novo" : null;
+  const sub = [tempo.formatarData(d.data), subTransferencia, d.categoriaId ? nomeCategoria(d.categoriaId) : explicacao].filter(Boolean).join(" · ");
   // §18: lançamento importado (origem !== "manual") e ainda não conferido
   // pelo usuário — distinção entre "veio automático" e "foi revisado".
   const naoRevisado = d.origem && d.origem !== "manual" && d.revisado === false;
@@ -153,17 +172,17 @@ function linhaTransacao(item) {
   return `
     <div class="item-cartao">
       <div class="item-corpo">
-        <div class="item-titulo">${escapeHtml(d.descricao || ROTULO_TIPO_TAG[d.tipo] || d.tipo)}</div>
+        <div class="item-titulo">${escapeHtml(titulo)}</div>
         <div class="item-sub">${escapeHtml(sub)}</div>
       </div>
       <div class="item-valor mono ${classeValor}" data-valor>${sinal}${formatarBRL(d.valorCentavos)}</div>
-      <span class="item-tag${d.status === "cancelado" ? " inativa" : ""}${statusMostrado === "atrasado" ? " critico" : ""}">${ROTULO_STATUS[statusMostrado] || statusMostrado}</span>
+      ${statusMostrado !== "pago" ? `<span class="item-tag${d.status === "cancelado" ? " inativa" : ""}${statusMostrado === "atrasado" ? " critico" : ""}">${ROTULO_STATUS[statusMostrado] || statusMostrado}</span>` : ""}
       ${parcelaTag}
-      ${naoRevisado ? `<span class="item-tag atencao">não revisado</span>` : ""}
+      ${naoRevisado ? `<span class="item-tag atencao" title="Veio do chat ou de extrato e ainda não foi conferido por você">a conferir</span>` : ""}
       <div class="item-acoes">
-        ${naoRevisado ? `<button class="icon-btn" title="Marcar como revisado" aria-label="Marcar como revisado" data-revisar="${escapeHtml(item.id)}">✓</button>` : ""}
-        <button class="icon-btn" title="Editar" aria-label="Editar" data-editar="${escapeHtml(item.id)}">✎</button>
-        <button class="icon-btn danger" title="Apagar" aria-label="Apagar" data-apagar="${escapeHtml(item.id)}">✕</button>
+        ${naoRevisado ? `<button class="btn-mini" title="Marcar como conferido" data-revisar="${escapeHtml(item.id)}">✓ Conferido</button>` : ""}
+        <button class="btn-mini" title="Editar" data-editar="${escapeHtml(item.id)}">Editar</button>
+        <button class="btn-mini perigo" title="Apagar" data-apagar="${escapeHtml(item.id)}">Apagar</button>
       </div>
     </div>`;
 }

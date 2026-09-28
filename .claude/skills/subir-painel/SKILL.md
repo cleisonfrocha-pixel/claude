@@ -51,13 +51,13 @@ o titular. Itens do mesmo pedido podem usar o que outro item acabou de criar.
 
 | acao | campos |
 |---|---|
-| `despesa` / `receita` | `valor`, `conta` ou `cartao` (receita só conta), `categoria`, `descricao`, `data`, `pessoa`, `fonteRenda` (receita), `status` (pago/previsto/agendado/atrasado), `certeza` (confirmado/provavel/incerto), `forcar` |
+| `despesa` / `receita` | `valor`, `conta` ou `cartao` (receita só conta), `categoria`, `descricao`, `data`, `pessoa`, `fonteRenda` (receita), `divida` (despesa que paga parcela), `status` (pago/previsto/agendado/atrasado), `certeza` (confirmado/provavel/incerto), `forcar` |
 | `transferencia` | `valor`, `de`, `para`, `data`, `descricao` |
 | `parcelamento` | `valorTotal`, `parcelas`, `cartao` ou `conta`, `categoria`, `descricao`, `data` (1ª parcela) |
-| `pagamento_fatura` | `valor`, `cartao`, `conta` (padrão: a de pagamento do cartão), `competencia` (AAAA-MM, opcional), `data` |
+| `pagamento_fatura` | `valor`, `cartao`, `conta` (padrão: a de pagamento do cartão), `data`, `competencia` (AAAA-MM do mês em que a fatura FECHA; normalmente omita: a ferramenta escolhe a fatura que já fechou até a data do pagamento) |
 | `criar` | `colecao` + `dados` (abaixo) |
 | `atualizar` | `colecao`, `ref` (nome), `campos` |
-| `pagar_parcela_divida` | `divida`, `quantidade` (padrão 1) |
+| `pagar_parcela_divida` | `divida`, `quantidade` (padrão 1). Só pra corrigir a contagem; pagamento com dinheiro saindo é `despesa` com `divida` |
 
 `criar`/`atualizar` aceitam `pessoa`, `conta`, `categoria`, `cartao` por nome e
 valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
@@ -68,7 +68,7 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
 - `contas`: nome, instituicao, tipo (corrente/poupanca/investimento/dinheiro/outra), saldoInicial, dataSaldoInicial, ehReserva
 - `cartoes`: apelido, conta (paga a fatura), bandeira, limiteTotal, diaFechamento, diaVencimento
 - `categorias`: nome, grupo (moradia/transporte/alimentacao/saude/educacao/lazer/dividas/renda/outros), natureza (receita/despesa), essencial
-- `fontesRenda`: nome, tipo (fixa/recorrente/variavel/eventual), valorEsperado
+- `fontesRenda`: nome, tipo (fixa/recorrente/variavel/eventual), valorEsperado, diaRecebimento (dia do mês em que cai; pergunte se ele souber, é o que a agenda usa)
 - `dividas`: nome, credor, saldoOriginal, valorParcela, quantidadeParcelas, parcelasPagas, dataInicio, taxaJurosMensalPct, emRisco, negativada
   - Dívida no Serasa/SPC: `negativada: true`. Sem acordo ainda: `valorParcela: 0`, `quantidadeParcelas: 1`, `dataInicio` = data da dívida original (ou da negativação). Juros informado (`taxaJurosMensalPct`) faz a simulação de caminhos ser honesta; se ele não souber, pergunte uma vez e siga sem.
 - `ativos`: nome, classe (liquido/investimento/veiculo/imovel/participacao/outro), valorAtual, dataAvaliacao
@@ -80,10 +80,16 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
 
 - **Dinheiro entre contas dele é `transferencia`**, nunca receita nem despesa.
 - **Pagar a fatura é `pagamento_fatura`**, nunca despesa: as compras já contaram.
-  Compra no cartão é `despesa` com `cartao`.
-- **"Paguei a parcela da dívida X"** = `despesa` (categoria "Dívidas e parcelas",
-  da conta de onde saiu) **e** `pagar_parcela_divida`. Só a despesa se ele não
-  tiver a dívida cadastrada e não der os dados dela; aí pergunte se quer cadastrar.
+  Compra no cartão é `despesa` com `cartao`. Se ele só mandar o total pago sem
+  as compras, suba assim mesmo: o painel mostra como "fatura sem compra
+  lançada" e avisa. Peça as compras da fatura quando der.
+- **"Paguei a parcela da dívida X"** (ou parcela no extrato) = `despesa` com
+  `divida: "X"` e a conta de onde saiu (categoria pode ficar de fora: vai pra
+  "Dívidas e parcelas"). A ferramenta liga o pagamento à dívida e conta a
+  parcela só se for a que está em aberto: extrato antigo, de parcela que já
+  está em "parcelas pagas" do cadastro, só fica ligado, nunca conta duas
+  vezes. NÃO use `pagar_parcela_divida` junto. Sem a dívida cadastrada,
+  pergunte se quer cadastrar.
 - **Incerto não é garantido:** "acho que", "talvez", "se o cliente pagar" =
   `status: previsto` + `certeza: incerto`; "vai cair dia 10" = previsto + provavel.
 - **"Tenho X na conta Y agora"** = `atualizar` a conta com `saldoInicial: X` e

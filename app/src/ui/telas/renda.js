@@ -79,10 +79,10 @@ function cartaoFonte(f, painel) {
       </div>
       <div class="item-valor mono" data-valor>${formatarBRL(f.valorEsperadoCentavos)}</div>
       ${!f.ativa ? `<span class="item-tag inativa">inativa</span>` : ""}
-      <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" data-id="${escapeHtml(f.id)}" title="Ver detalhes" aria-label="Ver detalhes">▾</button>
+      <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" data-id="${escapeHtml(f.id)}" aria-expanded="${aberto}">${aberto ? "Fechar" : "Detalhes"}</button>
       <div class="item-acoes">
-        <button class="icon-btn" data-acao="editar" data-id="${escapeHtml(f.id)}" title="Editar" aria-label="Editar">✎</button>
-        <button class="icon-btn danger" data-acao="apagar" data-id="${escapeHtml(f.id)}" title="Apagar" aria-label="Apagar">✕</button>
+        <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(f.id)}" >Editar</button>
+        <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(f.id)}" >Apagar</button>
       </div>
     </div>
     ${aberto ? `<div class="item-extra">${detalheFonte(f, painel)}</div>` : ""}`;
@@ -305,6 +305,9 @@ function campoFonteHtml(f) {
       <select id="campo-fonte-tipo">${TIPOS_FONTE_RENDA.map((t) => `<option value="${t}" ${f?.tipo === t ? "selected" : ""}>${ROTULO_TIPO_FONTE[t]}</option>`).join("")}</select></div>
     <div class="field"><label for="campo-fonte-valor">Valor esperado por mês</label>
       <input type="text" inputmode="decimal" id="campo-fonte-valor" placeholder="0,00" value="${f ? formatarBRL(f.valorEsperadoCentavos).replace("R$ ", "") : ""}"></div>
+    <div class="field"><label for="campo-fonte-dia">Dia do mês em que costuma cair (opcional)</label>
+      <input type="number" min="1" max="31" inputmode="numeric" id="campo-fonte-dia" value="${f?.diaRecebimento || ""}" placeholder="Ex.: 5">
+      <small class="tela-sub" style="display:block;margin-top:4px;">Sem o dia, a agenda usa o dia do último recebimento. Renda variável entra na previsão pelo pior mês recente.</small></div>
     <label class="field-check"><input type="checkbox" id="campo-fonte-ativa" ${f ? (f.ativa ? "checked" : "") : "checked"}> Ativa</label>
   `;
 }
@@ -332,6 +335,7 @@ function abrirFormularioFonte(f) {
       pessoaId: document.getElementById("campo-fonte-pessoa").value,
       tipo: document.getElementById("campo-fonte-tipo").value,
       valorEsperadoCentavos: paraCentavos(document.getElementById("campo-fonte-valor").value),
+      diaRecebimento: (() => { const n = Number(document.getElementById("campo-fonte-dia").value); return n >= 1 && n <= 31 ? Math.round(n) : null; })(),
       ativa: document.getElementById("campo-fonte-ativa").checked,
     };
     try {

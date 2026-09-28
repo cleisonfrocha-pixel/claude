@@ -10,6 +10,7 @@
 import * as db from "./db.js";
 import { contas, cartoes, categorias, ativos, pessoas, dividas as dividasRepoBase } from "./repositorios.js";
 import { transacoes } from "./transacoesRepo.js";
+import { carregarBase } from "./base.js";
 import { calcularClarezaDeCaixa } from "../domain/caixa.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
 import { calcularCustos } from "../domain/orcamento.js";
@@ -26,19 +27,8 @@ function comId(lista) {
 }
 
 async function carregarTudo() {
-  const [listaContas, listaCartoes, listaCategorias, listaAtivos, listaPessoas, listaDividas, listaTransacoes, listaSnapshots] = await Promise.all([
-    contas.listar(), cartoes.listar(), categorias.listar(), ativos.listar(), pessoas.listar(), dividasRepoBase.listar(), transacoes.listar(), db.listar(CAMINHO_SNAPSHOTS),
-  ]);
-  return {
-    contas: comId(listaContas),
-    cartoes: comId(listaCartoes),
-    categorias: comId(listaCategorias),
-    ativos: comId(listaAtivos),
-    pessoas: comId(listaPessoas),
-    dividas: comId(listaDividas),
-    transacoes: listaTransacoes.map((t) => t.dados),
-    snapshots: comId(listaSnapshots),
-  };
+  const [base, listaSnapshots] = await Promise.all([carregarBase(), db.listar(CAMINHO_SNAPSHOTS)]);
+  return { ...base, snapshots: comId(listaSnapshots) };
 }
 
 export async function calcularPainelPatrimonio() {

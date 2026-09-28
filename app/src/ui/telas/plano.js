@@ -14,7 +14,7 @@ import { escapeHtml } from "../utilitarios.js";
 const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
 const CLASSE_URGENCIA = { alta: "critico", media: "atencao", baixa: "" };
 const ROTULO_TIPO = { problema: "Problemas", risco: "Riscos", oportunidade: "Oportunidades" };
-const ROTULO_STATUS = { resolvida: "Resolvida", ignorada: "Ignorada", adiada: "Adiada", cancelada: "Cancelada" };
+const ROTULO_STATUS = { resolvida: "Resolvido", ignorada: "Não se aplica", adiada: "Lembrar depois", cancelada: "Descartado" };
 const ROTULO_HORIZONTE = {
   agora: "Agora", estaSemana: "Esta semana", esteMes: "Este mês", em90: "90 dias", em12meses: "12 meses",
 };
@@ -32,13 +32,11 @@ let achadosPorId = new Map();
 let pararAssinatura = null;
 let pararAssinaturaQualidade = null;
 let container = null;
-let historicoAberto = false;
 const achadosExpandidos = new Set();
 
 export default {
   montar(alvo) {
     container = alvo;
-    historicoAberto = false;
     achadosExpandidos.clear();
     if (pararAssinatura) pararAssinatura();
     pararAssinatura = assinarPainelDecisoes((r) => {
@@ -68,17 +66,17 @@ function textoDiagnostico(d) {
 
   linhas.push(linhaDiagnostico("Estado do caixa",
     d.estadoCaixa.seguroParaGastarCentavos < 0
-      ? `Negativo: falta <span class="valor-neg" data-valor>${formatarBRL(Math.abs(d.estadoCaixa.seguroParaGastarCentavos))}</span> para cobrir o que já está comprometido.`
-      : `<span data-valor>${formatarBRL(d.estadoCaixa.seguroParaGastarCentavos)}</span> seguros para gastar depois do que já está comprometido.`));
+      ? `Nos próximos 30 dias, mesmo contando o que entra, faltam <span class="valor-neg" data-valor>${formatarBRL(Math.abs(d.estadoCaixa.seguroParaGastarCentavos))}</span> no dia mais apertado.`
+      : `<span data-valor>${formatarBRL(d.estadoCaixa.seguroParaGastarCentavos)}</span> seguros pra gastar no dia a dia nos próximos 30 dias, contando o que entra e o que sai.`));
 
   linhas.push(linhaDiagnostico("Pressão das despesas fixas",
     d.pressaoFixas.totalCentavos > 0
-      ? `<span data-valor>${formatarBRL(d.pressaoFixas.fixasCentavos)}</span> de <span data-valor>${formatarBRL(d.pressaoFixas.totalCentavos)}</span> das despesas do mês (${d.pressaoFixas.percentual}%) são essenciais.`
+      ? `<span data-valor>${formatarBRL(d.pressaoFixas.fixasCentavos)}</span> de <span data-valor>${formatarBRL(d.pressaoFixas.totalCentavos)}</span> do gasto do mês (${d.pressaoFixas.percentual}%) é fixo: <span data-valor>${formatarBRL(d.pressaoFixas.essencialCentavos ?? d.pressaoFixas.fixasCentavos)}</span> de essencial e <span data-valor>${formatarBRL(d.pressaoFixas.parcelasCentavos || 0)}</span> de parcelas.`
       : "Nenhuma despesa paga registrada neste mês ainda."));
 
   linhas.push(linhaDiagnostico("Peso das dívidas",
     d.pesoDividas.comprometimentoMensalCentavos > 0
-      ? `<span data-valor>${formatarBRL(d.pesoDividas.comprometimentoMensalCentavos)}</span> por mês em parcelas${d.pesoDividas.quantidadeAtrasadas > 0 ? `, ${d.pesoDividas.quantidadeAtrasadas} ${d.pesoDividas.quantidadeAtrasadas === 1 ? "delas atrasada" : "delas atrasadas"}` : ""}.`
+      ? `<span data-valor>${formatarBRL(d.pesoDividas.comprometimentoMensalCentavos)}</span> por mês em parcelas${d.pesoDividas.quantidadeAtrasadas > 0 ? `, ${d.pesoDividas.quantidadeAtrasadas} ${d.pesoDividas.quantidadeAtrasadas === 1 ? "atrasada" : "atrasadas"}` : ""}${d.pesoDividas.quantidadeNegativadas > 0 ? `; ${d.pesoDividas.quantidadeNegativadas} no Serasa sem parcela combinada` : ""}.`
       : "Nenhuma dívida ativa cadastrada."));
 
   linhas.push(linhaDiagnostico("Previsibilidade e concentração da receita",
@@ -93,7 +91,7 @@ function textoDiagnostico(d) {
 
   if (d.foraDoPadrao.length) {
     linhas.push(linhaDiagnostico("Despesas fora do padrão",
-      d.foraDoPadrao.map((f) => `categoria <span data-valor>${formatarBRL(f.valorCentavos)}</span>, ${f.percentualAcima}% acima da média dos últimos meses`).join("; ") + "."));
+      d.foraDoPadrao.map((f) => `${escapeHtml(f.nomeCategoria || "Sem categoria")}: <span data-valor>${formatarBRL(f.valorCentavos)}</span>, ${f.percentualAcima}% acima da média dos meses anteriores (<span data-valor>${formatarBRL(f.mediaCentavos)}</span>)`).join("; ") + "."));
   }
 
   linhas.push(linhaDiagnostico("Reserva financeira",
@@ -136,7 +134,7 @@ function cartaoAchado(a) {
       <div class="achado-head">
         <span class="item-tag${urgenciaClasse ? " " + urgenciaClasse : ""}">${ROTULO_URGENCIA[a.urgencia]}</span>
         <span class="achado-origem">${escapeHtml(a.origem?.rotulo || "")}</span>
-        <button class="icon-btn item-chevron${aberto ? " aberto" : ""}" data-acao="expandir" title="Ver os lançamentos que originaram este alerta" aria-label="Ver lançamentos">▾</button>
+        <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" aria-expanded="${aberto}">${aberto ? "Fechar" : "De onde veio"}</button>
       </div>
       <div class="achado-titulo">${escapeHtml(a.titulo)}</div>
       <div class="achado-acao-sugerida">${escapeHtml(a.acaoSugerida)}${a.prazo ? ` · prazo ${escapeHtml(formatarData(a.prazo))}` : ""}</div>
@@ -144,10 +142,9 @@ function cartaoAchado(a) {
       <div class="achado-rodape">
         ${a.impactoCentavos != null ? `<b class="mono" data-valor>${formatarBRL(a.impactoCentavos)}</b>` : "<span></span>"}
         <div class="achado-botoes">
-          <button class="btn btn-ghost btn-sm" data-acao="resolvida">Resolver</button>
-          <button class="btn btn-ghost btn-sm" data-acao="ignorada">Ignorar</button>
-          <button class="btn btn-ghost btn-sm" data-acao="adiada">Adiar</button>
-          <button class="btn btn-ghost btn-sm" data-acao="cancelada">Cancelar</button>
+          <button class="btn-mini" data-acao="resolvida" title="Some da lista e vai pro histórico">Já resolvi</button>
+          <button class="btn-mini" data-acao="adiada" title="Some agora e volta depois">Lembrar depois</button>
+          <button class="btn-mini" data-acao="ignorada" title="Não vale pra sua situação">Não se aplica</button>
         </div>
       </div>
     </div>`;
@@ -204,6 +201,27 @@ function blocoQualidade(q) {
     </div>`;
 }
 
+const secoesAbertas = new Set();
+
+/** Bloco que abre e fecha — a tela começa curta, só com o que fazer; o
+ * resto está a um toque. Lembra o que estava aberto entre um recálculo e
+ * outro. */
+function recolhivel(id, titulo, resumo, conteudo) {
+  return `
+    <details class="bloco-recolhivel" data-secao="${id}"${secoesAbertas.has(id) ? " open" : ""}>
+      <summary><span class="titulo">${titulo}</span><span class="resumo">${resumo}</span></summary>
+      <div class="conteudo">${conteudo}</div>
+    </details>`;
+}
+
+function resumoDiagnostico(d) {
+  const partes = [];
+  partes.push(d.estadoCaixa.seguroParaGastarCentavos < 0 ? "caixa aperta nos próximos 30 dias" : "caixa cobre os próximos 30 dias");
+  if (d.pesoDividas.comprometimentoMensalCentavos > 0) partes.push(`${formatarBRL(d.pesoDividas.comprometimentoMensalCentavos)}/mês em parcelas`);
+  if (d.foraDoPadrao.length) partes.push(`${d.foraDoPadrao.length} gasto${d.foraDoPadrao.length > 1 ? "s" : ""} fora do padrão`);
+  return `<span data-valor>${escapeHtml(partes.join(" · "))}</span>`;
+}
+
 function listaHorizonte(chave, achados) {
   return `
     <div class="plano-horizonte">
@@ -236,37 +254,37 @@ function renderizar() {
     return;
   }
 
+  const pendentes = painel.achadosPendentes;
+  const urgentes = pendentes.filter((a) => a.urgencia === "alta").length;
   container.innerHTML = `
-    <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Diagnóstico</h3>
-      <p class="tela-sub">Fatos e relações observáveis nos seus dados</p></div></div>
-    ${avisoConfiabilidade(qualidade?.confiabilidade)}
-    <div class="divida-resumo">${textoDiagnostico(painel.diagnostico)}</div>
-
-    ${blocoQualidade(qualidade)}
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Central de decisões</h3>
-      <p class="tela-sub">O que merece sua atenção agora, priorizado por urgência e impacto</p></div></div>
+    <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">O que fazer agora</h3>
+      <p class="tela-sub">${pendentes.length
+        ? `${pendentes.length} ${pendentes.length === 1 ? "ponto" : "pontos"}${urgentes ? `, ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : ""}. Toque em "De onde veio" pra ver os lançamentos por trás de cada um`
+        : "Nada pedindo atenção agora"}</p></div></div>
     <div id="achados-lista">
-      ${painel.achadosPendentes.length ? listaAchadosPorTipo(painel.achadosPendentes) : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}
+      ${pendentes.length ? listaAchadosPorTipo(pendentes) : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}
     </div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Histórico</h3>
-      <p class="tela-sub">O que já foi resolvido, ignorado, adiado ou cancelado</p></div></div>
-    <button class="btn btn-ghost btn-sm" id="btn-historico">${historicoAberto ? "Esconder" : "Mostrar"} histórico (${painel.historico.length})</button>
-    <div id="historico-lista" style="margin-top:10px;${historicoAberto ? "" : "display:none;"}">
-      ${painel.historico.length ? painel.historico.map((h) => `
+    ${recolhivel("prazo", "Os mesmos pontos, por prazo", "Agora, esta semana, este mês, 90 dias e 12 meses",
+      ["agora", "estaSemana", "esteMes", "em90", "em12meses"].map((chave) => listaHorizonte(chave, painel.planoVivo[chave])).join(""))}
+
+    ${recolhivel("diagnostico", "Diagnóstico completo", resumoDiagnostico(painel.diagnostico),
+      `${avisoConfiabilidade(qualidade?.confiabilidade)}<div class="divida-resumo">${textoDiagnostico(painel.diagnostico)}</div>`)}
+
+    ${qualidade ? recolhivel("qualidade", "Qualidade dos dados", `Confiabilidade ${escapeHtml(qualidade.confiabilidade.nivel)}: o quanto dá pra confiar nestes números`, blocoQualidade(qualidade)) : ""}
+
+    ${recolhivel("historico", `Já decididos (${painel.historico.length})`, "O que você já marcou como resolvido, que não se aplica ou pra lembrar depois",
+      painel.historico.length ? painel.historico.map((h) => `
         <div class="historico-item">
           <span class="rotulo">${escapeHtml(h.titulo)}</span>
           <span class="status">${ROTULO_STATUS[h.status] || h.status}</span>
-          <button class="icon-btn" data-acao="reabrir" data-id="${escapeHtml(h.id)}" title="Reabrir" aria-label="Reabrir">↺</button>
-        </div>`).join("") : `<div class="vazio">Nada no histórico ainda.</div>`}
-    </div>
-
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Plano vivo</h3>
-      <p class="tela-sub">Agora, esta semana, este mês, 90 dias e 12 meses. Atualizado pela realidade, não um documento estático</p></div></div>
-    ${["agora", "estaSemana", "esteMes", "em90", "em12meses"].map((chave) => listaHorizonte(chave, painel.planoVivo[chave])).join("")}
+          <button class="btn-mini" data-acao="reabrir" data-id="${escapeHtml(h.id)}">Reabrir</button>
+        </div>`).join("") : `<div class="vazio">Nada decidido ainda.</div>`)}
   `;
 
+  container.querySelectorAll("details[data-secao]").forEach((d) => {
+    d.addEventListener("toggle", () => { if (d.open) secoesAbertas.add(d.dataset.secao); else secoesAbertas.delete(d.dataset.secao); });
+  });
   ligarEventos();
 }
 
@@ -289,13 +307,6 @@ function ligarEventos() {
     });
   });
 
-  const btnHistorico = container.querySelector("#btn-historico");
-  if (btnHistorico) {
-    btnHistorico.addEventListener("click", () => {
-      historicoAberto = !historicoAberto;
-      renderizar();
-    });
-  }
 
   container.querySelectorAll('[data-acao="reabrir"]').forEach((btn) => {
     btn.addEventListener("click", async () => {

@@ -105,9 +105,9 @@ function linhaRecorrencia(item) {
       <div class="item-valor mono ${classeValor}" data-valor>${sinal}${formatarBRL(d.valorEstimadoCentavos)}</div>
       <span class="item-tag${d.ativa ? "" : " inativa"}">${d.ativa ? "ativa" : "pausada"}</span>
       <div class="item-acoes">
-        <button class="icon-btn" title="${d.ativa ? "Pausar" : "Retomar"}" aria-label="${d.ativa ? "Pausar" : "Retomar"}" data-pausar="${escapeHtml(item.id)}">${d.ativa ? "⏸" : "▶"}</button>
-        <button class="icon-btn" title="Editar" aria-label="Editar" data-editar="${escapeHtml(item.id)}">✎</button>
-        <button class="icon-btn danger" title="Apagar" aria-label="Apagar" data-apagar="${escapeHtml(item.id)}">✕</button>
+        <button class="btn-mini" data-pausar="${escapeHtml(item.id)}">${d.ativa ? "Pausar" : "Retomar"}</button>
+        <button class="btn-mini"  data-editar="${escapeHtml(item.id)}">Editar</button>
+        <button class="btn-mini perigo"  data-apagar="${escapeHtml(item.id)}">Apagar</button>
       </div>
     </div>`;
 }

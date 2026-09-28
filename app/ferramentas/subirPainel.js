@@ -11,6 +11,8 @@ import { paraCentavos, formatarBRL } from "../src/domain/dinheiro.js";
 import { somarMeses, dataDeCompetencia, formatarData } from "../src/domain/tempo.js";
 import { competenciaFatura, gerarParcelas, construirParTransferencia, competenciasFaltantes } from "../src/domain/transacoes.js";
 import * as E from "../src/domain/esquema.js";
+import { faturaParaPagamento } from "../src/domain/cartoes.js";
+import { dataProximoVencimento, statusDivida } from "../src/domain/dividas.js";
 
 const HORIZONTE_RECORRENCIA_MESES = 3; // mesmo de dados/recorrenciasRepo.js
 const JANELA_DUPLICATA_DIAS = 1; // mesmo de domain/importacao.js
@@ -183,7 +185,11 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         const cartao = item.cartao ? resolver(estado, "cartoes", item.cartao) : null;
         exigir(conta || cartao, "faltou dizer a conta ou o cartão");
         exigir(!(acao === "receita" && cartao), "receita entra numa conta, não num cartão");
-        const categoria = resolver(estado, "categorias", item.categoria);
+        const divida = acao === "despesa" && item.divida ? resolver(estado, "dividas", item.divida) : null;
+        const categoria = item.categoria || !divida
+          ? resolver(estado, "categorias", item.categoria)
+          : (estado.categorias || []).find((c) => c.grupo === "dividas" && c.natureza === "despesa" && c.ativa !== false)
+            || resolver(estado, "categorias", item.categoria);
         exigir(categoria.natureza === acao, `a categoria "${categoria.nome}" é de ${categoria.natureza}, não de ${acao}`);
         avisarDuplicata(duplicataDe((t) => t.tipo === acao && (cartao ? t.cartaoId === cartao.id : t.contaId === conta.id), valor, data));
         const dados = {
@@ -196,8 +202,23 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
           fonteRendaId: acao === "receita" && item.fonteRenda ? resolver(estado, "fontesRenda", item.fonteRenda).id : null,
         };
         if (cartao) dados.faturaId = faturaDe(cartao, competenciaFatura(cartao, data));
+        if (divida) dados.dividaId = divida.id;
         transacao(dados);
         local.resumo.push(`${acao === "despesa" ? "Despesa" : "Receita"} · ${formatarBRL(valor)} · ${dados.descricao} · ${(cartao ? cartao.apelido : conta.nome)} · ${categoria.nome} · ${formatarData(data)}${dados.status !== "pago" ? ` · ${dados.status}` : ""}${dados.certeza !== "confirmado" ? ` · ${dados.certeza}` : ""}`);
+        // Parcela paga ligada à dívida: conta como parcela nova só se for a
+        // parcela em aberto (vence até 15 dias depois do pagamento). Extrato
+        // antigo, de parcela que já está dentro de "parcelas pagas" do
+        // cadastro, só fica ligado — nunca conta duas vezes.
+        if (divida && dados.status === "pago" && statusDivida(divida, data) !== "quitada") {
+          const proximo = dataProximoVencimento(divida);
+          if (proximo && diasEntre(data, proximo) <= 15 || (proximo && proximo < data)) {
+            const novo = (Number(divida.parcelasPagas) || 0) + 1;
+            atualizar("dividas", divida, { parcelasPagas: novo });
+            local.resumo.push(`Dívida · ${divida.nome} · parcelas pagas ${novo - 1} → ${novo} de ${divida.quantidadeParcelas}`);
+          } else {
+            local.resumo.push(`Dívida · ${divida.nome} · pagamento ligado (parcela já contada no cadastro)`);
+          }
+        }
       } else if (acao === "transferencia") {
         const data = validarData(item.data, hoje);
         const valor = centavos(item.valor);
@@ -245,7 +266,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         const abertas = estado.faturas.filter((f) => f.cartaoId === cartao.id && f.status !== "paga");
         const fatura = item.competencia
           ? abertas.find((f) => f.competencia === item.competencia)
-          : abertas.filter((f) => f.competencia <= competenciaDe(data)).sort((a, b) => b.competencia.localeCompare(a.competencia))[0];
+          : faturaParaPagamento(cartao, abertas, data);
         exigir(fatura, `não achei fatura em aberto do ${cartao.apelido}${item.competencia ? ` em ${item.competencia}` : ""}`);
         avisarDuplicata(duplicataDe((t) => t.tipo === "pagamento_fatura" && t.faturaId === fatura.id, valor, data));
         transacao({ tipo: "pagamento_fatura", contaId: conta.id, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null });

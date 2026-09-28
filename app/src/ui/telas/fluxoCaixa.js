@@ -45,7 +45,7 @@ function renderizar() {
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Fluxo de caixa</h2>
-        <p class="tela-sub">Quatro horizontes, cada um respondendo a uma pergunta diferente sobre o seu caixa.</p>
+        <p class="tela-sub">Quanto vai sobrar na conta em cada prazo, contando o que está marcado pra entrar e sair, as parcelas das dívidas e o gasto do dia a dia no ritmo dos últimos meses${painel.gastoDiaADiaMensalCentavos ? ` (<span data-valor>${formatarBRL(painel.gastoDiaADiaMensalCentavos)}</span> por mês)` : ""}. Renda que não é certa fica de fora.</p>
       </div>
     </div>
 
@@ -62,18 +62,18 @@ function renderizar() {
 
     ${h.saidaCritica
       ? `<div class="alerta-cobertura">
-          <div class="titulo">Saída crítica em ${escapeHtml(h.rotulo)}</div>
-          <div class="texto">Em ${escapeHtml(formatarData(h.saidaCritica.data))}, o saldo seguro projetado fica negativo
-            (<span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}</span>) por causa de
-            ${escapeHtml(h.saidaCritica.itens.map((i) => i.descricao).join(", "))},
-            um gap de <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.gapCentavos)}</span>.</div>
+          <div class="titulo">Falta dinheiro em até ${escapeHtml(h.rotulo)}</div>
+          <div class="texto">Em ${escapeHtml(formatarData(h.saidaCritica.data))} a conta fica em
+            <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}</span>, no dia de
+            ${escapeHtml([...new Set(h.saidaCritica.itens.map((i) => i.descricao))].join(", "))}.
+            Faltam <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.gapCentavos)}</span> nesse dia.</div>
         </div>`
-      : `<div class="alerta-tudo-coberto">Nos próximos ${escapeHtml(h.rotulo.toLowerCase())}, o saldo seguro projetado não fica negativo.</div>`}
+      : `<div class="alerta-tudo-coberto">Nos próximos ${escapeHtml(h.rotulo.toLowerCase())}, a conta não fica negativa em nenhum dia.</div>`}
 
     <div class="resumo-mes">
-      <div class="resumo-item"><span>Entradas (seguro)</span><b class="mono valor-pos" data-valor>${formatarBRL(h.entradasSeguroCentavos)}</b></div>
-      <div class="resumo-item"><span>Saídas (seguro)</span><b class="mono valor-neg" data-valor>${formatarBRL(h.saidasSeguroCentavos)}</b></div>
-      <div class="resumo-item"><span>Saldo final seguro</span><b class="mono ${h.saldoFinalSeguroCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(h.saldoFinalSeguroCentavos)}</b></div>
+      <div class="resumo-item"><span>Vai entrar</span><b class="mono valor-pos" data-valor>${formatarBRL(h.entradasSeguroCentavos)}</b></div>
+      <div class="resumo-item"><span>Vai sair</span><b class="mono valor-neg" data-valor>${formatarBRL(h.saidasSeguroCentavos)}</b></div>
+      <div class="resumo-item"><span>Fica em conta</span><b class="mono ${h.saldoFinalSeguroCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(h.saldoFinalSeguroCentavos)}</b></div>
     </div>
 
     ${temIncerto ? `
@@ -92,12 +92,12 @@ function renderizar() {
 }
 
 function cartaoHorizonte(h) {
-  const net = h.entradasSeguroCentavos - h.saidasSeguroCentavos;
   const ativo = h.chave === horizonteSelecionado;
+  const saldo = h.saldoFinalSeguroCentavos;
   return `
     <button class="horizonte-card${ativo ? " ativo" : ""}" data-horizonte="${h.chave}">
-      <div class="rotulo">${h.saidaCritica ? '<span class="ponto-critico"></span>' : ""}${escapeHtml(h.rotulo)}</div>
-      <div class="funcao">${escapeHtml(h.funcao)}</div>
-      <div class="net ${net < 0 ? "valor-neg" : "valor-pos"}" data-valor>${net >= 0 ? "+" : ""}${formatarBRL(net)}</div>
+      <div class="rotulo">${h.saidaCritica ? '<span class="ponto-critico"></span>' : ""}Daqui a ${escapeHtml(h.rotulo)}</div>
+      <div class="funcao">em conta, se nada mudar</div>
+      <div class="net ${saldo < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(saldo)}</div>
     </button>`;
 }

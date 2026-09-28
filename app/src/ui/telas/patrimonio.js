@@ -59,8 +59,8 @@ function cartaoAtivo(a) {
       </div>
       <div class="item-valor mono" data-valor>${formatarBRL(a.valorAtualCentavos)}</div>
       <div class="item-acoes">
-        <button class="icon-btn" data-acao="editar" data-id="${escapeHtml(a.id)}" title="Editar" aria-label="Editar">✎</button>
-        <button class="icon-btn danger" data-acao="apagar" data-id="${escapeHtml(a.id)}" title="Apagar" aria-label="Apagar">✕</button>
+        <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(a.id)}" >Editar</button>
+        <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(a.id)}" >Apagar</button>
       </div>
     </div>`;
 }
@@ -128,7 +128,7 @@ function renderizar() {
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Reserva</h3>
       <p class="tela-sub">${painel.reserva.coberturaMeses != null
-        ? `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados. Cobre ${painel.reserva.coberturaMeses.toFixed(1)} meses (${painel.reserva.coberturaDias} dias) de custo essencial`
+        ? `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados. Cobre ${painel.reserva.coberturaMeses.toFixed(1).replace(".", ",")} ${painel.reserva.coberturaMeses >= 0.95 && painel.reserva.coberturaMeses < 1.05 ? "mês" : "meses"} (${painel.reserva.coberturaDias} dias) do essencial e das parcelas, se a renda parasse hoje`
         : `<span data-valor>${formatarBRL(painel.reserva.saldoReservaCentavos)}</span> guardados. Sem custo essencial registrado ainda para calcular cobertura`}</p></div></div>
     ${painel.reserva.metas.map(linhaMetaReserva).join("")}
   `;

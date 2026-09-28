@@ -140,8 +140,11 @@ function renderizarPedindoConta() {
 
 function renderizarPainel(painel) {
   if (!container) return;
-  const { saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos, livreCentavos, seguroParaGastarCentavos } = painel;
+  const { saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos, entradasPrevistasCentavos, seguroParaGastarCentavos, diaMaisApertado } = painel;
   const negativo = seguroParaGastarCentavos < 0;
+  const explicacao = negativo
+    ? `Mesmo contando o que vai entrar, faltam <b data-valor>${formatarBRL(-seguroParaGastarCentavos)}</b> em ${escapeHtml(formatarData(diaMaisApertado))}. Veja em Planejamento o que vence nesse dia.`
+    : `Quanto dá pra gastar no dia a dia sem faltar dinheiro nos próximos ${HORIZONTE_DIAS} dias. Já conta o que vai entrar e tudo que vai sair${diaMaisApertado ? `; o dia mais apertado é ${escapeHtml(formatarData(diaMaisApertado))}` : ""}.`;
 
   container.innerHTML = `
     <div class="home-saldo-card">
@@ -155,13 +158,12 @@ function renderizarPainel(painel) {
 
       <button class="home-saldo-rotulo" id="ir-dinheiro-saldo">Dinheiro seguro para gastar ${icone("chevron", 15)}</button>
       <div class="home-saldo-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
-      <div class="home-saldo-sub">O que sobra depois de descontar tudo que já está comprometido nos
-        próximos ${HORIZONTE_DIAS} dias. Não conta a reserva.</div>
+      <div class="home-saldo-sub">${explicacao}</div>
 
       <div class="home-saldo-metricas">
-        <div class="home-metrica"><span>Saldo atual</span><b data-valor>${formatarBRL(saldoAtualCentavos)}</b></div>
-        <div class="home-metrica"><span>Comprometido</span><b data-valor>${formatarBRL(comprometidoCentavos)}</b></div>
-        <div class="home-metrica"><span>Livre</span><b data-valor>${formatarBRL(livreCentavos)}</b></div>
+        <div class="home-metrica"><span>Em conta hoje</span><b data-valor>${formatarBRL(saldoAtualCentavos)}</b></div>
+        <div class="home-metrica"><span>Vai entrar</span><b data-valor>+${formatarBRL(entradasPrevistasCentavos || 0)}</b></div>
+        <div class="home-metrica"><span>Vai sair</span><b data-valor>−${formatarBRL(comprometidoCentavos)}</b></div>
       </div>
 
       ${saldoReservaCentavos !== 0 ? `
@@ -309,6 +311,12 @@ function cartaoHome({ modulo, icone: nomeIcone, destaque, rotulo, valor, valorCl
     </button>`;
 }
 
+function resumoPendencias(achados) {
+  const urgentes = achados.filter((a) => a.urgencia === "alta").length;
+  const resto = achados.length - urgentes;
+  return [urgentes ? `${urgentes} urgente${urgentes > 1 ? "s" : ""}` : "", resto ? `${resto} pra acompanhar` : ""].filter(Boolean).join(" · ");
+}
+
 /** A grade inteira, um cartão por módulo — cada um lido de um painel que
  * já existe (nenhum número novo é inventado aqui). Redesenha tudo a cada
  * mudança em qualquer painel; é barato (é só HTML de texto) e mantém a
@@ -331,15 +339,14 @@ function renderizarGrade() {
   }
 
   if (estadoProjecao) {
-    const critico = estadoProjecao.horizontes.find((h) => h.saidaCritica);
-    const h7 = estadoProjecao.horizontes[0];
-    const net = h7.entradasSeguroCentavos - h7.saidasSeguroCentavos;
+    const h30 = estadoProjecao.horizontes.find((h) => h.chave === "30d") || estadoProjecao.horizontes[0];
+    const critico = h30.saidaCritica;
     cartoes.push(cartaoHome({
       modulo: "planejamento", icone: "planejamento", rotulo: "Planejamento",
-      valor: critico ? "Caixa aperta" : `${net >= 0 ? "+" : ""}${formatarBRL(net)}`,
-      valorClasse: critico ? "valor-neg" : (net < 0 ? "valor-neg" : "valor-pos"),
+      valor: critico ? "Caixa aperta" : formatarBRL(h30.saldoFinalSeguroCentavos),
+      valorClasse: critico || h30.saldoFinalSeguroCentavos < 0 ? "valor-neg" : "valor-pos",
       valorEhDinheiro: !critico,
-      sub: critico ? `previsto para ${escapeHtml(formatarData(critico.saidaCritica.data))}` : "saldo previsto em 7 dias",
+      sub: critico ? `em ${escapeHtml(formatarData(critico.data))}, no ritmo de gasto atual` : "em conta daqui a 30 dias, no ritmo de gasto atual",
     }));
   }
 
@@ -351,7 +358,7 @@ function renderizarGrade() {
       valorEhDinheiro: estadoDividas.quantidadeAtivas > 0,
       sub: estadoDividas.quantidadeAtivas === 0
         ? "nenhuma dívida ativa"
-        : `${estadoDividas.quantidadeAtrasadas > 0 ? `${estadoDividas.quantidadeAtrasadas} atrasada${estadoDividas.quantidadeAtrasadas > 1 ? "s" : ""} · ` : ""}<span data-valor>${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}</span>/mês`,
+        : `${estadoDividas.quantidadeSoAtrasadas > 0 ? `${estadoDividas.quantidadeSoAtrasadas} atrasada${estadoDividas.quantidadeSoAtrasadas > 1 ? "s" : ""} · ` : ""}${estadoDividas.quantidadeNegativadas > 0 ? `${estadoDividas.quantidadeNegativadas} no Serasa · ` : ""}<span data-valor>${formatarBRL(estadoDividas.comprometimentoMensalCentavos)}</span>/mês em parcelas`,
     }));
   }
 
@@ -396,7 +403,7 @@ function renderizarGrade() {
       valor: qtd === 0 ? "Em dia" : `${qtd} ${qtd === 1 ? "pendência" : "pendências"}`,
       valorClasse: qtd > 0 ? "valor-neg" : "valor-pos",
       valorEhDinheiro: false,
-      sub: qtd === 0 ? "nada pedindo atenção agora" : escapeHtml(estadoDecisoes.achadosPendentes[0].titulo),
+      sub: qtd === 0 ? "nada pedindo atenção agora" : resumoPendencias(estadoDecisoes.achadosPendentes),
     }));
   }
 

@@ -18,6 +18,7 @@ import { calcularSaldoConta, calcularClarezaDeCaixa } from "../domain/caixa.js";
 import { calcularVisaoCartao } from "../domain/cartoes.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
 import { calcularHorizonte } from "../domain/projecao.js";
+import { gastoDiaADiaMensal } from "../domain/previstos.js";
 import { calcularDiagnostico } from "../domain/diagnostico.js";
 import { calcularRendaAtual } from "../domain/renda.js";
 import { calcularCustos, calcularMargem, identificarCategoriasCrescentes } from "../domain/orcamento.js";
@@ -93,7 +94,8 @@ export async function calcularPainelDecisoes() {
   const saldoInicialCentavos = contasAtivas.filter((c) => !c.ehReserva).reduce((s, c) => s + calcularSaldoConta(c, dados.transacoes), 0);
 
   const clareza = calcularClarezaDeCaixa({ ...dados, hoje, horizonteDias: 30 });
-  const horizonte30d = calcularHorizonte({ ...dados, saldoInicialCentavos, hoje, dias: 30 });
+  const gastoDiaADiaMensalCentavos = gastoDiaADiaMensal({ ...dados, competencia });
+  const horizonte30d = calcularHorizonte({ ...dados, gastoDiaADiaMensalCentavos, saldoInicialCentavos, hoje, dias: 30 });
   const cartoesVisao = montarCartoesVisao({ ...dados, hoje });
 
   const diagnostico = calcularDiagnostico({ ...dados, clareza, competenciaAtual: competencia, hoje });
@@ -103,6 +105,7 @@ export async function calcularPainelDecisoes() {
     ...f, nomeCategoria: nomePorCategoria.get(f.categoriaId) || "Sem categoria",
     lancamentos: transacoesDaCategoria(dados.transacoes, f.categoriaId, competencia),
   }));
+  diagnostico.foraDoPadrao = foraDoPadrao;
   const categoriasCrescentes = identificarCategoriasCrescentes(dados.transacoes, competencia).map((c) => ({
     ...c, nomeCategoria: nomePorCategoria.get(c.categoriaId) || "Sem categoria",
     lancamentos: transacoesDaCategoria(dados.transacoes, c.categoriaId, competencia),

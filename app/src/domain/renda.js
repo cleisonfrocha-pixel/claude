@@ -86,43 +86,52 @@ export function calcularGaps({ rendaAtualCentavos, custoEssencialCentavos, custo
 const MARGEM_GASTO_ACIMA_DO_ESSENCIAL_PCT = 10;
 
 /**
- * A PERGUNTA CENTRAL do §12: havendo déficit, diz se o problema é de
- * gasto, de timing de caixa, de dívida, de renda, ou de uma combinação —
- * cada causa é um check independente sobre números já calculados em
- * outro lugar do domínio (clareza de caixa, dívidas, orçamento), então
- * mais de uma pode disparar ao mesmo tempo (a combinação é a lista ter
- * mais de um item, não um tipo à parte).
+ * A PERGUNTA CENTRAL do §12: HAVENDO déficit, diz se o problema é de
+ * gasto, de timing de caixa, de dívida, de renda, ou de uma combinação.
+ *
+ * Primeiro decide se há déficit — o mês não fecha (renda abaixo do que
+ * saiu, ou abaixo de essencial + parcelas) ou o caixa aperta num dia
+ * específico. Só então procura a causa. Antes, uma "causa" disparava
+ * sozinha e a tela gritava "déficit" num mês com sobra.
+ *
+ * `custoEssencialCentavos` vem de `calcularCustos` (sem parcela de
+ * dívida); `custoAtualCentavos` inclui as parcelas pagas no mês
+ * (`custoDividasPagasCentavos`), que por isso saem antes de comparar o
+ * gasto do dia a dia com o essencial.
  */
-export function diagnosticarCausaDeficit({ rendaAtualCentavos, custoEssencialCentavos, custoAtualCentavos, comprometimentoMensalDividasCentavos, seguroParaGastarCentavos }) {
+export function diagnosticarCausaDeficit({ rendaAtualCentavos, custoEssencialCentavos, custoAtualCentavos, custoDividasPagasCentavos = 0, comprometimentoMensalDividasCentavos = 0, seguroParaGastarCentavos }) {
   const causas = [];
+  const compromissoFixo = custoEssencialCentavos + comprometimentoMensalDividasCentavos;
+  const mesNaoFecha = rendaAtualCentavos < custoAtualCentavos || rendaAtualCentavos < compromissoFixo;
 
-  if (rendaAtualCentavos < custoEssencialCentavos) {
-    causas.push({
-      tipo: "renda",
-      titulo: "A renda atual não cobre o custo essencial",
-      dados: { rendaAtualCentavos, custoEssencialCentavos, faltaCentavos: custoEssencialCentavos - rendaAtualCentavos },
-    });
-  }
+  if (mesNaoFecha) {
+    if (rendaAtualCentavos < custoEssencialCentavos) {
+      causas.push({
+        tipo: "renda",
+        titulo: "A renda atual não cobre o custo essencial",
+        dados: { rendaAtualCentavos, custoEssencialCentavos, faltaCentavos: custoEssencialCentavos - rendaAtualCentavos },
+      });
+    }
 
-  const limiteGasto = Math.round(custoEssencialCentavos * (1 + MARGEM_GASTO_ACIMA_DO_ESSENCIAL_PCT / 100));
-  if (custoAtualCentavos > limiteGasto || custoAtualCentavos > rendaAtualCentavos) {
-    causas.push({
-      tipo: "gasto",
-      titulo: "O gasto do mês passou do que a renda ou o essencial sustentam",
-      dados: { custoAtualCentavos, custoEssencialCentavos, rendaAtualCentavos, excedenteCentavos: custoAtualCentavos - Math.min(limiteGasto, rendaAtualCentavos) },
-    });
-  }
+    const gastoDoDiaADia = custoAtualCentavos - custoDividasPagasCentavos;
+    const limiteGasto = Math.round(custoEssencialCentavos * (1 + MARGEM_GASTO_ACIMA_DO_ESSENCIAL_PCT / 100));
+    if (gastoDoDiaADia > limiteGasto && custoAtualCentavos > rendaAtualCentavos) {
+      causas.push({
+        tipo: "gasto",
+        titulo: "O gasto do mês passou do que a renda sustenta",
+        dados: { custoAtualCentavos, custoEssencialCentavos, rendaAtualCentavos, excedenteCentavos: custoAtualCentavos - rendaAtualCentavos },
+      });
+    }
 
-  const sobraAposEssencial = rendaAtualCentavos - custoEssencialCentavos;
-  if (comprometimentoMensalDividasCentavos > 0 && sobraAposEssencial < comprometimentoMensalDividasCentavos) {
-    causas.push({
-      tipo: "divida",
-      titulo: "O que sobra depois do essencial não cobre as parcelas de dívida",
-      dados: { sobraAposEssencial, comprometimentoMensalDividasCentavos, faltaCentavos: comprometimentoMensalDividasCentavos - sobraAposEssencial },
-    });
-  }
-
-  if (seguroParaGastarCentavos < 0 && rendaAtualCentavos >= custoAtualCentavos) {
+    const sobraAposEssencial = rendaAtualCentavos - custoEssencialCentavos;
+    if (comprometimentoMensalDividasCentavos > 0 && sobraAposEssencial < comprometimentoMensalDividasCentavos) {
+      causas.push({
+        tipo: "divida",
+        titulo: "O que sobra depois do essencial não cobre as parcelas de dívida",
+        dados: { sobraAposEssencial, comprometimentoMensalDividasCentavos, faltaCentavos: comprometimentoMensalDividasCentavos - sobraAposEssencial },
+      });
+    }
+  } else if (seguroParaGastarCentavos < 0) {
     causas.push({
       tipo: "timing",
       titulo: "O mês fecha no papel, mas o caixa aperta pelas datas de vencimento",
@@ -130,7 +139,5 @@ export function diagnosticarCausaDeficit({ rendaAtualCentavos, custoEssencialCen
     });
   }
 
-  const temDeficit = causas.length > 0 || seguroParaGastarCentavos < 0 || rendaAtualCentavos < custoAtualCentavos;
-
-  return { temDeficit, causas };
+  return { temDeficit: causas.length > 0 || mesNaoFecha, causas };
 }

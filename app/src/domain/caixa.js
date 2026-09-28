@@ -9,6 +9,8 @@
 
 import { somarDias } from "./tempo.js";
 import { efeitoNaConta, dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
+import { compromissosPorDia } from "./calendario.js";
+import { eventosFuturos } from "./previstos.js";
 
 /**
  * Saldo de UMA conta: saldo inicial cadastrado + o efeito de toda transação
@@ -39,8 +41,15 @@ export function calcularSaldoConta(conta, transacoes) {
  * ver dados/caixaRepo.js), porque este cálculo cruza `transacao.faturaId`
  * com o id da própria fatura; nada mais nesta função depende de id.
  */
-export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horizonteAte }) {
+export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horizonteAte, extras = [] }) {
   const itens = [];
+
+  // Saídas derivadas dos cadastros (parcela de dívida, conta mensal ainda
+  // não gerada) — ver domain/previstos.js.
+  for (const e of extras) {
+    if (e.tipo === "receita" || e.data > horizonteAte) continue;
+    itens.push({ tipo: e.origem?.tipo === "divida" ? "parcela" : "previsto", descricao: e.descricao, valorCentavos: e.valorCentavos, data: e.data, atrasado: !!e.atrasado, origem: e.origem });
+  }
 
   for (const t of transacoes || []) {
     if (t.tipo !== "despesa" || !t.contaId) continue;
@@ -85,7 +94,7 @@ export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horiz
  * `horizonteDias` (padrão 30) é o "horizonte escolhido" do §4 nesta fase —
  * um valor fixo até a Fase 5 trazer 7/30/90/365 lado a lado.
  */
-export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, hoje, horizonteDias = 30 }) {
+export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, hoje, horizonteDias = 30 }) {
   const horizonteAte = somarDias(hoje, horizonteDias);
 
   const contasAtivas = (contas || []).filter((c) => c.status === "ativa");
@@ -98,22 +107,45 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, h
   const saldoAtualCentavos = saldosOperacao.reduce((s, x) => s + x.saldoCentavos, 0);
   const saldoReservaCentavos = saldosReserva.reduce((s, x) => s + x.saldoCentavos, 0);
 
-  const comprometido = calcularComprometido({ transacoes, faturas, cartoes, hoje, horizonteAte });
+  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: horizonteAte, hoje });
+  const comprometido = calcularComprometido({ transacoes, faturas, cartoes, hoje, horizonteAte, extras });
 
+  // "Livre" responde "e se não entrasse nada?": saldo menos tudo que sai.
   const livreCentavos = saldoAtualCentavos - comprometido.totalCentavos;
-  const seguroParaGastarCentavos = livreCentavos;
+
+  // "Seguro para gastar" responde a pergunta do §4 de verdade: caminhando
+  // o saldo dia a dia, com o que sai E o que entra com segurança
+  // (confirmado/provável — incerto nunca), qual o ponto mais baixo? Gastar
+  // mais que isso hoje faz faltar dinheiro nesse dia. Nunca passa do saldo
+  // de hoje: dinheiro que ainda não entrou não se gasta hoje.
+  const dias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte, hoje, extras });
+  let saldo = saldoAtualCentavos;
+  let menorSaldoCentavos = saldoAtualCentavos;
+  let diaMaisApertado = null;
+  let entradasPrevistasCentavos = 0;
+  for (const dia of dias) {
+    for (const i of dia.itens) {
+      if (i.certeza === "incerto") continue;
+      if (i.tipo === "receita") { saldo += i.valorCentavos; entradasPrevistasCentavos += i.valorCentavos; } else saldo -= i.valorCentavos;
+    }
+    if (saldo < menorSaldoCentavos) { menorSaldoCentavos = saldo; diaMaisApertado = dia.data; }
+  }
+  const seguroParaGastarCentavos = Math.min(saldoAtualCentavos, menorSaldoCentavos);
 
   return {
     saldoAtualCentavos,
     saldoReservaCentavos,
     comprometidoCentavos: comprometido.totalCentavos,
+    entradasPrevistasCentavos,
     livreCentavos,
     seguroParaGastarCentavos,
+    diaMaisApertado,
     horizonteAte,
     detalhes: {
       contasOperacao: saldosOperacao,
       contasReserva: saldosReserva,
       compromissos: comprometido.itens.sort((a, b) => (a.data || "").localeCompare(b.data || "")),
+      entradas: dias.flatMap((d) => d.itens.filter((i) => i.tipo === "receita" && i.certeza !== "incerto").map((i) => ({ ...i, data: d.data }))),
     },
   };
 }

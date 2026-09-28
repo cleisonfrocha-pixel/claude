@@ -40,13 +40,14 @@ test("ordem de quitação: negativadas primeiro (menor saldo), depois juros mais
   assert.deepEqual(ordem, ["d", "b", "c", "a"]);
 });
 
-test("seguir como está: parcela abate, negativada sem acordo só cresce, sobra fica no caixa", () => {
+test("seguir como está: dívida com acordo rende a taxa e a parcela abate, negativada sem acordo só cresce, sobra fica no caixa", () => {
   const r = simularCenario(base(), cenario("atual"), { meses: 2 });
-  // mês 1: loja 100.000 + 5% = 105.000; carro 300.000 - 50.000
-  assert.equal(r.serie[0].dividaCentavos, 105000 + 250000);
+  // mês 1: loja 100.000 + 5% = 105.000; carro 300.000 + 1,5% − 50.000 = 254.500
+  assert.equal(r.serie[0].dividaCentavos, 105000 + 254500);
   assert.equal(r.serie[0].caixaCentavos, 500000 - 400000 - 50000);
-  assert.equal(r.serie[1].dividaCentavos, 110250 + 200000);
-  assert.equal(r.jurosAcumuladosCentavos, 5000 + 5250);
+  // mês 2: loja 110.250; carro 254.500 + 3.818 − 50.000 = 208.318
+  assert.equal(r.serie[1].dividaCentavos, 110250 + 208318);
+  assert.equal(r.jurosAcumuladosCentavos, 5000 + 4500 + 5250 + 3818);
   assert.equal(r.mesNomeLimpo, null);
   assert.equal(r.viavel, true);
 });

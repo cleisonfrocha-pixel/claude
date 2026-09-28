@@ -1028,3 +1028,79 @@ de cálculo confirmados: Sprint 22.
 Cada correção com teste provando o número certo (e o errado, antes da
 correção, documentado no comentário do teste). 332 testes passando (327 →
 +5 novos, mais os 2 recalculados que a correção do mês corrente exigiu).
+
+---
+
+## Segunda auditoria com um casal realista e Sprints 23-26 (28/09/2026)
+
+Pedido do usuário: auditoria a fundo antes de mandar os dados reais: o
+sistema vai fazer certo? um leigo entende no celular e no computador?
+Método: um casal fictício realista (renda variável dele, salário fixo dela,
+dois cartões, um que fecha dia 25 e vence dia 5, financiamento, empréstimo,
+duas dívidas no Serasa, três meses de extrato) montado pela MESMA
+ferramenta do chat, e o app aberto no navegador com esses dados em todas
+as telas, desktop e celular. Cada número conferido à mão.
+
+### Sprint 23 · motor — ✅
+
+- **Futuro que o sistema não enxergava** (`domain/previstos.js`, novo):
+  renda cadastrada (fixa pelo valor, variável pelo pior mês fechado, sem
+  histórico = incerta), parcela de cada dívida nas datas do contrato (vencida
+  e não paga pesa hoje) e conta mensal além dos meses já gerados. Entra na
+  agenda, no fluxo de caixa e na tela inicial. Antes: projeção de 12 meses
+  sem salário nem parcela (-R$ 5.260 e "caixa aperta" falso).
+- **"Dinheiro seguro para gastar"** passa a ser o ponto mais baixo do saldo
+  nos próximos 30 dias, contando o que entra e o que sai (§4 de verdade).
+  Antes: saldo menos saídas, sem nenhuma entrada (-R$ 2.070 com salário
+  caindo em uma semana).
+- **Projeção longa com o gasto do dia a dia** na média dos meses fechados,
+  menos o que as recorrências já projetam. Sem isso 12 meses era só entrada.
+- **Pagamento de fatura na fatura certa**: a que já fechou até a data
+  (`faturaParaPagamento`). Antes, no cartão que fecha 25 e vence 5, pagava a
+  fatura seguinte e a certa ficava "aberta" pra sempre, comendo limite.
+- **Parcela paga ligada à dívida** (`transacao.dividaId`): conta como parcela
+  nova só a que está em aberto; extrato antigo só liga. Fim das dívidas
+  "atrasadas" que estavam pagas.
+- **Saldo devedor = valor pra quitar hoje**: valor presente das parcelas na
+  taxa do contrato (informada ou implícita no principal/parcela/prazo). O
+  Sprint 22 tinha trocado "zera antes da hora" por "cobra juros futuros"
+  (carro: R$ 33.350 em vez de ~R$ 25.120).
+- **Caminhos**: dívida com acordo rende a taxa e a parcela abate (pagar a
+  mais corta juros de verdade); parcela descontada uma vez só (o Sprint 22
+  não tinha chegado aqui: sobra mensal errada em R$ 1.630); conservador usa o
+  pior mês da renda variável em vez de zero; aviso quando o mês fecha mas um
+  dia específico aperta.
+- **Alarmes falsos**: mês antes do começo do histórico não entra na média
+  como zero (eram 4 de 10 alertas); "déficit" só quando o mês não fecha ou o
+  caixa aperta (a tela Renda acusava déficit num mês com sobra de R$ 4.400);
+  "caixa aperta" e "saída crítica" não aparecem duplicados.
+- **Consistência entre telas**: leitura única de dados (`dados/base.js`); a
+  Renda passou a ler faturas (dava -R$ 300 onde a Início dava -R$ 2.070);
+  "essencial" com a mesma definição em todo lugar; recorrente vs.
+  extraordinário reconhece conta mensal que veio de extrato.
+
+### Sprint 24 · casal de teste permanente — ✅
+
+`testes/fixtures/casal.js` + `testes/casal.test.js`: o casal montado pela
+ferramenta do chat e 10 conferências com a conta à mão ao lado (faturas,
+parcelas, dinheiro seguro, custos, dívidas, por pessoa, caminhos, projeção,
+alertas). `testes/previstos.test.js` cobre os eventos futuros. 350 testes.
+
+### Sprint 25 · telas pra leigo — ✅
+
+- Listas no celular: o nome sumia (largura zero) e a tela rolava pro lado.
+  Agora nome em cima, valor e botões embaixo.
+- Todo botão com palavra (Editar, Apagar, Detalhes, Conferido, Pausar),
+  nada de ✎ ✕ ▾ soltos. Decisões: "Já resolvi", "Lembrar depois", "Não se
+  aplica".
+- Transferência aparece uma vez, não duas; pagamento de fatura e
+  transferência explicam que não são gasto; "a conferir" + "Conferi todos".
+- Plano › Visão geral começa pelo que fazer; prazo, diagnóstico, qualidade e
+  histórico recolhidos (a tela no celular caiu de ~12 pra ~4 alturas).
+- Início: "Em conta hoje / Vai entrar / Vai sair" e a frase diz o dia mais
+  apertado; cartões sem alerta repetido; texto de Objetivos voltou a
+  aparecer (botão não herdava a cor); Planejamento mostra quanto fica em
+  conta em 30 dias.
+- Fluxo de caixa mostra quanto fica em conta em cada prazo (antes, uma
+  variação que não batia com o detalhe). Nome da categoria no diagnóstico,
+  vírgula decimal, dia do recebimento no cadastro de renda.
