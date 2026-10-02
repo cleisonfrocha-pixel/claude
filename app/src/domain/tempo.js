@@ -17,6 +17,10 @@ export function competenciaAtual(agora = new Date()) {
 
 /** "2025-03-14T..." -> "2025-03" */
 export function competenciaDeData(isoOuData) {
+  // "AAAA-MM-DD" é um dia do calendário: o mês está escrito nele. Passar por
+  // `new Date` lê como meia-noite UTC e, no horário de Brasília, o dia 1
+  // virava o último dia do mês anterior.
+  if (typeof isoOuData === "string" && /^\d{4}-\d{2}/.test(isoOuData)) return isoOuData.slice(0, 7);
   const d = isoOuData instanceof Date ? isoOuData : new Date(isoOuData);
   if (Number.isNaN(d.getTime())) return competenciaAtual();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -93,9 +97,12 @@ export function hojeISO(agora = new Date()) {
 /** Formata uma data ISO como dd/mm/aaaa. */
 export function formatarData(iso) {
   if (!iso) return "";
-  const d = new Date(iso);
+  // Data "AAAA-MM-DD" é um dia do calendário, não um instante: lê como UTC e
+  // formata como UTC. Sem isso, no horário de Brasília todo dia aparecia um
+  // dia antes (23/09 virava 22/09).
+  const d = /^\d{4}-\d{2}-\d{2}/.test(iso) ? new Date(`${iso.slice(0, 10)}T12:00:00Z`) : new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("pt-BR");
+  return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
 /** "há 2 dias", "hoje", "ontem" — para timestamps de auditoria. */

@@ -23,7 +23,10 @@ export function calcularSaldoConta(conta, transacoes) {
   let efeito = 0;
   for (const t of transacoes || []) {
     if (t.contaId !== conta.id) continue;
-    if (conta.dataSaldoInicial && t.data <= conta.dataSaldoInicial) continue;
+    // O dinheiro mexe na conta no dia em que SAIU ou ENTROU (`pagoEm`), nunca no
+    // vencimento: uma conta que venceu em setembro e foi paga hoje tira o
+    // dinheiro de hoje. Sem `pagoEm` (lançamento antigo) vale a data do lançamento.
+    if (conta.dataSaldoInicial && (t.pagoEm || t.data) <= conta.dataSaldoInicial) continue;
     efeito += efeitoNaConta(t);
   }
   return inicial + efeito;
@@ -108,34 +111,40 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
   const saldoReservaCentavos = saldosReserva.reduce((s, x) => s + x.saldoCentavos, 0);
 
   const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: horizonteAte, hoje });
-  const comprometido = calcularComprometido({ transacoes, faturas, cartoes, hoje, horizonteAte, extras });
-
-  // "Livre" responde "e se não entrasse nada?": saldo menos tudo que sai.
-  const livreCentavos = saldoAtualCentavos - comprometido.totalCentavos;
-
-  // "Seguro para gastar" responde a pergunta do §4 de verdade: caminhando
-  // o saldo dia a dia, com o que sai E o que entra com segurança
-  // (confirmado/provável — incerto nunca), qual o ponto mais baixo? Gastar
-  // mais que isso hoje faz faltar dinheiro nesse dia. Nunca passa do saldo
-  // de hoje: dinheiro que ainda não entrou não se gasta hoje.
+  // Uma trilha só: o que sai, o que entra e o ponto mais baixo saem dos MESMOS
+  // itens. Antes "vai sair" somava uma lista e o "pode gastar" caminhava outra
+  // (a trilha descartava despesa de data passada que não era atrasada) e os
+  // números do mesmo cartão não fechavam entre si.
   const dias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte, hoje, extras });
   let saldo = saldoAtualCentavos;
   let menorSaldoCentavos = saldoAtualCentavos;
   let diaMaisApertado = null;
   let entradasPrevistasCentavos = 0;
+  let comprometidoCentavos = 0;
+  const compromissos = [];
   for (const dia of dias) {
     for (const i of dia.itens) {
-      if (i.certeza === "incerto") continue;
-      if (i.tipo === "receita") { saldo += i.valorCentavos; entradasPrevistasCentavos += i.valorCentavos; } else saldo -= i.valorCentavos;
+      if (i.tipo === "receita") {
+        if (i.certeza === "incerto") continue;
+        saldo += i.valorCentavos; entradasPrevistasCentavos += i.valorCentavos;
+      } else {
+        saldo -= i.valorCentavos; comprometidoCentavos += i.valorCentavos;
+        compromissos.push({
+          tipo: i.origem?.tipo === "divida" ? "parcela" : i.tipo, descricao: i.descricao, valorCentavos: i.valorCentavos,
+          data: dia.data, vencimento: i.vencimento || dia.data, atrasado: !!i.atrasado, semDia: !!i.semDia, origem: i.origem,
+        });
+      }
     }
     if (saldo < menorSaldoCentavos) { menorSaldoCentavos = saldo; diaMaisApertado = dia.data; }
   }
+  // "Livre" responde "e se não entrasse nada?": saldo menos tudo que sai.
+  const livreCentavos = saldoAtualCentavos - comprometidoCentavos;
   const seguroParaGastarCentavos = Math.min(saldoAtualCentavos, menorSaldoCentavos);
 
   return {
     saldoAtualCentavos,
     saldoReservaCentavos,
-    comprometidoCentavos: comprometido.totalCentavos,
+    comprometidoCentavos,
     entradasPrevistasCentavos,
     livreCentavos,
     seguroParaGastarCentavos,
@@ -144,7 +153,7 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
     detalhes: {
       contasOperacao: saldosOperacao,
       contasReserva: saldosReserva,
-      compromissos: comprometido.itens.sort((a, b) => (a.data || "").localeCompare(b.data || "")),
+      compromissos: compromissos.sort((a, b) => (a.data || "").localeCompare(b.data || "")),
       entradas: dias.flatMap((d) => d.itens.filter((i) => i.tipo === "receita" && i.certeza !== "incerto").map((i) => ({ ...i, data: d.data }))),
     },
   };

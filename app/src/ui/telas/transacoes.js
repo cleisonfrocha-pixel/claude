@@ -5,6 +5,7 @@
 // dados/recorrenciasRepo.js) — esta tela só coleta os campos certos para
 // cada uma e mostra o resultado.
 
+import { hojeISO } from "../../domain/tempo.js";
 import * as tempo from "../../domain/tempo.js";
 import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
 import { totalizarMes, statusEfetivo } from "../../domain/transacoes.js";
@@ -543,7 +544,7 @@ function campoFonteRenda(idPrefixo, atual) {
 
 function renderCamposModo(modo) {
   const alvo = document.getElementById("campos-modo");
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeISO();
   if (modo === "simples") {
     alvo.innerHTML = `
       <div class="field"><label>Tipo</label>

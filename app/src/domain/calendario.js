@@ -6,6 +6,26 @@
 // e — caminhando o saldo dia a dia — em que dia isso aperta de verdade.
 
 import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
+import { diasNoMes, dataDeCompetencia, somarDias } from "./tempo.js";
+
+/** Quando a verba pesa no caixa. Mês corrente: o que falta gastar já tem
+ * destino, então pesa HOJE por inteiro (é o mais seguro pro "pode gastar":
+ * dinheiro de mercado e almoço não é dinheiro livre). Mês futuro: repartida
+ * em semanas desde o dia 1, que é como o gasto de fato acontece. Resto de
+ * centavos vai na primeira parcela. */
+export function repartirVerba(t, de) {
+  const competencia = t.competencia || (t.data || "").slice(0, 7);
+  const primeiro = `${competencia}-01`;
+  const ultimo = dataDeCompetencia(competencia, diasNoMes(competencia));
+  const inicio = de > primeiro ? de : primeiro;
+  if (inicio > ultimo) return [{ data: ultimo, valorCentavos: Number(t.valorCentavos) || 0 }];
+  if (de >= primeiro) return [{ data: inicio, valorCentavos: Number(t.valorCentavos) || 0 }];
+  const datas = [];
+  for (let d = inicio; d <= ultimo && datas.length < 4; d = somarDias(d, 7)) datas.push(d);
+  const total = Number(t.valorCentavos) || 0;
+  const base = Math.floor(total / datas.length);
+  return datas.map((data, i) => ({ data, valorCentavos: base + (i === 0 ? total - base * datas.length : 0) }));
+}
 
 /**
  * Agrupa compromissos e receitas previstas por data, dentro de [de, ate].
@@ -23,6 +43,7 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     // Compromisso vencido e não pago não some do futuro: pesa hoje.
     const data = dados.atrasado && dataOriginal && dataOriginal < de ? de : dataOriginal;
     if (!data || data < de || data > ate) return;
+    dados = { vencimento: dataOriginal, ...dados };
     if (!porDia.has(data)) porDia.set(data, { data, entradasCentavos: 0, saidasCentavos: 0, itens: [] });
     const dia = porDia.get(data);
     // Entrada incerta aparece no dia mas não cobre nada (CLAUDE.md:
@@ -34,7 +55,17 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
 
   for (const t of transacoes || []) {
     if (t.status === "pago" || t.status === "cancelado") continue;
-    if (t.tipo === "despesa" && t.contaId) {
+    if (t.tipo === "despesa" && t.contaId && t.semDia && statusEfetivo(t, hoje) !== "atrasado") {
+      // Verba do mês (mercado, almoço, anúncios…): não tem dia. O que ainda
+      // não foi gasto pesa nas semanas que faltam do mês, não num dia que já
+      // passou (e some do caixa) nem tudo no dia 1.
+      for (const parte of repartirVerba(t, de)) {
+        item(parte.data, -parte.valorCentavos, {
+          tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: parte.valorCentavos, valorTotalCentavos: Number(t.valorCentavos) || 0,
+          atrasado: false, certeza: t.certeza, semDia: true,
+        });
+      }
+    } else if (t.tipo === "despesa" && t.contaId) {
       item(t.data, -(Number(t.valorCentavos) || 0), {
         tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: Number(t.valorCentavos) || 0,
         atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza,

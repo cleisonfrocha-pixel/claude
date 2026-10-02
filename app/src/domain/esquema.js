@@ -2,6 +2,8 @@
 // Ver docs/MODELO-DE-DADOS.md — este arquivo é a implementação viva daquele
 // documento para as coleções que nascem na Fase 0.
 
+
+import { hojeISO } from "./tempo.js";
 export const VERSAO_ESQUEMA = 1;
 
 export const PAPEIS_PESSOA = ["titular", "conjuge", "dependente", "outro"];
@@ -60,7 +62,7 @@ export function padraoConta(dados = {}) {
     nome: "",
     tipo: "corrente",
     saldoInicialCentavos: 0,
-    dataSaldoInicial: new Date().toISOString().slice(0, 10),
+    dataSaldoInicial: hojeISO(),
     status: "ativa",
     ehReserva: false,
     ...dados,
@@ -94,7 +96,7 @@ export function padraoCategoria(dados = {}) {
 
 export function padraoTransacao(dados = {}) {
   return {
-    data: new Date().toISOString().slice(0, 10),
+    data: hojeISO(),
     competencia: "",
     valorCentavos: 0,
     tipo: "despesa",
@@ -135,7 +137,7 @@ export function padraoRecorrencia(dados = {}) {
     cartaoId: null,
     periodicidade: "mensal",
     diaBase: 1,
-    inicio: new Date().toISOString().slice(0, 7),
+    inicio: hojeISO().slice(0, 7),
     fim: null,
     semDia: false,
     ativoId: null, // bem a que este custo pertence (galpão, carro): soma nos custos do bem
@@ -162,7 +164,7 @@ export function padraoDivida(dados = {}) {
     valorParcelaCentavos: 0,
     quantidadeParcelas: 1,
     parcelasPagas: 0,
-    dataInicio: new Date().toISOString().slice(0, 10),
+    dataInicio: hojeISO(),
     taxaJurosMensalPct: null,
     emRisco: false,
     negativada: false,
@@ -198,7 +200,7 @@ export function padraoAtivo(dados = {}) {
     classe: "liquido",
     dividaId: null, // dívida que financia o bem (carro financiado): mostra o líquido do bem
     valorAtualCentavos: 0,
-    dataAvaliacao: new Date().toISOString().slice(0, 10),
+    dataAvaliacao: hojeISO(),
     ...dados,
   };
 }

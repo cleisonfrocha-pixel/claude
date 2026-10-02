@@ -1530,3 +1530,24 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Caminhos: o cenário "Conservador" (só renda garantida) ainda pode avisar que
   o Jeep fica sem pagar: é um teste de estresse, não o caso base, mas vale
   rever se deve vir marcado como "sugerido".
+
+## Rodada 6 — plano da auditoria (Sprints 48 a 55)
+
+### Sprint 48: o número certo — 02/10/2026
+
+- **Saldo pela data real.** `calcularSaldoConta` usa `pagoEm` (o dia em que o
+  dinheiro saiu/entrou), não o vencimento. Pagar hoje a Luz que venceu em
+  23/09 agora derruba o saldo em R$ 156,79 (antes não mexia e o "pode gastar"
+  subia).
+- **Uma trilha só no Início.** "Vai sair", "Vai entrar", saldo previsto e "pode
+  gastar" saem dos mesmos itens (antes "vai sair" somava uma lista e o "pode
+  gastar" caminhava outra). A trilha descartava despesa de data passada que não
+  era atrasada: as verbas de 01/10 (R$ 2.435,00) sumiam. Hoje: verba do mês
+  corrente pesa hoje por inteiro; a de mês futuro é repartida em semanas.
+  Resultado nos dados reais: pode gastar R$ 430,37 (era R$ 2.865,37).
+- **Dois bugs de fuso horário** (aparecem só no horário de Brasília):
+  `competenciaDeData("2026-10-01")` devolvia 2026-09 e `formatarData` mostrava
+  todo dia um dia antes (23/09 virava 22/09). Corrigidos; a suíte agora roda
+  também com `TZ=America/Sao_Paulo`. Datas "de hoje" usam o relógio local.
+- Início: conta atrasada mostra "venceu dd/mm".
+- Testes: `numeroCerto.test.js`. 443 passando (nos dois fusos).

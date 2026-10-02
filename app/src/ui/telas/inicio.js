@@ -107,7 +107,7 @@ function blocoProximos(proximos) {
       <div class="inicio-lista">
         ${proximos.slice(0, 8).map((i) => `
           <div class="inicio-linha">
-            <span class="inicio-data">${i.atrasado ? '<span class="tag-atrasado">Atrasado</span>' : i.semDia ? "no mês" : escapeHtml(formatarData(i.data))}</span>
+            <span class="inicio-data">${i.atrasado ? `<span class="tag-atrasado">Atrasado</span><small class="inicio-venc">venceu ${escapeHtml(formatarData(i.vencimento || i.data).slice(0, 5))}</small>` : i.semDia ? "no mês" : escapeHtml(formatarData(i.data))}</span>
             <span class="inicio-desc">${escapeHtml(i.descricao || "")}${i.certeza && i.certeza !== "confirmado" && i.tipo === "entrada" ? " <small>(esperado)</small>" : ""}</span>
             <b class="mono ${i.tipo === "entrada" ? "valor-pos" : "valor-neg"}" data-valor>${i.tipo === "entrada" ? "+" : "−"}${formatarBRL(i.valorCentavos)}</b>
           </div>`).join("")}

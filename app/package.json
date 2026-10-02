@@ -3,6 +3,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test testes/*.test.js"
+    "test": "node --test testes/*.test.js && TZ=America/Sao_Paulo node --test testes/*.test.js"
   }
 }

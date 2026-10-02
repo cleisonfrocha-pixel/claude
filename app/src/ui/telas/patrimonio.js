@@ -3,6 +3,7 @@
 // evolução precisam reagir a ativo, dívida e conta mudando, não só à
 // lista de ativos — a fábrica de cadastro sozinha não dá conta disso.
 
+import { hojeISO } from "../../domain/tempo.js";
 import { ativos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelPatrimonio } from "../../dados/patrimonioRepo.js";
 import { CLASSES_ATIVO } from "../../domain/esquema.js";
@@ -197,7 +198,7 @@ function campoAtivoHtml(a) {
     <div class="field"><label for="campo-ativo-valor">Valor atual</label>
       <input type="text" inputmode="decimal" id="campo-ativo-valor" placeholder="0,00" value="${a ? formatarBRL(a.valorAtualCentavos).replace("R$ ", "") : ""}"></div>
     <div class="field"><label for="campo-ativo-data">Data da avaliação</label>
-      <input type="date" id="campo-ativo-data" value="${escapeHtml(a?.dataAvaliacao || new Date().toISOString().slice(0, 10))}" required></div>
+      <input type="date" id="campo-ativo-data" value="${escapeHtml(a?.dataAvaliacao || hojeISO())}" required></div>
   `;
 }
 
