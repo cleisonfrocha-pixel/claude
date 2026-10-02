@@ -725,3 +725,10 @@
 .busca-grupo { margin: 14px 0 4px; font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
 .btn-busca { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .dados-texto { width: 100%; min-height: 160px; font-family: var(--font-mono, monospace); font-size: 12px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }
+
+/* Fase 13: conversa com a IA. */
+.ia-conversa { display: flex; flex-direction: column; gap: 10px; max-height: 55vh; overflow-y: auto; margin-bottom: 8px; }
+.ia-bolha { padding: 10px 14px; border-radius: 16px; max-width: 92%; font-size: 14.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.ia-bolha.voce { align-self: flex-end; background: linear-gradient(135deg, var(--accent-fill-2), var(--accent-fill) 70%); color: var(--accent-ink); }
+.ia-bolha.ia { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); }
+.ia-sugestoes { display: flex; flex-wrap: wrap; gap: 8px; }

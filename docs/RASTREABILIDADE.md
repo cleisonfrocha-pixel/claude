@@ -1323,3 +1323,24 @@ esperar os dados reais.
 - Ainda aberto: comprovantes anexados (depende de a capability de arquivos do
   artefato) e histórico detalhado campo a campo.
 - 5 testes novos (400 no total).
+
+### Fase 13 — Assistente de IA (§20) — ✅ (02/10/2026)
+
+- Plano › Perguntar: conversa em português simples sobre o dinheiro da casa, via
+  capability `sample` (roda no claude.ai do próprio usuário, sem backend).
+- A IA só lê: nenhuma ferramenta de gravação está ligada a ela. Recebe um retrato
+  calculado na hora (caixa, mês, 3/6/12 meses, alavancas, renda, dívidas, bens,
+  fechamento, alertas) em que cada linha traz a fonte; as instruções proíbem
+  inventar número, tratam renda esperada como não garantida, não recomendam
+  produto financeiro e exigem a linha "Baseado em:". A tela mostra, recolhido,
+  exatamente o que vai junto (`domain/ia.js`, `dados/iaRepo.js`).
+- 3 testes novos (404 no total). O link do painel foi restringido pelo Cleison
+  antes de habilitar a capability.
+
+### Correção de cadastro (02/10/2026)
+
+Conferência da planilha "Possíveis lançamentos" e das mensagens contra o banco:
+faltavam Del Poente (R$ 5.000 em 05/10), cartão Crédito Shoppe (limite R$ 4.000),
+Fórmula do Caio (R$ 300/mês), Anúncios do Gedi (R$ 1.000/mês) e as faturas
+Nubank (PJ OUT R$ 2.297,10, PF OUT R$ 241,10, PJ NOV previsto R$ 1.196,70).
+Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony).

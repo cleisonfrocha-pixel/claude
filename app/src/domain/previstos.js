@@ -115,6 +115,7 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
     if (coberta) continue;
     const dia = diaDaFonte(f, receitas);
     for (const c of comps) {
+      if (f.fim && c > f.fim) continue; // contrato acabou: não projeta além do último mês
       if (receitas.some((t) => t.competencia === c && t.status !== "cancelado")) continue;
       const dataOriginal = dataDeCompetencia(c, dia);
       // Dia esperado já passou neste mês e ninguém confirmou o recebimento:

@@ -323,6 +323,9 @@ function campoFonteHtml(f) {
     <div class="field"><label for="campo-fonte-dia">Dia do mês em que costuma cair (opcional)</label>
       <input type="number" min="1" max="31" inputmode="numeric" id="campo-fonte-dia" value="${f?.diaRecebimento || ""}" placeholder="Ex.: 5">
       <small class="tela-sub" style="display:block;margin-top:4px;">Sem o dia, a agenda usa o dia do último recebimento. Renda variável entra na previsão pelo pior mês recente.</small></div>
+    <div class="field"><label for="campo-fonte-fim">Último mês em que paga (opcional)</label>
+      <input type="month" id="campo-fonte-fim" value="${escapeHtml(f?.fim || "")}">
+      <small class="tela-sub" style="display:block;margin-top:4px;">Contrato com data para acabar: depois desse mês o painel para de contar essa renda.</small></div>
     <label class="field-check"><input type="checkbox" id="campo-fonte-ativa" ${f ? (f.ativa ? "checked" : "") : "checked"}> Ativa</label>
   `;
 }
@@ -351,6 +354,7 @@ function abrirFormularioFonte(f) {
       tipo: document.getElementById("campo-fonte-tipo").value,
       valorEsperadoCentavos: paraCentavos(document.getElementById("campo-fonte-valor").value),
       diaRecebimento: (() => { const n = Number(document.getElementById("campo-fonte-dia").value); return n >= 1 && n <= 31 ? Math.round(n) : null; })(),
+      fim: document.getElementById("campo-fonte-fim").value || null,
       ativa: document.getElementById("campo-fonte-ativa").checked,
     };
     try {

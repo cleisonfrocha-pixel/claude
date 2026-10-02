@@ -84,3 +84,10 @@ test("faturaParaPagamento: a que já fechou até a data; adiantado, a mais antig
   assert.equal(faturaParaPagamento(cartao, abertas, "2026-08-26").id, "ago");
   assert.equal(faturaParaPagamento(cartao, abertas, "2026-07-10").id, "jul");
 });
+
+test("renda com 'fim': não projeta depois do último mês (Gedi/Tony até dezembro)", () => {
+  const fonte = { id: "f1", nome: "Gedi / Tony", tipo: "recorrente", valorEsperadoCentavos: 350000, diaRecebimento: 24, ativa: true, fim: "2026-12" };
+  const ev = eventosFuturos({ transacoes: [], dividas: [], recorrencias: [], fontesRenda: [fonte], cartoes: [], de: "2026-10-03", ate: "2027-03-31", hoje: "2026-10-03" });
+  const meses = ev.filter((e) => e.origem?.tipo === "fonteRenda").map((e) => e.data.slice(0, 7));
+  assert.deepEqual(meses, ["2026-10", "2026-11", "2026-12"]);
+});
