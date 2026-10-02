@@ -93,7 +93,7 @@ function linhaRecorrencia(item) {
   const d = item.dados;
   const destino = d.cartaoId ? nomeCartao(d.cartaoId) : (d.contaId ? nomeConta(d.contaId) : "");
   const categoria = d.categoriaId ? nomeCategoria(d.categoriaId) : null;
-  const sub = [`todo dia ${d.diaBase}`, destino, categoria].filter(Boolean).join(" · ");
+  const sub = [d.semDia ? "verba do mês, sem dia fixo" : `todo dia ${d.diaBase}`, destino, categoria].filter(Boolean).join(" · ");
   const classeValor = d.tipo === "receita" ? "valor-pos" : "valor-neg";
   const sinal = d.tipo === "receita" ? "+" : "−";
   return `
@@ -103,7 +103,7 @@ function linhaRecorrencia(item) {
         <div class="item-sub">${escapeHtml(sub)}${d.fim ? ` · até ${escapeHtml(competenciaLabel(d.fim))}` : ""}</div>
       </div>
       <div class="item-valor mono ${classeValor}" data-valor>${sinal}${formatarBRL(d.valorEstimadoCentavos)}</div>
-      <span class="item-tag${d.ativa ? "" : " inativa"}">${d.ativa ? "ativa" : "pausada"}</span>
+      ${d.ativa ? "" : `<span class="item-tag inativa">pausada</span>`}
       <div class="item-acoes">
         <button class="btn-mini" data-pausar="${escapeHtml(item.id)}">${d.ativa ? "Pausar" : "Retomar"}</button>
         <button class="btn-mini"  data-editar="${escapeHtml(item.id)}">Editar</button>

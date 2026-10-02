@@ -305,7 +305,7 @@ function listaHorizonte(chave, achados) {
     <div class="plano-horizonte">
       <div class="plano-horizonte-titulo">${ROTULO_HORIZONTE[chave]}</div>
       ${achados.length
-        ? achados.map((a) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(a.titulo)}</span>${a.impactoCentavos != null ? `<b data-valor>${formatarBRL(a.impactoCentavos)}</b>` : ""}</div>`).join("")
+        ? agruparAchados(achados).map((c) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(c.titulo)}</span>${c.impactoCentavos != null && c.impactoCentavos !== 0 ? `<b data-valor>${formatarBRL(c.impactoCentavos)}</b>` : ""}</div>`).join("")
         : `<div class="plano-horizonte-vazio">${NOTA_HORIZONTE_VAZIO[chave]}</div>`}
     </div>`;
 }

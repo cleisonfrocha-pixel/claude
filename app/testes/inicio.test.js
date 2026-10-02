@@ -34,3 +34,9 @@ test("completar retrato: pessoa sem renda e sem bens/metas", () => {
   assert.ok(f.includes("renda-p1") && f.includes("conta-p1") && f.includes("bens") && f.includes("meta"));
   assert.ok(!f.some((id) => id.endsWith("p2")));
 });
+
+test("completar retrato: metas de proteção em branco pedem preenchimento; investimento zero não", () => {
+  const base = { pessoas: [], contas: [], cartoes: [], fontesRenda: [], dividas: [], ativos: [{}], objetivos: [{}] };
+  assert.ok(completarRetrato({ ...base, metas: { custoDesejadoCentavos: null, metaRecuperacaoCentavos: null, investimentoMinimoMensalCentavos: 0 } }).some((f) => f.id === "metas-protecao"));
+  assert.ok(!completarRetrato({ ...base, metas: { custoDesejadoCentavos: 1, metaRecuperacaoCentavos: 1, investimentoMinimoMensalCentavos: 0 } }).some((f) => f.id === "metas-protecao"));
+});

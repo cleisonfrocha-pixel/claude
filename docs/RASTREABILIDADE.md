@@ -1291,3 +1291,12 @@ esperar os dados reais.
   mesma lista, com o texto original.
 - Cartão sem compra nem fatura mostra "sem dado de uso ainda", não "0% usado".
 - 3 testes novos (391 no total).
+
+### Sprint 39 — Acabamento e reauditoria final — ✅ (02/10/2026)
+
+- Fechou os itens que sobravam da Lista Mestra: #6/#7 (explicação dos números
+  e rótulos distintos), #13 (metas de proteção no "Completar seu retrato"),
+  #18 (lista por prazo agrupada), #21 (etiqueta "ativa" removida).
+- `semDia` aplicado no banco real (4 recorrências e 12 previstos).
+- Auditoria final completa em `docs/AUDITORIA-FINAL.md`: 21/21 itens resolvidos,
+  66 verificações automáticas em celular e desktop, 392 testes do motor.

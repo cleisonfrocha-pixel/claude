@@ -38,7 +38,7 @@ export function proximosDias({ compromissos, entradas, hoje, dias = 7 }) {
 
 /** O que falta para o painel enxergar a vida inteira. Cada item aponta o
  * dado que está faltando e a tela onde se resolve. */
-export function completarRetrato({ pessoas, contas, cartoes, fontesRenda, dividas, ativos, objetivos, hoje }) {
+export function completarRetrato({ pessoas, contas, cartoes, fontesRenda, dividas, ativos, objetivos, metas, hoje }) {
   const faltas = [];
   const ativas = (lista) => (lista || []).filter((x) => x.ativa !== false && x.status !== "inativa");
   for (const p of ativas(pessoas)) {
@@ -53,6 +53,9 @@ export function completarRetrato({ pessoas, contas, cartoes, fontesRenda, divida
   }
   if (!(ativos || []).length) faltas.push({ id: "bens", texto: "Nenhum bem cadastrado (carro, imóvel, investimentos)", destino: { modulo: "plano", aba: "patrimonio" } });
   if (!(objetivos || []).length) faltas.push({ id: "meta", texto: "Nenhuma meta definida", destino: { modulo: "plano", aba: "patrimonio" } });
+  if (metas && (metas.custoDesejadoCentavos == null || metas.metaRecuperacaoCentavos == null)) {
+    faltas.push({ id: "metas-protecao", texto: "Defina o custo de vida desejado e a meta de recuperação (a proteção do essencial usa isso)", destino: { modulo: "dinheiro", aba: "renda" } });
+  }
   const semParcelas = (dividas || []).filter((d) => !(Number(d.valorParcelaCentavos) > 0) && (Number(d.saldoOriginalCentavos) || 0) > 0);
   if (semParcelas.length) faltas.push({ id: "parcelas", texto: `${semParcelas.length} dívida(s) sem valor de parcela`, destino: { modulo: "dividas" } });
   return faltas;

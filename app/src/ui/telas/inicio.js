@@ -119,7 +119,7 @@ function renderizar() {
   const negativo = seguroParaGastarCentavos < 0;
   const explicacao = negativo
     ? `Mesmo contando o que vai entrar, faltam <b data-valor>${formatarBRL(-seguroParaGastarCentavos)}</b> em ${escapeHtml(formatarData(diaMaisApertado))}.`
-    : `Sem faltar dinheiro nos próximos ${horizonteDias} dias${diaMaisApertado ? `; o dia mais apertado é ${escapeHtml(formatarData(diaMaisApertado))}` : ""}.`;
+    : `É o ponto mais baixo que o saldo toca nos próximos ${horizonteDias} dias${diaMaisApertado ? `, em ${escapeHtml(formatarData(diaMaisApertado))}` : ""}. Gastando até aqui, não falta dinheiro em dia nenhum.`;
   const esperado = confianca.esperadoCentavos <= 0 ? ""
     : confianca.esperadoCentavos >= confianca.totalCentavos
       ? " Nenhum dos valores que vão entrar foi recebido ainda."
@@ -147,6 +147,7 @@ function renderizar() {
             <div class="home-metrica"><span>Vai entrar</span><b data-valor>+${formatarBRL(entradasPrevistasCentavos || 0)}</b></div>
             <div class="home-metrica"><span>Vai sair</span><b data-valor>−${formatarBRL(comprometidoCentavos)}</b></div>
           </div>
+          <div class="home-saldo-sub" style="margin-top:10px;">No fim dos ${horizonteDias} dias o saldo previsto é <b data-valor>${formatarBRL(saldoAtualCentavos + (entradasPrevistasCentavos || 0) - comprometidoCentavos)}</b> (em conta + vai entrar − vai sair). É outro número: este é o saldo final, o de cima é o pior momento do caminho.</div>
           ${saldoReservaCentavos !== 0 ? `
             <div class="home-reserva-inline"><span>Em reserva/segurança</span><b data-valor>${formatarBRL(saldoReservaCentavos)}</b></div>` : ""}
         </div>

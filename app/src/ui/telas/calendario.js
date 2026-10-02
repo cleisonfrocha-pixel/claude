@@ -76,7 +76,7 @@ function renderizar() {
     ${painel.piorDia ? `
       <div class="pressao-card">
         <div>
-          <div class="rotulo">Dia que mais sai dinheiro</div>
+          <div class="rotulo">Maior saída num dia só <small>(não é o dia em que o saldo fica mais baixo)</small></div>
           <div class="data">${escapeHtml(tempo.formatarData(painel.piorDia.data))}</div>
         </div>
         <b data-valor>-${formatarBRL(painel.piorDia.saidasCentavos - painel.piorDia.entradasCentavos)}</b>
@@ -93,7 +93,7 @@ function renderizar() {
 
     <div class="legenda-calendario">
       <span><span class="legenda-ponto" style="background:var(--text-faint);"></span>Tem compromisso</span>
-      <span><span class="legenda-ponto" style="background:var(--warn);"></span>Dia que mais sai dinheiro</span>
+      <span><span class="legenda-ponto" style="background:var(--warn);"></span>Maior saída num dia só</span>
       <span><span class="legenda-ponto" style="background:var(--danger);"></span>Sem cobertura</span>
     </div>
 
