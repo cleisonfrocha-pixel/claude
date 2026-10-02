@@ -171,6 +171,7 @@ function abrirModalEditar(item) {
         <div id="rc-categoria-wrap">${campoCategoria("rc", d.tipo, d.categoriaId)}</div>
         ${campoPessoa("rc", d.pessoaId)}
         <div class="field"><label for="rc-descricao">Descrição</label><input type="text" id="rc-descricao" value="${escapeHtml(d.descricao || "")}"></div>
+        <label class="field-check"><input type="checkbox" id="rc-semdia" ${d.semDia ? "checked" : ""}> Sem dia fixo — é uma verba do mês (combustível, mercado…)</label>
         <div class="field"><label for="rc-fim">Encerra em (opcional)</label><input type="month" id="rc-fim" value="${escapeHtml(d.fim || "")}"></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-acao="cancelar">Cancelar</button>
@@ -203,6 +204,7 @@ function abrirModalEditar(item) {
         pessoaId: document.getElementById("rc-pessoa").value,
         descricao: document.getElementById("rc-descricao").value.trim(),
         fim: document.getElementById("rc-fim").value || null,
+        semDia: document.getElementById("rc-semdia").checked,
       });
       mostrarToast("Recorrência atualizada.");
       fecharModal();

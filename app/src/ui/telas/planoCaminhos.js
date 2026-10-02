@@ -266,6 +266,7 @@ function renderizar() {
       ${grafico()}
     </div>
 
+    ${base.semHistorico ? `<p class="tela-sub" style="margin:0 0 12px;">Baseado no que você cadastrou para este mês, ainda sem histórico real. Fica mais preciso a cada mês fechado.</p>` : ""}
     <div class="caminhos-grid">${comparacao.cenarios.map(cartaoCaminho).join("")}</div>
 
     <details class="caminho-premissas">

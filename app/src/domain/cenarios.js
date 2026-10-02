@@ -31,6 +31,7 @@
 
 import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos } from "./orcamento.js";
+import { visaoDoMes } from "./mes.js";
 import { calcularSaldoAtual, statusDivida, taxaMensalEfetiva } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
 import { somarMeses } from "./tempo.js";
@@ -79,10 +80,20 @@ function media(valores) {
  * abaixo, já refaz esse desconto por conta própria (renda menos o custo
  * médio menos as parcelas do mês). Partir de `livreCentavos` descontaria o
  * mesmo compromisso duas vezes no primeiro mês. */
-export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, ativos, clareza, competencia, hoje, investimentoMinimoMensalCentavos = 0 }) {
-  const meses = mesesComMovimento(transacoes, competencia, MESES_HISTORICO);
-  const rendas = meses.map((c) => calcularRendaAtual(transacoes, c));
-  const custos = meses.map((c) => calcularCustos(transacoes, categorias, c));
+export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, recorrencias, cartoes, ativos, clareza, competencia, hoje, investimentoMinimoMensalCentavos = 0 }) {
+  let meses = mesesComMovimento(transacoes, competencia, MESES_HISTORICO);
+  let rendas = meses.map((c) => calcularRendaAtual(transacoes, c));
+  let custos = meses.map((c) => calcularCustos(transacoes, categorias, c));
+  // Sem nenhum mês fechado com movimento (cadastro recém-começado), o mês
+  // corrente projetado — o que está pago mais o que ainda vai entrar e
+  // sair — serve de base. Não inventa nada: só lê o que foi cadastrado.
+  const semHistorico = !meses.length;
+  if (semHistorico) {
+    const v = visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, competencia, hoje });
+    meses = [competencia];
+    rendas = [v.rendaContavelCentavos];
+    custos = [{ essencialCentavos: v.essencialCentavos, atualCentavos: v.gastoCentavos, discricionarioCentavos: v.gastoCentavos - v.essencialCentavos, faturaSemDetalheCentavos: 0 }];
+  }
 
   const rendaMediaCentavos = media(rendas);
   const custoEssencialCentavos = media(custos.map((c) => c.essencialCentavos));
@@ -138,7 +149,8 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
 
   return {
     competencia,
-    mesesHistorico: meses.length,
+    mesesHistorico: semHistorico ? 0 : meses.length,
+    semHistorico,
     rendaMediaCentavos,
     rendaGarantidaCentavos,
     fonteRendaGarantida: ativas.length ? "fontes" : "pior_mes",

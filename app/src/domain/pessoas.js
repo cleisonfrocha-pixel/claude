@@ -10,6 +10,7 @@
 
 import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos, calcularMargem } from "./orcamento.js";
+import { visaoDoMes, numerosDoMes } from "./mes.js";
 import { calcularSaldoConta } from "./caixa.js";
 import { calcularVisaoConsolidada, calcularSaldoAtual } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
@@ -31,9 +32,12 @@ export function donoDaTransacao(t, { contasPorId, cartoesPorId }) {
 // `transacoes` é o que é DA pessoa (renda, gasto); `transacoesDasContas` é
 // o extrato inteiro, porque saldo é da conta, não de quem gastou — uma
 // despesa dela paga na conta dele sai da conta dele.
-function numerosDoRecorte({ contas, transacoes, transacoesDasContas, dividas, ativos, categorias, competencia, hoje }) {
-  const rendaCentavos = calcularRendaAtual(transacoes, competencia);
-  const custos = calcularCustos(transacoes, categorias, competencia);
+function numerosDoRecorte({ contas, transacoes, transacoesDasContas, dividas, ativos, categorias, competencia, hoje, visao }) {
+  const { rendaCentavos, custos, renda } = numerosDoMes({
+    rendaPagaCentavos: calcularRendaAtual(transacoes, competencia),
+    custos: calcularCustos(transacoes, categorias, competencia),
+    visao,
+  });
   const visaoDividas = calcularVisaoConsolidada(dividas, hoje);
   const contasAtivas = contas.filter((c) => c.status === "ativa");
   const saldoOperacaoCentavos = contasAtivas.filter((c) => !c.ehReserva).reduce((s, c) => s + calcularSaldoConta(c, transacoesDasContas), 0);
@@ -42,6 +46,9 @@ function numerosDoRecorte({ contas, transacoes, transacoesDasContas, dividas, at
   const parcelasCentavos = visaoDividas.comprometimentoMensalCentavos;
   return {
     rendaCentavos,
+    rendaConfirmadaCentavos: renda ? renda.confirmadaCentavos : rendaCentavos,
+    rendaProvavelCentavos: renda ? renda.provavelCentavos : 0,
+    rendaIncertaCentavos: renda ? renda.incertaCentavos : 0,
     despesasCentavos: custos.atualCentavos,
     essencialCentavos: custos.essencialCentavos,
     discricionarioCentavos: custos.discricionarioCentavos,
@@ -115,7 +122,10 @@ export function calcularDesequilibrio(porPessoa) {
  * um "sem dono" só quando existe algo sem responsável, e a casa. A
  * participação de cada um na renda e no custo da casa sai daqui também.
  */
-export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, categorias, transacoes, dividas, ativos, competencia, hoje }) {
+export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, categorias, transacoes, dividas, ativos, competencia, hoje, fontesRenda, recorrencias }) {
+  const projetar = (pessoaId) => (fontesRenda || recorrencias
+    ? visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, competencia, hoje, pessoaId })
+    : null);
   const contexto = {
     contasPorId: new Map((contas || []).map((c) => [c.id, c])),
     cartoesPorId: new Map((cartoes || []).map((c) => [c.id, c])),
@@ -137,7 +147,7 @@ export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, categorias, t
     const r = recorte(pessoaId);
     const numeros = numerosDoRecorte({
       contas: r.contas, transacoes: r.transacoes, transacoesDasContas: todas,
-      dividas: r.dividas, ativos: r.ativos, categorias, competencia, hoje,
+      dividas: r.dividas, ativos: r.ativos, categorias, competencia, hoje, visao: projetar(pessoaId),
     });
     return {
       pessoaId, nome,
@@ -153,7 +163,7 @@ export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, categorias, t
     || Object.values(semDono.numeros).some((v) => v !== 0);
 
   const casa = numerosDoRecorte({
-    contas: contas || [], transacoes: todas, transacoesDasContas: todas, dividas: dividas || [], ativos: ativos || [], categorias, competencia, hoje,
+    contas: contas || [], transacoes: todas, transacoesDasContas: todas, dividas: dividas || [], ativos: ativos || [], categorias, competencia, hoje, visao: projetar(undefined),
   });
 
   const pct = (parte, total) => (total > 0 ? Math.round((parte / total) * 100) : null);

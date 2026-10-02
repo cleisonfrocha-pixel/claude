@@ -296,7 +296,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
             const t = {
               tipo: dados.tipo, valorCentavos: dados.valorEstimadoCentavos, data, competencia,
               contaId: dados.contaId, cartaoId: dados.cartaoId, categoriaId: dados.categoriaId, pessoaId: dados.pessoaId,
-              descricao: dados.descricao, status: "previsto", certeza: "provavel", recorrenciaId: id,
+              descricao: dados.descricao, status: "previsto", certeza: "provavel", recorrenciaId: id, semDia: !!dados.semDia,
             };
             if (cartao && dados.tipo === "despesa") t.faturaId = faturaDe(cartao, competenciaFatura(cartao, data));
             transacao(t, { revisado: true });

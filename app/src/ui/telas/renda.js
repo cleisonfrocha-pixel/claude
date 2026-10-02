@@ -162,7 +162,7 @@ function renderizar() {
     ${blocoCausaDeficit(painel.causaDeficit)}
 
     <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">Renda do mês</h3>
-      <p class="tela-sub"><span data-valor>${formatarBRL(painel.rendaAtualCentavos)}</span> realizados${concentracao.quantidadeFontes > 0
+      <p class="tela-sub"><span data-valor>${formatarBRL(painel.rendaAtualCentavos)}</span> no mês${painel.rendaEmCamadas ? ` (${formatarBRL(painel.rendaEmCamadas.confirmadaCentavos)} já recebidos + ${formatarBRL(painel.rendaEmCamadas.provavelCentavos)} esperados${painel.rendaEmCamadas.incertaCentavos ? `; ${formatarBRL(painel.rendaEmCamadas.incertaCentavos)} incertos ficam de fora` : ""})` : ""}${concentracao.quantidadeFontes > 0
         ? ` · ${concentracao.concentracaoPercentual}% concentrado na maior fonte (${concentracao.quantidadeFontes} ${concentracao.quantidadeFontes === 1 ? "fonte" : "fontes"})`
         : " · nenhuma receita ligada a uma fonte cadastrada"}</p></div>
       <button class="btn btn-primary" data-acao="nova-fonte">+ Nova fonte</button>

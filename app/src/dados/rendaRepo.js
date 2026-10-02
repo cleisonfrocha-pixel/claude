@@ -16,6 +16,7 @@ import {
   calcularCustos, calcularMargem, calcularRecorrenteVsExtraordinario,
   calcularEvolucaoPorCategoria, identificarCategoriasCrescentes,
 } from "../domain/orcamento.js";
+import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
 
 /** Uma leitura única do painel inteiro. */
@@ -31,9 +32,13 @@ async function montarPainelRenda(dados) {
   const clareza = calcularClarezaDeCaixa({ ...dados, hoje, horizonteDias: 30 });
   const visaoDividas = calcularVisaoConsolidada(dados.dividas, hoje);
 
-  const rendaAtualCentavos = calcularRendaAtual(dados.transacoes, competencia);
+  const visao = visaoDoMes({ ...dados, competencia, hoje });
+  const { rendaCentavos: rendaAtualCentavos, custos, renda: rendaEmCamadas } = numerosDoMes({
+    rendaPagaCentavos: calcularRendaAtual(dados.transacoes, competencia),
+    custos: calcularCustos(dados.transacoes, dados.categorias, competencia),
+    visao,
+  });
   const concentracao = calcularConcentracaoRenda(dados.transacoes, competencia);
-  const custos = calcularCustos(dados.transacoes, dados.categorias, competencia);
   const margemCentavos = calcularMargem({
     rendaAtualCentavos, custoEssencialCentavos: custos.essencialCentavos,
     comprometimentoMensalDividasCentavos: visaoDividas.comprometimentoMensalCentavos,
@@ -63,6 +68,8 @@ async function montarPainelRenda(dados) {
   return {
     hoje, competencia,
     rendaAtualCentavos,
+    rendaEmCamadas,
+    visaoMes: visao,
     concentracao,
     fontes,
     custos,

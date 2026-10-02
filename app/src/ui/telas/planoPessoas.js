@@ -71,7 +71,7 @@ function cartaoPessoa(p) {
         <span>${n.coberturaCentavos < 0 ? "Falta pra cobrir o próprio mês" : "Sobra depois do essencial e das parcelas"}</span>
         <b data-valor>${brl(Math.abs(n.coberturaCentavos))}</b>
       </div>
-      ${linha("Renda do mês", `<span class="valor-pos">${brl(n.rendaCentavos)}</span>`)}
+      ${linha("Renda do mês", `<span class="valor-pos">${brl(n.rendaCentavos)}</span>`, n.rendaProvavelCentavos ? `${formatarBRL(n.rendaConfirmadaCentavos)} recebidos + ${formatarBRL(n.rendaProvavelCentavos)} esperados` : "")}
       ${linha("Gasto do mês", brl(n.despesasCentavos), `essencial ${formatarBRL(n.essencialCentavos)}`)}
       ${linha("Parcelas de dívida", brl(n.parcelasCentavos))}
       ${linha("Resultado do mês", `<span class="${classeValor(n.resultadoMesCentavos)}">${brl(n.resultadoMesCentavos, { sinal: true })}</span>`, "renda menos gasto")}

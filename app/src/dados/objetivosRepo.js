@@ -9,6 +9,8 @@ import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
 import { calcularRendaAtual } from "../domain/renda.js";
 import { calcularCustos, calcularMargem } from "../domain/orcamento.js";
+import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
+import { carregarBase } from "./base.js";
 import { calcularHorizonteObjetivo, verificarCompatibilidadeComMargem } from "../domain/objetivos.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
 
@@ -35,8 +37,12 @@ export async function calcularPainelObjetivos() {
   const hoje = hojeISO();
   const competencia = competenciaAtual();
 
-  const rendaAtualCentavos = calcularRendaAtual(dados.transacoes, competencia);
-  const custos = calcularCustos(dados.transacoes, dados.categorias, competencia);
+  const base = await carregarBase();
+  const { rendaCentavos: rendaAtualCentavos, custos } = numerosDoMes({
+    rendaPagaCentavos: calcularRendaAtual(dados.transacoes, competencia),
+    custos: calcularCustos(dados.transacoes, dados.categorias, competencia),
+    visao: visaoDoMes({ ...base, competencia, hoje }),
+  });
   const visaoDividas = calcularVisaoConsolidada(dados.dividas, hoje);
   const margemCentavos = calcularMargem({
     rendaAtualCentavos, custoEssencialCentavos: custos.essencialCentavos,

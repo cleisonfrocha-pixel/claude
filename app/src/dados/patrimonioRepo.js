@@ -14,6 +14,7 @@ import { carregarBase } from "./base.js";
 import { calcularClarezaDeCaixa } from "../domain/caixa.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
 import { calcularCustos } from "../domain/orcamento.js";
+import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
 import {
   calcularComposicaoAtivos, montarSnapshot, calcularVariacao, calcularRelacaoDividaAtivoPatrimonio,
 } from "../domain/patrimonio.js";
@@ -59,7 +60,11 @@ export async function calcularPainelPatrimonio() {
   const relacao = calcularRelacaoDividaAtivoPatrimonio(snapshotAtual, snapshotAnterior);
 
   const clareza = calcularClarezaDeCaixa({ ...dados, hoje, horizonteDias: 30 });
-  const custos = calcularCustos(dados.transacoes, dados.categorias, competencia);
+  const { custos } = numerosDoMes({
+    rendaPagaCentavos: 0,
+    custos: calcularCustos(dados.transacoes, dados.categorias, competencia),
+    visao: visaoDoMes({ ...dados, competencia, hoje }),
+  });
   // Reserva precisa cobrir o essencial E a parcela de dívida (ela vence
   // igual mesmo sem renda) — calcularCustos tira a dívida do essencial de
   // propósito (ver orcamento.js), então soma de volta aqui.

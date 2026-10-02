@@ -21,6 +21,7 @@ import { calcularHorizonte } from "../domain/projecao.js";
 import { gastoDiaADiaMensal } from "../domain/previstos.js";
 import { calcularDiagnostico } from "../domain/diagnostico.js";
 import { calcularRendaAtual } from "../domain/renda.js";
+import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
 import { calcularCustos, calcularMargem, identificarCategoriasCrescentes } from "../domain/orcamento.js";
 import {
   detectarNovaRecorrencia, detectarRecorrenciaValorDiferente, detectarAumentoCartao,
@@ -126,9 +127,12 @@ export async function calcularPainelDecisoes() {
   const receitaEsperadaNaoRecebida = detectarReceitaEsperadaNaoRecebida(dados.fontesRenda, dados.transacoes, competencia, hoje);
 
   const visaoDividasAtual = calcularVisaoConsolidada(dados.dividas, hoje);
-  const custosAtual = calcularCustos(dados.transacoes, dados.categorias, competencia);
+  const { rendaCentavos: rendaAtualCentavos, custos: custosAtual } = numerosDoMes({
+    rendaPagaCentavos: calcularRendaAtual(dados.transacoes, competencia),
+    custos: calcularCustos(dados.transacoes, dados.categorias, competencia),
+    visao: visaoDoMes({ ...dados, competencia, hoje }),
+  });
   const custosAnterior = calcularCustos(dados.transacoes, dados.categorias, competenciaAnterior);
-  const rendaAtualCentavos = calcularRendaAtual(dados.transacoes, competencia);
   const rendaAnteriorCentavos = calcularRendaAtual(dados.transacoes, competenciaAnterior);
   // Comprometimento mensal de dívida é o mesmo nos dois meses (parcela é
   // estável mês a mês) — só renda e custo essencial variam de fato.

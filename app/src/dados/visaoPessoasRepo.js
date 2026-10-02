@@ -2,7 +2,8 @@
 // tem responsável, e a casa. Nada gravado — recalculado ao vivo sempre que
 // pessoa, conta, cartão, transação, dívida ou ativo mudar.
 
-import { pessoas, contas, cartoes, categorias, dividas, ativos } from "./repositorios.js";
+import { pessoas, contas, cartoes, categorias, dividas, ativos, fontesRenda } from "./repositorios.js";
+import { recorrencias } from "./recorrenciasRepo.js";
 import { transacoes } from "./transacoesRepo.js";
 import { calcularVisaoPorPessoa } from "../domain/pessoas.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
@@ -12,13 +13,14 @@ function comId(lista) {
 }
 
 export async function calcularPainelPessoas() {
-  const [p, c, k, cat, d, a, t] = await Promise.all([
-    pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), dividas.listar(), ativos.listar(), transacoes.listar(),
+  const [p, c, k, cat, d, a, t, fr, rec] = await Promise.all([
+    pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), dividas.listar(), ativos.listar(), transacoes.listar(), fontesRenda.listar(), recorrencias.listar(),
   ]);
   return calcularVisaoPorPessoa({
     pessoas: comId(p),
     contas: comId(c), cartoes: comId(k), categorias: comId(cat), dividas: comId(d), ativos: comId(a),
     transacoes: t.map((x) => x.dados),
+    fontesRenda: comId(fr), recorrencias: comId(rec),
     competencia: competenciaAtual(), hoje: hojeISO(),
   });
 }
@@ -35,7 +37,7 @@ export function assinarPainelPessoas(cb) {
       if (!cancelada) cb(r);
     }, 0);
   }
-  const paradas = [pessoas, contas, cartoes, dividas, ativos, transacoes].map((repo) => repo.assinar(agendar));
+  const paradas = [pessoas, contas, cartoes, dividas, ativos, transacoes, fontesRenda, recorrencias].map((repo) => repo.assinar(agendar));
   return () => {
     cancelada = true;
     clearTimeout(agendado);

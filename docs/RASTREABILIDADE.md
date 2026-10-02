@@ -1192,3 +1192,18 @@ esperar os dados reais.
   comportamento novo (antes ele verificava — sem querer documentar isso —
   que renda variável vencida e não recebida sumia do calendário). 360
   testes.
+
+### Sprint 30–31 — Navegação por ação e motor único do mês — ✅ (02/10/2026)
+
+- Sprint 30: barramento `ui/navegacao.js` (Lançar abre o formulário direto),
+  categorias novas (Equipe e freelancers, Ferramentas de trabalho = essenciais;
+  Escritório = não essencial), dica de data por extenso, `[hidden]` forçado.
+- Sprint 31: causa-raiz dos números divergentes eram dois motores — `caixa.js`
+  contava renda provável, e orçamento/renda/diagnóstico/cenários só contavam
+  "pago". Novo `domain/mes.js` (`visaoDoMes`, `numerosDoMes`) separa renda
+  confirmada, provável e incerta (incerta nunca entra) e gasto pago/previsto;
+  todas as telas e repositórios passaram a usá-lo. Renda e Por pessoa mostram
+  "já recebidos + esperados". Cenários sem histórico usam o mês atual e avisam.
+- Recorrência/transação com `semDia` (dia incerto) só atrasa após o fim do mês.
+- 7 testes novos em `mes.test.js` (incl. cenário Cleison: renda cadastrada,
+  nada recebido). 367 testes passando; Playwright com dados reais sem erro JS.

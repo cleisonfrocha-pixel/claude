@@ -162,6 +162,7 @@ export function dataVencimentoFatura(cartao, competenciaDaFatura) {
  */
 export function statusEfetivo(t, hoje) {
   if (t.status === "pago" || t.status === "cancelado" || t.status === "atrasado") return t.status;
+  if (t.semDia && t.data && hoje) return t.data.slice(0, 7) < hoje.slice(0, 7) ? "atrasado" : t.status;
   if (hoje && t.data && t.data < hoje) return "atrasado";
   return t.status;
 }

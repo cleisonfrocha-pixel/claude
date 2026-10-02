@@ -79,6 +79,7 @@ export async function gerarPendentes(recorrenciaId, horizonteMeses = HORIZONTE_P
       status: "previsto",
       certeza: "provavel",
       recorrenciaId,
+      semDia: !!recorrencia.dados.semDia,
     });
     if (recorrencia.dados.cartaoId && recorrencia.dados.tipo === "despesa") {
       const cartaoDoc = (await cartoes.listar()).find((c) => c.id === recorrencia.dados.cartaoId);

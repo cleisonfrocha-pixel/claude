@@ -566,6 +566,7 @@ function renderCamposModo(modo) {
         <div class="field"><label for="r-valor">Valor estimado</label><input type="text" inputmode="decimal" id="r-valor" placeholder="0,00" required></div>
         <div class="field"><label for="r-dia">Dia do mês</label><input type="number" id="r-dia" min="1" max="31" value="1" required></div>
       </div>
+      <label class="field-check"><input type="checkbox" id="r-semdia"> Sem dia fixo — é uma verba do mês (combustível, mercado…)</label>
       <div id="r-categoria-wrap">${campoCategoria("r", "despesa")}</div>
       ${campoPessoa("r")}
       <div class="field"><label for="r-descricao">Descrição</label><input type="text" id="r-descricao" placeholder="Ex.: Aluguel" required></div>
@@ -652,6 +653,7 @@ async function onSubmitTransacao(ev) {
         descricao: document.getElementById("r-descricao").value.trim(),
         valorEstimadoCentavos: paraCentavos(document.getElementById("r-valor").value),
         diaBase: parseInt(document.getElementById("r-dia").value, 10),
+        semDia: document.getElementById("r-semdia").checked,
         contaId: onde === "conta" ? document.getElementById("r-conta").value : null,
         cartaoId: onde === "cartao" ? document.getElementById("r-cartao").value : null,
         categoriaId: document.getElementById("r-categoria")?.value || "",

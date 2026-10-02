@@ -112,6 +112,7 @@ export function padraoTransacao(dados = {}) {
     parcelaNum: null,
     parcelaTotal: null,
     recorrenciaId: null,
+    semDia: false, // verba do mês: gasto sem dia fixo — nunca vira "atrasado" dentro do mês
     fonteRendaId: null, // só usado quando tipo é receita (§12) — opcional
     dividaId: null, // despesa que paga uma parcela de dívida (§11) — opcional
     origem: "manual",
@@ -134,6 +135,7 @@ export function padraoRecorrencia(dados = {}) {
     diaBase: 1,
     inicio: new Date().toISOString().slice(0, 7),
     fim: null,
+    semDia: false,
     ativa: true,
     ...dados,
   };
