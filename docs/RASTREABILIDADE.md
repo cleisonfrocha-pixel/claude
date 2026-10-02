@@ -1344,3 +1344,8 @@ faltavam Del Poente (R$ 5.000 em 05/10), cartão Crédito Shoppe (limite R$ 4.00
 Fórmula do Caio (R$ 300/mês), Anúncios do Gedi (R$ 1.000/mês) e as faturas
 Nubank (PJ OUT R$ 2.297,10, PF OUT R$ 241,10, PJ NOV previsto R$ 1.196,70).
 Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony).
+- Também corrigido no cadastro: Sociable (R$ 5.200) e CryptoPag (R$ 2.500) de
+  outubro, marcados "RECEBIDO" na planilha, entram como receita paga em 01/10
+  (já estão dentro do saldo de 01/10, então não mexem no saldo) e deixam de ser
+  contados de novo em "Vai entrar". "Pode gastar até" passou de R$ 6.432 para
+  R$ 2.992 por causa disso e das faturas do Nubank.
