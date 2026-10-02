@@ -535,7 +535,7 @@ interpretação sobre dados confiáveis, não a inteligência do produto.
 
 **Status (27/09/2026):** cenários (§22) entregues na aba Plano › Caminhos, junto
 com a visão por pessoa (casa com duas rendas separadas). Fechamento mensal
-(§21) continua aberto.
+(§21) foi entregue em 02/10/2026 (Plano › Fechamento).
 
 Fechamento: resumo do mês, realizados, resultado, variação de dívida, reserva e
 patrimônio, maiores mudanças de comportamento, principais alertas e decisões,

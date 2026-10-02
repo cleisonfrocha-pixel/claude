@@ -1300,3 +1300,13 @@ esperar os dados reais.
 - `semDia` aplicado no banco real (4 recorrências e 12 previstos).
 - Auditoria final completa em `docs/AUDITORIA-FINAL.md`: 21/21 itens resolvidos,
   66 verificações automáticas em celular e desktop, 392 testes do motor.
+
+### Fase 14 (restante) — Fechamento mensal (§21) — ✅ (02/10/2026)
+
+- Aba Plano › Fechamento: entrou (recebido), saiu (pago), resultado, comparação
+  com o mês anterior, o que ficou aberto (fora do resultado), maiores mudanças
+  nos gastos por categoria, dívida e patrimônio do mês (retrato guardado),
+  decisões tomadas no mês e os últimos 6 meses lado a lado. Só leitura.
+- `domain/fechamento.js` (puro), `dados/fechamentoRepo.js`, `ui/telas/fechamento.js`.
+  Mês sem dado anterior não inventa variação. 3 testes novos (395 no total).
+- Fase 14 completa (cenários na Sprint 19-21, fechamento agora).
