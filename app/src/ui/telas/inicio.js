@@ -23,6 +23,7 @@ import { formatarData, hojeISO } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
+import { navegar } from "../navegacao.js";
 
 const HORIZONTE_DIAS = 30;
 
@@ -176,7 +177,7 @@ function renderizarPainel(painel) {
     <div id="banner-home"></div>
 
     <div class="home-atalhos">
-      <button class="home-atalho" data-ir="dinheiro"><span class="home-atalho-icone">${icone("dinheiro", 20)}</span><span>Lançar</span></button>
+      <button class="home-atalho" data-lancar><span class="home-atalho-icone">${icone("dinheiro", 20)}</span><span>Lançar</span></button>
       <button class="home-atalho" data-ir="plano"><span class="home-atalho-icone">${icone("plano", 20)}</span><span>Plano</span></button>
       <button class="home-atalho" data-ir="dividas"><span class="home-atalho-icone">${icone("dividas", 20)}</span><span>Dívidas</span></button>
       <button class="home-atalho" data-ir="renda"><span class="home-atalho-icone">${icone("renda", 20)}</span><span>Renda</span></button>
@@ -190,6 +191,7 @@ function renderizarPainel(painel) {
   `;
 
   container.querySelector("#ir-dinheiro-saldo").addEventListener("click", () => irPara("dinheiro"));
+  container.querySelector("[data-lancar]")?.addEventListener("click", () => navegar({ modulo: "dinheiro", aba: "transacoes", acao: "nova-transacao" }));
   container.querySelector("#botao-config-home").addEventListener("click", () => irPara("configuracoes"));
   container.querySelectorAll(".home-atalho[data-ir]").forEach((btn) => {
     btn.addEventListener("click", () => irPara(btn.getAttribute("data-ir")));

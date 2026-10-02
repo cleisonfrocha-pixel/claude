@@ -55,5 +55,9 @@ export function criarTelaComAbas(config) {
     renderizarCasco();
   }
 
-  return { montar, desmontar };
+  function definirAba(id) {
+    if (config.abas.some((a) => a.id === id)) abaAtiva = id;
+  }
+
+  return { montar, desmontar, definirAba };
 }

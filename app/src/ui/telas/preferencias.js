@@ -44,8 +44,8 @@ export default {
         </div>
         <div class="item-cartao">
           <div class="item-corpo">
-            <div class="item-titulo">Versão do esquema de dados</div>
-            <div class="item-sub">v${escapeHtml(VERSAO_ESQUEMA)} · docs/MODELO-DE-DADOS.md no repositório</div>
+            <div class="item-titulo">Versão dos dados</div>
+            <div class="item-sub">Seus dados estão organizados na versão ${escapeHtml(VERSAO_ESQUEMA)} do painel.</div>
           </div>
         </div>
       </div>

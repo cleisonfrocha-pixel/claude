@@ -9,6 +9,7 @@ import * as privacidade from "./ui/privacidade.js";
 import * as tema from "./ui/tema.js";
 import * as modal from "./ui/modal.js";
 import * as shell from "./ui/shell.js";
+import { ligarDicaDeData } from "./ui/utilitarios.js";
 
 async function semearCategoriasSeVazio() {
   const existentes = await categorias.listar();
@@ -22,6 +23,7 @@ async function iniciar() {
   tema.inicializar();
   privacidade.inicializar();
   modal.religar();
+  ligarDicaDeData();
 
   const { primeiraExecucao } = await garantirEsquema();
   if (primeiraExecucao) await semearCategoriasSeVazio();

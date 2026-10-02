@@ -635,3 +635,7 @@
 @media (max-width: 480px) {
   .item-valor { font-size: 13.5px; }
 }
+
+/* Sprint 30: campo escondido nunca aparece, e a data ganha dica por extenso. */
+[hidden] { display: none !important; }
+.dica-data { display: block; color: var(--text-faint); font-size: 12.5px; margin-top: 4px; text-transform: capitalize; }

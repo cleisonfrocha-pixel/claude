@@ -14,6 +14,7 @@
 import { escapeHtml } from "./utilitarios.js";
 import { icone } from "./icones.js";
 import { abrir as abrirModal, fechar as fecharModal } from "./modal.js";
+import { registrar as registrarNavegacao } from "./navegacao.js";
 import { criarTelaComAbas } from "./telas/comAbas.js";
 import { criarTelaPlaceholder } from "./telas/placeholder.js";
 import telaInicio from "./telas/inicio.js";
@@ -83,6 +84,12 @@ let containerConteudo = null;
 
 export function inicializar(container) {
   containerConteudo = container;
+  registrarNavegacao(({ modulo, aba }) => {
+    const m = MODULOS.find((x) => x.id === modulo);
+    if (!m) return;
+    if (aba && m.tela.definirAba) m.tela.definirAba(aba);
+    selecionarModulo(modulo, true);
+  });
   renderizarNavegacao();
   montarModulo(moduloAtivo);
   const scroller = document.querySelector(".modulos-nav");
@@ -168,8 +175,8 @@ function atualizarSombraDeRolagem() {
   scroller.classList.toggle("pode-rolar-dir", podeDir);
 }
 
-function selecionarModulo(id) {
-  if (id === moduloAtivo) return;
+function selecionarModulo(id, forcar = false) {
+  if (id === moduloAtivo && !forcar) return;
   const anterior = MODULOS.find((m) => m.id === moduloAtivo);
   if (anterior && anterior.tela.desmontar) anterior.tela.desmontar();
   moduloAtivo = id;

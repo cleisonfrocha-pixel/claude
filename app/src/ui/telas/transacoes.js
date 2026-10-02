@@ -19,6 +19,7 @@ import { marcarRevisado } from "../../dados/importacaoRepo.js";
 import { pessoas, contas, cartoes, categorias, fontesRenda } from "../../dados/repositorios.js";
 import { faturas } from "../../dados/faturasRepo.js";
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
+import { consumirAcao } from "../navegacao.js";
 
 const ROTULO_STATUS = { previsto: "Previsto", agendado: "Agendado", pago: "Pago", atrasado: "Atrasado", cancelado: "Cancelado" };
 const ROTULO_CERTEZA = { confirmado: "Confirmado", provavel: "Provável", incerto: "Incerto" };
@@ -37,6 +38,7 @@ export default {
     if (pararAssinatura) pararAssinatura();
     pararAssinatura = transacoes.assinar((novaLista) => { lista = novaLista; renderizar(); });
     renderizar();
+    if (consumirAcao("nova-transacao")) abrirModalNovaTransacao();
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
