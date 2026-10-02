@@ -70,7 +70,7 @@ const REDIRECIONAMENTOS = {
   planejamento: { modulo: "dinheiro", aba: "agenda" },
   renda: { modulo: "dinheiro", aba: "renda" },
   patrimonio: { modulo: "plano", aba: "patrimonio" },
-  objetivos: { modulo: "plano", aba: "metas" },
+  objetivos: { modulo: "plano", aba: "patrimonio" },
 };
 
 // Barra de baixo: Início · Dinheiro · ＋ · Dívidas · Plano. O ＋ no meio é a

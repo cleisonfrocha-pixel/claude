@@ -5,9 +5,9 @@
 
 import { objetivos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelObjetivos } from "../../dados/objetivosRepo.js";
-import { simularNovoPrazo } from "../../domain/objetivos.js";
+import { simularNovoPrazo, simularMetaReversa } from "../../domain/objetivos.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
-import { formatarData } from "../../domain/tempo.js";
+import { formatarData, hojeISO, somarMeses } from "../../domain/tempo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
 import { escapeHtml, iniciais, mostrarToast } from "../utilitarios.js";
 
@@ -61,15 +61,15 @@ function detalheObjetivo(o) {
     <div class="fatura-linha"><span class="rotulo">Falta</span><b data-valor>${formatarBRL(o.faltaCentavos)}</b></div>
     <div class="fatura-linha"><span class="rotulo">Meses restantes</span><b>${o.mesesRestantes}</b></div>
     <div class="fatura-linha"><span class="rotulo">Necessário por mês</span><b data-valor>${formatarBRL(o.valorNecessarioPorMesCentavos)}</b></div>
-    <div class="fatura-linha"><span class="rotulo">Margem atual disponível</span><b data-valor>${formatarBRL(o.margemCentavos)}</b></div>
+    <div class="fatura-linha"><span class="rotulo">Sobra do mês hoje</span><b data-valor>${formatarBRL(o.margemCentavos)}</b></div>
     ${o.compativel
-      ? `<div class="alerta-tudo-coberto" style="margin-top:10px;">Essa meta cabe na sua margem atual.</div>`
-      : `<div class="erro-form" style="margin-top:10px;">Fora do ritmo: faltam <span data-valor>${formatarBRL(o.faltaPorMesCentavos)}</span> por mês para chegar no prazo com a margem de hoje.</div>`}
+      ? `<div class="alerta-tudo-coberto" style="margin-top:10px;">Essa meta cabe no que sobra por mês.</div>`
+      : `<div class="erro-form" style="margin-top:10px;">Fora do ritmo: faltam <span data-valor>${formatarBRL(o.faltaPorMesCentavos)}</span> por mês para chegar no prazo com a sobra de hoje.</div>`}
 
     <div class="simulador-bloco">
-      <div class="simulador-titulo">Simular com outra margem mensal</div>
+      <div class="simulador-titulo">Simular com outra sobra mensal</div>
       <div class="simulador-linha">
-        <div class="field"><label for="sim-margem-${o.id}">Margem mensal hipotética</label>
+        <div class="field"><label for="sim-margem-${o.id}">Sobra mensal hipotética</label>
           <input type="text" inputmode="decimal" id="sim-margem-${o.id}" data-campo="margem" placeholder="0,00"></div>
         <button class="btn btn-ghost btn-sm" type="button" data-acao="simular-prazo">Simular</button>
       </div>
@@ -90,19 +90,58 @@ function renderizar() {
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
       <div>
-        <h2 class="tela-titulo">Objetivos</h2>
-        <p class="tela-sub">Conectados ao fluxo de caixa: cada meta é verificada contra a margem atual, não fica isolada.</p>
+        <h2 class="tela-titulo">Metas</h2>
+        <p class="tela-sub">Cada meta é conferida contra o que sobra por mês, não fica isolada.</p>
       </div>
       <button class="btn btn-primary" data-acao="novo-objetivo">+ Novo objetivo</button>
     </div>
     <div class="resumo-mes">
-      <div class="resumo-item"><span>Margem mensal atual</span><b class="mono ${painel.margemCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(painel.margemCentavos)}</b></div>
+      <div class="resumo-item"><span>Sobra do mês hoje</span><b class="mono ${painel.margemCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(painel.margemCentavos)}</b></div>
     </div>
+    <section class="inicio-bloco meta-reversa">
+      <h3>Quero chegar em… dá?</h3>
+      <p class="tela-sub" style="margin:0 0 10px;">Simulação: não grava nada. Diz se cabe no que sobra por mês hoje.</p>
+      <div class="row2">
+        <div class="field"><label for="mr-valor">Quanto quero juntar</label>
+          <input type="text" inputmode="decimal" id="mr-valor" placeholder="0,00"></div>
+        <div class="field"><label for="mr-prazo">Até quando</label>
+          <input type="date" id="mr-prazo"></div>
+      </div>
+      <div class="field"><label for="mr-atual">Quanto já tenho para isso <small>pode deixar em branco</small></label>
+        <input type="text" inputmode="decimal" id="mr-atual" placeholder="0,00"></div>
+      <div id="mr-resultado" class="simulador-resultado"></div>
+    </section>
     <div class="lista-cartoes" id="lista-objetivos"></div>
   `;
 
+  ligarMetaReversa();
   renderizarLista();
   container.querySelector('[data-acao="novo-objetivo"]').addEventListener("click", () => abrirFormularioObjetivo(null));
+}
+
+function ligarMetaReversa() {
+  const q = (id) => container.querySelector(id);
+  const calcular = () => {
+    const alvo = paraCentavos(q("#mr-valor").value);
+    const prazo = q("#mr-prazo").value;
+    const saida = q("#mr-resultado");
+    if (!(alvo > 0) || !prazo) { saida.innerHTML = ""; return; }
+    const hoje = hojeISO();
+    if (prazo <= hoje) { saida.innerHTML = `<div class="erro-form">Escolha uma data no futuro.</div>`; return; }
+    const r = simularMetaReversa({ valorAlvoCentavos: alvo, valorAtualCentavos: paraCentavos(q("#mr-atual").value) || 0, prazo, hoje, margemCentavos: painel.margemCentavos });
+    if (r.da) {
+      saida.innerHTML = `<div class="alerta-tudo-coberto"><b>Dá.</b> Precisa de <span data-valor>${formatarBRL(r.necessarioPorMesCentavos)}</span> por mês e hoje sobra <span data-valor>${formatarBRL(r.margemCentavos)}</span>${r.folgaPorMesCentavos > 0 ? `, folga de <span data-valor>${formatarBRL(r.folgaPorMesCentavos)}</span>` : ""}.</div>`;
+      return;
+    }
+    const quando = r.mesesComMargemAtual != null ? formatarData(somarMeses(hoje.slice(0, 7), r.mesesComMargemAtual) + hoje.slice(7)) : null;
+    saida.innerHTML = `
+      <div class="erro-form"><b>Não dá do jeito que está.</b> Faltam <span data-valor>${formatarBRL(r.faltaPorMesCentavos)}</span> por mês: precisa de <span data-valor>${formatarBRL(r.necessarioPorMesCentavos)}</span> e hoje ${r.margemCentavos > 0 ? `sobra <span data-valor>${formatarBRL(r.margemCentavos)}</span>` : "não sobra nada"}.</div>
+      <div class="tela-sub" style="margin-top:8px;">
+        ${quando ? `Com a sobra de hoje você chega lá em <b>${r.mesesComMargemAtual} meses</b> (por volta de ${escapeHtml(quando)}). ` : "Com a sobra de hoje não há prazo possível: primeiro é preciso abrir folga no mês. "}
+        ${r.margemCentavos > 0 ? `No prazo pedido dá pra juntar <span data-valor>${formatarBRL(r.valorPossivelNoPrazoCentavos)}</span>.` : ""}
+      </div>`;
+  };
+  ["#mr-valor", "#mr-prazo", "#mr-atual"].forEach((id) => { q(id).addEventListener("input", calcular); q(id).addEventListener("change", calcular); });
 }
 
 function renderizarLista() {

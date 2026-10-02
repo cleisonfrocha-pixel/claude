@@ -91,3 +91,28 @@ test("simularNovoPrazo: objetivo já alcançado não precisa de mais nenhum mês
   assert.equal(r.mesesNecessarios, 0);
   assert.equal(r.atingivel, true);
 });
+
+import { simularMetaReversa } from "../src/domain/objetivos.js";
+
+test("meta ao contrário: cabe na margem -> dá, com folga", () => {
+  const r = simularMetaReversa({ valorAlvoCentavos: 1200000, valorAtualCentavos: 0, prazo: "2027-10-03", hoje: "2026-10-03", margemCentavos: 150000 });
+  assert.equal(r.mesesAtePrazo, 12);
+  assert.equal(r.necessarioPorMesCentavos, 100000);
+  assert.equal(r.da, true);
+  assert.equal(r.folgaPorMesCentavos, 50000);
+});
+
+test("meta ao contrário: não cabe -> diz quanto falta por mês e o prazo possível", () => {
+  const r = simularMetaReversa({ valorAlvoCentavos: 1200000, valorAtualCentavos: 0, prazo: "2027-10-03", hoje: "2026-10-03", margemCentavos: 60000 });
+  assert.equal(r.da, false);
+  assert.equal(r.faltaPorMesCentavos, 40000);
+  assert.equal(r.mesesComMargemAtual, 20);
+  assert.equal(r.valorPossivelNoPrazoCentavos, 720000);
+});
+
+test("meta ao contrário: margem zero ou negativa não tem prazo possível", () => {
+  const r = simularMetaReversa({ valorAlvoCentavos: 500000, prazo: "2027-10-03", hoje: "2026-10-03", margemCentavos: -10000 });
+  assert.equal(r.da, false);
+  assert.equal(r.mesesComMargemAtual, null);
+  assert.equal(r.valorPossivelNoPrazoCentavos, 0);
+});

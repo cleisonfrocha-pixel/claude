@@ -58,3 +58,33 @@ export function simularNovoPrazo(objetivo, valorAtualCentavos, novaMargemMensalC
   if (!novaMargemMensalCentavos || novaMargemMensalCentavos <= 0) return { mesesNecessarios: null, atingivel: false };
   return { mesesNecessarios: Math.ceil(faltaCentavos / novaMargemMensalCentavos), atingivel: true };
 }
+
+const MESES_TETO = 600;
+
+/**
+ * Meta ao contrário: "quero R$ V até tal data" -> dá ou não dá com a margem
+ * de hoje? Se não dá, diz quanto falta por mês e as duas saídas honestas:
+ * o prazo em que a margem de hoje chega lá, e o valor que a margem de hoje
+ * alcança no prazo pedido. Pura e sem escrita: é simulação (CLAUDE.md).
+ * `margemCentavos` <= 0 não tem prazo possível.
+ */
+export function simularMetaReversa({ valorAlvoCentavos, valorAtualCentavos = 0, prazo, hoje, margemCentavos }) {
+  const alvo = Number(valorAlvoCentavos) || 0;
+  const falta = Math.max(0, alvo - (Number(valorAtualCentavos) || 0));
+  const meses = Math.max(0, diferencaEmMeses(competenciaDeData(hoje), competenciaDeData(prazo)));
+  const necessarioPorMesCentavos = meses > 0 ? Math.ceil(falta / meses) : falta;
+  const margem = Number(margemCentavos) || 0;
+  const da = falta === 0 || (meses > 0 && margem >= necessarioPorMesCentavos);
+  const mesesComMargem = falta === 0 ? 0 : margem > 0 ? Math.ceil(falta / margem) : null;
+  return {
+    faltaCentavos: falta,
+    mesesAtePrazo: meses,
+    necessarioPorMesCentavos,
+    margemCentavos: margem,
+    da,
+    folgaPorMesCentavos: da ? margem - necessarioPorMesCentavos : 0,
+    faltaPorMesCentavos: da ? 0 : necessarioPorMesCentavos - margem,
+    mesesComMargemAtual: mesesComMargem != null && mesesComMargem <= MESES_TETO ? mesesComMargem : null,
+    valorPossivelNoPrazoCentavos: margem > 0 ? Math.min(falta, margem * meses) + (Number(valorAtualCentavos) || 0) : (Number(valorAtualCentavos) || 0),
+  };
+}

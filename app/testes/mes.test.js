@@ -87,3 +87,10 @@ test("Caminhos sem histórico: usa o mês cadastrado e avisa", () => {
   assert.ok(b.rendaMediaCentavos > 0);
   assert.ok(compararCenarios(b, {}).cenarios.length >= 5);
 });
+
+import { sobraDoMes } from "../src/domain/mes.js";
+
+test("sobra do mês: renda contável - gasto - parcelas, igual para todas as telas", () => {
+  assert.equal(sobraDoMes({ rendaContavelCentavos: 1000000, gastoCentavos: 700000 }, 200000), 100000);
+  assert.equal(sobraDoMes({ rendaContavelCentavos: 100000, gastoCentavos: 700000 }, 0), -600000);
+});

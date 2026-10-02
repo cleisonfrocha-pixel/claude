@@ -52,7 +52,7 @@ export function completarRetrato({ pessoas, contas, cartoes, fontesRenda, divida
     }
   }
   if (!(ativos || []).length) faltas.push({ id: "bens", texto: "Nenhum bem cadastrado (carro, imóvel, investimentos)", destino: { modulo: "plano", aba: "patrimonio" } });
-  if (!(objetivos || []).length) faltas.push({ id: "meta", texto: "Nenhuma meta definida", destino: { modulo: "plano", aba: "metas" } });
+  if (!(objetivos || []).length) faltas.push({ id: "meta", texto: "Nenhuma meta definida", destino: { modulo: "plano", aba: "patrimonio" } });
   const semParcelas = (dividas || []).filter((d) => !(Number(d.valorParcelaCentavos) > 0) && (Number(d.saldoOriginalCentavos) || 0) > 0);
   if (semParcelas.length) faltas.push({ id: "parcelas", texto: `${semParcelas.length} dívida(s) sem valor de parcela`, destino: { modulo: "dividas" } });
   return faltas;

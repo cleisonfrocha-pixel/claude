@@ -108,3 +108,11 @@ export function numerosDoMes({ rendaPagaCentavos, custos, visao }) {
     },
   };
 }
+
+/** Quanto sobra (ou falta) no mês: renda contável menos tudo que o mês tem
+ * de gasto (pago e previsto) menos as parcelas de dívida. É O número de
+ * "sobra" do produto — Plano e Metas leem daqui, para não existirem duas
+ * sobras diferentes. */
+export function sobraDoMes(visao, parcelasMesCentavos = 0) {
+  return visao.rendaContavelCentavos - visao.gastoCentavos - (Number(parcelasMesCentavos) || 0);
+}

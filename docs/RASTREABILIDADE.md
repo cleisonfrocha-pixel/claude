@@ -1254,3 +1254,14 @@ esperar os dados reais.
 - Duas colunas no desktop. "Prazo", "Diagnóstico completo", "Qualidade dos
   dados" e histórico seguem recolhidos abaixo.
 - 5 testes novos em `planoGeral.test.js` (380 no total).
+
+### Sprint 36 — Metas plausíveis — ✅ (02/10/2026)
+
+- "Quero chegar em… dá?" (`simularMetaReversa`): valor + prazo → "Dá, com folga de
+  R$X" ou "Não dá, faltam R$X por mês", mais o prazo em que a sobra de hoje chega
+  lá e o quanto dá pra juntar no prazo. Simulação, não grava nada.
+- Uma sobra só: `sobraDoMes` (`domain/mes.js`) alimenta Plano e Metas. Antes a
+  tela de Metas usava uma "margem" só com o essencial e mostrava um número
+  diferente do Plano.
+- Patrimônio e Objetivos viraram uma tela, "Patrimônio & Metas", dentro do Plano.
+- 4 testes novos (384 no total).

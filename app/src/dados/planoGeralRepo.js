@@ -5,7 +5,7 @@ import { assinarBase } from "./base.js";
 import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularHorizonte } from "../domain/projecao.js";
 import { gastoDiaADiaMensal } from "../domain/previstos.js";
-import { visaoDoMes } from "../domain/mes.js";
+import { visaoDoMes, sobraDoMes } from "../domain/mes.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
 import { alavancas } from "../domain/planoGeral.js";
 import { hojeISO, competenciaDeData } from "../domain/tempo.js";
@@ -21,7 +21,7 @@ export function calcularPlanoGeral(base, hoje = hojeISO()) {
   const visao = visaoDoMes({ ...base, competencia, hoje });
   const consolidada = calcularVisaoConsolidada(base.dividas, hoje);
   const parcelasMes = consolidada.comprometimentoMensalCentavos || 0;
-  const sobraCentavos = visao.rendaContavelCentavos - visao.gastoCentavos - parcelasMes;
+  const sobraCentavos = sobraDoMes(visao, parcelasMes);
 
   const operacao = base.contas.filter((c) => c.status === "ativa" && !c.ehReserva);
   const saldoInicialCentavos = operacao.reduce((s, c) => s + calcularSaldoConta(c, base.transacoes), 0);

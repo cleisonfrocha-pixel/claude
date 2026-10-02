@@ -7,9 +7,7 @@ import { objetivos, contas, categorias, pessoas, dividas as dividasRepoBase } fr
 import { transacoes } from "./transacoesRepo.js";
 import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
-import { calcularRendaAtual } from "../domain/renda.js";
-import { calcularCustos, calcularMargem } from "../domain/orcamento.js";
-import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
+import { visaoDoMes, sobraDoMes } from "../domain/mes.js";
 import { carregarBase } from "./base.js";
 import { calcularHorizonteObjetivo, verificarCompatibilidadeComMargem } from "../domain/objetivos.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
@@ -38,16 +36,12 @@ export async function calcularPainelObjetivos() {
   const competencia = competenciaAtual();
 
   const base = await carregarBase();
-  const { rendaCentavos: rendaAtualCentavos, custos } = numerosDoMes({
-    rendaPagaCentavos: calcularRendaAtual(dados.transacoes, competencia),
-    custos: calcularCustos(dados.transacoes, dados.categorias, competencia),
-    visao: visaoDoMes({ ...base, competencia, hoje }),
-  });
   const visaoDividas = calcularVisaoConsolidada(dados.dividas, hoje);
-  const margemCentavos = calcularMargem({
-    rendaAtualCentavos, custoEssencialCentavos: custos.essencialCentavos,
-    comprometimentoMensalDividasCentavos: visaoDividas.comprometimentoMensalCentavos,
-  });
+  // A "margem" das metas é a mesma sobra do Plano: o que o mês realmente
+  // deixa depois de gastos e parcelas (domain/mes.js), não uma margem só
+  // com o essencial, que dava um número diferente em cada tela.
+  const visao = visaoDoMes({ ...base, competencia, hoje });
+  const margemCentavos = sobraDoMes(visao, visaoDividas.comprometimentoMensalCentavos);
 
   const listaObjetivos = dados.objetivos.map((o) => {
     let valorAtualCentavos = Number(o.valorAtualCentavos) || 0;
