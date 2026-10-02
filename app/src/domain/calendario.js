@@ -62,18 +62,20 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
       for (const parte of repartirVerba(t, de)) {
         item(parte.data, -parte.valorCentavos, {
           tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: parte.valorCentavos, valorTotalCentavos: Number(t.valorCentavos) || 0,
-          atrasado: false, certeza: t.certeza, semDia: true,
+          atrasado: false, certeza: t.certeza, semDia: true, transacaoId: t.id, contaId: t.contaId, categoriaId: t.categoriaId, competencia: t.competencia,
         });
       }
     } else if (t.tipo === "despesa" && t.contaId) {
       item(t.data, -(Number(t.valorCentavos) || 0), {
         tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: Number(t.valorCentavos) || 0,
-        atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza,
+        atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza, transacaoId: t.id, contaId: t.contaId, categoriaId: t.categoriaId, competencia: t.competencia,
+        origem: t.recorrenciaId ? { tipo: "recorrencia", id: t.recorrenciaId } : t.dividaId ? { tipo: "divida", id: t.dividaId } : { tipo: "transacao", id: t.id },
       });
     } else if (t.tipo === "receita") {
       item(t.data, Number(t.valorCentavos) || 0, {
         tipo: "receita", descricao: t.descricao || "Receita", valorCentavos: Number(t.valorCentavos) || 0,
-        atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza,
+        atrasado: statusEfetivo(t, hoje) === "atrasado", certeza: t.certeza, transacaoId: t.id, contaId: t.contaId, competencia: t.competencia, fonteRendaId: t.fonteRendaId || null,
+        origem: t.fonteRendaId ? { tipo: "fonteRenda", id: t.fonteRendaId } : { tipo: "transacao", id: t.id },
       });
     }
     // despesa em cartão: ignorada aqui de propósito — ver fatura abaixo.
@@ -92,14 +94,17 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     const total = totalPorFatura.get(f.id) || 0;
     if (total <= 0) continue;
     const vencimento = dataVencimentoFatura(cartao, f.competencia);
-    item(vencimento, -total, { tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? vencimento < hoje : false, certeza: "confirmado" });
+    item(vencimento, -total, {
+      tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? vencimento < hoje : false, certeza: "confirmado",
+      faturaId: f.id, cartaoId: cartao.id, contaPagamentoId: cartao.contaPagamentoId || null, origem: { tipo: "fatura", id: f.id },
+    });
   }
 
   // Eventos derivados dos cadastros (renda fixa, parcela de dívida,
   // recorrência ainda não gerada) — ver domain/previstos.js.
   for (const e of extras || []) {
     item(e.data, e.tipo === "receita" ? e.valorCentavos : -e.valorCentavos, {
-      tipo: e.tipo, descricao: e.descricao, valorCentavos: e.valorCentavos, atrasado: !!e.atrasado, certeza: e.certeza, virtual: true, origem: e.origem,
+      tipo: e.tipo, descricao: e.descricao, valorCentavos: e.valorCentavos, atrasado: !!e.atrasado, certeza: e.certeza, virtual: true, origem: e.origem, evento: e,
     });
   }
 

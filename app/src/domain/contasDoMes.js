@@ -10,6 +10,7 @@
 // nascido de uma conta (recorrência, dívida, essencial ou baixado de previsto).
 
 import { eventosFuturos } from "./previstos.js";
+import { compromissosPorDia } from "./calendario.js";
 import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
 import { competenciaDeData, diasNoMes, dataDeCompetencia } from "./tempo.js";
 
@@ -28,11 +29,44 @@ function estadoDe(vencimento, hoje, paga) {
   return "a_pagar";
 }
 
+/** Itens ABERTOS do mês, tirados da MESMA linha do tempo do Início e do Plano
+ * (`compromissosPorDia`): se uma conta está aberta, ela aparece aqui uma vez só e
+ * pesa no "pode gastar" uma vez só. Verba do mês (repartida em semanas na linha
+ * do tempo) volta a ser um item só, sem dia fixo. */
+const SEM_CONTA = "__sem_conta__";
+
+function itensAbertosDaLinhaDoTempo({ transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, competencia, hoje, receitas }) {
+  const competenciaHoje = competenciaDeData(hoje);
+  if (competencia < competenciaHoje) return [];
+  const fim = dataDeCompetencia(competencia, diasNoMes(competencia));
+  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: fim, hoje });
+  // Conta aberta sem conta de saída definida continua sendo conta a pagar.
+  const comConta = (transacoes || []).map((t) => (t.contaId || t.tipo === "receita" || t.cartaoId || t.faturaId ? t : { ...t, contaId: SEM_CONTA }));
+  const dias = compromissosPorDia({ transacoes: comConta, faturas, cartoes, de: hoje, ate: fim, hoje, extras });
+  const inicioMes = `${competencia}-01`;
+  const porVerba = new Map();
+  const saida = [];
+  for (const dia of dias) {
+    if (dia.data < inicioMes) continue;
+    for (const i of dia.itens) {
+      if ((i.tipo === "receita") !== receitas) continue;
+      if (i.semDia && i.transacaoId) {
+        if (!porVerba.has(i.transacaoId)) {
+          const unico = { ...i, valorCentavos: i.valorTotalCentavos || i.valorCentavos, vencimento: null };
+          porVerba.set(i.transacaoId, unico);
+          saida.push(unico);
+        }
+        continue;
+      }
+      saida.push({ ...i, dataDoEfeito: dia.data });
+    }
+  }
+  return saida;
+}
+
 export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencias, categorias, competencia, hoje }) {
   const itens = [];
   const competenciaHoje = competenciaDeData(hoje);
-  const mesAtual = competencia === competenciaHoje;
-  const mesPassado = competencia < competenciaHoje;
   const catPorId = new Map((categorias || []).map((c) => [c.id, c]));
   const catEssencial = (id) => !!catPorId.get(id)?.essencial || catPorId.get(id)?.grupo === "dividas";
 
@@ -44,59 +78,48 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
     });
   };
 
-  for (const t of transacoes || []) {
-    if (t.tipo !== "despesa" || t.status === "cancelado") continue;
-    if (t.faturaId || t.cartaoId) continue;
-    const efetivo = statusEfetivo(t, hoje);
-    const aberta = ABERTO.has(efetivo);
-    const paga = t.status === "pago";
-    // Conta paga pertence ao mês do vencimento e também ao mês em que foi
-    // paga: pagar hoje uma conta atrasada de setembro marca ponto em outubro.
-    const doMes = t.competencia === competencia || (paga && t.pagoEm && competenciaDeData(t.pagoEm) === competencia);
-    const atrasadaDeAntes = mesAtual && aberta && t.competencia < competencia;
-    if (!doMes && !atrasadaDeAntes) continue;
-    if (paga && !(t.recorrenciaId || t.dividaId || t.foiPrevisto || catEssencial(t.categoriaId))) continue;
-    novo({
-      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Conta", contaSugeridaId: t.contaId || null,
-      valorCentavos: Number(t.valorCentavos) || 0, vencimento: t.semDia ? null : t.data, semDia: !!t.semDia,
-      paga, pagoEm: paga ? (t.pagoEm || t.data) : null, categoriaId: t.categoriaId || null,
-      origem: t.recorrenciaId ? { tipo: "recorrencia", id: t.recorrenciaId } : t.dividaId ? { tipo: "divida", id: t.dividaId } : { tipo: "transacao", id: t.id },
-    });
-  }
-
-  const fim = dataDeCompetencia(competencia, diasNoMes(competencia));
-  if (!mesPassado) {
-    for (const e of eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda: [], cartoes, de: hoje, ate: fim, hoje })) {
-      if (e.tipo !== "despesa" || !e.origem || !["divida", "recorrencia"].includes(e.origem.tipo)) continue;
-      const venc = e.vencimento || e.data;
-      if (competenciaDeData(venc) !== competencia && !(mesAtual && e.atrasado)) continue;
-      const rec = e.origem.tipo === "recorrencia" ? (recorrencias || []).find((r) => r.id === e.origem.id) : null;
-      novo({
-        chave: `e:${e.origem.tipo}:${e.origem.id}:${venc}`, tipo: "evento", evento: { ...e, data: venc }, descricao: e.descricao, contaSugeridaId: rec?.contaId || null,
-        valorCentavos: e.valorCentavos, vencimento: venc, paga: false, origem: e.origem,
-      });
+  // Abertas: da linha do tempo.
+  for (const i of itensAbertosDaLinhaDoTempo({ transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda: [], competencia, hoje, receitas: false })) {
+    const rec = i.origem?.tipo === "recorrencia" ? (recorrencias || []).find((r) => r.id === i.origem.id) : null;
+    if (i.tipo === "fatura") {
+      novo({ chave: `f:${i.faturaId}`, tipo: "fatura", faturaId: i.faturaId, cartaoId: i.cartaoId, contaPagamentoId: i.contaPagamentoId, contaSugeridaId: i.contaPagamentoId, descricao: i.descricao, valorCentavos: i.valorCentavos, vencimento: i.vencimento, paga: false, origem: i.origem });
+    } else if (i.transacaoId) {
+      novo({ chave: `t:${i.transacaoId}`, tipo: "transacao", transacaoId: i.transacaoId, descricao: i.descricao, contaSugeridaId: i.contaId && i.contaId !== SEM_CONTA ? i.contaId : null, valorCentavos: i.valorCentavos, vencimento: i.vencimento, semDia: !!i.semDia, paga: false, categoriaId: i.categoriaId || null, origem: i.origem });
+    } else if (i.evento) {
+      const e = { ...i.evento, data: i.evento.vencimento || i.vencimento || i.evento.data };
+      novo({ chave: `e:${i.origem.tipo}:${i.origem.id}:${e.data}`, tipo: "evento", evento: e, descricao: i.descricao, contaSugeridaId: rec?.contaId || null, valorCentavos: i.valorCentavos, vencimento: e.data, paga: false, origem: i.origem });
     }
   }
 
+  // Pagas: o que já saiu (conta que nasceu de uma conta, ou essencial).
+  for (const t of transacoes || []) {
+    if (t.tipo !== "despesa" || t.status !== "pago" || t.faturaId || t.cartaoId) continue;
+    const doMes = t.competencia === competencia || (t.pagoEm && competenciaDeData(t.pagoEm) === competencia);
+    if (!doMes) continue;
+    if (!(t.recorrenciaId || t.dividaId || t.foiPrevisto || catEssencial(t.categoriaId))) continue;
+    novo({
+      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Conta", contaSugeridaId: t.contaId || null,
+      valorCentavos: Number(t.valorCentavos) || 0, vencimento: t.semDia ? null : t.data, semDia: !!t.semDia,
+      paga: true, pagoEm: t.pagoEm || t.data, categoriaId: t.categoriaId || null,
+      origem: t.recorrenciaId ? { tipo: "recorrencia", id: t.recorrenciaId } : t.dividaId ? { tipo: "divida", id: t.dividaId } : { tipo: "transacao", id: t.id },
+    });
+  }
+  const cartaoPorId = new Map((cartoes || []).map((c) => [c.id, c]));
   const totalPorFatura = new Map();
   for (const t of transacoes || []) {
     if (!t.faturaId || t.tipo !== "despesa" || t.status === "cancelado") continue;
     totalPorFatura.set(t.faturaId, (totalPorFatura.get(t.faturaId) || 0) + (Number(t.valorCentavos) || 0));
   }
-  const cartaoPorId = new Map((cartoes || []).map((c) => [c.id, c]));
   for (const f of faturas || []) {
+    if (f.status !== "paga") continue;
     const cartao = cartaoPorId.get(f.cartaoId);
     const total = totalPorFatura.get(f.id) || 0;
     if (!cartao || total <= 0) continue;
     const venc = dataVencimentoFatura(cartao, f.competencia);
-    const paga = f.status === "paga";
-    const doMes = competenciaDeData(venc) === competencia;
-    const atrasadaDeAntes = mesAtual && !paga && venc < `${competencia}-01`;
-    if (!doMes && !atrasadaDeAntes) continue;
+    if (competenciaDeData(venc) !== competencia) continue;
     novo({
       chave: `f:${f.id}`, tipo: "fatura", faturaId: f.id, cartaoId: cartao.id, contaPagamentoId: cartao.contaPagamentoId || null, contaSugeridaId: cartao.contaPagamentoId || null,
-      descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, vencimento: venc, paga, pagoEm: paga ? venc : null,
-      origem: { tipo: "fatura", id: f.id },
+      descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, vencimento: venc, paga: true, pagoEm: venc, origem: { tipo: "fatura", id: f.id },
     });
   }
 

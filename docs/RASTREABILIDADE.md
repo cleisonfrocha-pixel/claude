@@ -1572,3 +1572,8 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   procura a conta aberta parecida ("Vivo SET" x "Vivo 10/10") e pergunta se é
   ela; sim dá baixa nela, em vez de duplicar.
 - 450 testes passando (nos dois fusos).
+
+## Sprint 50 — linha do tempo única
+- `contasDoMes` (itens abertos de A pagar) passa a sair da mesma linha do tempo (`compromissosPorDia` + `eventosFuturos`) usada pelo Início e pelo Plano; verba do mês volta a ser um item só; conta sem conta de saída continua aparecendo.
+- Itens da linha do tempo carregam ids de origem (transação, conta, categoria, fatura, cartão).
+- Testes de invariantes: A pagar aberto == saídas da linha do tempo; parcela atrasada pesa uma vez com o vencimento original. 452 testes nos dois fusos.

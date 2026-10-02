@@ -142,3 +142,31 @@ test("entradas: incerta aparece mas nunca entra nos totais", () => {
   assert.equal(r.resumo.incertasCentavos, 500000);
   assert.equal(r.resumo.quantidade, 1);
 });
+
+import { compromissosPorDia } from "../src/domain/calendario.js";
+import { eventosFuturos } from "../src/domain/previstos.js";
+
+test("invariante: A pagar aberto do mês == saídas da linha do tempo do mês (uma vez cada)", () => {
+  const transacoes = [
+    t({ id: "a", descricao: "Luz", data: "2026-10-05", contaId: "k", valorCentavos: 20000 }),
+    t({ id: "c", descricao: "Net", data: "2026-10-20", contaId: "k", valorCentavos: 12000 }),
+    t({ id: "v", descricao: "Mercado", data: "2026-10-01", semDia: true, contaId: "k", valorCentavos: 100000 }),
+    t({ id: "r", tipo: "receita", descricao: "Salário", data: "2026-10-25", contaId: "k", valorCentavos: 500000 }),
+  ];
+  const r = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes });
+  const abertas = r.itens.filter((i) => !i.paga);
+  assert.equal(abertas.length, 3);
+  const dias = compromissosPorDia({ transacoes, faturas: [], cartoes: [], de: HOJE, ate: "2026-10-31", hoje: HOJE, extras: [] });
+  const saidas = dias.reduce((s, d) => s + d.saidasCentavos, 0);
+  assert.equal(r.resumo.faltaCentavos, saidas);
+  assert.equal(new Set(abertas.map((i) => i.chave)).size, abertas.length);
+});
+
+test("invariante: parcela de dívida em atraso pesa uma vez, com o vencimento original", () => {
+  const dividas = [{ id: "d1", nome: "Jeep", valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 19, dataInicio: "2025-03-04" }];
+  const r = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, dividas, transacoes: [] });
+  const extras = eventosFuturos({ transacoes: [], dividas, de: HOJE, ate: "2026-10-31", hoje: HOJE });
+  const dias = compromissosPorDia({ transacoes: [], faturas: [], cartoes: [], de: HOJE, ate: "2026-10-31", hoje: HOJE, extras });
+  assert.equal(r.resumo.faltaCentavos, dias.reduce((s, d) => s + d.saidasCentavos, 0));
+  assert.equal(r.itens.length, 1);
+});
