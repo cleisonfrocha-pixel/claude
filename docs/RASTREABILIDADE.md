@@ -1595,3 +1595,8 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Dívida sem acordo pesa pelo valor cobrado com juros em todas as telas (Bradesco R$ 10.064,16, não R$ 5.546,04).
 - Tela Dívidas: placar, tag "oferta −64%", bloco com valor de origem, cobrado, oferta, economia e validade; Jeep com barra, já pago e falta pagar. Campos novos: valor com juros, oferta, protesto, CNPJ, cartório, o que trava.
 - Campo `centro` nas transações e dívidas (preenchido no Sprint 55; a leitura por centro entra nas telas do Sprint 54). 466 testes nos dois fusos.
+
+## Sprint 54 — Início com "até o dinheiro entrar"
+- Caixa devolve `proximaEntrada` (primeira entrada não incerta depois de hoje), `seguroAteAProximaEntradaCentavos` (menor saldo antes dela) e `primeiroBuraco` (primeiro dia negativo com as contas que pesam nele). Mesma trilha do restante, sem lista paralela.
+- Início: bloco "Até o dinheiro entrar" com o quanto dá pra gastar até a próxima entrada certa e "o que quebra". 469 testes nos dois fusos.
+- Decidido não fazer agora: reagrupar Dinheiro em 3 abas (risco alto, ganho baixo diante do problema real, que era dado incoerente) e a ponte "sobra do mês x caixa" (o mapa de 12 meses do Plano já cobre o caminho mês a mês).

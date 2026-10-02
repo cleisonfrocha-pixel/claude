@@ -129,7 +129,11 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
   let entradasPrevistasCentavos = 0;
   let comprometidoCentavos = 0;
   const compromissos = [];
+  const pontos = [];
+  let primeiroBuraco = null;
+  let proximaEntrada = null;
   for (const dia of dias) {
+    const saldoAntes = saldo;
     for (const i of dia.itens) {
       if (i.tipo === "receita") {
         if (i.certeza === "incerto") continue;
@@ -143,7 +147,23 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
       }
     }
     if (saldo < menorSaldoCentavos) { menorSaldoCentavos = saldo; diaMaisApertado = dia.data; }
+    pontos.push({ data: dia.data, saldoCentavos: saldo });
+    if (!proximaEntrada && dia.data > hoje) {
+      const e = dia.itens.find((i) => i.tipo === "receita" && i.certeza !== "incerto");
+      if (e) proximaEntrada = { data: dia.data, valorCentavos: dia.itens.filter((i) => i.tipo === "receita" && i.certeza !== "incerto").reduce((a, i) => a + i.valorCentavos, 0), descricao: e.descricao, certeza: e.certeza || "confirmado" };
+    }
+    if (!primeiroBuraco && saldo < 0) {
+      primeiroBuraco = {
+        data: dia.data, faltaCentavos: -saldo,
+        causas: dia.itens.filter((i) => i.tipo !== "receita").sort((a, b) => b.valorCentavos - a.valorCentavos).map((i) => ({ descricao: i.descricao, valorCentavos: i.valorCentavos, origem: i.origem || null })),
+        saldoAntesCentavos: saldoAntes,
+      };
+    }
   }
+  // Até a próxima entrada: o mais baixo que o saldo toca ANTES de ela chegar.
+  // É o número que responde "posso gastar isso até o dinheiro entrar?".
+  const antesDaEntrada = proximaEntrada ? pontos.filter((p) => p.data < proximaEntrada.data) : pontos;
+  const seguroAteAProximaEntradaCentavos = Math.min(saldoAtualCentavos, ...antesDaEntrada.map((p) => p.saldoCentavos));
   // "Livre" responde "e se não entrasse nada?": saldo menos tudo que sai.
   const livreCentavos = saldoAtualCentavos - comprometidoCentavos;
   const seguroParaGastarCentavos = Math.min(saldoAtualCentavos, menorSaldoCentavos);
@@ -155,6 +175,9 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
     entradasPrevistasCentavos,
     livreCentavos,
     seguroParaGastarCentavos,
+    seguroAteAProximaEntradaCentavos,
+    proximaEntrada,
+    primeiroBuraco,
     diaMaisApertado,
     horizonteAte,
     detalhes: {

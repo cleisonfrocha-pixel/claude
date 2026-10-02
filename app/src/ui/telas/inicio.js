@@ -77,6 +77,19 @@ function blocoContasDoMes(c) {
     </section>`;
 }
 
+function blocoAteAProximaEntrada(caixa) {
+  const e = caixa.proximaEntrada;
+  const buraco = caixa.primeiroBuraco;
+  if (!e && !buraco) return "";
+  const v = caixa.seguroAteAProximaEntradaCentavos;
+  const linhaEntrada = e ? `
+      <div class="fatura-linha"><span class="rotulo">Até a próxima entrada certa (${escapeHtml(e.descricao || "entrada")}, ${escapeHtml(formatarData(e.data).slice(0, 5))}${e.certeza && e.certeza !== "confirmado" ? ", esperada" : ""})</span><b class="${v < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(v)}</b></div>
+      <div class="tela-sub" style="margin:2px 0 8px;">Entram <span data-valor>${formatarBRL(e.valorCentavos)}</span> nesse dia. Esse é o quanto dá pra gastar até lá sem faltar.</div>` : "";
+  const linhaBuraco = buraco ? `
+      <div class="mes-progresso-msg alerta"><b>O que quebra:</b> em ${escapeHtml(formatarData(buraco.data).slice(0, 5))} faltam <span data-valor>${formatarBRL(buraco.faltaCentavos)}</span>. ${buraco.causas.length ? "Pesam nesse dia: " + escapeHtml(buraco.causas.slice(0, 3).map((c) => `${c.descricao} (${formatarBRL(c.valorCentavos)})`).join(", ")) + "." : ""}</div>` : "";
+  return `<section class="inicio-bloco"><h3>Até o dinheiro entrar</h3>${linhaEntrada}${linhaBuraco}</section>`;
+}
+
 function blocoPontoDeAtencao() {
   const achado = (estadoDecisoes?.achadosPendentes || [])[0];
   if (!achado) {
@@ -168,6 +181,7 @@ function renderizar() {
             <div class="home-reserva-inline"><span>Em reserva/segurança</span><b data-valor>${formatarBRL(saldoReservaCentavos)}</b></div>` : ""}
         </div>
         <button class="btn btn-primary inicio-lancar" data-lancar>${icone("adicionar", 18)} Lançar</button>
+        ${blocoAteAProximaEntrada(caixa)}
         ${blocoContasDoMes(contasMes)}
         ${blocoPontoDeAtencao()}
       </div>
