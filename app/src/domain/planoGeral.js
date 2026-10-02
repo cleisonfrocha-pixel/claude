@@ -2,7 +2,7 @@
 // avisos agrupados. Puro (CLAUDE.md). Toda alavanca diz a premissa e aponta
 // os dados de onde saiu o número; nenhuma inventa valor.
 
-import { statusDivida, parcelasRestantes } from "./dividas.js";
+import { statusDivida, parcelasRestantes, classificarDivida } from "./dividas.js";
 
 const PESO = { alta: 3, media: 2, baixa: 1 };
 const REDUCAO_CATEGORIA_PCT = 20;
@@ -59,8 +59,10 @@ export function alavancas({ transacoes, categorias, dividas, competencia, hoje, 
     });
   }
 
-  // 2) Renegociar a maior parcela de dívida ativa.
-  const ativas = (dividas || []).filter((d) => statusDivida(d, hoje) !== "quitada" && (Number(d.valorParcelaCentavos) || 0) > 0);
+  // 2) Renegociar a maior parcela de dívida ativa. Financiamento em dia
+  // (carro pago certinho) não entra: renegociar o que está em dia não é uma
+  // alavanca, é ruído.
+  const ativas = (dividas || []).filter((d) => classificarDivida(d, hoje) === "divida" && (Number(d.valorParcelaCentavos) || 0) > 0);
   const maior = ativas.sort((a, b) => b.valorParcelaCentavos - a.valorParcelaCentavos)[0];
   if (maior) {
     lista.push({

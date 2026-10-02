@@ -5,7 +5,7 @@
 // citar as fontes ("Dados usados"), e o que não está no retrato é "não sei".
 
 import { formatarBRL } from "./dinheiro.js";
-import { calcularSaldoAtual, parcelasRestantes, statusDivida } from "./dividas.js";
+import { calcularSaldoAtual, parcelasRestantes, statusDivida, classificarDivida } from "./dividas.js";
 
 const R = (c) => formatarBRL(Number(c) || 0);
 
@@ -33,7 +33,10 @@ export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, 
     add("Renda", `${f.nome} (${f.tipo}): ${R(f.valorEsperadoCentavos)}${f.diaRecebimento ? `, dia ${f.diaRecebimento}` : ""}${f.fim ? `, só até ${f.fim}` : ""}`);
   }
   for (const d of (dividas || []).filter((x) => statusDivida(x, hoje) !== "quitada").slice(0, 12)) {
-    add("Dívidas", `${d.nome}${d.credor ? ` (${d.credor})` : ""}: deve ${R(calcularSaldoAtual(d))}; parcela ${R(d.valorParcelaCentavos)}; ${parcelasRestantes(d)} parcelas restantes${d.negativada ? "; negativada" : ""}${d.emRisco ? "; em risco" : ""}`);
+    const fin = classificarDivida(d, hoje) === "financiamento";
+    add(fin ? "Financiamentos em dia" : "Dívidas", fin
+      ? `${d.nome}${d.credor ? ` (${d.credor})` : ""}: parcela ${R(d.valorParcelaCentavos)}/mês, ${parcelasRestantes(d)} parcelas restantes (soma ${R(calcularSaldoAtual(d))}); pago em dia, não é dívida atrasada`
+      : `${d.nome}${d.credor ? ` (${d.credor})` : ""}: deve ${R(calcularSaldoAtual(d))}; parcela ${R(d.valorParcelaCentavos)}; ${parcelasRestantes(d)} parcelas restantes${d.negativada ? "; negativada" : ""}${d.emRisco ? "; em risco" : ""}`);
   }
   for (const x of (ativos || []).slice(0, 8)) add("Bens", `${x.nome}: ${R(x.valorAtualCentavos)}`);
   if (!(ativos || []).length) add("Bens", "Nenhum bem cadastrado: o patrimônio mostrado só tem as dívidas.");

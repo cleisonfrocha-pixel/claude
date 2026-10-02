@@ -48,14 +48,17 @@ export async function calcularPainelPatrimonio() {
   // achava o retrato criava outro, e leituras simultâneas criavam cópias.
   const porCompetencia = new Map();
   for (const sn of dados.snapshots) {
+    // Retrato zerado (ativos e passivos em 0) é cópia vazia de uma leitura
+    // antiga: comparar contra ele inventa "variação" de patrimônio.
+    if (sn.competencia !== competencia && !sn.ativosCentavos && !sn.passivosCentavos) continue;
     const atual = porCompetencia.get(sn.competencia);
     if (!atual || sn.id === sn.competencia) porCompetencia.set(sn.competencia, sn);
   }
-  const retratoDeHoje = montarSnapshot({ competencia, ativosCentavos, passivosCentavos, composicao });
+  const retratoDeHoje = montarSnapshot({ competencia, ativosCentavos, passivosCentavos, composicao, passivosProblemasCentavos: visaoDividas.saldoProblemasCentavos });
   const existente = porCompetencia.get(competencia);
   const mudou = !existente || existente.ativosCentavos !== retratoDeHoje.ativosCentavos
-    || existente.passivosCentavos !== retratoDeHoje.passivosCentavos || existente.id !== competencia;
-  const chave = `${competencia}|${retratoDeHoje.ativosCentavos}|${retratoDeHoje.passivosCentavos}`;
+    || existente.passivosCentavos !== retratoDeHoje.passivosCentavos || existente.passivosProblemasCentavos !== retratoDeHoje.passivosProblemasCentavos || existente.id !== competencia;
+  const chave = `${competencia}|${retratoDeHoje.ativosCentavos}|${retratoDeHoje.passivosCentavos}|${retratoDeHoje.passivosProblemasCentavos}`;
   if (mudou && chave !== ultimoRetratoGravado) {
     ultimoRetratoGravado = chave; // leituras simultâneas não regravam o mesmo retrato
     await db.definir(CAMINHO_SNAPSHOTS, competencia, retratoDeHoje);
@@ -94,6 +97,8 @@ export async function calcularPainelPatrimonio() {
     recorrencias: dados.recorrencias,
     pessoas: dados.pessoas,
     ativosCentavos, passivosCentavos, liquidoCentavos, composicao,
+    passivosProblemasCentavos: visaoDividas.saldoProblemasCentavos,
+    passivosFinanciamentosCentavos: visaoDividas.saldoFinanciamentosCentavos,
     variacaoMensal, variacaoAcumulada, relacao,
     reserva,
     historicoSnapshots: snapshotsOrdenados,

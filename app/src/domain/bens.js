@@ -3,7 +3,7 @@
 // por ele. O patrimônio líquido já desconta a dívida uma vez, no total; o
 // líquido do bem é só a leitura item a item e nunca é somado de novo.
 
-import { calcularSaldoAtual, statusDivida } from "./dividas.js";
+import { calcularSaldoAtual, statusDivida, classificarDivida, parcelasRestantes, dataEstimadaQuitacao } from "./dividas.js";
 
 function diasEntre(a, b) {
   return Math.round((new Date(`${b}T12:00:00Z`) - new Date(`${a}T12:00:00Z`)) / 86400000);
@@ -19,6 +19,9 @@ export function leituraDoBem(ativo, dividas, recorrencias) {
   return {
     valorCentavos,
     dividaCentavos,
+    parcelasRestantes: divida ? parcelasRestantes(divida) : 0,
+    parcelaCentavos: divida ? Number(divida.valorParcelaCentavos) || 0 : 0,
+    quitacao: divida ? dataEstimadaQuitacao(divida) : null,
     dividaNome: divida ? divida.nome : null,
     liquidoCentavos: valorCentavos - dividaCentavos,
     custosMensaisCentavos,
@@ -26,20 +29,24 @@ export function leituraDoBem(ativo, dividas, recorrencias) {
   };
 }
 
-/** Dívidas em duas listas: as que têm acordo (parcela combinada, andando) e
- * as negativadas ou sem acordo, que não quitam sozinhas. Quitadas ficam de
- * fora. Cada lista traz o total que ela pesa. */
+/** Dívidas em três grupos. "Dívidas": o que está atrasado, negativado, sem
+ * acordo ou em risco, o que realmente suja o nome. "Financiamentos em dia":
+ * parcelado com acordo e pago certinho, que é compromisso mensal, não
+ * alarme. "Quitadas" ficam de fora dos totais. Cada grupo traz o que pesa. */
 export function separarDividas(dividas, hoje) {
-  const ativas = (dividas || []).filter((d) => statusDivida(d, hoje) !== "quitada");
-  const semAcordo = (d) => d.negativada || !((Number(d.valorParcelaCentavos) || 0) > 0);
-  const comAcordo = ativas.filter((d) => !semAcordo(d));
-  const negativadas = ativas.filter(semAcordo);
+  const todas = dividas || [];
+  const grupo = (g) => todas.filter((d) => classificarDivida(d, hoje) === g);
+  const problemas = grupo("divida");
+  const financiamentos = grupo("financiamento");
+  const quitadas = grupo("quitada");
   const soma = (l) => l.reduce((s, d) => s + calcularSaldoAtual(d), 0);
+  const parcelas = (l) => l.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0);
   return {
-    comAcordo, negativadas,
-    totalComAcordoCentavos: soma(comAcordo),
-    totalNegativadasCentavos: soma(negativadas),
-    parcelasMesCentavos: comAcordo.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0),
+    problemas, financiamentos, quitadas,
+    totalProblemasCentavos: soma(problemas),
+    totalFinanciamentosCentavos: soma(financiamentos),
+    parcelasProblemasCentavos: parcelas(problemas),
+    parcelasFinanciamentosCentavos: parcelas(financiamentos),
   };
 }
 

@@ -1376,3 +1376,28 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Prevenção: `testes/publicacao.test.js` falha se algum import relativo ou
   `src`/`href` do `index.html` apontar para arquivo inexistente (406 testes).
   Ao republicar, conferir a lista de arquivos publicados contra `find src estilo`.
+
+## Rodada 4 — pente fino (Sprints 40 a 47)
+
+### Sprint 40: financiamento em dia não é dívida — 02/10/2026
+
+- Pedido do Cleison: o Jeep Compass (parcelado, pago em dia) aparecia como uma
+  dívida vermelha de R$135.971; pra ele é um bem que está sendo pago, e dívida
+  é o que está atrasado e suja o nome.
+- `classificarDivida` (`domain/dividas.js`): "financiamento" (parcelado, com
+  acordo, em dia, sem nome sujo), "divida" (atrasada, negativada, sem acordo ou
+  em risco) ou "quitada". Campo `tipo` no cadastro força um lado, mas atraso e
+  nome sujo sempre viram dívida.
+- `calcularVisaoConsolidada` ganhou saldo/parcelas/quantidade separados por
+  grupo. A tela Dívidas mostra "Dívidas pra resolver" (vazia = "Nome limpo") e
+  "Financiamentos em dia" (parcela por mês, parcelas que faltam, quando quita,
+  etiqueta verde "em dia").
+- Patrimônio: o Jeep mostra valor, parcelas que faltam e quando quita; o hero
+  só fica vermelho se o negativo vem de dívida de verdade; o sinal "dívida
+  caiu" passou a olhar só dívida de verdade; retratos zerados antigos não
+  entram mais na variação.
+- Alerta `divida_aumentou` só conta dívida de verdade (retrato antigo sem esse
+  recorte não gera alerta). "Renegociar parcela" não sugere mais financiamento
+  em dia. Por pessoa e IA separam os dois grupos.
+- Testes: bens (classificação, visão consolidada, leitura do bem), patrimônio
+  (variação de dívidas), decisões. 410 passando.

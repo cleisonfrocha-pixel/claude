@@ -93,6 +93,23 @@ export function statusDivida(divida, hoje) {
   return "ativa";
 }
 
+/** Como a dívida aparece pro usuário: "financiamento" é parcelado em dia,
+ * com acordo e sem nome sujo (um carro sendo pago, por exemplo) e não é
+ * dívida problema; "divida" é o que está atrasado, negativado, sem acordo ou
+ * marcado em risco. O campo `tipo` ("financiamento"|"divida") do cadastro
+ * decide quando o usuário quer forçar um lado. Quitada fica de fora. */
+export function classificarDivida(divida, hoje) {
+  if (statusDivida(divida, hoje) === "quitada") return "quitada";
+  if (divida.tipo === "financiamento" || divida.tipo === "divida") {
+    // Mesmo marcado como financiamento, atraso e nome sujo viram dívida.
+    if (divida.tipo === "financiamento" && (divida.negativada || statusDivida(divida, hoje) === "atrasada")) return "divida";
+    return divida.tipo;
+  }
+  const semAcordo = !(Number(divida.valorParcelaCentavos) > 0);
+  if (semAcordo || divida.negativada || divida.emRisco || statusDivida(divida, hoje) === "atrasada") return "divida";
+  return "financiamento";
+}
+
 /** Visão consolidada de todas as dívidas — cada número somado na leitura a
  * partir das dívidas individuais, nenhum total gravado. */
 export function calcularVisaoConsolidada(dividas, hoje) {
@@ -112,7 +129,20 @@ export function calcularVisaoConsolidada(dividas, hoje) {
   const datasQuitacao = ativas.map((d) => dataEstimadaQuitacao(d)).filter(Boolean).sort();
   const dataQuitacaoTotal = semAcordo.length || !datasQuitacao.length ? null : datasQuitacao[datasQuitacao.length - 1];
 
+  const problemas = ativas.filter((d) => classificarDivida(d, hoje) === "divida");
+  const financiamentos = ativas.filter((d) => classificarDivida(d, hoje) === "financiamento");
+  const soma = (l) => l.reduce((s, d) => s + calcularSaldoAtual(d), 0);
+
   return {
+    // O que pesa como dívida de verdade (atrasada, negativada, sem acordo,
+    // em risco) e o que é parcelado em dia: dois mundos que não se somam
+    // num número vermelho só.
+    quantidadeProblemas: problemas.length,
+    saldoProblemasCentavos: soma(problemas),
+    parcelasProblemasCentavos: problemas.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0),
+    quantidadeFinanciamentos: financiamentos.length,
+    saldoFinanciamentosCentavos: soma(financiamentos),
+    parcelasFinanciamentosCentavos: financiamentos.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0),
     quantidadeAtivas: ativas.length,
     quantidadeAtrasadas: atrasadas.length,
     quantidadeEmRisco: emRisco.length,

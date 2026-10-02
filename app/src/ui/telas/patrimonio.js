@@ -43,8 +43,11 @@ function linhaVariacao(rotulo, variacao) {
 function blocoRelacao(r) {
   if (!r) return `<div class="tela-sub">Ainda não há um mês anterior para comparar.</div>`;
   const sinal = (bom) => bom ? '<span class="valor-pos">✓</span>' : '<span class="valor-neg">✕</span>';
+  // Financiamento em dia diminui sozinho a cada parcela e não é alarme: o
+  // sinal olha só as dívidas de verdade (atrasadas, negativadas, sem acordo).
+  const dividas = r.variacaoDividasCentavos == null ? '<span class="valor-neutro">sem base</span>' : sinal(r.variacaoDividasCentavos <= 0);
   return `
-    <div class="fatura-linha"><span class="rotulo">Dívida caiu</span>${sinal(r.passivoCaiu)}</div>
+    <div class="fatura-linha"><span class="rotulo">Dívidas pra resolver não aumentaram</span>${dividas}</div>
     <div class="fatura-linha"><span class="rotulo">Ativo subiu</span>${sinal(r.ativoSubiu)}</div>
     <div class="fatura-linha"><span class="rotulo">Patrimônio cresceu</span>${sinal(r.patrimonioSubiu)}</div>
   `;
@@ -53,7 +56,7 @@ function blocoRelacao(r) {
 function cartaoAtivo(a) {
   const l = leituraDoBem(a, painel.dividas, painel.recorrencias);
   const extras = [
-    l.dividaNome && l.dividaCentavos > 0 ? `deve <span data-valor>${formatarBRL(l.dividaCentavos)}</span> (${escapeHtml(l.dividaNome)}) · líquido <b data-valor>${formatarBRL(l.liquidoCentavos)}</b>` : "",
+    l.dividaNome && l.dividaCentavos > 0 ? `faltam <span data-valor>${formatarBRL(l.dividaCentavos)}</span> em ${l.parcelasRestantes} parcelas de <span data-valor>${formatarBRL(l.parcelaCentavos)}</span>${l.quitacao ? ` (quita em ${escapeHtml(formatarData(l.quitacao))})` : ""} · valor menos o que falta: <b class="${l.liquidoCentavos < 0 ? "valor-neutro" : "valor-pos"}" data-valor>${formatarBRL(l.liquidoCentavos)}</b>` : "",
     l.custosMensaisCentavos > 0 ? `custa <span data-valor>${formatarBRL(l.custosMensaisCentavos)}</span>/mês (${l.custos.map((c) => escapeHtml(c.descricao)).join(", ")})` : "",
   ].filter(Boolean);
   return `
@@ -103,7 +106,8 @@ function renderizar() {
     return;
   }
 
-  const negativo = painel.liquidoCentavos < 0;
+  // Vermelho só quando o negativo vem de dívida de verdade, não do financiamento em dia.
+  const negativo = painel.liquidoCentavos < 0 && (painel.ativosCentavos - (painel.passivosProblemasCentavos || 0)) < 0;
 
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
@@ -117,7 +121,7 @@ function renderizar() {
     <div class="hero-caixa">
       <div class="hero-caixa-label">Patrimônio líquido</div>
       <div class="hero-caixa-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(painel.liquidoCentavos)}</div>
-      <div class="hero-caixa-sub"><span data-valor>${formatarBRL(painel.ativosCentavos)}</span> em ativos, menos <span data-valor>${formatarBRL(painel.passivosCentavos)}</span> em dívidas ativas, em ${escapeHtml(competenciaLabel(painel.competencia))}.</div>
+      <div class="hero-caixa-sub"><span data-valor>${formatarBRL(painel.ativosCentavos)}</span> em ativos, menos <span data-valor>${formatarBRL(painel.passivosCentavos)}</span> em dívidas e parcelas que faltam${painel.passivosFinanciamentosCentavos > 0 ? ` (<span data-valor>${formatarBRL(painel.passivosFinanciamentosCentavos)}</span> são financiamentos em dia)` : ""}, em ${escapeHtml(competenciaLabel(painel.competencia))}.</div>
     </div>
 
     <div class="resumo-mes">

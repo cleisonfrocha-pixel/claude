@@ -335,6 +335,7 @@
 .item-tag.inativa { background: var(--danger-bg); color: var(--danger); }
 .item-tag.atencao { background: var(--warn-bg); color: var(--warn); }
 .item-tag.critico { background: var(--danger-bg); color: var(--danger); }
+.item-tag.ok { background: var(--good-bg); color: var(--good); }
 
 /* ---- item expansível (ex.: detalhe de cartão) ---- */
 .item-chevron { transition: transform .15s ease; font-size: 13px; }

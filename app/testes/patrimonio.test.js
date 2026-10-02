@@ -76,3 +76,11 @@ test("calcularRelacaoDividaAtivoPatrimonio: patrimônio pode piorar mesmo com at
   assert.equal(r.passivoCaiu, false);
   assert.equal(r.patrimonioSubiu, false);
 });
+
+test("relação só compara dívidas de verdade quando os dois retratos têm o recorte", () => {
+  const ant = montarSnapshot({ competencia: "2026-08", ativosCentavos: 100, passivosCentavos: 500, passivosProblemasCentavos: 100, composicao: [] });
+  const atu = montarSnapshot({ competencia: "2026-09", ativosCentavos: 100, passivosCentavos: 900, passivosProblemasCentavos: 100, composicao: [] });
+  assert.equal(calcularRelacaoDividaAtivoPatrimonio(atu, ant).variacaoDividasCentavos, 0);
+  const antigo = montarSnapshot({ competencia: "2026-07", ativosCentavos: 100, passivosCentavos: 0, composicao: [] });
+  assert.equal(calcularRelacaoDividaAtivoPatrimonio(atu, antigo).variacaoDividasCentavos, null);
+});

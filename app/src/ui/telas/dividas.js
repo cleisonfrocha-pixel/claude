@@ -11,7 +11,7 @@ import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../../domain/tempo.js";
 import {
   calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao,
-  statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva,
+  statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva, classificarDivida,
 } from "../../domain/dividas.js";
 import { separarDividas } from "../../domain/bens.js";
 import { simularAporteExtra, simularQuitacaoAntecipada } from "../../domain/simuladorDividas.js";
@@ -53,6 +53,11 @@ export default criarTelaCadastro({
     { id: "parcelasPagas", rotulo: "Parcelas já pagas", tipo: "numero", min: 0, obrigatorio: true, padrao: 0 },
     { id: "dataInicio", rotulo: "Vencimento da 1ª parcela", tipo: "data", obrigatorio: true },
     { id: "taxaJurosMensalPct", rotulo: "Juros ao mês, % (opcional)", tipo: "numero", min: 0, step: 0.01 },
+    { id: "tipo", rotulo: "Como tratar", tipo: "select", opcoes: [
+      { valor: "", rotulo: "Automático (parcelado em dia é financiamento)" },
+      { valor: "financiamento", rotulo: "Financiamento: bem que estou pagando em dia" },
+      { valor: "divida", rotulo: "Dívida: preciso resolver" },
+    ] },
     { id: "prioridadePagamento", rotulo: "Prioridade de pagamento (opcional): 1 paga primeiro se faltar dinheiro pro mês", tipo: "numero", min: 1, step: 1 },
     { id: "emRisco", rotulo: "Em risco (renegociação incerta, credor pressionando, etc.)", tipo: "check" },
     { id: "negativada", rotulo: "Nome negativado (Serasa/SPC). Sem acordo ainda? Deixe a parcela em 0,00", tipo: "check" },
@@ -64,11 +69,11 @@ export default criarTelaCadastro({
 
   secoes(itens) {
     const d = separarDividas(itens.map((i) => ({ id: i.id, ...i.dados })), hojeISO());
-    const todas = new Set([...d.comAcordo, ...d.negativadas].map((x) => x.id));
+    const ids = (l) => l.map((x) => x.id);
     return [
-      { titulo: "Com acordo, andando", sub: `<span data-valor>${formatarBRL(d.totalComAcordoCentavos)}</span> devidos · <span data-valor>${formatarBRL(d.parcelasMesCentavos)}</span>/mês em parcelas`, ids: d.comAcordo.map((x) => x.id) },
-      { titulo: "Negativadas ou sem acordo", sub: `<span data-valor>${formatarBRL(d.totalNegativadasCentavos)}</span> que não quitam sozinhas: precisam de negociação`, ids: d.negativadas.map((x) => x.id) },
-      ...(itens.some((i) => !todas.has(i.id)) ? [{ titulo: "Quitadas", ids: itens.filter((i) => !todas.has(i.id)).map((i) => i.id) }] : []),
+      ...(d.problemas.length ? [{ titulo: "Dívidas pra resolver", sub: `<span data-valor>${formatarBRL(d.totalProblemasCentavos)}</span> atrasados, negativados ou sem acordo`, ids: ids(d.problemas) }] : []),
+      { titulo: "Financiamentos em dia", sub: d.financiamentos.length ? `<span data-valor>${formatarBRL(d.parcelasFinanciamentosCentavos)}</span> por mês, pagos certinho` : "", ids: ids(d.financiamentos) },
+      ...(d.quitadas.length ? [{ titulo: "Quitadas", ids: ids(d.quitadas) }] : []),
     ];
   },
 
@@ -76,17 +81,19 @@ export default criarTelaCadastro({
     const hoje = hojeISO();
     const dividasComId = itens.map((i) => ({ id: i.id, ...i.dados }));
     const v = calcularVisaoConsolidada(dividasComId, hoje);
+    const tudoEmDia = v.quantidadeProblemas === 0;
     return `
       <div class="divida-resumo">
-        <div class="titulo">Visão consolidada</div>
+        <div class="titulo">${tudoEmDia ? "Nome limpo, tudo em dia" : "O que precisa de atenção"}</div>
         <div class="resumo-mes" style="margin:0;">
-          <div class="resumo-item"><span>Saldo devido total</span><b class="mono valor-neg" data-valor>${formatarBRL(v.saldoTotalAtualCentavos)}</b></div>
-          <div class="resumo-item"><span>Comprometimento mensal</span><b class="mono" data-valor>${formatarBRL(v.comprometimentoMensalCentavos)}</b></div>
+          <div class="resumo-item"><span>Dívidas pra resolver</span><b class="mono${v.saldoProblemasCentavos > 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(v.saldoProblemasCentavos)}</b></div>
+          <div class="resumo-item"><span>Financiamentos por mês</span><b class="mono" data-valor>${formatarBRL(v.parcelasFinanciamentosCentavos)}</b></div>
           <div class="resumo-item"><span>Quitação estimada</span><b class="mono" data-valor>${v.dataQuitacaoTotal ? escapeHtml(formatarData(v.dataQuitacaoTotal)) : (v.quantidadeSemAcordo ? "sem previsão" : "-")}</b></div>
         </div>
         ${v.quantidadeNegativadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);font-weight:600;">${v.quantidadeNegativadas} ${v.quantidadeNegativadas === 1 ? "dívida negativada" : "dívidas negativadas"}, somando <span data-valor>${formatarBRL(v.saldoNegativadoCentavos)}</span>.${v.quantidadeSemAcordo ? ` ${v.quantidadeSemAcordo} sem acordo: não quitam sozinhas.` : ""}</div>` : ""}
         ${v.quantidadeSoAtrasadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);">${v.quantidadeSoAtrasadas} ${v.quantidadeSoAtrasadas === 1 ? "dívida atrasada" : "dívidas atrasadas"}${v.quantidadeNegativadas ? " (fora as negativadas)" : ""}.</div>` : ""}
         ${v.quantidadeEmRisco > 0 ? `<div class="tela-sub" style="margin-top:4px;">${v.quantidadeEmRisco} ${v.quantidadeEmRisco === 1 ? "dívida marcada" : "dívidas marcadas"} como em risco.</div>` : ""}
+        ${v.quantidadeFinanciamentos > 0 ? `<div class="tela-sub" style="margin-top:10px;">${v.quantidadeFinanciamentos} ${v.quantidadeFinanciamentos === 1 ? "financiamento em dia" : "financiamentos em dia"}: faltam <span data-valor>${formatarBRL(v.saldoFinanciamentosCentavos)}</span> em parcelas, o que é compromisso mensal e não dívida atrasada.</div>` : ""}
       </div>`;
   },
 
@@ -97,6 +104,17 @@ export default criarTelaCadastro({
     const restantes = parcelasRestantes(dados);
     const semAcordo = !(Number(dados.valorParcelaCentavos) > 0);
     const negativadaAtiva = dados.negativada && status !== "quitada";
+    const financiamento = classificarDivida(dados, hoje) === "financiamento";
+    if (financiamento) {
+      const quit = dataEstimadaQuitacao(dados);
+      return {
+        titulo: dados.nome,
+        sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}faltam ${restantes} de ${dados.quantidadeParcelas} parcelas${quit ? ` · quita em ${formatarData(quit)}` : ""}`,
+        valorDireita: `${formatarBRL(dados.valorParcelaCentavos)}/mês`,
+        tag: "em dia",
+        tagClasse: "ok",
+      };
+    }
     return {
       titulo: dados.nome,
       sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}${dados.prioridadePagamento != null ? ` · prioridade ${dados.prioridadePagamento}` : ""}`,
@@ -120,7 +138,7 @@ export default criarTelaCadastro({
         : `<div class="tela-sub" style="margin:0 0 4px;">Pago ${dados.parcelasPagas} de ${dados.quantidadeParcelas} parcelas (${Math.round(percentualPago)}%)</div>
       <div class="barra-limite"><span style="width:${percentualPago}%"></span></div>`}
       <div class="fatura-linha"><span class="rotulo">Saldo original</span><b data-valor>${formatarBRL(dados.saldoOriginalCentavos)}</b></div>
-      <div class="fatura-linha"><span class="rotulo">Saldo atual</span><b data-valor>${formatarBRL(saldoAtual)}</b></div>
+      <div class="fatura-linha"><span class="rotulo">${classificarDivida(dados, hojeISO()) === "financiamento" ? "Falta pagar em parcelas" : "Saldo atual"}</span><b${classificarDivida(dados, hojeISO()) === "financiamento" ? ' class="valor-neutro"' : ""} data-valor>${formatarBRL(saldoAtual)}</b></div>
       <div class="fatura-linha"><span class="rotulo">Parcela mensal</span><b data-valor>${formatarBRL(dados.valorParcelaCentavos)}</b></div>
       ${dados.taxaJurosMensalPct != null
         ? `<div class="fatura-linha"><span class="rotulo">Juros ao mês</span><b>${String(dados.taxaJurosMensalPct).replace(".", ",")}%</b></div>`

@@ -164,6 +164,9 @@ export function padraoDivida(dados = {}) {
     taxaJurosMensalPct: null,
     emRisco: false,
     negativada: false,
+    // "" = o app decide (parcelado em dia é financiamento; atrasado, negativado
+    // ou sem acordo é dívida). "financiamento" ou "divida" força um lado.
+    tipo: "",
     // Quando não dá pra pagar todas as parcelas no mês (Caminhos, §22):
     // 1 paga primeiro, número maior atrasa primeiro. null = não definida
     // — o motor protege pelo juro mais alto até o usuário decidir.

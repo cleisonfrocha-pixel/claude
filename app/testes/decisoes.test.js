@@ -163,7 +163,7 @@ test("detectarAchados: margem em queda vira risco; margem em alta não gera acha
 });
 
 test("detectarAchados: passivo aumentou vira risco de dívida aumentando", () => {
-  const relacaoPatrimonio = { passivoCaiu: false, ativoSubiu: false, patrimonioSubiu: false, variacaoPassivoCentavos: 50000, variacaoAtivoCentavos: 0, variacaoPatrimonioCentavos: -50000 };
+  const relacaoPatrimonio = { passivoCaiu: false, ativoSubiu: false, patrimonioSubiu: false, variacaoPassivoCentavos: 50000, variacaoDividasCentavos: 50000, variacaoAtivoCentavos: 0, variacaoPatrimonioCentavos: -50000 };
   const achados = detectarAchados({ ...BASE, relacaoPatrimonio });
   assert.ok(achados.find((a) => a.chave === "divida_aumentou"));
   assert.equal(achados.some((a) => a.chave === "patrimonio_evoluiu_positivo"), false);

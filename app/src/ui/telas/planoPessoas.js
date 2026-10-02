@@ -76,10 +76,11 @@ function cartaoPessoa(p) {
       ${linha("Parcelas de dívida", brl(n.parcelasCentavos))}
       ${linha("Resultado do mês", `<span class="${classeValor(n.resultadoMesCentavos)}">${brl(n.resultadoMesCentavos, { sinal: true })}</span>`, "renda menos gasto")}
       ${linha("Saldo em conta", brl(n.saldoOperacaoCentavos), n.saldoReservaCentavos ? `mais ${formatarBRL(n.saldoReservaCentavos)} em reserva` : "")}
-      ${linha("Dívidas", `<span class="${n.dividasSaldoCentavos > 0 ? "valor-neg" : ""}">${brl(n.dividasSaldoCentavos)}</span>`,
+      ${linha("Dívidas pra resolver", `<span class="${n.dividasSaldoCentavos > 0 ? "valor-neg" : ""}">${brl(n.dividasSaldoCentavos)}</span>`,
         [n.dividasAtivas ? `${n.dividasAtivas} ativa${n.dividasAtivas > 1 ? "s" : ""}` : "nenhuma",
           n.dividasAtrasadas ? `${n.dividasAtrasadas} atrasada${n.dividasAtrasadas > 1 ? "s" : ""}` : "",
           n.dividasNegativadas ? `${n.dividasNegativadas} negativada${n.dividasNegativadas > 1 ? "s" : ""}` : ""].filter(Boolean).join(" · "))}
+      ${n.financiamentosQuantidade ? linha("Financiamentos em dia", `<span class="valor-neutro">${brl(n.financiamentosParcelaCentavos)}/mês</span>`, `${n.financiamentosQuantidade} em andamento, faltam ${formatarBRL(n.financiamentosSaldoCentavos)} em parcelas`) : ""}
       ${linha("Patrimônio líquido", `<span class="${classeValor(n.patrimonioLiquidoCentavos)}">${brl(n.patrimonioLiquidoCentavos)}</span>`)}
       ${negativadas.length ? `
         <div class="pessoa-negativadas">

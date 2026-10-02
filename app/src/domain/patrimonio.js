@@ -32,11 +32,14 @@ export function calcularPatrimonioLiquido({ ativosCentavos, passivosCentavos }) 
 /** Monta o retrato (snapshot) de uma competência. É isto que fica
  * gravado — um retrato datado, não um saldo vivo (ver
  * dados/patrimonioRepo.js e a nota em MODELO-DE-DADOS.md). */
-export function montarSnapshot({ competencia, ativosCentavos, passivosCentavos, composicao }) {
+export function montarSnapshot({ competencia, ativosCentavos, passivosCentavos, composicao, passivosProblemasCentavos }) {
   return {
     competencia,
     ativosCentavos,
     passivosCentavos,
+    // Só o que é dívida de verdade (atrasada, negativada, sem acordo). Retratos
+    // antigos não têm este campo e por isso não entram na comparação.
+    ...(passivosProblemasCentavos != null ? { passivosProblemasCentavos } : {}),
     liquidoCentavos: calcularPatrimonioLiquido({ ativosCentavos, passivosCentavos }),
     composicao,
   };
@@ -63,6 +66,8 @@ export function calcularRelacaoDividaAtivoPatrimonio(snapshotAtual, snapshotAnte
     ativoSubiu: snapshotAtual.ativosCentavos > snapshotAnterior.ativosCentavos,
     patrimonioSubiu: snapshotAtual.liquidoCentavos > snapshotAnterior.liquidoCentavos,
     variacaoPassivoCentavos: snapshotAtual.passivosCentavos - snapshotAnterior.passivosCentavos,
+    variacaoDividasCentavos: snapshotAtual.passivosProblemasCentavos != null && snapshotAnterior.passivosProblemasCentavos != null
+      ? snapshotAtual.passivosProblemasCentavos - snapshotAnterior.passivosProblemasCentavos : null,
     variacaoAtivoCentavos: snapshotAtual.ativosCentavos - snapshotAnterior.ativosCentavos,
     variacaoPatrimonioCentavos: snapshotAtual.liquidoCentavos - snapshotAnterior.liquidoCentavos,
   };

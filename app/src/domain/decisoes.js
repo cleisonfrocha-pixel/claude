@@ -265,14 +265,15 @@ export function detectarAchados({
     }));
   }
 
-  // Risco: aumento de dívida total (§24) — reaproveita a relação
-  // dívida/ativo/patrimônio da Fase 9 (domain/patrimonio.js) inteira.
-  if (relacaoPatrimonio && relacaoPatrimonio.variacaoPassivoCentavos > 0) {
+  // Risco: aumento de dívida (§24). Só conta dívida de verdade (atrasada,
+  // negativada, sem acordo): financiamento em dia não é alarme, e retrato
+  // antigo sem esse recorte não serve de base de comparação.
+  if (relacaoPatrimonio && relacaoPatrimonio.variacaoDividasCentavos > 0) {
     achados.push(achado({
       chave: "divida_aumentou", origemId: "passivo_total", tipo: "risco", urgencia: "media",
-      titulo: "O total de dívidas aumentou em relação ao mês anterior",
+      titulo: "As dívidas atrasadas ou negativadas aumentaram em relação ao mês anterior",
       acaoSugerida: "Conferir se foi uma dívida nova ou uma reavaliação, e se isso está no plano.",
-      impactoCentavos: relacaoPatrimonio.variacaoPassivoCentavos,
+      impactoCentavos: relacaoPatrimonio.variacaoDividasCentavos,
       origem: { tipo: "patrimonio", id: "passivo_total", rotulo: "Patrimônio · passivos" },
     }));
   }
