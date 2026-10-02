@@ -68,9 +68,23 @@ export function calcularVisaoCartao({ cartao, transacoesDoCartao, faturasDoCarta
 
   const utilizadoCentavos = emAberto.reduce((s, f) => s + f.totalCentavos, 0);
   const limiteTotalCentavos = Number(cartao.limiteTotalCentavos) || 0;
-  const disponivelCentavos = limiteTotalCentavos - utilizadoCentavos;
+  // "Compras previstas" é plano, não compra feita: não gasta limite.
+  const previstoCentavos = (transacoesDoCartao || [])
+    .filter((t) => t.faturaId && t.tipo === "despesa" && t.status !== "cancelado" && PADRAO_PREVISTAS.test(t.descricao || ""))
+    .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
+  // Limite livre que a pessoa leu no app do banco, numa data: vale como ponto
+  // de partida, e só o que foi comprado DEPOIS dele o reduz.
+  const inf = cartao.limiteLivreInformado
+    || (cartao.limiteLivreCentavos != null && cartao.limiteLivreCentavos !== "" && cartao.limiteLivreEm ? { valorCentavos: cartao.limiteLivreCentavos, em: cartao.limiteLivreEm } : null);
+  let disponivelCentavos = limiteTotalCentavos - (utilizadoCentavos - previstoCentavos);
+  if (inf && Number(inf.valorCentavos) >= 0 && inf.em) {
+    const depois = (transacoesDoCartao || [])
+      .filter((t) => t.cartaoId === cartao.id && t.tipo === "despesa" && t.status !== "cancelado" && t.data > inf.em && !PADRAO_PREVISTAS.test(t.descricao || ""))
+      .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
+    disponivelCentavos = Number(inf.valorCentavos) - depois;
+  }
   const percentualUtilizado = limiteTotalCentavos > 0
-    ? Math.max(0, (utilizadoCentavos / limiteTotalCentavos) * 100)
+    ? Math.max(0, ((limiteTotalCentavos - disponivelCentavos) / limiteTotalCentavos) * 100)
     : 0;
 
   let nivelAlerta = "normal";
@@ -80,7 +94,7 @@ export function calcularVisaoCartao({ cartao, transacoesDoCartao, faturasDoCarta
   const [faturaAtual = null, proximaFatura = null, ...comprometimentoFuturo] = emAberto;
 
   return {
-    limiteTotalCentavos, utilizadoCentavos, disponivelCentavos, percentualUtilizado, nivelAlerta,
+    limiteTotalCentavos, utilizadoCentavos, disponivelCentavos, previstoCentavos, percentualUtilizado, nivelAlerta,
     faturaAtual, proximaFatura, comprometimentoFuturo,
   };
 }
@@ -92,6 +106,7 @@ export function calcularVisaoCartao({ cartao, transacoesDoCartao, faturasDoCarta
 // (CLAUDE.md: compra no cartão ≠ pagamento da fatura; nada de contar em dobro).
 // Em vez de adivinhar, o painel avisa e deixa cancelar o resumo com um toque.
 
+export const PADRAO_PREVISTAS = /^compras previstas/i;
 export const PADRAO_RESUMO_FATURA = /^compras (até o fechamento|previstas)/i;
 
 export function ehResumoDeFatura(t) {
@@ -110,4 +125,15 @@ export function faturasContadasEmDobro(transacoes) {
     if (ehResumoDeFatura(t)) { f.resumos.push(t.id); f.resumoCentavos += v; } else f.detalhadoCentavos += v;
   }
   return [...porFatura.values()].filter((f) => f.resumos.length && f.detalhadoCentavos > 0);
+}
+
+/** "Cabe no cartão?": a compra cabe no limite livre, e a fatura que ela gera
+ * (paga no dia habitual) cabe no saldo da conta que paga? Devolve o veredito
+ * com os números, para a tela mostrar antes de confirmar. */
+export function cabeNoCartao({ visao, valorCentavos, saldoContaPagadoraCentavos = null, faturaJaPrevistaCentavos = 0 }) {
+  const limiteDepois = visao.disponivelCentavos - valorCentavos;
+  const cabeNoLimite = limiteDepois >= 0;
+  let cabeNaFatura = null;
+  if (saldoContaPagadoraCentavos != null) cabeNaFatura = saldoContaPagadoraCentavos - faturaJaPrevistaCentavos - valorCentavos >= 0;
+  return { cabeNoLimite, limiteDepoisCentavos: limiteDepois, cabeNaFatura, ok: cabeNoLimite && cabeNaFatura !== false };
 }

@@ -36,6 +36,9 @@ export default criarTelaCadastro({
     { id: "limiteTotalCentavos", rotulo: "Limite total", tipo: "moeda" },
     { id: "diaFechamento", rotulo: "Dia de fechamento", tipo: "numero", min: 1, max: 31, obrigatorio: true },
     { id: "diaVencimento", rotulo: "Dia de vencimento", tipo: "numero", min: 1, max: 31, obrigatorio: true },
+    { id: "diaPagamentoHabitual", rotulo: "Dia em que você costuma pagar a fatura (opcional)", tipo: "numero", min: 1, max: 31 },
+    { id: "limiteLivreCentavos", rotulo: "Limite livre que o app do banco mostra hoje (opcional)", tipo: "moeda" },
+    { id: "limiteLivreEm", rotulo: "Dia em que você viu esse limite", tipo: "data" },
   ],
   async carregarContexto() {
     const [listaPessoas, listaContas, listaTransacoes, listaFaturas] = await Promise.all([

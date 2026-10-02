@@ -29,7 +29,7 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
     let confirmado = false;
     const opcoes = [
       ...contas.map((c) => ({ chave: `conta:${c.id}`, titulo: c.nome, sub: [c.pessoa, c.ehReserva ? "reserva" : ""].filter(Boolean).join(" · "), direita: formatarBRL(c.saldoCentavos), saldo: c.saldoCentavos })),
-      ...cartoes.map((c) => ({ chave: `cartao:${c.id}`, titulo: `Cartão ${c.apelido}`, sub: "o dinheiro só sai quando a fatura for paga", direita: `${formatarBRL(c.disponivelCentavos)} livres`, limite: c.disponivelCentavos })),
+      ...cartoes.map((c) => ({ chave: `cartao:${c.id}`, titulo: `Cartão ${c.apelido}`, sub: "o dinheiro só sai quando a fatura for paga", direita: `${formatarBRL(c.disponivelCentavos)} livres`, limite: c.disponivelCentavos, pagadora: c.contaPagadoraNome, saldoPagadora: c.saldoPagadoraCentavos, pagaEm: c.pagaEm })),
     ];
     modal.abrir(`
       <div class="modal folha-pagamento">
@@ -76,7 +76,7 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
         alvo.innerHTML = `${escapeHtml(o.titulo)}: <span class="mono" data-valor>${formatarBRL(o.saldo)}</span> → <b class="mono ${depois < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(depois)}</b>${depois < 0 ? " <span class='valor-neg'>(fica negativa)</span>" : ""}`;
       } else {
         const depois = o.limite - v;
-        alvo.innerHTML = `Limite livre: <span class="mono" data-valor>${formatarBRL(o.limite)}</span> → <b class="mono ${depois < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(depois)}</b>${depois < 0 ? " <span class='valor-neg'>(passa do limite)</span>" : ""}. A conta só é debitada quando você pagar a fatura.`;
+        alvo.innerHTML = `Limite livre: <span class="mono" data-valor>${formatarBRL(o.limite)}</span> → <b class="mono ${depois < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(depois)}</b>${depois < 0 ? " <span class='valor-neg'>(passa do limite)</span>" : ""}. ${o.pagadora && o.saldoPagadora != null ? `A fatura sai de ${escapeHtml(o.pagadora)}${o.pagaEm ? " por volta de " + escapeHtml(formatarData(o.pagaEm).slice(0, 5)) : ""} (saldo hoje <span class="mono" data-valor>${formatarBRL(o.saldoPagadora)}</span>${o.saldoPagadora - v < 0 ? ", <span class='valor-neg'>não cobre esta compra</span>" : ""}).` : "A conta só é debitada quando você pagar a fatura."}`;
       }
     }
     raiz.addEventListener("input", atualizar);

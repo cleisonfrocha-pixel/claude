@@ -152,6 +152,18 @@ export function dataVencimentoFatura(cartao, competenciaDaFatura) {
   return dataDeCompetencia(competenciaVencimentoFatura(cartao, competenciaDaFatura), cartao.diaVencimento);
 }
 
+/** Dia em que o dinheiro da fatura costuma SAIR da conta. Quem pedala paga logo
+ * depois de fechar, antes do vencimento: `diaPagamentoHabitual` no cartão (o dia
+ * do mês). Sem ele, ou se passar do vencimento, vale o vencimento. */
+export function dataPagamentoPrevisto(cartao, competenciaDaFatura) {
+  const venc = dataVencimentoFatura(cartao, competenciaDaFatura);
+  const dia = Number(cartao.diaPagamentoHabitual) || 0;
+  if (!dia) return venc;
+  const habitual = dataDeCompetencia(competenciaVencimentoFatura(cartao, competenciaDaFatura), dia);
+  const fechamento = dataDeCompetencia(competenciaDaFatura, cartao.diaFechamento);
+  return habitual > fechamento && habitual < venc ? habitual : venc;
+}
+
 /**
  * O status "de verdade" de uma transação agora — mesma ideia de
  * `statusDivida` (§11, domain/dividas.js), aplicada a lançamento comum:

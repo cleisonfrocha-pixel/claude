@@ -5,7 +5,7 @@
 // Duas perguntas, uma depois da outra: que dias têm compromisso (e quanto),
 // e — caminhando o saldo dia a dia — em que dia isso aperta de verdade.
 
-import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
+import { dataVencimentoFatura, dataPagamentoPrevisto, statusEfetivo } from "./transacoes.js";
 import { diasNoMes, dataDeCompetencia, somarDias } from "./tempo.js";
 
 /** Quando a verba pesa no caixa. Mês corrente: o que falta gastar já tem
@@ -94,8 +94,10 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     const total = totalPorFatura.get(f.id) || 0;
     if (total <= 0) continue;
     const vencimento = dataVencimentoFatura(cartao, f.competencia);
-    item(vencimento, -total, {
-      tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? vencimento < hoje : false, certeza: "confirmado",
+    const saida = dataPagamentoPrevisto(cartao, f.competencia);
+    item(saida, -total, {
+      vencimento,
+      tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? saida < hoje : false, certeza: "confirmado",
       faturaId: f.id, cartaoId: cartao.id, contaPagamentoId: cartao.contaPagamentoId || null, origem: { tipo: "fatura", id: f.id },
     });
   }

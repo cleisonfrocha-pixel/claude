@@ -8,6 +8,7 @@ import { contas } from "./repositorios.js";
 import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularVisaoCartao } from "../domain/cartoes.js";
 import { hojeISO } from "../domain/tempo.js";
+import { dataPagamentoPrevisto } from "../domain/transacoes.js";
 
 export async function opcoesDePagamento(hoje = hojeISO()) {
   const base = await carregarBase();
@@ -19,7 +20,12 @@ export async function opcoesDePagamento(hoje = hojeISO()) {
     })),
     cartoes: base.cartoes.filter((c) => c.status === "ativo").map((c) => {
       const v = calcularVisaoCartao({ cartao: c, transacoesDoCartao: base.transacoes, faturasDoCartao: base.faturas.filter((f) => f.cartaoId === c.id), hoje });
-      return { id: c.id, apelido: c.apelido, pessoaId: c.pessoaId, pessoa: pessoaNome(c.pessoaId), disponivelCentavos: v.disponivelCentavos, limiteCentavos: c.limiteTotalCentavos };
+      const pagadora = base.contas.find((x) => x.id === c.contaPagamentoId);
+      const aberta = base.faturas.filter((f) => f.cartaoId === c.id && f.status !== "paga").sort((a, b) => a.competencia.localeCompare(b.competencia))[0];
+      return {
+        contaPagadoraNome: pagadora?.nome || "", saldoPagadoraCentavos: pagadora ? calcularSaldoConta(pagadora, base.transacoes) : null,
+        pagaEm: aberta ? dataPagamentoPrevisto(c, aberta.competencia) : null,
+        id: c.id, apelido: c.apelido, pessoaId: c.pessoaId, pessoa: pessoaNome(c.pessoaId), disponivelCentavos: v.disponivelCentavos, limiteCentavos: c.limiteTotalCentavos };
     }),
     hoje,
   };

@@ -1577,3 +1577,10 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - `contasDoMes` (itens abertos de A pagar) passa a sair da mesma linha do tempo (`compromissosPorDia` + `eventosFuturos`) usada pelo Início e pelo Plano; verba do mês volta a ser um item só; conta sem conta de saída continua aparecendo.
 - Itens da linha do tempo carregam ids de origem (transação, conta, categoria, fatura, cartão).
 - Testes de invariantes: A pagar aberto == saídas da linha do tempo; parcela atrasada pesa uma vez com o vencimento original. 452 testes nos dois fusos.
+
+## Sprint 51 — cartão e pedalada
+- `diaPagamentoHabitual` no cartão: a fatura pesa no caixa no dia em que você costuma pagar (entre fechamento e vencimento); o vencimento real continua visível (`dataPagamentoPrevisto`).
+- Limite livre informado (valor + dia em que foi visto): só compras posteriores o reduzem. "Compras previstas" não gastam limite.
+- `cabeNoCartao` (limite + saldo da conta que paga). A folha Paguei mostra de qual conta a fatura sai, quando, e se o saldo cobre.
+- Campos novos na tela Cartões. 457 testes nos dois fusos.
+- Pendente do sprint: Shopee Carolina e Morelli no cartão serão cadastrados no Sprint 55 (dados).
