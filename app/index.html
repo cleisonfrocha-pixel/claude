@@ -15,15 +15,23 @@
 </script>
 <script>
 (function () {
-  // Rede de segurança para "o painel não abre": sem isso, qualquer erro
-  // antes do primeiro render (import de módulo que falha, exceção dentro
-  // de main.js, promise rejeitada) deixa a tela em branco sem pista
-  // nenhuma — nem para o usuário reportar, nem para depurar depois.
-  // window.mostrarErroFatal é chamado por main.js quando ele mesmo pega
-  // um erro durante a inicialização; os listeners abaixo cobrem o que
-  // escapa disso (ex.: um módulo que nem chega a executar).
+  // Rede de segurança para "o painel não abre". Dois momentos diferentes:
+  // ANTES de o painel aparecer, um erro deixa a tela em branco sem pista
+  // nenhuma, então mostramos a tela de erro com botão de tentar de novo.
+  // DEPOIS que o painel já está na tela, um erro solto (uma leitura que
+  // falhou, uma rede que oscilou) NÃO pode cobrir tudo de preto: vira só um
+  // aviso pequeno no rodapé, e o painel continua mexível.
   var mostrado = false;
+  function botao(texto, aoClicar, destaque) {
+    var b = document.createElement("button");
+    b.textContent = texto;
+    b.setAttribute("style", "min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #5b21b6;background:" + (destaque ? "#7c3aed" : "transparent") + ";color:#fff;font:600 15px -apple-system,BlinkMacSystemFont,sans-serif;margin-right:8px;cursor:pointer;");
+    b.addEventListener("click", aoClicar);
+    return b;
+  }
   window.mostrarErroFatal = function (mensagem, detalhe) {
+    var conteudo = document.getElementById("conteudo-principal");
+    if (window.__painelPronto || (conteudo && conteudo.children.length)) { window.mostrarAviso(mensagem, detalhe); return; }
     if (mostrado) return;
     mostrado = true;
     var raiz = document.createElement("div");
@@ -35,25 +43,42 @@
     corpo.textContent = mensagem || "Erro desconhecido durante a inicialização.";
     corpo.setAttribute("style", "margin-bottom:12px;");
     var sub = document.createElement("div");
-    sub.textContent = "Manda um print desta tela para eu corrigir.";
-    sub.setAttribute("style", "color:#b8b6ad;margin-bottom:12px;");
+    sub.textContent = "Toque em Tentar de novo. Se continuar, manda um print desta tela para eu corrigir.";
+    sub.setAttribute("style", "color:#b8b6ad;margin-bottom:16px;");
     raiz.appendChild(titulo);
     raiz.appendChild(corpo);
     raiz.appendChild(sub);
+    raiz.appendChild(botao("Tentar de novo", function () { location.reload(); }, true));
     if (detalhe) {
       var pre = document.createElement("pre");
       pre.textContent = String(detalhe);
-      pre.setAttribute("style", "white-space:pre-wrap;word-break:break-word;font-size:12px;color:#8a8780;background:#1f1e1b;padding:10px;border-radius:8px;");
+      pre.setAttribute("style", "white-space:pre-wrap;word-break:break-word;font-size:12px;color:#8a8780;background:#1f1e1b;padding:10px;border-radius:8px;margin-top:16px;");
       raiz.appendChild(pre);
     }
     document.body.appendChild(raiz);
+  };
+  window.mostrarAviso = function (mensagem, detalhe) {
+    try { console.error(mensagem, detalhe || ""); } catch (e) {}
+    var antigo = document.getElementById("aviso-erro");
+    if (antigo) antigo.remove();
+    var el = document.createElement("div");
+    el.id = "aviso-erro";
+    el.setAttribute("style", "position:fixed;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:70;background:#1f1e1b;color:#faf9f5;border:1px solid #5b21b6;border-radius:14px;padding:12px 14px;font:14px -apple-system,BlinkMacSystemFont,sans-serif;display:flex;gap:10px;align-items:center;justify-content:space-between;");
+    var t = document.createElement("span");
+    t.textContent = "Algo falhou ao atualizar. Seus dados estão salvos.";
+    el.appendChild(t);
+    var acoes = document.createElement("span");
+    acoes.appendChild(botao("Recarregar", function () { location.reload(); }, true));
+    acoes.appendChild(botao("Fechar", function () { el.remove(); }, false));
+    el.appendChild(acoes);
+    document.body.appendChild(el);
   };
   window.addEventListener("error", function (ev) {
     window.mostrarErroFatal("Erro ao carregar o painel: " + (ev.message || "erro sem descrição") + ".", ev.filename ? ev.filename + ":" + ev.lineno : "");
   });
   window.addEventListener("unhandledrejection", function (ev) {
     var razao = ev.reason;
-    window.mostrarErroFatal("Erro ao carregar o painel.", razao && razao.stack ? razao.stack : razao);
+    window.mostrarErroFatal("Erro ao carregar o painel.", razao && razao.stack ? razao.stack : (razao && razao.message) || razao);
   });
 })();
 </script>

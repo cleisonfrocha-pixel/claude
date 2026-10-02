@@ -32,8 +32,14 @@ export function assinarBase(calcular, cb) {
     if (cancelada || agendado) return;
     agendado = setTimeout(async () => {
       agendado = null;
-      const r = await calcular(await carregarBase());
-      if (!cancelada) cb(r);
+      try {
+        const r = await calcular(await carregarBase());
+        if (!cancelada) cb(r);
+      } catch (erro) {
+        // Uma leitura que falha (rede, limite) não pode derrubar a tela: a
+        // próxima mudança de dado recalcula.
+        console.error("Falha ao recalcular o painel:", erro);
+      }
     }, 0);
   }
   const paradas = [transacoes, ...Object.values(REPOS)].map((repo) => repo.assinar(agendar));

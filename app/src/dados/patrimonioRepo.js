@@ -22,6 +22,7 @@ import { calcularReserva } from "../domain/reserva.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
 
 const CAMINHO_SNAPSHOTS = "patrimonioSnapshots";
+let ultimoRetratoGravado = "";
 
 function comId(lista) {
   return lista.map((item) => ({ id: item.id, ...item.dados }));
@@ -42,13 +43,26 @@ export async function calcularPainelPatrimonio() {
   const passivosCentavos = visaoDividas.saldoTotalAtualCentavos;
   const liquidoCentavos = ativosCentavos - passivosCentavos;
 
-  let snapshotsOrdenados = [...dados.snapshots].sort((a, b) => a.competencia.localeCompare(b.competencia));
-  let snapshotAtual = snapshotsOrdenados.find((s) => s.competencia === competencia);
-  if (!snapshotAtual) {
-    snapshotAtual = montarSnapshot({ competencia, ativosCentavos, passivosCentavos, composicao });
-    await db.criar(CAMINHO_SNAPSHOTS, snapshotAtual);
-    snapshotsOrdenados = [...snapshotsOrdenados, snapshotAtual].sort((a, b) => a.competencia.localeCompare(b.competencia));
+  // Um retrato por mês (o id do documento é a própria competência), e o do
+  // mês corrente acompanha os números de hoje. Antes, cada leitura que não
+  // achava o retrato criava outro, e leituras simultâneas criavam cópias.
+  const porCompetencia = new Map();
+  for (const sn of dados.snapshots) {
+    const atual = porCompetencia.get(sn.competencia);
+    if (!atual || sn.id === sn.competencia) porCompetencia.set(sn.competencia, sn);
   }
+  const retratoDeHoje = montarSnapshot({ competencia, ativosCentavos, passivosCentavos, composicao });
+  const existente = porCompetencia.get(competencia);
+  const mudou = !existente || existente.ativosCentavos !== retratoDeHoje.ativosCentavos
+    || existente.passivosCentavos !== retratoDeHoje.passivosCentavos || existente.id !== competencia;
+  const chave = `${competencia}|${retratoDeHoje.ativosCentavos}|${retratoDeHoje.passivosCentavos}`;
+  if (mudou && chave !== ultimoRetratoGravado) {
+    ultimoRetratoGravado = chave; // leituras simultâneas não regravam o mesmo retrato
+    await db.definir(CAMINHO_SNAPSHOTS, competencia, retratoDeHoje);
+  }
+  porCompetencia.set(competencia, { ...retratoDeHoje, id: competencia });
+  const snapshotsOrdenados = [...porCompetencia.values()].sort((a, b) => a.competencia.localeCompare(b.competencia));
+  const snapshotAtual = porCompetencia.get(competencia);
 
   const indiceAtual = snapshotsOrdenados.findIndex((s) => s.competencia === competencia);
   const snapshotAnterior = snapshotsOrdenados.slice(0, indiceAtual).reverse()[0] || null;

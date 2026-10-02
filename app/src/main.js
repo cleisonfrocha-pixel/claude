@@ -32,6 +32,8 @@ async function iniciar() {
   if (badge) badge.hidden = db.modoAtual() !== "local";
 
   shell.inicializar(document.getElementById("conteudo-principal"));
+  // A partir daqui o painel está na tela: erros soltos viram aviso, não tela preta.
+  window.__painelPronto = true;
 }
 
 async function iniciarComRedeDeSeguranca() {

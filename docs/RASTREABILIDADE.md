@@ -1352,3 +1352,16 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Ajuste do Cleison: CryptoPag caiu no Nubank e Sociable no Next. Fonte de renda
   ganhou `contaId` ("Conta onde cai"): o "Recebi" lança na conta certa. Receita de
   outubro do CryptoPag movida para o Nubank.
+
+### Correção: tela preta ao abrir (02/10/2026)
+
+- Causa provável: a rede de segurança do `index.html` cobria TODA a tela com a
+  mensagem de erro em qualquer erro solto ou promessa rejeitada, mesmo com o
+  painel já aberto; e o painel fazia ~200 leituras do banco só para abrir
+  (cada tela relia as 13 coleções), o que num limite de requisições vira
+  rejeição solta. Agora: (1) depois de aberto, erro solto vira só um aviso
+  pequeno ("Recarregar"/"Fechar") e o painel continua mexível; antes de abrir,
+  a tela de erro tem o botão "Tentar de novo"; (2) cache de leitura em `db.js`
+  (leituras simultâneas viram uma, assinaturas mantêm o cache fresco): 196 → 10
+  leituras; (3) `assinarBase` não deixa falha de leitura escapar;
+  (4) retrato mensal do patrimônio com id fixo por mês (antes criava cópias).
