@@ -46,7 +46,7 @@ export async function darBaixaEvento(evento, { valorCentavos, hoje = hojeISO() }
   if (tipo === "fonteRenda") {
     const f = fontes.find((x) => x.id === id);
     if (!f) throw new Error("Fonte de renda não encontrada.");
-    const conta = contaPadrao(contas, f.pessoaId);
+    const conta = contas.find((c) => c.id === f.contaId && c.status === "ativa") || contaPadrao(contas, f.pessoaId);
     const cat = categorias.find((c) => c.natureza === "receita" && c.ativa !== false && c.id === f.categoriaId)
       || categorias.find((c) => c.natureza === "receita" && c.ativa !== false);
     if (!conta || !cat) throw new Error("Falta uma conta ativa ou uma categoria de receita.");

@@ -1349,3 +1349,6 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   (já estão dentro do saldo de 01/10, então não mexem no saldo) e deixam de ser
   contados de novo em "Vai entrar". "Pode gastar até" passou de R$ 6.432 para
   R$ 2.992 por causa disso e das faturas do Nubank.
+- Ajuste do Cleison: CryptoPag caiu no Nubank e Sociable no Next. Fonte de renda
+  ganhou `contaId` ("Conta onde cai"): o "Recebi" lança na conta certa. Receita de
+  outubro do CryptoPag movida para o Nubank.

@@ -179,6 +179,7 @@ export function padraoFonteRenda(dados = {}) {
     tipo: "fixa",
     valorEsperadoCentavos: 0,
     diaRecebimento: null, // dia do mês em que costuma cair (opcional)
+    contaId: null, // conta onde esta renda costuma cair (para "Recebi" cair na conta certa)
     fim: null, // "AAAA-MM" do último mês em que a fonte paga (ex.: contrato até dezembro); null = sem fim
     ativa: true,
     ...dados,

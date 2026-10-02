@@ -72,6 +72,7 @@ async function montarPainelRenda(dados) {
     visaoMes: visao,
     concentracao,
     fontes,
+    contas: (dados.contas || []).filter((c) => c.status === "ativa"),
     custos,
     margemCentavos,
     recorrenteVsExtraordinario: calcularRecorrenteVsExtraordinario(dados.transacoes, competencia, dados.recorrencias),
