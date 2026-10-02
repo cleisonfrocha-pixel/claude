@@ -63,7 +63,10 @@ function mesesComMovimento(transacoes, competencia, meses) {
     const c = somarMeses(competencia, -i);
     const renda = calcularRendaAtual(transacoes, c);
     const custos = calcularCustos(transacoes, [], c);
-    if (renda > 0 || custos.atualCentavos > 0) lista.push(c);
+    // Mês sem nenhuma renda lançada não é mês fechado: é mês que ficou
+    // pela metade (só gasto, ex.: fatura lançada em resumo). Usá-lo como
+    // "histórico" faz a simulação achar que a casa não ganha nada.
+    if (renda > 0) lista.push(c);
   }
   return lista;
 }

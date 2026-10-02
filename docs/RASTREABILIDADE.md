@@ -1509,3 +1509,24 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - `ferramentas/arquivos-para-publicar.js` + `docs/PUBLICACAO.md`: lista o que
   publicar (tudo ou só o que mudou) e confere a lista publicada contra o
   repositório, pra não repetir o arquivo esquecido de 02/10. 434 testes.
+
+### Sprint 47: reauditoria final — 02/10/2026
+
+- 15 telas, celular (390) e desktop (1280), com os dados reais: nenhum erro de
+  console nem de página. Conferido: Início, Dinheiro (A pagar/A receber,
+  Transações, Agenda, Renda, Recorrências, Contas, Cartões, Importar), Dívidas,
+  Plano (Visão geral, Por pessoa, Caminhos, Patrimônio & Metas, Perguntar).
+- Achado e corrigido na reauditoria: a aba Caminhos usava como "histórico" um
+  mês sem nenhuma renda lançada (setembro, só fatura em resumo) e concluía
+  "sobra por mês −R$ 5.854; Jeep fica sem pagar por 23 meses", contradizendo o
+  resto do painel. Mês sem renda lançada não é mês fechado: a base passou a
+  ser o mês corrente projetado, e "Seguir como está" agora mostra a mesma sobra
+  do Início e do Plano (+R$ 3.750). 435 testes.
+- Em aberto, de propósito (dependem do dono): teste real da IA (`sample`) no
+  claude.ai; investimentos, galpão e dívidas do Serasa (dados que ainda não
+  chegaram); custos do Gedi depois de dezembro (hoje contam como terminando);
+  extrato do Nubank pra trocar o lançamento resumido da fatura pelas compras;
+  campo de data em dd/mm/aaaa (limite do navegador).
+- Caminhos: o cenário "Conservador" (só renda garantida) ainda pode avisar que
+  o Jeep fica sem pagar: é um teste de estresse, não o caso base, mas vale
+  rever se deve vir marcado como "sugerido".

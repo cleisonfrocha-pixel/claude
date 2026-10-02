@@ -245,3 +245,17 @@ test("caixaCentavos parte do saldo em conta, não do livre (senão o mês 1 desc
   });
   assert.equal(b.caixaCentavos, 6000);
 });
+
+test("mês sem renda lançada não vira histórico: a base cai no mês corrente projetado", () => {
+  const transacoes = [
+    // setembro: só gasto (fatura em resumo), nenhuma renda lançada
+    { id: "a", tipo: "despesa", status: "pago", competencia: "2026-09", data: "2026-09-20", valorCentavos: 250000, categoriaId: "c" },
+    // outubro: renda esperada e gasto previsto
+    { id: "b", tipo: "receita", status: "previsto", competencia: "2026-10", data: "2026-10-05", valorCentavos: 1000000, certeza: "provavel" },
+    { id: "c", tipo: "despesa", status: "previsto", competencia: "2026-10", data: "2026-10-10", valorCentavos: 300000, categoriaId: "c" },
+  ];
+  const base = montarBaseCenarios({ transacoes, categorias: [{ id: "c", essencial: true, natureza: "despesa" }], dividas: [], fontesRenda: [], recorrencias: [], cartoes: [], ativos: [], clareza: null, competencia: "2026-10", hoje: "2026-10-02" });
+  assert.equal(base.semHistorico, true);
+  assert.equal(base.rendaMediaCentavos, 1000000);
+  assert.equal(base.custoAtualCentavos, 300000);
+});
