@@ -68,17 +68,8 @@ export function detectarAchados({
     }));
   }
 
-  // Oportunidade: mesmo no dia mais apertado sobra dinheiro (§4) — só
-  // aqui dá pra sugerir usar a sobra sem faltar pra conta do mês.
-  if (clareza && clareza.seguroParaGastarCentavos > 10000) {
-    achados.push(achado({
-      chave: "caixa_sobra_livre", origemId: "livre", tipo: "oportunidade", urgencia: "baixa",
-      titulo: "Sobra dinheiro mesmo no dia mais apertado do mês",
-      acaoSugerida: "Considerar reforçar a reserva ou adiantar uma parcela de dívida.",
-      impactoCentavos: clareza.seguroParaGastarCentavos,
-      origem: { tipo: "clareza_caixa", id: "livre", rotulo: "Início · Dinheiro seguro para gastar" },
-    }));
-  }
+  // (A "sobra mesmo no dia mais apertado" já é o número grande do Início:
+  // repetir como aviso só enche o Plano de ruído.)
 
   // Risco: saída de caixa crítica prevista no horizonte de 30 dias (§7).
   // Mesmo aperto que o achado acima já mostra (mesma trajetória de 30
@@ -152,7 +143,9 @@ export function detectarAchados({
     if (!c.visao || c.visao.nivelAlerta === "normal") continue;
     achados.push(achado({
       chave: "cartao_limite", origemId: c.cartaoId, tipo: "risco",
-      urgencia: c.visao.nivelAlerta === "critico" ? "alta" : "media",
+      // Cartão cheio pede cuidado, não alarme: só é urgente quando a fatura
+      // já está vencida (aí vira conta atrasada, que tem aviso próprio).
+      urgencia: "media",
       titulo: `Cartão ${c.apelido} está ${c.visao.nivelAlerta === "critico" ? "no limite" : "perto do limite"}`,
       acaoSugerida: "Evitar novas compras nesse cartão até liberar espaço.",
       impactoCentavos: c.visao.disponivelCentavos,

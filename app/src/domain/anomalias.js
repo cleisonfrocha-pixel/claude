@@ -20,7 +20,9 @@ import { somarMeses } from "./tempo.js";
  * ter sido cadastrado com atraso ou editada). */
 export function detectarNovaRecorrencia(recorrencias, competencia) {
   return (recorrencias || [])
-    .filter((r) => r.ativa && r.inicio === competencia)
+    // Compromisso que o próprio usuário cadastrou (à mão ou pelo chat) não é
+    // novidade pra ele: só avisa o que apareceu por importação ou detecção.
+    .filter((r) => r.ativa && r.inicio === competencia && r.origem && !["manual", "chat"].includes(r.origem))
     .map((r) => ({ recorrenciaId: r.id, descricao: r.descricao, tipo: r.tipo, valorEstimadoCentavos: r.valorEstimadoCentavos }));
 }
 

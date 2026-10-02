@@ -32,12 +32,25 @@ export function criarTelaComAbas(config) {
       <div id="conteudo-aba"></div>
     `;
     const nav = containerAtual.querySelector(".subabas");
-    nav.innerHTML = config.abas.map((a) => `
+    const ativaOculta = config.abas.find((a) => a.id === abaAtiva)?.oculta;
+    // Aba oculta (sem chip) tem um caminho de volta e, se pedido, um botão
+    // flutuante de atalho nas outras abas.
+    const voltar = ativaOculta ? `<button class="modulo-chip" data-aba="${escapeHtml(config.abas[0].id)}" role="tab">‹ ${escapeHtml(config.abas[0].rotulo)}</button>` : "";
+    nav.innerHTML = voltar + config.abas.filter((a) => !a.oculta).map((a) => `
       <button class="modulo-chip${a.id === abaAtiva ? " ativo" : ""}" data-aba="${escapeHtml(a.id)}" role="tab">${escapeHtml(a.rotulo)}</button>
     `).join("");
     nav.querySelectorAll("[data-aba]").forEach((btn) => {
       btn.addEventListener("click", () => selecionar(btn.dataset.aba));
     });
+    const flut = config.botaoFlutuante;
+    if (flut && abaAtiva !== flut.aba) {
+      const fab = document.createElement("button");
+      fab.className = "fab-atalho";
+      fab.type = "button";
+      fab.textContent = flut.rotulo;
+      fab.addEventListener("click", () => selecionar(flut.aba));
+      containerAtual.appendChild(fab);
+    }
     montarAbaAtiva();
   }
 

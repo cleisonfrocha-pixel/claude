@@ -1460,3 +1460,20 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - `testes/linguagem.test.js`: falha se qualquer tela mostrar margem, gap,
   discricionário, extraordinário, passivo, snapshot, comprometimento ou
   competência. 426 passando.
+
+### Sprint 44: menos ruído nos alertas — 02/10/2026
+
+- "Revisar" no Plano caiu de 24 pontos para os que pedem ação de verdade:
+  - "22 compromissos recorrentes novos": recorrência cadastrada pelo próprio
+    usuário (à mão ou pelo chat) não é novidade; só avisa o que apareceu por
+    importação ou detecção.
+  - "Sobra dinheiro mesmo no dia mais apertado" saiu: já é o número grande do
+    Início.
+  - Cartão no limite/perto do limite passou a urgência média (não "urgente").
+  - "Dívidas aumentaram" só conta dívida de verdade (Sprint 40).
+- Início ganhou "Contas de outubro" (progresso e atrasadas, com atalho pra dar
+  baixa) e o saldo previsto virou uma linha com explicação em vez de um
+  parágrafo.
+- Plano passou de 6 para 4 abas: Fechamento virou um card na Visão geral e
+  Perguntar virou botão flutuante.
+- Testes ajustados (anomalias, decisões, casal). 426 passando.

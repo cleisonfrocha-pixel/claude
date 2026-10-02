@@ -5,7 +5,8 @@ import { assinarBase } from "./base.js";
 import { calcularClarezaDeCaixa } from "../domain/caixa.js";
 import { confiancaDoNumero, proximosDias, completarRetrato } from "../domain/inicio.js";
 import { obterMetas } from "./orcamentoRepo.js";
-import { hojeISO } from "../domain/tempo.js";
+import { contasDoMes } from "../domain/contasDoMes.js";
+import { hojeISO, competenciaDeData } from "../domain/tempo.js";
 
 const HORIZONTE_DIAS = 30;
 
@@ -16,6 +17,11 @@ export function calcularInicio(base, hoje = hojeISO(), metas = null) {
     confianca: confiancaDoNumero(caixa.detalhes.entradas),
     proximos: proximosDias({ compromissos: caixa.detalhes.compromissos, entradas: caixa.detalhes.entradas, hoje, dias: 7 }),
     retrato: completarRetrato({ ...base, metas, hoje }),
+    contasMes: (() => {
+      const competencia = competenciaDeData(hoje);
+      const c = contasDoMes({ ...base, competencia, hoje });
+      return { competencia, resumo: c.resumo, atrasadas: c.grupos.atrasada.slice(0, 3) };
+    })(),
     horizonteDias: HORIZONTE_DIAS,
   };
 }

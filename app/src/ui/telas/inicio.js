@@ -9,7 +9,7 @@ import { pessoas, contas } from "../../dados/repositorios.js";
 import { assinarInicio } from "../../dados/inicioRepo.js";
 import { assinarPainelDecisoes } from "../../dados/decisoesRepo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
-import { formatarData } from "../../domain/tempo.js";
+import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { escapeHtml, ajudaHtml } from "../utilitarios.js";
 import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
@@ -59,6 +59,22 @@ function saudacao() {
   if (hora < 12) return "Bom dia";
   if (hora < 18) return "Boa tarde";
   return "Boa noite";
+}
+
+function blocoContasDoMes(c) {
+  if (!c || !c.resumo.quantidade) return "";
+  const r = c.resumo;
+  const tudo = r.faltaCentavos === 0;
+  return `
+    <section class="inicio-bloco">
+      <h3>Contas de ${escapeHtml(competenciaLabel(c.competencia).split(" ")[0].toLowerCase())}</h3>
+      <div class="mes-progresso-topo"><b>${r.quantidadePagas} de ${r.quantidade}</b> <span>pagas</span><span class="mes-progresso-pct">${r.percentualPago}%</span></div>
+      <div class="barra-limite ${r.quantidadeAtrasadas ? "critico" : ""}"><span style="width:${r.percentualPago}%"></span></div>
+      ${r.quantidadeAtrasadas
+        ? `<div class="mes-progresso-msg alerta">${r.quantidadeAtrasadas} ${r.quantidadeAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"} (<span data-valor>${formatarBRL(r.atrasadasCentavos)}</span>): ${escapeHtml(c.atrasadas.map((i) => i.descricao).join(", "))}${r.quantidadeAtrasadas > c.atrasadas.length ? "…" : ""}</div>`
+        : `<div class="mes-progresso-msg ${tudo ? "ok" : ""}">${tudo ? "Mês em dia: tudo pago." : `Nada atrasado. Faltam <span data-valor>${formatarBRL(r.faltaCentavos)}</span>.`}</div>`}
+      <button class="btn-link" data-ir-contas>Ver as contas e dar baixa</button>
+    </section>`;
 }
 
 function blocoPontoDeAtencao() {
@@ -114,7 +130,7 @@ function blocoRetrato(retrato) {
 
 function renderizar() {
   if (!container || !estadoInicio) return;
-  const { caixa, confianca, proximos, retrato, horizonteDias } = estadoInicio;
+  const { caixa, confianca, proximos, retrato, horizonteDias, contasMes } = estadoInicio;
   const { saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos, entradasPrevistasCentavos, seguroParaGastarCentavos, diaMaisApertado, horizonteAte } = caixa;
   const negativo = seguroParaGastarCentavos < 0;
   const explicacao = negativo
@@ -147,11 +163,12 @@ function renderizar() {
             <div class="home-metrica"><span>Vai entrar</span><b data-valor>+${formatarBRL(entradasPrevistasCentavos || 0)}</b></div>
             <div class="home-metrica"><span>Vai sair</span><b data-valor>−${formatarBRL(comprometidoCentavos)}</b></div>
           </div>
-          <div class="home-saldo-sub" style="margin-top:10px;">No fim dos ${horizonteDias} dias o saldo previsto é <b data-valor>${formatarBRL(saldoAtualCentavos + (entradasPrevistasCentavos || 0) - comprometidoCentavos)}</b> (em conta + vai entrar − vai sair). É outro número: este é o saldo final, o de cima é o pior momento do caminho.</div>
+          <div class="home-saldo-sub" style="margin-top:10px;">Saldo previsto em ${horizonteDias} dias: <b data-valor>${formatarBRL(saldoAtualCentavos + (entradasPrevistasCentavos || 0) - comprometidoCentavos)}</b> ${ajudaHtml("É o que sobra em conta no fim do período: em conta hoje, mais o que vai entrar, menos o que vai sair. O número de cima é o ponto mais baixo no caminho, por isso é menor.")}</div>
           ${saldoReservaCentavos !== 0 ? `
             <div class="home-reserva-inline"><span>Em reserva/segurança</span><b data-valor>${formatarBRL(saldoReservaCentavos)}</b></div>` : ""}
         </div>
         <button class="btn btn-primary inicio-lancar" data-lancar>${icone("adicionar", 18)} Lançar</button>
+        ${blocoContasDoMes(contasMes)}
         ${blocoPontoDeAtencao()}
       </div>
       <div class="inicio-lateral">
@@ -161,6 +178,7 @@ function renderizar() {
     </div>`;
 
   container.querySelector("[data-lancar]").addEventListener("click", () => irPara({ modulo: "dinheiro", aba: "transacoes", acao: "nova-transacao" }));
+  container.querySelectorAll("[data-ir-contas]").forEach((b) => b.addEventListener("click", () => irPara({ modulo: "dinheiro", aba: "apagar" })));
   container.querySelectorAll("[data-ir-plano]").forEach((b) => b.addEventListener("click", () => irPara("plano")));
   container.querySelectorAll("[data-ir-agenda]").forEach((b) => b.addEventListener("click", () => irPara("planejamento")));
   container.querySelectorAll("[data-retrato]").forEach((b) => b.addEventListener("click", () => irPara(retrato[Number(b.dataset.retrato)].destino)));

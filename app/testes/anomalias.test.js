@@ -9,10 +9,14 @@ import {
 
 test("detectarNovaRecorrencia: recorrência cujo início é o mês atual aparece", () => {
   const recorrencias = [
-    { id: "r1", descricao: "Streaming", inicio: "2026-03", ativa: true, valorEstimadoCentavos: 4000 },
-    { id: "r2", descricao: "Aluguel", inicio: "2025-01", ativa: true, valorEstimadoCentavos: 150000 },
+    { id: "r1", descricao: "Streaming", inicio: "2026-03", ativa: true, valorEstimadoCentavos: 4000, origem: "importacao" },
+    { id: "r2", descricao: "Aluguel", inicio: "2025-01", ativa: true, valorEstimadoCentavos: 150000, origem: "importacao" },
+    { id: "r3", descricao: "Cadastrada por mim", inicio: "2026-03", ativa: true, valorEstimadoCentavos: 1000, origem: "chat" },
+    { id: "r4", descricao: "À mão", inicio: "2026-03", ativa: true, valorEstimadoCentavos: 1000, origem: "manual" },
+    { id: "r5", descricao: "Antiga sem origem", inicio: "2026-03", ativa: true, valorEstimadoCentavos: 1000 },
   ];
   const r = detectarNovaRecorrencia(recorrencias, "2026-03");
+  // só o que apareceu sozinho (importação/detecção); o que o usuário cadastrou não é novidade
   assert.deepEqual(r.map((x) => x.recorrenciaId), ["r1"]);
 });
 

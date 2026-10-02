@@ -129,5 +129,5 @@ test("casal: só alerta o que é de verdade", () => {
   assert.deepEqual(fora.map((f) => E.categorias.find((c) => c.id === f.categoriaId).nome), ["Lazer"]);
   const achados = detectarAchados({ clareza, dividas: E.dividas, hoje: HOJE, foraDoPadrao: fora });
   const chaves = achados.map((a) => a.chave).sort();
-  assert.deepEqual(chaves, ["caixa_sobra_livre", "despesa_fora_padrao", "divida_negativada", "divida_negativada"]);
+  assert.deepEqual(chaves, ["despesa_fora_padrao", "divida_negativada", "divida_negativada"]);
 });

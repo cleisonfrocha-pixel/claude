@@ -27,12 +27,9 @@ test("detectarAchados: sem seguro negativo, nenhum problema de caixa aparece", (
   assert.equal(achados.some((a) => a.chave === "caixa_seguro_negativo"), false);
 });
 
-test("detectarAchados: sobra livre relevante vira oportunidade", () => {
+test("detectarAchados: sobra livre não vira aviso (já é o número grande do Início)", () => {
   const achados = detectarAchados({ clareza: { seguroParaGastarCentavos: 300000, livreCentavos: 300000 }, dividas: [], cartoesVisao: [], hoje: "2026-03-01" });
-  const a = achados.find((x) => x.chave === "caixa_sobra_livre");
-  assert.ok(a);
-  assert.equal(a.tipo, "oportunidade");
-  assert.equal(a.urgencia, "baixa");
+  assert.equal(achados.find((x) => x.chave === "caixa_sobra_livre"), undefined);
 });
 
 test("detectarAchados: dívida atrasada vira problema, apontando a dívida de origem", () => {
@@ -58,7 +55,7 @@ test("detectarAchados: dívida em risco (mas não atrasada) vira risco, sem dupl
   assert.equal(achados[0].chave, "divida_em_risco");
 });
 
-test("detectarAchados: cartão no limite vira risco de urgência alta; perto do limite, média", () => {
+test("detectarAchados: cartão no limite e perto do limite são risco de urgência média, não alarme", () => {
   const cartoesVisao = [
     { cartaoId: "c1", apelido: "Roxinho", visao: { nivelAlerta: "critico", disponivelCentavos: 1000, percentualUtilizado: 95 } },
     { cartaoId: "c2", apelido: "Azul", visao: { nivelAlerta: "atencao", disponivelCentavos: 20000, percentualUtilizado: 75 } },
@@ -67,7 +64,7 @@ test("detectarAchados: cartão no limite vira risco de urgência alta; perto do 
   const achados = detectarAchados({ clareza: { seguroParaGastarCentavos: 0, livreCentavos: 0 }, dividas: [], cartoesVisao, hoje: "2026-03-01" });
   const critico = achados.find((a) => a.origem.id === "c1");
   const atencao = achados.find((a) => a.origem.id === "c2");
-  assert.equal(critico.urgencia, "alta");
+  assert.equal(critico.urgencia, "media");
   assert.equal(atencao.urgencia, "media");
   assert.equal(achados.some((a) => a.origem.id === "c3"), false, "cartão normal não gera achado");
 });

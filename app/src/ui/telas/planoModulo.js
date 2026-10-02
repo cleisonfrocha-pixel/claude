@@ -13,12 +13,13 @@ import telaPatrimonioEMetas from "./patrimonioEMetas.js";
 export default criarTelaComAbas({
   titulo: "Plano",
   subtitulo: "Diagnóstico sem moralizar, quem cobre o quê na casa, e os caminhos possíveis daqui pra frente.",
+  botaoFlutuante: { rotulo: "Perguntar", aba: "perguntar" },
   abas: [
     { id: "geral", rotulo: "Visão geral", tela: telaVisaoGeral },
     { id: "pessoas", rotulo: "Por pessoa", tela: telaPorPessoa },
     { id: "caminhos", rotulo: "Caminhos", tela: telaCaminhos },
-    { id: "fechamento", rotulo: "Fechamento", tela: telaFechamento },
-    { id: "perguntar", rotulo: "Perguntar", tela: telaPerguntar },
+    { id: "fechamento", rotulo: "Fechamento", tela: telaFechamento, oculta: true },
+    { id: "perguntar", rotulo: "Perguntar", tela: telaPerguntar, oculta: true },
     { id: "patrimonio", rotulo: "Patrimônio & Metas", tela: telaPatrimonioEMetas },
   ],
 });

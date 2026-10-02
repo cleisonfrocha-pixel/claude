@@ -412,6 +412,12 @@ function renderizar() {
       </div>
     </div>
 
+    <button class="bloco-link" data-ir-fechamento>
+      <span class="titulo">Fechamento do mês</span>
+      <span class="resumo">Como o mês fechou: quanto entrou, quanto saiu e o que mudou</span>
+      <span class="seta">Abrir</span>
+    </button>
+
     ${recolhivel("prazo", "Os mesmos pontos, por prazo", "Agora, esta semana, este mês, 90 dias e 12 meses",
       ["agora", "estaSemana", "esteMes", "em90", "em12meses"].map((chave) => listaHorizonte(chave, painel.planoVivo[chave])).join(""))}
 
@@ -436,6 +442,7 @@ function renderizar() {
 }
 
 function ligarEventos() {
+  container.querySelector("[data-ir-fechamento]")?.addEventListener("click", () => navegar({ modulo: "plano", aba: "fechamento" }));
   container.querySelectorAll("[data-marco]").forEach((b) => {
     b.addEventListener("click", () => {
       const virada = geral.mapa.linhas.find((l) => l.competencia === geral.mapa.buraco?.mesDaVirada);
