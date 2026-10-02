@@ -32,7 +32,7 @@
 .wordmark-nome { display: flex; flex-direction: column; line-height: 1.2; }
 .wordmark-nome b { font-weight: 700; font-size: 18px; letter-spacing: -.01em; color: var(--text); }
 .wordmark-nome small { font-size: 13px; font-weight: 500; letter-spacing: .01em; color: var(--text-muted); }
-.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
 .modo-local-badge {
   font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;
   padding: 4px 10px; border-radius: 999px; background: var(--warn-bg); color: var(--warn);
@@ -715,3 +715,13 @@
 .plano-alavanca .btn-link { padding-top: 2px; text-align: left; align-self: flex-start; }
 .achado-grupo .achado-card { margin-top: 10px; }
 @media (max-width: 480px) { .plano-futuro b { font-size: 15px; } }
+
+/* Fase 15: busca, filtros e atividade. */
+.filtros-barra { display: flex; gap: 8px; margin-bottom: 10px; }
+.filtros-barra input[type=search] { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; min-height: 44px; }
+.filtros-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.filtros-campos select, .filtros-campos input { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 9px 10px; background: var(--surface); color: var(--text); font: inherit; min-height: 44px; }
+.busca-resultado { display: flex; justify-content: space-between; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--border); padding: 10px 0; color: var(--text); font: inherit; cursor: pointer; min-height: 44px; }
+.busca-grupo { margin: 14px 0 4px; font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+.btn-busca { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.dados-texto { width: 100%; min-height: 160px; font-family: var(--font-mono, monospace); font-size: 12px; background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px; }

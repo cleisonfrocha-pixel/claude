@@ -20,6 +20,7 @@ import { pessoas, contas, cartoes, categorias, fontesRenda } from "../../dados/r
 import { faturas } from "../../dados/faturasRepo.js";
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
 import { consumirAcao } from "../navegacao.js";
+import { filtrarTransacoes, haFiltroAtivo } from "../../domain/busca.js";
 import { darBaixaTransacao } from "../../dados/baixaRepo.js";
 
 const ROTULO_STATUS = { previsto: "Previsto", agendado: "Agendado", pago: "Pago", atrasado: "Atrasado", cancelado: "Cancelado" };
@@ -31,6 +32,8 @@ let lista = [];
 let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [], faturas: [], fontesRenda: [] };
 let pararAssinatura = null;
 let container = null;
+let filtros = {};
+let filtrosAbertos = false;
 
 export default {
   async montar(alvo) {
@@ -67,8 +70,13 @@ function opcoes(lista2, valorFn, rotuloFn) {
 
 function renderizar() {
   if (!container) return;
-  const doMes = lista.filter((t) => t.dados.competencia === mes);
-  const totais = totalizarMes(lista.map((t) => t.dados), mes);
+  const filtrando = haFiltroAtivo(filtros);
+  const doMes = filtrando
+    ? lista.filter((t) => filtrarTransacoes([t.dados], filtros).length)
+    : lista.filter((t) => t.dados.competencia === mes);
+  const totais = filtrando
+    ? totalizarMes(doMes.map((t) => ({ ...t.dados, competencia: "x" })), "x")
+    : totalizarMes(lista.map((t) => t.dados), mes);
 
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
@@ -79,7 +87,9 @@ function renderizar() {
       <button class="btn btn-primary" id="btn-nova-transacao">+ Nova transação</button>
     </div>
 
-    <div class="mes-nav">
+    ${barraDeFiltros(filtrando, doMes.length)}
+
+    <div class="mes-nav"${filtrando ? ' hidden' : ""}>
       <button class="icon-btn" id="mes-prev" aria-label="Mês anterior">‹</button>
       <div class="mes-nav-label">${escapeHtml(tempo.competenciaLabel(mes))}</div>
       <button class="icon-btn" id="mes-next" aria-label="Próximo mês">›</button>
@@ -98,19 +108,57 @@ function renderizar() {
   renderizarLista(doMes);
 
   container.querySelector("#btn-nova-transacao").addEventListener("click", abrirModalNovaTransacao);
+  ligarFiltros();
   container.querySelector("#mes-prev").addEventListener("click", () => { mes = tempo.somarMeses(mes, -1); renderizar(); });
   container.querySelector("#mes-next").addEventListener("click", () => { mes = tempo.somarMeses(mes, 1); renderizar(); });
   const btnHoje = container.querySelector("#mes-hoje");
   if (btnHoje) btnHoje.addEventListener("click", () => { mes = tempo.competenciaAtual(); renderizar(); });
 }
 
+function barraDeFiltros(filtrando, quantidade) {
+  const sel = (id, rotulo, itens, valor) => `<select data-filtro="${id}" aria-label="${rotulo}"><option value="">${rotulo}</option>${itens.map((i) => `<option value="${escapeHtml(i.valor)}"${i.valor === valor ? " selected" : ""}>${escapeHtml(i.rotulo)}</option>`).join("")}</select>`;
+  return `
+    <div class="filtros-barra">
+      <input type="search" data-filtro="texto" placeholder="Buscar por descrição, valor ou data" value="${escapeHtml(filtros.texto || "")}" aria-label="Buscar">
+      <button class="btn btn-ghost btn-sm" id="filtros-toggle" aria-expanded="${filtrosAbertos}">Filtros${filtrando ? " ●" : ""}</button>
+    </div>
+    <div class="filtros-campos"${filtrosAbertos ? "" : " hidden"}>
+      ${sel("pessoaId", "Pessoa", opcoes(contexto.pessoas, (p) => p.id, (p) => p.dados.nome), filtros.pessoaId)}
+      ${sel("contaId", "Conta", opcoes(contexto.contas, (c) => c.id, (c) => c.dados.nome), filtros.contaId)}
+      ${sel("cartaoId", "Cartão", opcoes(contexto.cartoes, (c) => c.id, (c) => c.dados.apelido), filtros.cartaoId)}
+      ${sel("categoriaId", "Categoria", opcoes(contexto.categorias, (c) => c.id, (c) => c.dados.nome), filtros.categoriaId)}
+      ${sel("status", "Situação", [["pago", "Pago"], ["previsto", "Previsto"], ["atrasado", "Atrasado"], ["agendado", "Agendado"]].map(([valor, rotulo]) => ({ valor, rotulo })), filtros.status)}
+      <label class="field"><span class="tela-sub" style="margin:0;">De</span><input type="date" data-filtro="de" value="${escapeHtml(filtros.de || "")}"></label>
+      <label class="field"><span class="tela-sub" style="margin:0;">Até</span><input type="date" data-filtro="ate" value="${escapeHtml(filtros.ate || "")}"></label>
+    </div>
+    ${filtrando ? `<div class="nota-incerto" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;"><span>${quantidade} lançamento${quantidade === 1 ? "" : "s"} em todo o histórico, não só neste mês.</span><button class="btn-mini" id="filtros-limpar">Limpar filtros</button></div>` : ""}`;
+}
+
+function ligarFiltros() {
+  container.querySelector("#filtros-toggle")?.addEventListener("click", () => { filtrosAbertos = !filtrosAbertos; renderizar(); });
+  container.querySelector("#filtros-limpar")?.addEventListener("click", () => { filtros = {}; renderizar(); });
+  container.querySelectorAll("[data-filtro]").forEach((el) => {
+    const evento = el.dataset.filtro === "texto" ? "input" : "change";
+    el.addEventListener(evento, () => {
+      filtros = { ...filtros, [el.dataset.filtro]: el.value };
+      const posicao = el.selectionStart;
+      renderizar();
+      if (el.dataset.filtro === "texto") {
+        const novo = container.querySelector('[data-filtro="texto"]');
+        novo.focus();
+        try { novo.setSelectionRange(posicao, posicao); } catch (e) { /* tipo search não aceita em alguns navegadores */ }
+      }
+    });
+  });
+}
+
 function renderizarLista(doMes) {
   const alvo = container.querySelector("#lista-transacoes");
   if (!alvo) return;
   if (!doMes.length) {
-    alvo.innerHTML = `<div class="vazio">Nenhuma transação em ${escapeHtml(tempo.competenciaLabel(mes))}.
+    alvo.innerHTML = haFiltroAtivo(filtros) ? `<div class="vazio">Nada encontrado com esses filtros.</div>` : `<div class="vazio">Nenhuma transação em ${escapeHtml(tempo.competenciaLabel(mes))}.
       <div><button class="btn btn-primary" id="vazio-nova">+ Nova transação</button></div></div>`;
-    alvo.querySelector("#vazio-nova").addEventListener("click", abrirModalNovaTransacao);
+    alvo.querySelector("#vazio-nova")?.addEventListener("click", abrirModalNovaTransacao);
     return;
   }
   const ordenada = doMes.slice().sort((a, b) => (b.dados.data || "").localeCompare(a.dados.data || ""));

@@ -32,6 +32,8 @@ import telaRenda from "./telas/renda.js";
 import telaPatrimonio from "./telas/patrimonio.js";
 import telaObjetivos from "./telas/objetivos.js";
 import telaImportar from "./telas/importar.js";
+import telaDados from "./telas/dadosEAtividade.js";
+import { ligarBuscaGlobal } from "./buscaGlobal.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
@@ -53,6 +55,7 @@ const telaConfiguracoes = criarTelaComAbas({
     { id: "pessoas", rotulo: "Pessoas", tela: telaPessoas },
     { id: "categorias", rotulo: "Categorias", tela: telaCategorias },
     { id: "preferencias", rotulo: "Preferências", tela: telaPreferencias },
+    { id: "dados", rotulo: "Dados", tela: telaDados },
   ],
 });
 
@@ -91,6 +94,7 @@ export function inicializar(container) {
     selecionarModulo(modulo, true);
   });
   renderizarNavegacao();
+  ligarBuscaGlobal();
   montarModulo(moduloAtivo);
   const scroller = document.querySelector(".modulos-nav");
   if (scroller) {

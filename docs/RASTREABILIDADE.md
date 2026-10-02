@@ -1310,3 +1310,16 @@ esperar os dados reais.
 - `domain/fechamento.js` (puro), `dados/fechamentoRepo.js`, `ui/telas/fechamento.js`.
   Mês sem dado anterior não inventa variação. 3 testes novos (395 no total).
 - Fase 14 completa (cenários na Sprint 19-21, fechamento agora).
+
+### Fase 15 — Qualidade de vida (§27) — ✅ parcial (02/10/2026)
+
+- Busca global (lupa no topo): transações, dívidas, recorrências, fontes de renda,
+  bens, cartões e contas; leva à tela certa (`domain/busca.js`, `ui/buscaGlobal.js`).
+- Transações: busca por descrição, valor ou data e filtros por pessoa, conta,
+  cartão, categoria, situação e período; com filtro, procura em todo o histórico.
+- Configurações › Dados: exportação completa (JSON, 14 coleções) e dos lançamentos
+  (CSV para planilha), com Copiar e Baixar; atividade recente derivada de
+  `criadoEm/atualizadoEm` (nada gravado a mais).
+- Ainda aberto: comprovantes anexados (depende de a capability de arquivos do
+  artefato) e histórico detalhado campo a campo.
+- 5 testes novos (400 no total).
