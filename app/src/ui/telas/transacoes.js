@@ -22,6 +22,8 @@ import { faturas } from "../../dados/faturasRepo.js";
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
 import { consumirAcao } from "../navegacao.js";
 import { filtrarTransacoes, haFiltroAtivo } from "../../domain/busca.js";
+import { baixarComPergunta } from "../baixaUI.js";
+import { perguntarSeQuita } from "../conciliarAoLancar.js";
 import { darBaixaTransacao } from "../../dados/baixaRepo.js";
 
 const ROTULO_STATUS = { previsto: "Previsto", agendado: "Agendado", pago: "Pago", atrasado: "Atrasado", cancelado: "Cancelado" };
@@ -189,14 +191,14 @@ function renderizarLista(doMes) {
   });
   alvo.querySelectorAll("[data-baixa]").forEach((btn) => {
     btn.addEventListener("click", async () => {
+      const item = doMes.find((t) => t.id === btn.getAttribute("data-baixa"));
+      if (!item) return;
       btn.disabled = true;
-      try {
-        await darBaixaTransacao(btn.getAttribute("data-baixa"));
-        mostrarToast("Pronto, registrado como pago.");
-      } catch (e) {
-        btn.disabled = false;
-        mostrarToast(e.message || "Não consegui dar baixa.");
-      }
+      await baixarComPergunta(
+        { tipo: "transacao", transacaoId: item.id, descricao: item.dados.descricao || "Lançamento", valorCentavos: item.dados.valorCentavos, contaSugeridaId: item.dados.contaId || null, origem: item.dados.dividaId ? { tipo: "divida" } : null },
+        item.dados.tipo === "receita" ? "receita" : "despesa",
+      );
+      btn.disabled = false;
     });
   });
   alvo.querySelectorAll("[data-revisar]").forEach((btn) => {
@@ -671,7 +673,7 @@ async function onSubmitTransacao(ev) {
     if (modo === "simples") {
       const tipo = document.querySelector('input[name="s-tipo"]:checked').value;
       const onde = document.getElementById("s-onde") ? document.getElementById("s-onde").value : "conta";
-      await criarSimples({
+      const lancamento = {
         tipo,
         valorCentavos: paraCentavos(document.getElementById("s-valor").value),
         data: document.getElementById("s-data").value,
@@ -683,7 +685,17 @@ async function onSubmitTransacao(ev) {
         descricao: document.getElementById("s-descricao").value.trim(),
         status: document.getElementById("s-status").value,
         certeza: document.getElementById("s-certeza").value,
-      });
+      };
+      // Se isso paga uma conta que já está na lista, dá baixa nela em vez de duplicar.
+      const quita = await perguntarSeQuita(lancamento);
+      if (quita === null) return;
+      if (quita !== "novo") {
+        await darBaixaTransacao(quita, { valorCentavos: lancamento.valorCentavos, contaId: lancamento.contaId, dataPagamento: lancamento.data });
+        mostrarToast("Conta paga: foi dada baixa na que já estava na lista.");
+        fecharModal();
+        return;
+      }
+      await criarSimples({ ...lancamento, pagoEm: lancamento.status === "pago" ? lancamento.data : null });
       mostrarToast("Transação lançada.");
     } else if (modo === "transferencia") {
       await criarTransferencia({
@@ -741,6 +753,7 @@ async function onSubmitTransacao(ev) {
     // de novo agora que pessoas/contas/cartões/faturas estão atualizados.
   } catch (erro) {
     const msg = erro instanceof ErroDeValidacao ? erro.erros.join(" ") : "Não foi possível salvar. Tente novamente.";
-    erroEl.innerHTML = `<div class="erro-form">${escapeHtml(msg)}</div>`;
+    if (erroEl.isConnected) erroEl.innerHTML = `<div class="erro-form">${escapeHtml(msg)}</div>`;
+    else mostrarToast(msg);
   }
 }

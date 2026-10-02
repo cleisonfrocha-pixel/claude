@@ -4,10 +4,10 @@
 // leitura (domain/contasDoMes.js), nunca gravado.
 
 import * as tempo from "../../domain/tempo.js";
-import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
+import { formatarBRL } from "../../domain/dinheiro.js";
 import { assinarContasDoMes } from "../../dados/contasRepo.js";
-import { darBaixaTransacao, darBaixaEvento, darBaixaFatura, desfazerBaixa } from "../../dados/baixaRepo.js";
-import { escapeHtml, mostrarToast } from "../utilitarios.js";
+import { baixarComPergunta } from "../baixaUI.js";
+import { escapeHtml } from "../utilitarios.js";
 import { navegar } from "../navegacao.js";
 import * as modal from "../modal.js";
 
@@ -195,50 +195,23 @@ function renderizar() {
   container.querySelector("#mes-next").addEventListener("click", () => trocarMes(tempo.somarMeses(mesVisivel, 1)));
 }
 
-async function pagar(item, botao, valorCentavos) {
+async function pagar(item, botao) {
   if (botao) botao.disabled = true;
-  try {
-    let desfazer;
-    if (item.tipo === "transacao") desfazer = await darBaixaTransacao(item.transacaoId, { valorCentavos });
-    else if (item.tipo === "evento") desfazer = await darBaixaEvento(item.evento, { valorCentavos });
-    else if (item.tipo === "fatura") desfazer = await darBaixaFatura({ faturaId: item.faturaId, cartaoId: item.cartaoId, valorCentavos: valorCentavos || item.valorCentavos, descricao: item.descricao });
-    mostrarToast(TEXTOS[lado].pronto(item.descricao), { acao: { rotulo: "Desfazer", fn: async () => {
-      try { await desfazerBaixa(desfazer); mostrarToast("Desfeito."); } catch (e) { mostrarToast(e.message || "Não consegui desfazer."); }
-    } } });
-  } catch (e) {
-    if (botao) botao.disabled = false;
-    mostrarToast(e.message || "Não consegui dar baixa.");
-  }
+  await baixarComPergunta(item, lado === "receber" ? "receita" : "despesa");
+  if (botao) botao.disabled = false;
 }
 
 function abrirMais(item) {
-  const podeOutroValor = item.estado !== "paga";
   modal.abrir(`
     <div class="modal">
       <h2>${escapeHtml(item.descricao)}</h2>
       <p class="tela-sub" style="margin-bottom:14px;"><span data-valor>${formatarBRL(item.valorCentavos)}</span> · ${escapeHtml(quando(item, painel.hoje))}</p>
-      ${podeOutroValor ? `
-        <div class="field"><label for="outro-valor">${lado === "receber" ? "Recebi outro valor" : "Paguei outro valor"}</label>
-          <input type="text" inputmode="decimal" id="outro-valor" placeholder="${formatarBRL(item.valorCentavos).replace("R$ ", "")}"></div>
-        <div class="erro-form" id="outro-erro" hidden></div>` : ""}
       <div class="modal-actions" style="flex-wrap:wrap;">
         <button class="btn btn-ghost" data-m="origem">Abrir o cadastro</button>
-        ${podeOutroValor ? `<button class="btn btn-primary" data-m="pagar">${lado === "receber" ? "Receber esse valor" : "Pagar esse valor"}</button>` : ""}
         <button class="btn btn-ghost" data-m="fechar">Fechar</button>
       </div>
     </div>`);
   const raiz = document.getElementById("overlay-modal");
   raiz.querySelector('[data-m="fechar"]').addEventListener("click", () => modal.fechar());
   raiz.querySelector('[data-m="origem"]').addEventListener("click", () => { modal.fechar(); navegar(DESTINO_ORIGEM[item.origem?.tipo] || DESTINO_ORIGEM.transacao); });
-  raiz.querySelector('[data-m="pagar"]')?.addEventListener("click", () => {
-    const valor = paraCentavos(raiz.querySelector("#outro-valor").value);
-    if (!Number.isFinite(valor) || valor <= 0) {
-      const erro = raiz.querySelector("#outro-erro");
-      erro.textContent = "Informe um valor maior que zero.";
-      erro.hidden = false;
-      return;
-    }
-    modal.fechar();
-    pagar(item, null, valor);
-  });
 }

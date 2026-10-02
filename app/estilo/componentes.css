@@ -844,3 +844,14 @@
   .icon-btn { min-width: 44px; min-height: 44px; }
 }
 .inicio-venc { display: block; font-size: 11.5px; color: var(--danger); font-weight: 600; margin-top: 2px; }
+
+/* ---- folha de pagamento (Paguei / Recebi) ---- */
+.folha-pagamento .fp-opcoes { display: grid; gap: 8px; margin-top: 6px; }
+.fp-opcao { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; min-height: 56px; }
+.fp-opcao:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--surface-2); }
+.fp-opcao input { accent-color: var(--accent); width: 20px; height: 20px; flex: 0 0 auto; }
+.fp-opcao-corpo { flex: 1; min-width: 0; display: grid; }
+.fp-opcao-corpo small { color: var(--text-muted); font-size: 12px; }
+.fp-opcao-valor { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.fp-depois { margin: 4px 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+.fp-depois:empty { display: none; }

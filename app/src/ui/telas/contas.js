@@ -1,7 +1,13 @@
 import { criarTelaCadastro } from "./telaCadastro.js";
 import { contas, pessoas } from "../../dados/repositorios.js";
 import { TIPOS_CONTA } from "../../domain/esquema.js";
-import { formatarBRL } from "../../domain/dinheiro.js";
+import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
+import { calcularSaldoConta } from "../../domain/caixa.js";
+import { transacoes } from "../../dados/transacoesRepo.js";
+import { conferirSaldo } from "../../dados/pagamentoRepo.js";
+import { formatarData } from "../../domain/tempo.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
+import * as modal from "../modal.js";
 
 const ROTULO_TIPO = {
   corrente: "Conta corrente", poupanca: "Poupança", investimento: "Investimento",
@@ -16,8 +22,8 @@ export default criarTelaCadastro({
   singular: "Conta",
   generoFeminino: true,
   async carregarContexto() {
-    const lista = await pessoas.listar();
-    return { pessoas: lista.map((p) => ({ valor: p.id, rotulo: p.dados.nome })) };
+    const [lista, trans] = await Promise.all([pessoas.listar(), transacoes.listar()]);
+    return { pessoas: lista.map((p) => ({ valor: p.id, rotulo: p.dados.nome })), transacoes: trans.map((t) => t.dados) };
   },
   campos: [
     { id: "nome", rotulo: "Nome da conta", tipo: "texto", obrigatorio: true, placeholder: "Ex.: Conta principal" },
@@ -29,14 +35,57 @@ export default criarTelaCadastro({
     { id: "ehReserva", rotulo: "É dinheiro de reserva/segurança", tipo: "check" },
     { id: "status", rotulo: "Encerrada", tipo: "check", valorMarcado: "encerrada", valorDesmarcado: "ativa", padrao: "ativa" },
   ],
-  exibir(dados, contexto) {
+  exibir(dados, contexto, id) {
     const pessoa = (contexto.pessoas || []).find((p) => p.valor === dados.pessoaId);
+    const saldo = calcularSaldoConta({ id, ...dados }, contexto.transacoes || []);
     return {
       titulo: dados.nome,
-      sub: `${dados.instituicao ? dados.instituicao + " · " : ""}${ROTULO_TIPO[dados.tipo] || dados.tipo}${pessoa ? " · " + pessoa.rotulo : ""}`,
-      valorDireita: formatarBRL(dados.saldoInicialCentavos),
+      sub: `${dados.instituicao ? dados.instituicao + " · " : ""}${ROTULO_TIPO[dados.tipo] || dados.tipo}${pessoa ? " · " + pessoa.rotulo : ""} · ${dados.saldoConferidoEm ? "conferido" : "saldo de"} ${formatarData(dados.dataSaldoInicial).slice(0, 5)}`,
+      valorDireita: formatarBRL(saldo),
       tag: dados.status === "ativa" ? null : "encerrada",
       tagInativa: dados.status !== "ativa",
     };
+  },
+
+  rotuloDetalhes: "Conferir",
+  renderExtra(dados, id, contexto) {
+    const saldo = calcularSaldoConta({ id, ...dados }, contexto.transacoes || []);
+    const hist = (dados.conferencias || []).slice(-5).reverse();
+    return `
+      <div class="tela-sub" style="margin:0 0 10px;">O saldo é calculado a partir da última conferência e de tudo que você pagou ou recebeu por esta conta depois dela. Confira de vez em quando com o app do banco.</div>
+      <div class="fatura-linha"><span class="rotulo">Saldo agora no painel</span><b data-valor>${formatarBRL(saldo)}</b></div>
+      <button class="btn btn-primary" data-conferir style="margin:10px 0;">Conferir saldo</button>
+      ${hist.length ? `<div class="tela-sub" style="margin:8px 0 4px;">Últimas conferências</div>${hist.map((h) => `
+        <div class="fatura-linha"><span class="rotulo">${escapeHtml(formatarData(h.data))}<small>painel calculava ${formatarBRL(h.calculadoCentavos)}</small></span><b data-valor>${formatarBRL(h.informadoCentavos)}${h.diferencaCentavos ? ` <span style="font-weight:400;font-size:13px;">(${h.diferencaCentavos > 0 ? "+" : ""}${formatarBRL(h.diferencaCentavos)})</span>` : ""}</b></div>`).join("")}` : ""}`;
+  },
+  aoRenderizarExtra(dados, id, contexto, elExtra) {
+    elExtra.querySelector("[data-conferir]")?.addEventListener("click", () => {
+      const calculado = calcularSaldoConta({ id, ...dados }, contexto.transacoes || []);
+      modal.abrir(`
+        <div class="modal">
+          <h2>Conferir saldo: ${escapeHtml(dados.nome)}</h2>
+          <p class="tela-sub" style="margin-bottom:12px;">Abra o app do banco e digite quanto aparece de saldo agora. O painel calcula <b data-valor>${formatarBRL(calculado)}</b>.</p>
+          <div class="field"><label for="cf-valor">Saldo no app do banco</label><input type="text" inputmode="decimal" id="cf-valor" placeholder="0,00"></div>
+          <div class="fp-depois" id="cf-dif"></div>
+          <div class="erro-form" id="cf-erro" hidden></div>
+          <div class="modal-actions"><button class="btn btn-ghost" data-cf="cancelar">Cancelar</button><button class="btn btn-primary" data-cf="ok">Conferir</button></div>
+        </div>`);
+      const raiz = document.getElementById("overlay-modal");
+      const dif = () => paraCentavos(raiz.querySelector("#cf-valor").value) - calculado;
+      raiz.querySelector("#cf-valor").addEventListener("input", () => {
+        const v = raiz.querySelector("#cf-valor").value.trim();
+        raiz.querySelector("#cf-dif").innerHTML = v ? (dif() === 0 ? "Bate certinho." : `Diferença de <b data-valor>${formatarBRL(dif())}</b> (fica registrada).`) : "";
+      });
+      raiz.querySelector('[data-cf="cancelar"]').addEventListener("click", () => modal.fechar());
+      raiz.querySelector('[data-cf="ok"]').addEventListener("click", async () => {
+        const txt = raiz.querySelector("#cf-valor").value.trim();
+        if (!txt) { const e = raiz.querySelector("#cf-erro"); e.textContent = "Digite o saldo que aparece no app do banco."; e.hidden = false; return; }
+        try {
+          const r = await conferirSaldo(id, paraCentavos(txt));
+          modal.fechar();
+          mostrarToast(r.diferencaCentavos === 0 ? "Saldo conferido: bate certinho." : `Saldo conferido. Diferença de ${formatarBRL(r.diferencaCentavos)} registrada.`);
+        } catch (e) { const el = raiz.querySelector("#cf-erro"); el.textContent = e.message; el.hidden = false; }
+      });
+    });
   },
 });

@@ -67,3 +67,22 @@ test("data do calendário não anda um dia no horário de Brasília", () => {
   assert.equal(formatarData("2026-09-23"), "23/09/2026");
   assert.equal(formatarData("2026-10-01"), "01/10/2026");
 });
+
+import { candidatosDePagamento } from "../src/domain/conciliacao.js";
+test("conta conferida no meio do dia: o que entra depois da conferência conta, o de antes não", () => {
+  const c = { ...conta, dataSaldoInicial: "2026-10-02", saldoConferidoEm: "2026-10-02T15:00:00.000Z" };
+  const antes = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 1000, atualizadoEm: "2026-10-02T14:00:00.000Z" });
+  const depois = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 2500, atualizadoEm: "2026-10-02T16:00:00.000Z" });
+  assert.equal(calcularSaldoConta(c, [antes, depois]), 1000000 - 2500);
+});
+
+test("conciliar: o Vivo pago aponta a conta Vivo aberta, e uma conta sem parentesco não aparece", () => {
+  const abertas = [
+    desp({ id: "vivo", descricao: "Vivo internet móvel", data: "2026-10-10", valorCentavos: 9462 }),
+    desp({ id: "luz", descricao: "Conta de Luz 1", data: "2026-10-13", valorCentavos: 15061 }),
+    desp({ id: "pago", status: "pago", descricao: "Vivo", data: "2026-10-10", valorCentavos: 9462 }),
+  ];
+  const r = candidatosDePagamento({ tipo: "despesa", valorCentavos: 9200, descricao: "Vivo internet móvel SET", data: "2026-10-02" }, abertas, { hoje: "2026-10-02" });
+  assert.deepEqual(r.map((x) => x.transacao.id), ["vivo"]);
+  assert.equal(candidatosDePagamento({ tipo: "despesa", valorCentavos: 12345, descricao: "Pizza", data: "2026-10-02" }, abertas, { hoje: "2026-10-02" }).length, 0);
+});

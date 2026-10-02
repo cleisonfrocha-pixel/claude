@@ -57,7 +57,7 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
     if (!doMes && !atrasadaDeAntes) continue;
     if (paga && !(t.recorrenciaId || t.dividaId || t.foiPrevisto || catEssencial(t.categoriaId))) continue;
     novo({
-      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Conta",
+      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Conta", contaSugeridaId: t.contaId || null,
       valorCentavos: Number(t.valorCentavos) || 0, vencimento: t.semDia ? null : t.data, semDia: !!t.semDia,
       paga, pagoEm: paga ? (t.pagoEm || t.data) : null, categoriaId: t.categoriaId || null,
       origem: t.recorrenciaId ? { tipo: "recorrencia", id: t.recorrenciaId } : t.dividaId ? { tipo: "divida", id: t.dividaId } : { tipo: "transacao", id: t.id },
@@ -70,8 +70,9 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
       if (e.tipo !== "despesa" || !e.origem || !["divida", "recorrencia"].includes(e.origem.tipo)) continue;
       const venc = e.vencimento || e.data;
       if (competenciaDeData(venc) !== competencia && !(mesAtual && e.atrasado)) continue;
+      const rec = e.origem.tipo === "recorrencia" ? (recorrencias || []).find((r) => r.id === e.origem.id) : null;
       novo({
-        chave: `e:${e.origem.tipo}:${e.origem.id}:${venc}`, tipo: "evento", evento: { ...e, data: venc }, descricao: e.descricao,
+        chave: `e:${e.origem.tipo}:${e.origem.id}:${venc}`, tipo: "evento", evento: { ...e, data: venc }, descricao: e.descricao, contaSugeridaId: rec?.contaId || null,
         valorCentavos: e.valorCentavos, vencimento: venc, paga: false, origem: e.origem,
       });
     }
@@ -93,7 +94,7 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
     const atrasadaDeAntes = mesAtual && !paga && venc < `${competencia}-01`;
     if (!doMes && !atrasadaDeAntes) continue;
     novo({
-      chave: `f:${f.id}`, tipo: "fatura", faturaId: f.id, cartaoId: cartao.id, contaPagamentoId: cartao.contaPagamentoId || null,
+      chave: `f:${f.id}`, tipo: "fatura", faturaId: f.id, cartaoId: cartao.id, contaPagamentoId: cartao.contaPagamentoId || null, contaSugeridaId: cartao.contaPagamentoId || null,
       descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, vencimento: venc, paga, pagoEm: paga ? venc : null,
       origem: { tipo: "fatura", id: f.id },
     });
@@ -144,7 +145,7 @@ export function entradasDoMes({ transacoes, fontesRenda, recorrencias, cartoes, 
     const atrasadaDeAntes = mesAtual && aberta && t.competencia < competencia;
     if (!doMes && !atrasadaDeAntes) continue;
     novo({
-      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Entrada",
+      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Entrada", contaSugeridaId: t.contaId || null,
       valorCentavos: Number(t.valorCentavos) || 0, vencimento: t.data, paga, pagoEm: paga ? (t.pagoEm || t.data) : null,
       incerta: !paga && t.certeza === "incerto",
       origem: t.fonteRendaId ? { tipo: "fonteRenda", id: t.fonteRendaId } : { tipo: "transacao", id: t.id },
@@ -157,8 +158,9 @@ export function entradasDoMes({ transacoes, fontesRenda, recorrencias, cartoes, 
       if (e.tipo !== "receita" || !e.origem || !["fonteRenda", "recorrencia"].includes(e.origem.tipo)) continue;
       const venc = e.vencimento || e.data;
       if (competenciaDeData(venc) !== competencia) continue;
+      const fonte = e.origem.tipo === "fonteRenda" ? (fontesRenda || []).find((f) => f.id === e.origem.id) : null;
       novo({
-        chave: `e:${e.origem.tipo}:${e.origem.id}:${venc}`, tipo: "evento", evento: { ...e, data: venc }, descricao: e.descricao,
+        chave: `e:${e.origem.tipo}:${e.origem.id}:${venc}`, tipo: "evento", evento: { ...e, data: venc }, descricao: e.descricao, contaSugeridaId: fonte?.contaId || null,
         valorCentavos: e.valorCentavos, vencimento: venc, paga: false, incerta: e.certeza === "incerto", origem: e.origem,
       });
     }

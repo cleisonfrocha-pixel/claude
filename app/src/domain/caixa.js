@@ -26,7 +26,14 @@ export function calcularSaldoConta(conta, transacoes) {
     // O dinheiro mexe na conta no dia em que SAIU ou ENTROU (`pagoEm`), nunca no
     // vencimento: uma conta que venceu em setembro e foi paga hoje tira o
     // dinheiro de hoje. Sem `pagoEm` (lançamento antigo) vale a data do lançamento.
-    if (conta.dataSaldoInicial && (t.pagoEm || t.data) <= conta.dataSaldoInicial) continue;
+    const dia = t.pagoEm || t.data;
+    if (conta.dataSaldoInicial && dia <= conta.dataSaldoInicial) {
+      // Saldo conferido no meio do dia: o que foi lançado DEPOIS da conferência,
+      // mesmo no mesmo dia, ainda não está no saldo informado.
+      const depois = conta.saldoConferidoEm && dia === conta.dataSaldoInicial
+        && (t.atualizadoEm || t.criadoEm || "") > conta.saldoConferidoEm;
+      if (!depois) continue;
+    }
     efeito += efeitoNaConta(t);
   }
   return inicial + efeito;

@@ -8,7 +8,7 @@ import * as tempo from "../../domain/tempo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { assinarCalendario } from "../../dados/calendarioRepo.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
-import { darBaixaEvento } from "../../dados/baixaRepo.js";
+import { baixarComPergunta } from "../baixaUI.js";
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const ROTULO_TIPO = { despesa: "Despesa", receita: "Receita", fatura: "Fatura de cartão" };
@@ -173,13 +173,11 @@ function renderizarDetalhe() {
     btn.addEventListener("click", async () => {
       const item = info.itens[Number(btn.getAttribute("data-baixa-evento"))];
       btn.disabled = true;
-      try {
-        await darBaixaEvento({ ...item, data: info.data });
-        mostrarToast("Pronto, registrado como pago.");
-      } catch (e) {
-        btn.disabled = false;
-        mostrarToast(e.message || "Não consegui dar baixa.");
-      }
+      await baixarComPergunta(
+        { tipo: "evento", evento: { ...item, data: item.vencimento || info.data }, descricao: item.descricao, valorCentavos: item.valorCentavos, origem: item.origem },
+        item.tipo === "receita" ? "receita" : "despesa",
+      );
+      btn.disabled = false;
     });
   });
 }

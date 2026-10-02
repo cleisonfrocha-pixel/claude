@@ -1551,3 +1551,24 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   também com `TZ=America/Sao_Paulo`. Datas "de hoje" usam o relógio local.
 - Início: conta atrasada mostra "venceu dd/mm".
 - Testes: `numeroCerto.test.js`. 443 passando (nos dois fusos).
+
+### Sprint 49: Paguei/Recebi perguntam de onde, conferir saldo, Lançar concilia — 02/10/2026
+
+- **Folha de pagamento** (`ui/folhaDePagamento.js`, `ui/baixaUI.js`): todo Paguei
+  e Recebi (A pagar, A receber, Transações, Calendário) pergunta o valor, **de
+  onde saiu** (cada conta com o saldo de agora, cada cartão com o limite livre)
+  ou **em qual conta caiu**, e quando (hoje, ontem, outro dia). Mostra o efeito
+  antes de confirmar ("Nubank: R$ 3.002 → R$ 2.845"). Pagamento parcial deixa o
+  resto como conta a pagar. Pagar no cartão vira compra da fatura certa.
+  Desfazer devolve tudo, inclusive o resto.
+- **`baixaRepo`** aceita `contaId`, `cartaoId`, `dataPagamento`; o saldo da conta
+  escolhida muda na hora. Testado na camada de dados (`baixaRepo.test.js`).
+- **Conferir saldo** (Dinheiro › Contas › Conferir): o painel passa a contar do
+  saldo informado, guarda a diferença (`conferencias`) e, no mesmo dia, ainda
+  conta o que for lançado depois da conferência. Contas agora mostram o saldo de
+  agora (antes mostravam o saldo inicial).
+  Com os dados reais: Next calculado R$ 5.829,07, informado R$ 5.829,33 → +R$ 0,26.
+- **Lançar concilia** (`domain/conciliacao.js`): ao lançar um pagamento, o painel
+  procura a conta aberta parecida ("Vivo SET" x "Vivo 10/10") e pergunta se é
+  ela; sim dá baixa nela, em vez de duplicar.
+- 450 testes passando (nos dois fusos).
