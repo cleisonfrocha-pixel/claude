@@ -74,6 +74,7 @@ const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 function quando(i, hoje) {
   const rec = lado === "receber";
   if (i.estado === "paga") return i.pagoEm ? `${rec ? "recebida" : "paga"} em ${diaMes(i.pagoEm)}` : (rec ? "recebida" : "paga");
+  if (i.semDia && i.totalDaVerbaCentavos > 0) return `verba do mês: gastou ${formatarBRL(i.gastoDaVerbaCentavos || 0)} de ${formatarBRL(i.totalDaVerbaCentavos)}`;
   if (i.semDia || !i.vencimento) return "sem dia fixo, até o fim do mês";
   if (i.estado === "atrasada") return rec ? `esperada dia ${diaMes(i.vencimento)} · não caiu há ${plural(i.diasAtraso, "dia", "dias")}` : `venceu dia ${diaMes(i.vencimento)} · atrasada há ${plural(i.diasAtraso, "dia", "dias")}`;
   if (i.estado === "hoje") return rec ? "cai hoje" : "vence hoje";

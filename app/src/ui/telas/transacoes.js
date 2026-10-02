@@ -690,7 +690,7 @@ async function onSubmitTransacao(ev) {
       const quita = await perguntarSeQuita(lancamento);
       if (quita === null) return;
       if (quita !== "novo") {
-        await darBaixaTransacao(quita, { valorCentavos: lancamento.valorCentavos, contaId: lancamento.contaId, dataPagamento: lancamento.data });
+        await darBaixaTransacao(quita, { valorCentavos: lancamento.valorCentavos, contaId: lancamento.contaId || null, cartaoId: lancamento.cartaoId || null, dataPagamento: lancamento.data });
         mostrarToast("Conta paga: foi dada baixa na que já estava na lista.");
         fecharModal();
         return;

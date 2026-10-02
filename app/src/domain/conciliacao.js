@@ -28,6 +28,15 @@ export function candidatosDePagamento(lancamento, transacoes, { hoje } = {}) {
     if (t.tipo !== lancamento.tipo || !ABERTO.has(t.status) || t.cartaoId || t.faturaId) continue;
     const v = Number(t.valorCentavos) || 0;
     if (!(v > 0)) continue;
+    // Verba do mês (mercado, lazer…): qualquer gasto do mesmo tipo consome um pedaço
+    // dela, seja qual for o valor ou o dia. Casa pelo nome ou pela categoria.
+    if (t.semDia) {
+      const mesmaCategoria = !!lancamento.categoriaId && lancamento.categoriaId === t.categoriaId;
+      const mesmoMes = !lancamento.data || (t.competencia || t.data.slice(0, 7)) === lancamento.data.slice(0, 7);
+      const nomeBate = [...palavras(t.descricao)].some((p) => pal.has(p));
+      if (mesmoMes && (nomeBate || mesmaCategoria)) saida.push({ transacao: t, parecido: true, verba: true, diferenca: 0, dias: 0, pontos: -1 });
+      continue;
+    }
     const dif = Math.abs(v - valor) / v;
     const parecido = [...palavras(t.descricao)].some((p) => pal.has(p));
     const dias = Math.abs(diasEntre(t.data, lancamento.data || hoje || t.data));

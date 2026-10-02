@@ -91,6 +91,15 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
     }
   }
 
+  // Verba do mês: quanto já foi gasto dela (pago na mesma categoria e mês) e o total.
+  for (const i of itens) {
+    if (!i.semDia || i.paga || !i.categoriaId) continue;
+    const gasto = (transacoes || []).filter((t) => t.tipo === "despesa" && t.status === "pago" && t.categoriaId === i.categoriaId && t.competencia === competencia)
+      .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
+    i.gastoDaVerbaCentavos = gasto;
+    i.totalDaVerbaCentavos = gasto + i.valorCentavos;
+  }
+
   // Pagas: o que já saiu (conta que nasceu de uma conta, ou essencial).
   for (const t of transacoes || []) {
     if (t.tipo !== "despesa" || t.status !== "pago" || t.faturaId || t.cartaoId) continue;

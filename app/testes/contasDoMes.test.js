@@ -170,3 +170,13 @@ test("invariante: parcela de dívida em atraso pesa uma vez, com o vencimento or
   assert.equal(r.resumo.faltaCentavos, dias.reduce((s, d) => s + d.saidasCentavos, 0));
   assert.equal(r.itens.length, 1);
 });
+
+test("verba do mês mostra quanto já foi gasto e o total", () => {
+  const r = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes: [
+    t({ id: "v", descricao: "Mercado", data: "2026-10-01", semDia: true, contaId: "k", categoriaId: "mer", valorCentavos: 92000 }),
+    t({ id: "g", descricao: "Mercado Assaí", data: "2026-10-03", status: "pago", categoriaId: "mer", valorCentavos: 8000 }),
+  ] });
+  const v = r.itens.find((i) => i.transacaoId === "v");
+  assert.equal(v.gastoDaVerbaCentavos, 8000);
+  assert.equal(v.totalDaVerbaCentavos, 100000);
+});

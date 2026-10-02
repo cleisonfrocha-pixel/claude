@@ -1584,3 +1584,8 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - `cabeNoCartao` (limite + saldo da conta que paga). A folha Paguei mostra de qual conta a fatura sai, quando, e se o saldo cobre.
 - Campos novos na tela Cartões. 457 testes nos dois fusos.
 - Pendente do sprint: Shopee Carolina e Morelli no cartão serão cadastrados no Sprint 55 (dados).
+
+## Sprint 52 — verbas consumíveis
+- Lançar um gasto (na conta ou no cartão) que combina com uma verba do mês (nome ou categoria) pergunta se desconta dela; a verba fica com o resto, sem dia, e Desfazer restaura.
+- A pagar mostra "verba do mês: gastou X de Y". Teste de camada de dados e de motor. 459 testes nos dois fusos.
+- Os valores das verbas (mercado, lazer, almoço, combustível, anúncios, galão, café, fórmula do Caio) entram no Sprint 55.

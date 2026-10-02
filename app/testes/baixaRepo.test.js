@@ -75,3 +75,20 @@ test("conferir saldo guarda a diferença e passa a contar dali pra frente", asyn
   assert.equal(conta.conferencias[0].diferencaCentavos, 26);
   assert.equal(await saldo(next), 582933);
 });
+
+test("verba do mês: gastar R$ 80 em 'Mercado' deixa a verba com o resto, ainda sem dia, e desfazer restaura", async () => {
+  const { next } = await semear();
+  const verba = await db.criar("transacoes", { tipo: "despesa", status: "previsto", certeza: "confirmado", data: "2026-10-01", competencia: "2026-10", semDia: true, valorCentavos: 100000, contaId: next, categoriaId: "mercado", pessoaId: "p", descricao: "Mercado do mês", origem: "chat", revisado: true });
+  const { candidatosDePagamento } = await import("../src/domain/conciliacao.js");
+  const abertas = (await db.listar("transacoes")).map((t) => ({ id: t.id, ...t.dados }));
+  const cand = candidatosDePagamento({ tipo: "despesa", valorCentavos: 8000, descricao: "Mercado Assaí", data: "2026-10-03" }, abertas, { hoje: "2026-10-03" });
+  assert.equal(cand[0].transacao.id, verba);
+  assert.equal(cand[0].verba, true);
+  const d = await darBaixaTransacao(verba, { hoje: "2026-10-03", valorCentavos: 8000, contaId: next });
+  const todas = (await db.listar("transacoes")).map((t) => t.dados);
+  const resto = todas.find((t) => t.status === "previsto" && t.descricao === "Mercado do mês");
+  assert.equal(resto.valorCentavos, 92000);
+  assert.equal(resto.semDia, true);
+  await desfazerBaixa(d);
+  assert.equal((await db.listar("transacoes")).filter((t) => t.dados.descricao === "Mercado do mês").length, 1);
+});

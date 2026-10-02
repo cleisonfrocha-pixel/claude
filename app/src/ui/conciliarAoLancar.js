@@ -12,7 +12,7 @@ import * as modal from "./modal.js";
 /** Resolve com o id da conta prevista escolhida, "novo" (é outro lançamento) ou
  * null (fechou a janela sem decidir: nada é gravado). */
 export async function perguntarSeQuita(lancamento) {
-  if (lancamento.status !== "pago" || !["despesa", "receita"].includes(lancamento.tipo) || lancamento.cartaoId) return "novo";
+  if (lancamento.status !== "pago" || !["despesa", "receita"].includes(lancamento.tipo)) return "novo";
   const abertas = (await transacoes.listar()).map((t) => ({ id: t.id, ...t.dados }));
   const candidatos = candidatosDePagamento(lancamento, abertas, { hoje: hojeISO() });
   if (!candidatos.length) return "novo";
@@ -24,7 +24,7 @@ export async function perguntarSeQuita(lancamento) {
         <p class="tela-sub" style="margin-bottom:12px;">Você lançou <b>${escapeHtml(lancamento.descricao || "um pagamento")}</b> de <span data-valor>${formatarBRL(lancamento.valorCentavos)}</span>. Parece ser:</p>
         ${candidatos.map((c, i) => `
           <button class="fp-opcao" style="width:100%;text-align:left;" data-escolha="${escapeHtml(c.transacao.id)}">
-            <span class="fp-opcao-corpo"><b>${escapeHtml(c.transacao.descricao)}</b><small>${c.transacao.status === "atrasado" ? "atrasada, " : ""}vence ${escapeHtml(formatarData(c.transacao.data).slice(0, 5))}</small></span>
+            <span class="fp-opcao-corpo"><b>${escapeHtml(c.transacao.descricao)}</b><small>${c.verba ? "verba do mês: desconta daqui, sobra " + escapeHtml(formatarBRL(Math.max(0, c.transacao.valorCentavos - lancamento.valorCentavos))) : (c.transacao.status === "atrasado" ? "atrasada, " : "") + "vence " + escapeHtml(formatarData(c.transacao.data).slice(0, 5))}</small></span>
             <span class="fp-opcao-valor mono" data-valor>${formatarBRL(c.transacao.valorCentavos)}</span>
           </button>`).join("")}
         <div class="modal-actions" style="flex-wrap:wrap;margin-top:12px;">
