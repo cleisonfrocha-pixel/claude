@@ -1265,3 +1265,16 @@ esperar os dados reais.
   diferente do Plano.
 - Patrimônio e Objetivos viraram uma tela, "Patrimônio & Metas", dentro do Plano.
 - 4 testes novos (384 no total).
+
+### Sprint 37 — Dívidas e patrimônio reais — ✅ (02/10/2026)
+
+- Dívidas em duas listas: "Com acordo, andando" e "Negativadas ou sem acordo",
+  cada uma com o total que pesa (`separarDividas`, `domain/bens.js`; hook
+  `secoes` em `telaCadastro.js`).
+- Bem líquido da própria dívida: ativo ganhou `dividaId` (Jeep: vale X, deve Y,
+  líquido Z). O patrimônio total continua descontando a dívida uma vez só.
+- Custos ligados ao bem: recorrência ganhou `ativoId` ("Bem ligado"); o bem
+  mostra o custo mensal (galpão: aluguel, água, luz...).
+- Aviso "Patrimônio incompleto" quando há dívida sem nenhum bem do outro lado,
+  bem sem valor ou avaliação com mais de 1 ano.
+- 4 testes novos em `bens.test.js` (388 no total).

@@ -6,7 +6,7 @@
 // pausa afeta o futuro, não apaga o passado.
 
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
-import { pessoas, contas, cartoes, categorias, ErroDeValidacao } from "../../dados/repositorios.js";
+import { pessoas, contas, cartoes, categorias, ativos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
 import { competenciaLabel } from "../../domain/tempo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
@@ -15,7 +15,7 @@ import { escapeHtml, mostrarToast } from "../utilitarios.js";
 const ROTULO_TIPO = { despesa: "Despesa", receita: "Receita" };
 
 let lista = [];
-let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [] };
+let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [], ativos: [] };
 let pararAssinatura = null;
 let container = null;
 
@@ -34,8 +34,8 @@ export default {
 };
 
 async function carregarContexto() {
-  const [p, c, ca, cat] = await Promise.all([pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar()]);
-  contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat };
+  const [p, c, ca, cat, at] = await Promise.all([pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), ativos.listar()]);
+  contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat, ativos: at };
 }
 
 function nomeConta(id) { return (contexto.contas.find((c) => c.id === id) || {}).dados?.nome || "-"; }
@@ -171,6 +171,8 @@ function abrirModalEditar(item) {
         <div id="rc-categoria-wrap">${campoCategoria("rc", d.tipo, d.categoriaId)}</div>
         ${campoPessoa("rc", d.pessoaId)}
         <div class="field"><label for="rc-descricao">Descrição</label><input type="text" id="rc-descricao" value="${escapeHtml(d.descricao || "")}"></div>
+        <div class="field"><label for="rc-ativo">Bem ligado <small>opcional: galpão, carro… o custo aparece no bem</small></label>
+          <select id="rc-ativo"><option value="">Nenhum</option>${contexto.ativos.map((a) => `<option value="${escapeHtml(a.id)}" ${d.ativoId === a.id ? "selected" : ""}>${escapeHtml(a.dados.nome)}</option>`).join("")}</select></div>
         <label class="field-check"><input type="checkbox" id="rc-semdia" ${d.semDia ? "checked" : ""}> Sem dia fixo — é uma verba do mês (combustível, mercado…)</label>
         <div class="field"><label for="rc-fim">Encerra em (opcional)</label><input type="month" id="rc-fim" value="${escapeHtml(d.fim || "")}"></div>
         <div class="modal-actions">
@@ -205,6 +207,7 @@ function abrirModalEditar(item) {
         descricao: document.getElementById("rc-descricao").value.trim(),
         fim: document.getElementById("rc-fim").value || null,
         semDia: document.getElementById("rc-semdia").checked,
+        ativoId: document.getElementById("rc-ativo").value || null,
       });
       mostrarToast("Recorrência atualizada.");
       fecharModal();

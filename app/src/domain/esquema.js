@@ -136,6 +136,7 @@ export function padraoRecorrencia(dados = {}) {
     inicio: new Date().toISOString().slice(0, 7),
     fim: null,
     semDia: false,
+    ativoId: null, // bem a que este custo pertence (galpão, carro): soma nos custos do bem
     ativa: true,
     ...dados,
   };
@@ -188,6 +189,7 @@ export function padraoAtivo(dados = {}) {
     pessoaId: "",
     nome: "",
     classe: "liquido",
+    dividaId: null, // dívida que financia o bem (carro financiado): mostra o líquido do bem
     valorAtualCentavos: 0,
     dataAvaliacao: new Date().toISOString().slice(0, 10),
     ...dados,

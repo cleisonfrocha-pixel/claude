@@ -27,6 +27,8 @@ import { ErroDeValidacao } from "../../dados/repositorios.js";
  *   chamado logo depois que o HTML de `renderExtra` entra no DOM, com o próprio elemento — é onde um
  *   cadastro liga interatividade dentro do painel expandido (ex.: o simulador de dívidas), sem duplicar
  *   a lógica de lista/expandir desta fábrica.
+ * @param {(itens: Array, contexto: object) => Array<{titulo: string, sub?: string, ids: string[]}>} [config.secoes] - quando
+ *   presente, a lista é dividida em seções (cada uma com título e os ids dos itens que ficam nela)
  * @param {(itens: Array, contexto: object) => string} [config.resumo] - quando presente, um bloco de
  *   visão consolidada renderizado acima da lista, recalculado toda vez que a lista muda.
  */
@@ -86,7 +88,7 @@ export function criarTelaCadastro(config) {
       alvo.querySelector('[data-acao="novo-vazio"]').addEventListener("click", () => abrirFormulario(null));
       return;
     }
-    alvo.innerHTML = itens.map((item) => {
+    const htmlDoItem = (item) => {
       const v = config.exibir(item.dados, contexto, item.id);
       const expansivel = typeof config.renderExtra === "function";
       const aberto = expansivel && expandidos.has(item.id);
@@ -106,7 +108,19 @@ export function criarTelaCadastro(config) {
           </div>
         </div>
         ${aberto ? `<div class="item-extra" data-extra-id="${escapeHtml(item.id)}">${config.renderExtra(item.dados, item.id, contexto)}</div>` : ""}`;
-    }).join("");
+    };
+    if (typeof config.secoes === "function") {
+      const secoes = config.secoes(itens, contexto);
+      alvo.innerHTML = secoes.map((sec) => {
+        const doGrupo = itens.filter((i) => sec.ids.includes(i.id));
+        return `
+          <div class="tela-head" style="margin:18px 0 8px;"><div><h3 class="tela-titulo" style="font-size:15px;">${escapeHtml(sec.titulo)} <span class="tela-sub" style="display:inline;">(${doGrupo.length})</span></h3>
+            ${sec.sub ? `<p class="tela-sub">${sec.sub}</p>` : ""}</div></div>
+          ${doGrupo.length ? doGrupo.map(htmlDoItem).join("") : `<div class="tela-sub">Nenhuma.</div>`}`;
+      }).join("");
+    } else {
+      alvo.innerHTML = itens.map(htmlDoItem).join("");
+    }
     if (typeof config.aoRenderizarExtra === "function") {
       itens.forEach((item) => {
         if (!expandidos.has(item.id)) return;

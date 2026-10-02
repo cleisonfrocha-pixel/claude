@@ -6,6 +6,7 @@
 import { ativos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelPatrimonio } from "../../dados/patrimonioRepo.js";
 import { CLASSES_ATIVO } from "../../domain/esquema.js";
+import { leituraDoBem, avisoPatrimonioIncompleto } from "../../domain/bens.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
@@ -50,12 +51,18 @@ function blocoRelacao(r) {
 }
 
 function cartaoAtivo(a) {
+  const l = leituraDoBem(a, painel.dividas, painel.recorrencias);
+  const extras = [
+    l.dividaNome && l.dividaCentavos > 0 ? `deve <span data-valor>${formatarBRL(l.dividaCentavos)}</span> (${escapeHtml(l.dividaNome)}) · líquido <b data-valor>${formatarBRL(l.liquidoCentavos)}</b>` : "",
+    l.custosMensaisCentavos > 0 ? `custa <span data-valor>${formatarBRL(l.custosMensaisCentavos)}</span>/mês (${l.custos.map((c) => escapeHtml(c.descricao)).join(", ")})` : "",
+  ].filter(Boolean);
   return `
     <div class="item-cartao" data-id="${escapeHtml(a.id)}">
       <div class="item-avatar">${escapeHtml(iniciais(a.nome))}</div>
       <div class="item-corpo">
         <div class="item-titulo">${escapeHtml(a.nome)}</div>
         <div class="item-sub">${ROTULO_CLASSE[a.classe]} · avaliado em ${escapeHtml(formatarData(a.dataAvaliacao))}</div>
+        ${extras.length ? `<div class="item-sub">${extras.join(" · ")}</div>` : ""}
       </div>
       <div class="item-valor mono" data-valor>${formatarBRL(a.valorAtualCentavos)}</div>
       <div class="item-acoes">
@@ -80,6 +87,12 @@ function linhaMetaReserva(m) {
     </div>`;
 }
 
+function avisoHtml() {
+  const aviso = avisoPatrimonioIncompleto({ ativos: painel.ativos, dividas: painel.dividas, hoje: painel.hoje });
+  if (!aviso) return "";
+  return `<div class="erro-form" style="margin-bottom:12px;"><b>Patrimônio incompleto.</b> ${aviso.motivos.map(escapeHtml).join(" ")}</div>`;
+}
+
 function renderizar() {
   if (!container) return;
 
@@ -100,6 +113,7 @@ function renderizar() {
       </div>
     </div>
 
+    ${avisoHtml()}
     <div class="hero-caixa">
       <div class="hero-caixa-label">Patrimônio líquido</div>
       <div class="hero-caixa-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(painel.liquidoCentavos)}</div>
@@ -174,6 +188,8 @@ function campoAtivoHtml(a) {
       <select id="campo-ativo-pessoa" required><option value="" ${a?.pessoaId ? "" : "selected"}>Selecione uma pessoa</option>${pessoasOpts}</select></div>
     <div class="field"><label for="campo-ativo-classe">Classe</label>
       <select id="campo-ativo-classe">${CLASSES_ATIVO.map((c) => `<option value="${c}" ${a?.classe === c ? "selected" : ""}>${ROTULO_CLASSE[c]}</option>`).join("")}</select></div>
+    <div class="field"><label for="campo-ativo-divida">Dívida que financia este bem <small>opcional: mostra quanto sobra de verdade</small></label>
+      <select id="campo-ativo-divida"><option value="">Nenhuma</option>${(painel.dividas || []).map((d) => `<option value="${escapeHtml(d.id)}" ${a?.dividaId === d.id ? "selected" : ""}>${escapeHtml(d.nome)}</option>`).join("")}</select></div>
     <div class="field"><label for="campo-ativo-valor">Valor atual</label>
       <input type="text" inputmode="decimal" id="campo-ativo-valor" placeholder="0,00" value="${a ? formatarBRL(a.valorAtualCentavos).replace("R$ ", "") : ""}"></div>
     <div class="field"><label for="campo-ativo-data">Data da avaliação</label>
@@ -205,6 +221,7 @@ function abrirFormularioAtivo(a) {
       classe: document.getElementById("campo-ativo-classe").value,
       valorAtualCentavos: paraCentavos(document.getElementById("campo-ativo-valor").value),
       dataAvaliacao: document.getElementById("campo-ativo-data").value,
+      dividaId: document.getElementById("campo-ativo-divida").value || null,
     };
     try {
       if (editando) {

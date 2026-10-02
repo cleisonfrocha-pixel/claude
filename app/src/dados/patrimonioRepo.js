@@ -76,6 +76,8 @@ export async function calcularPainelPatrimonio() {
   return {
     hoje, competencia,
     ativos: dados.ativos,
+    dividas: dados.dividas,
+    recorrencias: dados.recorrencias,
     pessoas: dados.pessoas,
     ativosCentavos, passivosCentavos, liquidoCentavos, composicao,
     variacaoMensal, variacaoAcumulada, relacao,

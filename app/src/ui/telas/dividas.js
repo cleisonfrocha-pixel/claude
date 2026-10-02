@@ -13,6 +13,7 @@ import {
   calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao,
   statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva,
 } from "../../domain/dividas.js";
+import { separarDividas } from "../../domain/bens.js";
 import { simularAporteExtra, simularQuitacaoAntecipada } from "../../domain/simuladorDividas.js";
 import { escapeHtml } from "../utilitarios.js";
 
@@ -59,6 +60,16 @@ export default criarTelaCadastro({
   async carregarContexto() {
     const listaPessoas = await pessoas.listar();
     return { pessoas: listaPessoas.map((p) => ({ valor: p.id, rotulo: p.dados.nome })) };
+  },
+
+  secoes(itens) {
+    const d = separarDividas(itens.map((i) => ({ id: i.id, ...i.dados })), hojeISO());
+    const todas = new Set([...d.comAcordo, ...d.negativadas].map((x) => x.id));
+    return [
+      { titulo: "Com acordo, andando", sub: `<span data-valor>${formatarBRL(d.totalComAcordoCentavos)}</span> devidos · <span data-valor>${formatarBRL(d.parcelasMesCentavos)}</span>/mês em parcelas`, ids: d.comAcordo.map((x) => x.id) },
+      { titulo: "Negativadas ou sem acordo", sub: `<span data-valor>${formatarBRL(d.totalNegativadasCentavos)}</span> que não quitam sozinhas: precisam de negociação`, ids: d.negativadas.map((x) => x.id) },
+      ...(itens.some((i) => !todas.has(i.id)) ? [{ titulo: "Quitadas", ids: itens.filter((i) => !todas.has(i.id)).map((i) => i.id) }] : []),
+    ];
   },
 
   resumo(itens) {
