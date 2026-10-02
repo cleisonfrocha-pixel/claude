@@ -1163,3 +1163,32 @@ esperar os dados reais.
 - Verificado via Playwright: carga normal sem regressão (358 testes
   continuam passando) e acionamento manual de `mostrarErroFatal`
   mostrando a tela de erro corretamente.
+
+## Sprint 29 · renda prevista sem confirmar vira "atrasado" na agenda (02/10/2026)
+
+- Primeiro upload real de dados pelo chat: pessoas (Cleison Rocha, Carolina
+  de Jesus), contas (Next, Nubank, com saldo de 01/10) e 5 fontes de renda
+  (Carolina salário fixo; Sociable, CryptoPag, Projeto Gábbia e Gedi/Tony
+  recorrentes, freelas do Cleison). Corrigi de passagem um cadastro de
+  pessoa com nome errado, resquício de teste ("Cleison Fiorin").
+- Pedido do Cleison: "no calendário deveriam ter os dias que vão entrar
+  esse aporte... com alertas, tipo: precisa entrar, hein? ou preciso
+  cobrar." Achado ao investigar: `eventosFuturos` (domain/previstos.js) já
+  projetava o dia esperado de cada fonte de renda pro calendário, mas se o
+  dia passava sem receita confirmada, o evento simplesmente sumia — sem
+  aviso nenhum. A mesma função já tratava isso certo pra parcela de dívida
+  (vencida e não paga pesa hoje, marcada `atrasado`); faltava o mesmo pra
+  renda prevista.
+- Correção: o laço de `fontesRenda` em `eventosFuturos` agora usa o mesmo
+  padrão — dia esperado já passado neste mês sem receita lançada pesa hoje
+  como `atrasado: true`, em vez de desaparecer. A tela Agenda
+  (`calendario.js`) já sabia renderizar essa etiqueta "Atrasado" pra outros
+  tipos de evento; não precisou mudar nada na UI. Recorrências (aluguel,
+  etc.) ficaram de fora de propósito: aquele comportamento de "não virar
+  cobrança retroativa" foi uma decisão deliberada de sprint anterior, não
+  o mesmo problema.
+- 2 testes novos em `previstos.test.js` provando o atraso (com e sem
+  receita no mês) e 1 teste existente atualizado pra refletir o
+  comportamento novo (antes ele verificava — sem querer documentar isso —
+  que renda variável vencida e não recebida sumia do calendário). 360
+  testes.

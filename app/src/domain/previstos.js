@@ -108,10 +108,16 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
     const dia = diaDaFonte(f, receitas);
     for (const c of comps) {
       if (receitas.some((t) => t.competencia === c && t.status !== "cancelado")) continue;
-      const data = dataDeCompetencia(c, dia);
+      const dataOriginal = dataDeCompetencia(c, dia);
+      // Dia esperado já passou neste mês e ninguém confirmou o recebimento:
+      // não some do calendário, pesa hoje como atrasado (mesmo tratamento
+      // da parcela de dívida, acima) — é o "precisa cobrar" que o usuário
+      // espera ver.
+      const atrasado = dataOriginal < de;
+      const data = atrasado ? de : dataOriginal;
       if (data < de || data > ate) continue;
       eventos.push({
-        data, tipo: "receita", valorCentavos: valor.valorCentavos, certeza: valor.certeza, virtual: true,
+        data, tipo: "receita", valorCentavos: valor.valorCentavos, certeza: valor.certeza, virtual: true, atrasado,
         descricao: valor.piso ? `${f.nome} (pior mês recente)` : f.nome,
         origem: { tipo: "fonteRenda", id: f.id },
       });

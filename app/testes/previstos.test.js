@@ -18,8 +18,32 @@ test("renda variável entra pelo pior mês fechado; sem histórico, é incerta (
     { tipo: "receita", status: "pago", fonteRendaId: "v", competencia: "2026-07", data: "2026-07-12", valorCentavos: 820000 },
     { tipo: "receita", status: "pago", fonteRendaId: "v", competencia: "2026-08", data: "2026-08-12", valorCentavos: 560000 },
   ];
-  assert.deepEqual(eventosFuturos({ transacoes, fontesRenda: fontes, ...janela }).map((x) => [x.valorCentavos, x.certeza]), [[560000, "provavel"]]);
-  assert.deepEqual(eventosFuturos({ transacoes: [], fontesRenda: fontes, ...janela }).map((x) => [x.valorCentavos, x.certeza]), [[700000, "incerto"]]);
+  // Janela começa 2026-09-28: o dia 12 de setembro já passou sem receita
+  // lançada, então também aparece — atrasado, pesando hoje — além da
+  // projeção normal de outubro.
+  assert.deepEqual(eventosFuturos({ transacoes, fontesRenda: fontes, ...janela }).map((x) => [x.data, x.valorCentavos, x.certeza, !!x.atrasado]), [
+    ["2026-09-28", 560000, "provavel", true], ["2026-10-12", 560000, "provavel", false],
+  ]);
+  assert.deepEqual(eventosFuturos({ transacoes: [], fontesRenda: fontes, ...janela }).map((x) => [x.data, x.valorCentavos, x.certeza, !!x.atrasado]), [
+    ["2026-09-28", 700000, "incerto", true], ["2026-10-12", 700000, "incerto", false],
+  ]);
+});
+
+test("fonte de renda com dia já passado no mês e sem receita lançada pesa hoje, como atrasada", () => {
+  const fontes = [{ id: "s", nome: "Sociable", tipo: "recorrente", valorEsperadoCentavos: 520000, ativa: true, diaRecebimento: 1 }];
+  const e = eventosFuturos({ transacoes: [], fontesRenda: fontes, de: "2026-10-15", ate: "2026-11-15", hoje: "2026-10-15" });
+  assert.deepEqual(e.map((x) => [x.data, x.valorCentavos, !!x.atrasado]), [
+    ["2026-10-15", 520000, true], ["2026-11-01", 520000, false],
+  ]);
+});
+
+test("fonte de renda: dia do mês ainda não chegou não é atrasado; mês já recebido não repete", () => {
+  const fontes = [{ id: "s", nome: "Sociable", tipo: "recorrente", valorEsperadoCentavos: 520000, ativa: true, diaRecebimento: 20 }];
+  const semReceita = eventosFuturos({ transacoes: [], fontesRenda: fontes, de: "2026-10-15", ate: "2026-11-25", hoje: "2026-10-15" });
+  assert.deepEqual(semReceita.map((x) => [x.data, !!x.atrasado]), [["2026-10-20", false], ["2026-11-20", false]]);
+  const jaRecebido = [{ tipo: "receita", status: "pago", fonteRendaId: "s", competencia: "2026-10", data: "2026-10-20", valorCentavos: 520000 }];
+  const comReceita = eventosFuturos({ transacoes: jaRecebido, fontesRenda: fontes, de: "2026-10-15", ate: "2026-11-25", hoje: "2026-10-15" });
+  assert.deepEqual(comReceita.map((x) => x.data), ["2026-11-20"]);
 });
 
 test("parcela de dívida entra no vencimento; parcela vencida e não paga pesa hoje", () => {
