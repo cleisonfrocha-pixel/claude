@@ -696,3 +696,22 @@
 .inicio-pendencia:last-child { border-bottom: 0; }
 .inicio-pendencia span { color: var(--text-faint); transform: rotate(-90deg); display: inline-flex; }
 .btn-link { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; padding: 10px 0 0; min-height: 44px; }
+
+/* Sprint 35: Plano reconstruído. */
+.plano-onde { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.plano-onde > div, .plano-futuro > div { display: flex; flex-direction: column; gap: 3px; }
+.plano-onde span, .plano-futuro span, .plano-sobra span { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
+.plano-onde b, .plano-futuro b { font-size: 17px; }
+.plano-onde small, .plano-futuro small { color: var(--text-faint); font-size: 12px; }
+.plano-sobra { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.plano-sobra b { font-size: 22px; color: var(--ok, #22c55e); }
+.plano-sobra.negativa b { color: var(--danger); }
+.plano-futuro { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.plano-futuro .negativo b { color: var(--danger); }
+.plano-alavanca { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.plano-alavanca:last-child { border-bottom: 0; }
+.plano-alavanca-topo { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.plano-alavanca small { color: var(--text-muted); font-size: 13px; line-height: 1.4; }
+.plano-alavanca .btn-link { padding-top: 2px; text-align: left; align-self: flex-start; }
+.achado-grupo .achado-card { margin-top: 10px; }
+@media (max-width: 480px) { .plano-futuro b { font-size: 15px; } }

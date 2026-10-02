@@ -1242,3 +1242,15 @@ esperar os dados reais.
 - Removidos: grade de 7 cartões, carrossel e atalhos redondos. Duas colunas no
   desktop. `dados/inicioRepo.js` lê tudo do retrato único (`dados/base.js`).
 - 5 testes novos em `inicio.test.js` (375 no total).
+
+### Sprint 35 — Plano reconstruído (Visão geral) — ✅ (02/10/2026)
+
+- Visão geral do Plano: "Onde você está" (conta, renda recebida + esperada,
+  gastos, parcelas, sobra/falta), "Pra onde você vai" (3, 6 e 12 meses, só
+  renda confirmada/provável) e "3 coisas que mudam o jogo" (alavancas com
+  premissa e base do cálculo; `domain/planoGeral.js`, `dados/planoGeralRepo.js`).
+- Revisões agrupadas por tipo: 18 "novo compromisso recorrente" viram uma linha
+  com "Ver todos" (resolve o achado da rodada 2 da auditoria).
+- Duas colunas no desktop. "Prazo", "Diagnóstico completo", "Qualidade dos
+  dados" e histórico seguem recolhidos abaixo.
+- 5 testes novos em `planoGeral.test.js` (380 no total).

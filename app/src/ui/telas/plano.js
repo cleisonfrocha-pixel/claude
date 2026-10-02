@@ -7,6 +7,9 @@
 
 import { assinarPainelDecisoes, decidirAchado, reabrirDecisao } from "../../dados/decisoesRepo.js";
 import { assinarPainelQualidade } from "../../dados/qualidadeRepo.js";
+import { assinarPlanoGeral } from "../../dados/planoGeralRepo.js";
+import { agruparAchados } from "../../domain/planoGeral.js";
+import { navegar } from "../navegacao.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
@@ -28,6 +31,9 @@ const NOTA_HORIZONTE_VAZIO = {
 
 let painel = null;
 let qualidade = null;
+let geral = null;
+let pararAssinaturaGeral = null;
+const gruposAbertos = new Set();
 let achadosPorId = new Map();
 let pararAssinatura = null;
 let pararAssinaturaQualidade = null;
@@ -46,11 +52,15 @@ export default {
     });
     if (pararAssinaturaQualidade) pararAssinaturaQualidade();
     pararAssinaturaQualidade = assinarPainelQualidade((r) => { qualidade = r; renderizar(); });
+    if (pararAssinaturaGeral) pararAssinaturaGeral();
+    pararAssinaturaGeral = assinarPlanoGeral((r) => { geral = r; renderizar(); });
     renderizar();
   },
   desmontar() {
     if (pararAssinatura) { pararAssinatura(); pararAssinatura = null; }
     if (pararAssinaturaQualidade) { pararAssinaturaQualidade(); pararAssinaturaQualidade = null; }
+    if (pararAssinaturaGeral) { pararAssinaturaGeral(); pararAssinaturaGeral = null; }
+    geral = null;
     container = null;
     painel = null;
     qualidade = null;
@@ -148,6 +158,74 @@ function cartaoAchado(a) {
         </div>
       </div>
     </div>`;
+}
+
+function cartaoRevisao(c) {
+  if (!c.grupo) return cartaoAchado(c.achado);
+  const aberto = gruposAbertos.has(c.chave);
+  return `
+    <div class="achado-card achado-grupo" data-grupo="${escapeHtml(c.chave)}">
+      <div class="achado-head">
+        <span class="item-tag${CLASSE_URGENCIA[c.urgencia] ? " " + CLASSE_URGENCIA[c.urgencia] : ""}">${ROTULO_URGENCIA[c.urgencia]}</span>
+        <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="abrir-grupo" aria-expanded="${aberto}">${aberto ? "Fechar" : "Ver todos"}</button>
+      </div>
+      <div class="achado-titulo">${escapeHtml(c.titulo)}</div>
+      ${aberto ? c.itens.map(cartaoAchado).join("") : ""}
+    </div>`;
+}
+
+function blocoOndeVoceEsta(g) {
+  const a = g.agora;
+  const sobra = a.sobraCentavos;
+  return `
+    <section class="inicio-bloco">
+      <h3>Onde você está</h3>
+      <div class="plano-onde">
+        <div><span>Em conta hoje</span><b class="mono" data-valor>${formatarBRL(a.saldoInicialCentavos)}</b></div>
+        <div><span>Renda do mês</span><b class="mono" data-valor>${formatarBRL(a.rendaConfirmadaCentavos + a.rendaProvavelCentavos)}</b>
+          <small data-valor>${formatarBRL(a.rendaConfirmadaCentavos)} recebidos + ${formatarBRL(a.rendaProvavelCentavos)} esperados</small></div>
+        <div><span>Gastos do mês</span><b class="mono" data-valor>${formatarBRL(a.gastoCentavos)}</b></div>
+        <div><span>Parcelas de dívida</span><b class="mono" data-valor>${formatarBRL(a.parcelasCentavos)}</b></div>
+      </div>
+      <div class="plano-sobra ${sobra < 0 ? "negativa" : ""}">
+        <span>${sobra < 0 ? "Falta no mês" : "Sobra no mês"}</span>
+        <b class="mono" data-valor>${formatarBRL(Math.abs(sobra))}</b>
+      </div>
+      ${a.rendaIncertaCentavos > 0 ? `<p class="tela-sub" style="margin:8px 0 0;"><span data-valor>${formatarBRL(a.rendaIncertaCentavos)}</span> de renda incerta ficou de fora da conta.</p>` : ""}
+    </section>`;
+}
+
+function blocoPraOndeVai(g) {
+  return `
+    <section class="inicio-bloco">
+      <h3>Pra onde você vai</h3>
+      <p class="tela-sub" style="margin:0 0 10px;">Saldo em conta no ritmo de hoje, só com renda confirmada ou provável.</p>
+      <div class="plano-futuro">
+        ${g.futuro.map((h) => `
+          <div class="${h.saldoFinalSeguroCentavos < 0 ? "negativo" : ""}">
+            <span>${escapeHtml(h.rotulo)}</span>
+            <b class="mono" data-valor>${formatarBRL(h.saldoFinalSeguroCentavos)}</b>
+            ${h.saidaCritica ? `<small>aperta em ${escapeHtml(formatarData(h.saidaCritica.data))}</small>` : ""}
+          </div>`).join("")}
+      </div>
+    </section>`;
+}
+
+function blocoAlavancas(g) {
+  if (!g.alavancas.length) return "";
+  return `
+    <section class="inicio-bloco">
+      <h3>3 coisas que mudam o jogo</h3>
+      ${g.alavancas.map((l, i) => `
+        <div class="plano-alavanca">
+          <div class="plano-alavanca-topo">
+            <b>${escapeHtml(l.titulo)}</b>
+            <span class="mono valor-pos" data-valor>+${formatarBRL(l.impactoMensalCentavos)}/mês</span>
+          </div>
+          <small>${escapeHtml(l.premissa)} Base: <span data-valor>${formatarBRL(l.baseCentavos)}</span>/mês.</small>
+          <button class="btn-link" data-alavanca="${i}">Ver ${escapeHtml(l.origem.rotulo)}</button>
+        </div>`).join("")}
+    </section>`;
 }
 
 function listaAchadosPorTipo(achados) {
@@ -256,13 +334,25 @@ function renderizar() {
 
   const pendentes = painel.achadosPendentes;
   const urgentes = pendentes.filter((a) => a.urgencia === "alta").length;
+  const cards = agruparAchados(pendentes);
   container.innerHTML = `
-    <div class="tela-head" style="margin-top:0;"><div><h3 class="tela-titulo" style="font-size:17px;">O que fazer agora</h3>
-      <p class="tela-sub">${pendentes.length
-        ? `${pendentes.length} ${pendentes.length === 1 ? "ponto" : "pontos"}${urgentes ? `, ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : ""}. Toque em "De onde veio" pra ver os lançamentos por trás de cada um`
-        : "Nada pedindo atenção agora"}</p></div></div>
-    <div id="achados-lista">
-      ${pendentes.length ? listaAchadosPorTipo(pendentes) : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}
+    <div class="inicio-grade">
+      <div class="inicio-principal">
+        ${geral ? blocoOndeVoceEsta(geral) : ""}
+        ${geral ? blocoPraOndeVai(geral) : ""}
+        ${geral ? blocoAlavancas(geral) : ""}
+      </div>
+      <div class="inicio-lateral">
+        <section class="inicio-bloco">
+          <h3>Revisar</h3>
+          <p class="tela-sub" style="margin:0 0 10px;">${pendentes.length
+            ? `${pendentes.length} ${pendentes.length === 1 ? "ponto" : "pontos"}${urgentes ? `, ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : ""}. Toque em "De onde veio" pra ver os lançamentos por trás de cada um.`
+            : "Nada pedindo atenção agora."}</p>
+          <div id="achados-lista">
+            ${cards.length ? cards.map(cartaoRevisao).join("") : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}
+          </div>
+        </section>
+      </div>
     </div>
 
     ${recolhivel("prazo", "Os mesmos pontos, por prazo", "Agora, esta semana, este mês, 90 dias e 12 meses",
@@ -289,6 +379,16 @@ function renderizar() {
 }
 
 function ligarEventos() {
+  container.querySelectorAll("[data-alavanca]").forEach((b) => {
+    b.addEventListener("click", () => navegar(geral.alavancas[Number(b.dataset.alavanca)].destino));
+  });
+  container.querySelectorAll("[data-grupo] > .achado-head [data-acao=\"abrir-grupo\"]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const chave = btn.closest("[data-grupo]").dataset.grupo;
+      if (gruposAbertos.has(chave)) gruposAbertos.delete(chave); else gruposAbertos.add(chave);
+      renderizar();
+    });
+  });
   container.querySelectorAll("[data-achado]").forEach((card) => {
     const id = card.dataset.achado;
     const a = achadosPorId.get(id);
