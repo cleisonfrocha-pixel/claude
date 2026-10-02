@@ -219,6 +219,7 @@ export function padraoAtivo(dados = {}) {
     classe: "liquido",
     dividaId: null, // dívida que financia o bem (carro financiado): mostra o líquido do bem
     valorAtualCentavos: 0,
+    valorCompraCentavos: 0, // quanto custou (opcional)
     dataAvaliacao: hojeISO(),
     ...dados,
   };
@@ -304,9 +305,9 @@ export function validarDivida(d) {
   if (!Number.isFinite(d.saldoOriginalCentavos) || d.saldoOriginalCentavos <= 0) erros.push("Saldo original precisa ser maior que zero.");
   // Dívida negativada ainda sem acordo (Serasa/SPC) não tem parcela: é um
   // saldo devido parado. Só nesse caso a parcela pode ser zero.
-  const semAcordo = d.negativada && d.valorParcelaCentavos === 0;
+  const semAcordo = (d.negativada || d.protestada || d.tipo === "divida") && d.valorParcelaCentavos === 0;
   if (!semAcordo && (!Number.isFinite(d.valorParcelaCentavos) || d.valorParcelaCentavos <= 0)) {
-    erros.push("Valor da parcela precisa ser maior que zero (pode ser zero só em dívida negativada ainda sem acordo).");
+    erros.push("Valor da parcela precisa ser maior que zero (pode ser zero só em dívida negativada, protestada ou marcada como dívida, ainda sem acordo).");
   }
   if (!Number.isInteger(d.quantidadeParcelas) || d.quantidadeParcelas < 1) erros.push("Quantidade de parcelas inválida.");
   if (!Number.isInteger(d.parcelasPagas) || d.parcelasPagas < 0) erros.push("Parcelas pagas inválido.");

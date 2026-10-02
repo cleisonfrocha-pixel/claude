@@ -70,8 +70,9 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
 - `categorias`: nome, grupo (moradia/transporte/alimentacao/saude/educacao/filho/lazer/dividas/renda/outros), natureza (receita/despesa), essencial. "Filho" já vem essencial por padrão: gasto de criança não é corte.
 - `fontesRenda`: nome, tipo (fixa/recorrente/variavel/eventual), valorEsperado, diaRecebimento (dia do mês em que cai; pergunte se ele souber, é o que a agenda usa)
 - `dividas`: nome, credor, saldoOriginal, valorParcela, quantidadeParcelas, parcelasPagas, dataInicio, taxaJurosMensalPct, emRisco, negativada, prioridadePagamento (opcional: 1 paga primeiro se um mês não der pra pagar todas — pergunte a ordem dele se ele mencionar que vai deixar alguma conta pra depois)
+  - Esteira (Sprint 53): `valorComJuros` (o que o credor cobra hoje), `ofertaValor`/`ofertaOrigem`/`ofertaValidade` (deixe a validade vazia se ele não souber), `protestada`, `cartorio`, `credorCnpj`, `bloqueio`, `centro` (casa/negocio/galpao), `mesmaDividaDe`. Protesto que é a mesma dívida do Serasa: marque `protestada` na dívida existente, não crie outra. Dívida sem acordo e sem negativação: `tipo: "divida"` com `valorParcela: 0`.
   - Dívida no Serasa/SPC: `negativada: true`. Sem acordo ainda: `valorParcela: 0`, `quantidadeParcelas: 1`, `dataInicio` = data da dívida original (ou da negativação). Juros informado (`taxaJurosMensalPct`) faz a simulação de caminhos ser honesta; se ele não souber, pergunte uma vez e siga sem.
-- `ativos`: nome, classe (liquido/investimento/veiculo/imovel/participacao/outro), valorAtual, dataAvaliacao
+- `ativos`: nome, classe (liquido/investimento/veiculo/imovel/participacao/outro), valorAtual, valorCompra (quanto custou, opcional), dataAvaliacao
 - `objetivos`: nome, valorAlvo, valorAtual, prazo, conta (vinculada)
 - `recorrencias`: descricao, tipo (receita/despesa), valorEstimado, conta ou cartao, categoria, diaBase, inicio (AAAA-MM). Já gera os previstos dos próximos 3 meses.
 - `pessoas`: nome, papel (titular/conjuge/dependente/outro)

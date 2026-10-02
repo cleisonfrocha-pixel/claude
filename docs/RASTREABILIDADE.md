@@ -1600,3 +1600,14 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Caixa devolve `proximaEntrada` (primeira entrada não incerta depois de hoje), `seguroAteAProximaEntradaCentavos` (menor saldo antes dela) e `primeiroBuraco` (primeiro dia negativo com as contas que pesam nele). Mesma trilha do restante, sem lista paralela.
 - Início: bloco "Até o dinheiro entrar" com o quanto dá pra gastar até a próxima entrada certa e "o que quebra". 469 testes nos dois fusos.
 - Decidido não fazer agora: reagrupar Dinheiro em 3 abas (risco alto, ganho baixo diante do problema real, que era dado incoerente) e a ponte "sobra do mês x caixa" (o mapa de 12 meses do Plano já cobre o caminho mês a mês).
+
+## Sprint 55 — dados cadastrados e reauditoria (02/10/2026)
+Subido pelo chat (lote nwm5rxt5f20rhynoa4cs, desfaz com "desfaz o último envio"):
+- Next conferido em R$ 5.829,33 (hoje); conta da Carolina criada; salário dela cai nela e a fatura Shopee sai dela (o repasse ao Next não precisa de valor: transferência não muda o total da casa).
+- Shopee R$ 650 virou compra na fatura do cartão da Carolina (vence 10/10); o lançamento antigo foi cancelado, não apagado.
+- Verbas: Mercado R$ 1.000 (o "Compra Supermercado" de outubro virou verba; a cópia nova de outubro foi cancelada) e Lazer R$ 500.
+- Del Poente R$ 5.000 (05/10) agora confirmado. Morelli R$ 600 no centro Galpão.
+- Jeep Compass Longitude T270 1.3 Turbo Flex; Galpão como bem (R$ 450 mil estimado, custou R$ 150 mil).
+- Dívidas: EDP ×3 (nov/dez/jan; a de nov também tem protesto), Bradesco (de R$ 10.064,16 por R$ 3.522,46, −64%), Mercado Pago (R$ 12.857,70 por R$ 3.214,42, −75%), protestos de R$ 3.473,75, R$ 1.164,98 e R$ 288,36, água do galpão (~R$ 1.000). Placar: nome limpo 0 de 8.
+Reauditoria com o banco real: Em conta R$ 8.831,61; "o que quebra" mostra 04/10 faltando R$ 69,37 (Jeep vence um dia antes do Del Poente cair), por conta das 3 atrasadas e das camisetas de R$ 1.400. Início e A pagar batem; o Início olha 30 dias e A pagar olha o mês, por isso os totais diferem.
+Pendente: validade das ofertas (não informada, ficou "sem prazo informado"), valor do repasse da Carolina, custos/aluguel do galpão (ele disse que atualiza depois), FIPE mensal.
