@@ -12,7 +12,7 @@ import { agruparAchados } from "../../domain/planoGeral.js";
 import { navegar } from "../navegacao.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
-import { escapeHtml } from "../utilitarios.js";
+import { escapeHtml, ajudaHtml } from "../utilitarios.js";
 
 const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
 const CLASSE_URGENCIA = { alta: "critico", media: "atencao", baixa: "" };
@@ -26,7 +26,7 @@ const NOTA_HORIZONTE_VAZIO = {
   estaSemana: "Nenhum gargalo previsto para esta semana.",
   esteMes: "Nenhuma pendência para fechar o mês.",
   em90: "Nenhuma oportunidade identificada nos próximos 90 dias.",
-  em12meses: "Sem itens de longo prazo. Construir reserva, reduzir passivos e iniciar patrimônio seguem como direção geral.",
+  em12meses: "Sem itens de longo prazo. Construir reserva, reduzir dívidas e começar a juntar patrimônio seguem como direção geral.",
 };
 
 let painel = null;
@@ -110,7 +110,7 @@ function textoDiagnostico(d) {
       : "Nenhuma conta marcada como reserva."));
 
   linhas.push(linhaDiagnostico("Patrimônio líquido",
-    `<b class="mono${d.patrimonioLiquido.liquidoCentavos < 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(d.patrimonioLiquido.liquidoCentavos)}</b>: <span data-valor>${formatarBRL(d.patrimonioLiquido.ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(d.patrimonioLiquido.passivosCentavos)}</span> em passivos.`));
+    `<b class="mono${d.patrimonioLiquido.liquidoCentavos < 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(d.patrimonioLiquido.liquidoCentavos)}</b>: <span data-valor>${formatarBRL(d.patrimonioLiquido.ativosCentavos)}</span> em ativos, <span data-valor>${formatarBRL(d.patrimonioLiquido.passivosCentavos)}</span> em dívidas e parcelas.`));
 
   linhas.push(linhaDiagnostico("Completude dos dados",
     d.completude.completo
@@ -188,7 +188,7 @@ function blocoOndeVoceEsta(g) {
         <div><span>Parcelas de dívida</span><b class="mono" data-valor>${formatarBRL(a.parcelasCentavos)}</b></div>
       </div>
       <div class="plano-sobra ${sobra < 0 ? "negativa" : ""}">
-        <span>${sobra < 0 ? "Falta no mês" : "Sobra no mês"}</span>
+        <span>${sobra < 0 ? "Falta no mês" : "Sobra no mês"} ${ajudaHtml("Renda do mês (recebida e esperada) menos todos os gastos do mês e as parcelas de dívida. Renda incerta não entra na conta.")}</span>
         <b class="mono" data-valor>${formatarBRL(Math.abs(sobra))}</b>
       </div>
       ${a.rendaIncertaCentavos > 0 ? `<p class="tela-sub" style="margin:8px 0 0;"><span data-valor>${formatarBRL(a.rendaIncertaCentavos)}</span> de renda incerta ficou de fora da conta.</p>` : ""}

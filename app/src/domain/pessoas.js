@@ -10,7 +10,7 @@
 
 import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos, calcularMargem } from "./orcamento.js";
-import { visaoDoMes, numerosDoMes } from "./mes.js";
+import { visaoDoMes, numerosDoMes, sobraDoMes } from "./mes.js";
 import { calcularSaldoConta } from "./caixa.js";
 import { calcularVisaoConsolidada, calcularSaldoAtual } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
@@ -56,6 +56,8 @@ function numerosDoRecorte({ contas, transacoes, transacoesDasContas, dividas, at
     // Mesma fórmula da margem da Fase 8: renda menos essencial menos parcelas.
     coberturaCentavos: calcularMargem({ rendaAtualCentavos: rendaCentavos, custoEssencialCentavos: custos.essencialCentavos, comprometimentoMensalDividasCentavos: parcelasCentavos }),
     resultadoMesCentavos: rendaCentavos - custos.atualCentavos,
+    // A mesma "sobra do mês" do Início, do Plano e da Renda (um número por pergunta).
+    sobraMesCentavos: visao ? sobraDoMes(visao, parcelasCentavos) : rendaCentavos - custos.atualCentavos - parcelasCentavos,
     saldoOperacaoCentavos,
     saldoReservaCentavos,
     dividasSaldoCentavos: visaoDividas.saldoProblemasCentavos,

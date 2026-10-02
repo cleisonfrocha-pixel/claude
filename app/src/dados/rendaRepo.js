@@ -16,7 +16,7 @@ import {
   calcularCustos, calcularMargem, calcularRecorrenteVsExtraordinario,
   calcularEvolucaoPorCategoria, identificarCategoriasCrescentes,
 } from "../domain/orcamento.js";
-import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
+import { visaoDoMes, numerosDoMes, sobraDoMes } from "../domain/mes.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
 
 /** Uma leitura única do painel inteiro. */
@@ -75,6 +75,7 @@ async function montarPainelRenda(dados) {
     contas: (dados.contas || []).filter((c) => c.status === "ativa"),
     custos,
     margemCentavos,
+    sobraMesCentavos: sobraDoMes(visao, visaoDividas.comprometimentoMensalCentavos),
     recorrenteVsExtraordinario: calcularRecorrenteVsExtraordinario(dados.transacoes, competencia, dados.recorrencias),
     evolucaoCategorias: calcularEvolucaoPorCategoria(dados.transacoes, competencia),
     categoriasCrescentes: identificarCategoriasCrescentes(dados.transacoes, competencia),

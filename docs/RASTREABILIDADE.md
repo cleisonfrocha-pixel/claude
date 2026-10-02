@@ -1444,3 +1444,19 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   Aviso explícito: ainda não há histórico de gasto do dia a dia (mercado,
   lazer), então os meses de frente estão mais folgados do que a vida real.
 - Testes: `mapa12.test.js` (7). 425 passando.
+
+### Sprint 43: um número por pergunta, sem jargão — 02/10/2026
+
+- Renda reescrita em português de gente: "Dá pra pagar o mês?" (no lugar de
+  "Os três gaps"), "Pra onde vai o dinheiro", "Gastos que dá pra cortar",
+  "Gastos fixos", "Gastos fora do normal", "Gastos que só sobem". "Margem" saiu
+  da tela: a Renda passou a mostrar a mesma **Sobra do mês** do Início e do
+  Plano. Por pessoa e Casa também: "Sobra do mês" (renda menos todos os gastos
+  e parcelas); a conta de "quem cobre o essencial" ficou separada, com
+  explicação.
+- Botão "i" com explicação curta (`ajudaHtml`) em Pode gastar até, Sobra do
+  mês e Dá pra pagar o mês. Linhas zeradas sem sentido (fixos/fora do normal
+  quando nada foi pago ainda) deixam de aparecer.
+- `testes/linguagem.test.js`: falha se qualquer tela mostrar margem, gap,
+  discricionário, extraordinário, passivo, snapshot, comprometimento ou
+  competência. 426 passando.

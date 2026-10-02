@@ -13,7 +13,7 @@ import { TIPOS_FONTE_RENDA } from "../../domain/esquema.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData } from "../../domain/tempo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
-import { escapeHtml, iniciais, mostrarToast } from "../utilitarios.js";
+import { escapeHtml, ajudaHtml, iniciais, mostrarToast } from "../utilitarios.js";
 
 const ROTULO_TIPO_FONTE = { fixa: "Fixa", recorrente: "Recorrente", variavel: "Variável", eventual: "Eventual" };
 const ROTULO_CAUSA = { renda: "Renda", gasto: "Gasto", divida: "Dívida", timing: "Timing de caixa" };
@@ -63,7 +63,7 @@ function blocoCausaDeficit(cd) {
       ${cd.causas.map((c) => `
         <div class="texto" style="margin-top:6px;"><b>${escapeHtml(ROTULO_CAUSA[c.tipo])}</b>: ${escapeHtml(c.titulo)}. ${textoCausa(c)}</div>
       `).join("")}
-      ${!cd.causas.length ? `<div class="texto">O caixa fechou negativo por uma margem pequena, sem uma causa específica se destacar.</div>` : ""}
+      ${!cd.causas.length ? `<div class="texto">O caixa fechou negativo por uma diferença pequena, sem uma causa que se destaque.</div>` : ""}
     </div>`;
 }
 
@@ -138,24 +138,24 @@ function renderizar() {
       <div class="tela-head" style="margin-top:0;">
         <div>
           <h2 class="tela-titulo">Renda</h2>
-          <p class="tela-sub">Capacidade de geração de renda, os gaps que ela precisa cobrir, e por que existe déficit quando existe.</p>
+          <p class="tela-sub">Quanto entra, de onde vem e se dá pra fechar o mês.</p>
         </div>
       </div>
       <div class="vazio">
-        Ainda não há nenhuma fonte de renda nem transação cadastrada. Sem isso não dá para calcular gap, margem ou causa de déficit.
+        Ainda não há nenhuma fonte de renda nem transação cadastrada. Sem isso não dá pra saber quanto falta ou sobra no mês.
         <div><button class="btn btn-primary" data-acao="nova-fonte">+ Nova fonte de renda</button></div>
       </div>`;
     container.querySelector('[data-acao="nova-fonte"]').addEventListener("click", () => abrirFormularioFonte(null));
     return;
   }
 
-  const { gaps, custos, margemCentavos, concentracao, metas, recorrenteVsExtraordinario, evolucaoCategorias, categoriasCrescentes } = painel;
+  const { gaps, custos, concentracao, metas, recorrenteVsExtraordinario, evolucaoCategorias, categoriasCrescentes } = painel;
 
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
       <div>
         <h2 class="tela-titulo">Renda</h2>
-        <p class="tela-sub">Capacidade de geração de renda, os gaps que ela precisa cobrir, e por que existe déficit quando existe.</p>
+        <p class="tela-sub">Quanto entra, de onde vem e se dá pra fechar o mês.</p>
       </div>
     </div>
 
@@ -169,27 +169,26 @@ function renderizar() {
     </div>
     <div class="lista-cartoes" id="lista-fontes" style="margin-bottom:20px;"></div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Os três gaps</h3>
-      <p class="tela-sub">Renda atual menos cada patamar de custo. Positivo é sobra, negativo é falta</p></div></div>
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Dá pra pagar o mês? ${ajudaHtml("É a renda do mês menos cada nível de gasto. Verde é o que sobra, vermelho é o que falta.")}</h3></div></div>
     <div class="resumo-mes">
-      ${linhaGap("Contra o essencial", gaps.gapEssencialCentavos)}
-      ${linhaGap("Contra o custo desejado", gaps.gapDesejadoCentavos)}
-      ${linhaGap("Contra a meta de recuperação", gaps.gapRecuperacaoCentavos)}
+      ${linhaGap("Pra pagar só o essencial", gaps.gapEssencialCentavos)}
+      ${linhaGap("Pra manter o padrão que você quer", gaps.gapDesejadoCentavos)}
+      ${linhaGap("Pra se recuperar", gaps.gapRecuperacaoCentavos)}
     </div>
     ${metas.custoDesejadoCentavos == null || metas.metaRecuperacaoCentavos == null ? `
       <div class="nota-incerto">
-        <span>${metas.custoDesejadoCentavos == null ? "Custo desejado não definido" : ""}${metas.custoDesejadoCentavos == null && metas.metaRecuperacaoCentavos == null ? " · " : ""}${metas.metaRecuperacaoCentavos == null ? `Meta de recuperação usando o padrão (essencial + parcelas de dívida): <span data-valor>${formatarBRL(metas.metaRecuperacaoEfetivaCentavos)}</span>` : ""}</span>
+        <span>${metas.custoDesejadoCentavos == null ? "Você ainda não definiu quanto quer gastar por mês" : ""}${metas.custoDesejadoCentavos == null && metas.metaRecuperacaoCentavos == null ? " · " : ""}${metas.metaRecuperacaoCentavos == null ? `Pra se recuperar, usando o mínimo (essencial + parcelas de dívida): <span data-valor>${formatarBRL(metas.metaRecuperacaoEfetivaCentavos)}</span>` : ""}</span>
       </div>` : ""}
 
     <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Metas</h3>
-      <p class="tela-sub">Custo de vida desejado, meta de recuperação e investimento mínimo. Só você define, o sistema nunca inventa</p></div></div>
+      <p class="tela-sub">Quanto você quer gastar, quanto precisa pra se recuperar e quanto investir. Só você define, o painel nunca inventa.</p></div></div>
     <div class="simulador-linha" style="margin-bottom:10px;">
-      <div class="field"><label for="input-custo-desejado">Custo de vida desejado</label>
+      <div class="field"><label for="input-custo-desejado">Quanto quero gastar por mês</label>
         <input type="text" inputmode="decimal" id="input-custo-desejado" placeholder="0,00" value="${metas.custoDesejadoCentavos != null ? formatarBRL(metas.custoDesejadoCentavos).replace("R$ ", "") : ""}"></div>
       <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-custo-desejado">Salvar</button>
     </div>
     <div class="simulador-linha" style="margin-bottom:10px;">
-      <div class="field"><label for="input-meta-recuperacao">Meta de recuperação (opcional)</label>
+      <div class="field"><label for="input-meta-recuperacao">Quanto preciso por mês pra me recuperar (opcional)</label>
         <input type="text" inputmode="decimal" id="input-meta-recuperacao" placeholder="0,00" value="${metas.metaRecuperacaoCentavos != null ? formatarBRL(metas.metaRecuperacaoCentavos).replace("R$ ", "") : ""}"></div>
       <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-meta-recuperacao">Salvar</button>
     </div>
@@ -200,17 +199,18 @@ function renderizar() {
     </div>
     <div class="tela-sub" style="margin:6px 0 0;">Continua saindo todo mês em Plano › Caminhos, mesmo com dívida em aberto — protegido como o essencial, nunca vira dinheiro pra pagar dívida.</div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Custos e margem</h3>
-      <p class="tela-sub">Orçamento como instrumento de clareza, não uma prisão</p></div></div>
+    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Pra onde vai o dinheiro</h3>
+      <p class="tela-sub">Pra enxergar com clareza, não pra se prender.</p></div></div>
     <div class="resumo-mes">
-      <div class="resumo-item"><span>Custo essencial</span><b class="mono" data-valor>${formatarBRL(custos.essencialCentavos)}</b></div>
-      <div class="resumo-item"><span>Custo atual</span><b class="mono" data-valor>${formatarBRL(custos.atualCentavos)}</b></div>
-      <div class="resumo-item"><span>Discricionário</span><b class="mono" data-valor>${formatarBRL(custos.discricionarioCentavos)}</b></div>
+      <div class="resumo-item"><span>Gastos essenciais</span><b class="mono" data-valor>${formatarBRL(custos.essencialCentavos)}</b></div>
+      <div class="resumo-item"><span>Gasto total do mês</span><b class="mono" data-valor>${formatarBRL(custos.atualCentavos)}</b></div>
+      <div class="resumo-item"><span>Gastos que dá pra cortar</span><b class="mono" data-valor>${formatarBRL(custos.discricionarioCentavos)}</b></div>
     </div>
     <div class="resumo-mes">
-      <div class="resumo-item"><span>Margem</span><b class="mono ${margemCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(margemCentavos)}</b></div>
-      <div class="resumo-item"><span>Recorrente</span><b class="mono" data-valor>${formatarBRL(recorrenteVsExtraordinario.recorrenteCentavos)}</b></div>
-      <div class="resumo-item"><span>Extraordinário</span><b class="mono" data-valor>${formatarBRL(recorrenteVsExtraordinario.extraordinarioCentavos)}</b></div>
+      <div class="resumo-item"><span>Sobra do mês ${ajudaHtml("Renda do mês (recebida e esperada) menos todos os gastos do mês e as parcelas de dívida. É o mesmo número do Início e do Plano.")}</span><b class="mono ${painel.sobraMesCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(painel.sobraMesCentavos)}</b></div>
+      ${recorrenteVsExtraordinario.recorrenteCentavos || recorrenteVsExtraordinario.extraordinarioCentavos ? `
+      <div class="resumo-item"><span>Gastos fixos</span><b class="mono" data-valor>${formatarBRL(recorrenteVsExtraordinario.recorrenteCentavos)}</b></div>
+      <div class="resumo-item"><span>Gastos fora do normal</span><b class="mono" data-valor>${formatarBRL(recorrenteVsExtraordinario.extraordinarioCentavos)}</b></div>` : ""}
     </div>
     ${custos.faturaSemDetalheCentavos > 0 ? `
       <div class="nota-incerto">
@@ -222,7 +222,7 @@ function renderizar() {
     ${evolucaoCategorias.length ? evolucaoCategorias.map((i) => linhaEvolucao(i, painel)).join("") : `<div class="vazio">Nenhuma despesa paga neste mês ainda.</div>`}
 
     ${categoriasCrescentes.length ? `
-      <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Categorias consumindo margem de forma crescente</h3>
+      <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Gastos que só sobem</h3>
         <p class="tela-sub">Subiram em todos os últimos meses, sem nenhuma queda no meio</p></div></div>
       ${categoriasCrescentes.map((c) => {
         const cat = (painel.categorias || []).find((x) => x.id === c.categoriaId);

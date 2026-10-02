@@ -10,7 +10,7 @@ import { assinarInicio } from "../../dados/inicioRepo.js";
 import { assinarPainelDecisoes } from "../../dados/decisoesRepo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData } from "../../domain/tempo.js";
-import { escapeHtml } from "../utilitarios.js";
+import { escapeHtml, ajudaHtml } from "../utilitarios.js";
 import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
 import { navegar } from "../navegacao.js";
@@ -135,7 +135,7 @@ function renderizar() {
               <button class="home-topo-acao" id="botao-ocultar-home" title="Ocultar valores" aria-label="Ocultar valores"></button>
             </div>
           </div>
-          <div class="home-saldo-rotulo" style="cursor:default;">Pode gastar até ${escapeHtml(formatarData(horizonteAte))}</div>
+          <div class="home-saldo-rotulo" style="cursor:default;">Pode gastar até ${escapeHtml(formatarData(horizonteAte))} ${ajudaHtml("É o que dá pra gastar sem faltar dinheiro pra nenhuma conta até essa data: o que está em conta, mais o que vai entrar, menos o que vai sair, olhando o pior momento do caminho.")}</div>
           <div class="home-saldo-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
           <div class="home-saldo-sub">${explicacao}</div>
           <div class="selo-confianca ${confianca.nivel}" title="${escapeHtml(confianca.frase)}">

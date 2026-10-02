@@ -811,3 +811,12 @@
 .mapa-chip.bom { background: var(--good-bg); color: var(--good); }
 .mapa-buraco.cabe { background: var(--good-bg); border-color: var(--good); }
 .mapa-buraco.cabe .titulo { color: var(--good); }
+
+/* ---- botãozinho "i" com explicação curta ---- */
+.ajuda { display: inline-block; position: relative; vertical-align: middle; margin-left: 4px; }
+.ajuda > summary { list-style: none; cursor: pointer; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); color: var(--text-muted); display: inline-grid; place-items: center; font: italic 700 12px Georgia, serif; text-transform: none; letter-spacing: 0; }
+.ajuda > summary::-webkit-details-marker { display: none; }
+.ajuda[open] > summary { color: var(--accent); border-color: var(--accent); }
+.ajuda-texto { display: block; margin: 8px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); color: var(--text); font: 400 13px/1.45 var(--font, system-ui, sans-serif); text-transform: none; letter-spacing: 0; font-style: normal; white-space: normal; max-width: 320px; }
+.home-saldo-rotulo .ajuda > summary { border-color: rgba(255,255,255,.6); color: #fff; }
+.plano-sobra .ajuda-texto { color: var(--text); }

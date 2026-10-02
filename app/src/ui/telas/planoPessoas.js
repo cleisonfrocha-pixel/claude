@@ -7,7 +7,7 @@ import { assinarPainelPessoas } from "../../dados/visaoPessoasRepo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { competenciaLabel } from "../../domain/tempo.js";
 import { SEM_DONO } from "../../domain/pessoas.js";
-import { escapeHtml } from "../utilitarios.js";
+import { escapeHtml, ajudaHtml } from "../utilitarios.js";
 
 let container = null;
 let parar = null;
@@ -68,13 +68,13 @@ function cartaoPessoa(p) {
         </div>
       </div>
       <div class="pessoa-destaque ${n.coberturaCentavos < 0 ? "negativo" : ""}">
-        <span>${n.coberturaCentavos < 0 ? "Falta pra cobrir o próprio mês" : "Sobra depois do essencial e das parcelas"}</span>
+        <span>${n.coberturaCentavos < 0 ? "Falta pra cobrir o essencial e as parcelas" : "Sobra depois do essencial e das parcelas"} ${ajudaHtml("Considera só o gasto essencial e as parcelas, pra saber quem cobre quem. A \"Sobra do mês\" abaixo desconta todos os gastos.")}</span>
         <b data-valor>${brl(Math.abs(n.coberturaCentavos))}</b>
       </div>
       ${linha("Renda do mês", `<span class="valor-pos">${brl(n.rendaCentavos)}</span>`, n.rendaProvavelCentavos ? `${formatarBRL(n.rendaConfirmadaCentavos)} recebidos + ${formatarBRL(n.rendaProvavelCentavos)} esperados` : "")}
       ${linha("Gasto do mês", brl(n.despesasCentavos), `essencial ${formatarBRL(n.essencialCentavos)}`)}
       ${linha("Parcelas de dívida", brl(n.parcelasCentavos))}
-      ${linha("Resultado do mês", `<span class="${classeValor(n.resultadoMesCentavos)}">${brl(n.resultadoMesCentavos, { sinal: true })}</span>`, "renda menos gasto")}
+      ${linha("Sobra do mês", `<span class="${classeValor(n.sobraMesCentavos ?? n.resultadoMesCentavos)}">${brl(n.sobraMesCentavos ?? n.resultadoMesCentavos, { sinal: true })}</span>`, "renda menos todos os gastos e as parcelas")}
       ${linha("Saldo em conta", brl(n.saldoOperacaoCentavos), n.saldoReservaCentavos ? `mais ${formatarBRL(n.saldoReservaCentavos)} em reserva` : "")}
       ${linha("Dívidas pra resolver", `<span class="${n.dividasSaldoCentavos > 0 ? "valor-neg" : ""}">${brl(n.dividasSaldoCentavos)}</span>`,
         [n.dividasAtivas ? `${n.dividasAtivas} ativa${n.dividasAtivas > 1 ? "s" : ""}` : "nenhuma",
@@ -97,7 +97,7 @@ function blocoCasa() {
       <div class="resumo-item"><span>Renda da casa</span><b class="mono valor-pos" data-valor>${brl(c.rendaCentavos)}</b></div>
       <div class="resumo-item"><span>Gasto da casa</span><b class="mono" data-valor>${brl(c.despesasCentavos)}</b></div>
       <div class="resumo-item"><span>Parcelas</span><b class="mono" data-valor>${brl(c.parcelasCentavos)}</b></div>
-      <div class="resumo-item"><span>Sobra depois do essencial e das parcelas</span><b class="mono ${classeValor(c.coberturaCentavos)}" data-valor>${brl(c.coberturaCentavos)}</b></div>
+      <div class="resumo-item"><span>Sobra do mês ${ajudaHtml("Renda do mês (recebida e esperada) menos todos os gastos e as parcelas de dívida. É o mesmo número do Início e do Plano.")}</span><b class="mono ${classeValor(c.sobraMesCentavos)}" data-valor>${brl(c.sobraMesCentavos)}</b></div>
     </div>
     ${c.dividasNegativadas ? `<div class="alerta-cobertura"><div class="titulo">${c.dividasNegativadas} ${c.dividasNegativadas === 1 ? "dívida negativada" : "dívidas negativadas"} na casa</div>
       <div class="texto">Somam <b data-valor>${brl(c.saldoNegativadoCentavos)}</b>. Nome sujo trava crédito e costuma ser o primeiro ponto de virada: veja em Caminhos quanto tempo cada estratégia leva pra limpar.</div></div>` : ""}`;

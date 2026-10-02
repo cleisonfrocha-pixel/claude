@@ -69,8 +69,8 @@ function detalheObjetivo(o) {
     <div class="simulador-bloco">
       <div class="simulador-titulo">Simular com outra sobra mensal</div>
       <div class="simulador-linha">
-        <div class="field"><label for="sim-margem-${o.id}">Sobra mensal hipotética</label>
-          <input type="text" inputmode="decimal" id="sim-margem-${o.id}" data-campo="margem" placeholder="0,00"></div>
+        <div class="field"><label for="sim-sobra-${o.id}">Sobra mensal hipotética</label>
+          <input type="text" inputmode="decimal" id="sim-sobra-${o.id}" data-campo="sobra" placeholder="0,00"></div>
         <button class="btn btn-ghost btn-sm" type="button" data-acao="simular-prazo">Simular</button>
       </div>
       <div class="simulador-resultado" data-resultado="prazo"></div>
@@ -179,19 +179,19 @@ function renderizarLista() {
     const elExtra = alvo.querySelector(`[data-extra-id="${o.id}"]`);
     if (!elExtra) return;
     const btnSimular = elExtra.querySelector('[data-acao="simular-prazo"]');
-    const inputMargem = elExtra.querySelector('[data-campo="margem"]');
+    const inputMargem = elExtra.querySelector('[data-campo="sobra"]');
     const resultado = elExtra.querySelector('[data-resultado="prazo"]');
     if (btnSimular) {
       btnSimular.addEventListener("click", () => {
         const novaMargem = paraCentavos(inputMargem.value);
         if (!novaMargem || novaMargem <= 0) {
-          resultado.innerHTML = `<div class="erro-form">Informe uma margem maior que zero.</div>`;
+          resultado.innerHTML = `<div class="erro-form">Informe uma sobra maior que zero.</div>`;
           return;
         }
         const r = simularNovoPrazo(o, o.valorAtualCalculadoCentavos, novaMargem);
         resultado.innerHTML = r.atingivel
           ? `<div class="simulador-aviso" style="font-size:13px;color:var(--text);">Com <span data-valor>${formatarBRL(novaMargem)}</span>/mês, a meta seria atingida em ${r.mesesNecessarios} ${r.mesesNecessarios === 1 ? "mês" : "meses"}. Isto é uma simulação. Nada foi alterado no objetivo.</div>`
-          : `<div class="erro-form">Com essa margem, a meta nunca seria atingida.</div>`;
+          : `<div class="erro-form">Com essa sobra, a meta nunca seria atingida.</div>`;
       });
     }
   });
