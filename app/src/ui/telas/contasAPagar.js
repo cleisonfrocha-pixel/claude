@@ -11,12 +11,7 @@ import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { navegar } from "../navegacao.js";
 import * as modal from "../modal.js";
 
-const GRUPOS = [
-  { id: "atrasada", titulo: "Atrasadas", dica: "Pagando estas primeiro, o mês sai do vermelho." },
-  { id: "hoje", titulo: "Vencem hoje", dica: "" },
-  { id: "a_pagar", titulo: "A pagar", dica: "" },
-  { id: "paga", titulo: "Pagas", dica: "" },
-];
+const GRUPOS = ["atrasada", "hoje", "a_pagar", "paga"];
 const DESTINO_ORIGEM = {
   recorrencia: { modulo: "dinheiro", aba: "recorrencias" },
   divida: { modulo: "dividas" },
@@ -24,6 +19,23 @@ const DESTINO_ORIGEM = {
   transacao: { modulo: "dinheiro", aba: "transacoes" },
 };
 
+// "pagar" = contas do mês; "receber" = entradas do mês. Mesma tela, mesmos
+// estados (o motor usa o mesmo vocabulário nos dois lados).
+let lado = "pagar";
+const TEXTOS = {
+  pagar: {
+    titulo: "A pagar", sub: "Cada conta do mês com o seu estado. Toque em Paguei quando pagar.", botao: "Paguei", selo: "Paga",
+    unidade: "contas pagas", feito: "pagos", falta: "faltam", vazio: "Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.",
+    grupos: { atrasada: ["Atrasadas", "Pagando estas primeiro, o mês sai do vermelho."], hoje: ["Vencem hoje", ""], a_pagar: ["A pagar", ""], paga: ["Pagas", ""] },
+    pronto: (d) => `${d} paga.`,
+  },
+  receber: {
+    titulo: "A receber", sub: "O que deve entrar no mês. Toque em Recebi quando o dinheiro cair.", botao: "Recebi", selo: "Recebida",
+    unidade: "entradas recebidas", feito: "recebidos", falta: "faltam", vazio: "Nenhuma entrada prevista neste mês. Cadastre em Renda.",
+    grupos: { atrasada: ["Ainda não caíram", "Passou do dia esperado. Vale conferir com quem paga."], hoje: ["Caem hoje", ""], a_pagar: ["A receber", ""], paga: ["Recebidas", ""] },
+    pronto: (d) => `${d} recebida.`,
+  },
+};
 let mesVisivel = tempo.competenciaAtual();
 let painel = null;
 let parar = null;
@@ -32,6 +44,7 @@ let container = null;
 export default {
   montar(alvo) {
     container = alvo;
+    lado = "pagar";
     mesVisivel = tempo.competenciaAtual();
     assinar();
     renderizar();
@@ -59,18 +72,19 @@ const diaMes = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 
 function quando(i, hoje) {
-  if (i.estado === "paga") return i.pagoEm ? `paga em ${diaMes(i.pagoEm)}` : "paga";
+  const rec = lado === "receber";
+  if (i.estado === "paga") return i.pagoEm ? `${rec ? "recebida" : "paga"} em ${diaMes(i.pagoEm)}` : (rec ? "recebida" : "paga");
   if (i.semDia || !i.vencimento) return "sem dia fixo, até o fim do mês";
-  if (i.estado === "atrasada") return `venceu dia ${diaMes(i.vencimento)} · atrasada há ${plural(i.diasAtraso, "dia", "dias")}`;
-  if (i.estado === "hoje") return "vence hoje";
+  if (i.estado === "atrasada") return rec ? `esperada dia ${diaMes(i.vencimento)} · não caiu há ${plural(i.diasAtraso, "dia", "dias")}` : `venceu dia ${diaMes(i.vencimento)} · atrasada há ${plural(i.diasAtraso, "dia", "dias")}`;
+  if (i.estado === "hoje") return rec ? "cai hoje" : "vence hoje";
   const dias = Math.round((new Date(`${i.vencimento}T12:00:00Z`) - new Date(`${hoje}T12:00:00Z`)) / 86400000);
-  return `vence dia ${diaMes(i.vencimento)} · ${dias === 1 ? "amanhã" : `em ${dias} dias`}`;
+  return `${rec ? "cai" : "vence"} dia ${diaMes(i.vencimento)} · ${dias === 1 ? "amanhã" : `em ${dias} dias`}${i.incerta ? " · incerta, fora da conta" : ""}`;
 }
 
 function cartaoConta(i, hoje) {
   const paga = i.estado === "paga";
   return `
-    <div class="conta-card estado-${i.estado}" data-chave="${escapeHtml(i.chave)}">
+    <div class="conta-card estado-${i.estado}${i.incerta ? " incerta" : ""}" data-chave="${escapeHtml(i.chave)}">
       <span class="conta-marca" aria-hidden="true">${paga ? "✓" : i.estado === "atrasada" ? "!" : ""}</span>
       <div class="conta-corpo">
         <div class="conta-titulo">${escapeHtml(i.descricao)}</div>
@@ -79,7 +93,7 @@ function cartaoConta(i, hoje) {
       <div class="conta-direita">
         <div class="conta-valor mono" data-valor>${formatarBRL(i.valorCentavos)}</div>
         <div class="conta-acoes">
-          ${paga ? `<span class="conta-selo">Paga</span>` : `<button class="btn-mini btn-baixa conta-pagar" data-pagar>Paguei</button>`}
+          ${paga ? `<span class="conta-selo">${TEXTOS[lado].selo}</span>` : `<button class="btn-mini btn-baixa conta-pagar" data-pagar>${TEXTOS[lado].botao}</button>`}
           <button class="btn-mini conta-mais" data-mais aria-label="Mais opções de ${escapeHtml(i.descricao)}">⋯</button>
         </div>
       </div>
@@ -104,23 +118,39 @@ function porSemana(lista, hoje) {
 
 function mensagemDoMes(r) {
   const { resumo: s } = r;
-  if (!s.quantidade) return "Nenhuma conta marcada neste mês.";
-  if (s.faltaCentavos === 0) return "Mês em dia: tudo pago.";
-  if (s.quantidadeAtrasadas) return `${plural(s.quantidadeAtrasadas, "conta atrasada", "contas atrasadas")} (${formatarBRL(s.atrasadasCentavos)}). Comece por elas.`;
-  if (s.proxima) return `Nada atrasado. Próxima: ${s.proxima.descricao}, dia ${diaMes(s.proxima.vencimento)}.`;
-  return "Nada atrasado.";
+  const rec = lado === "receber";
+  if (!s.quantidade) return rec ? "Nenhuma entrada marcada neste mês." : "Nenhuma conta marcada neste mês.";
+  if (s.faltaCentavos === 0) return rec ? "Tudo que era esperado já entrou." : "Mês em dia: tudo pago.";
+  if (s.quantidadeAtrasadas) return rec
+    ? `${plural(s.quantidadeAtrasadas, "entrada ainda não caiu", "entradas ainda não caíram")} (${formatarBRL(s.atrasadasCentavos)}). Vale conferir.`
+    : `${plural(s.quantidadeAtrasadas, "conta atrasada", "contas atrasadas")} (${formatarBRL(s.atrasadasCentavos)}). Comece por elas.`;
+  if (s.proxima) return rec ? `Próxima a cair: ${s.proxima.descricao}, dia ${diaMes(s.proxima.vencimento)}.` : `Nada atrasado. Próxima: ${s.proxima.descricao}, dia ${diaMes(s.proxima.vencimento)}.`;
+  return rec ? "Nenhuma entrada atrasada." : "Nada atrasado.";
+}
+
+function dadosDoLado() {
+  return lado === "receber" ? painel.entradas : painel;
 }
 
 function renderizar() {
   if (!container) return;
-  const titulo = `<div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">A pagar</h2>
-    <p class="tela-sub">Cada conta do mês com o seu estado. Toque em Paguei quando pagar.</p></div></div>`;
-  if (!painel) { container.innerHTML = `${titulo}<p class="tela-sub">Carregando…</p>`; return; }
+  const T = TEXTOS[lado];
+  const cabeca = `<div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">${T.titulo}</h2>
+    <p class="tela-sub">${T.sub}</p></div></div>`;
+  if (!painel) { container.innerHTML = `${cabeca}<p class="tela-sub">Carregando…</p>`; return; }
 
-  const { resumo: s, grupos, hoje } = painel;
-  const classeBarra = s.quantidadeAtrasadas ? "critico" : "";
+  const dados = dadosDoLado();
+  const { resumo: s, grupos } = dados;
+  const hoje = painel.hoje;
+  const classeBarra = s.quantidadeAtrasadas && lado === "pagar" ? "critico" : "";
+  const seletor = `
+    <div class="lado-seletor" role="tablist">
+      <button class="lado-opcao${lado === "pagar" ? " ativo" : ""}" data-lado="pagar" role="tab">A pagar <span>${painel.resumo.quantidade - painel.resumo.quantidadePagas}</span></button>
+      <button class="lado-opcao${lado === "receber" ? " ativo" : ""}" data-lado="receber" role="tab">A receber <span>${painel.entradas.resumo.quantidade - painel.entradas.resumo.quantidadePagas}</span></button>
+    </div>`;
   container.innerHTML = `
-    ${titulo}
+    ${seletor}
+    ${cabeca}
     <div class="mes-nav">
       <button class="icon-btn" id="mes-prev" aria-label="Mês anterior">‹</button>
       <div class="mes-nav-label">${escapeHtml(tempo.competenciaLabel(mesVisivel))}</div>
@@ -129,37 +159,40 @@ function renderizar() {
 
     <div class="mes-progresso">
       <div class="mes-progresso-topo">
-        <b>${s.quantidadePagas} de ${s.quantidade}</b> <span>contas pagas</span>
+        <b>${s.quantidadePagas} de ${s.quantidade}</b> <span>${T.unidade}</span>
         <span class="mes-progresso-pct">${s.percentualPago}%</span>
       </div>
       <div class="barra-limite ${classeBarra}"><span style="width:${s.percentualPago}%"></span></div>
       <div class="mes-progresso-valores">
-        <span><span data-valor>${formatarBRL(s.pagoCentavos)}</span> pagos</span>
-        <span>faltam <b data-valor>${formatarBRL(s.faltaCentavos)}</b></span>
+        <span><span data-valor>${formatarBRL(s.pagoCentavos)}</span> ${T.feito}</span>
+        <span>${T.falta} <b data-valor>${formatarBRL(s.faltaCentavos)}</b></span>
       </div>
-      <div class="mes-progresso-msg ${s.quantidadeAtrasadas ? "alerta" : s.faltaCentavos === 0 && s.quantidade ? "ok" : ""}">${escapeHtml(mensagemDoMes(painel))}</div>
+      <div class="mes-progresso-msg ${s.quantidadeAtrasadas && lado === "pagar" ? "alerta" : s.faltaCentavos === 0 && s.quantidade ? "ok" : ""}">${escapeHtml(mensagemDoMes(dados))}</div>
+      ${lado === "receber" && s.incertasCentavos > 0 ? `<div class="mes-progresso-msg">Mais <span data-valor>${formatarBRL(s.incertasCentavos)}</span> são incertos e ficam fora da conta.</div>` : ""}
     </div>
 
     ${GRUPOS.map((g) => {
-      const lista = grupos[g.id];
+      const lista = grupos[g];
       if (!lista.length) return "";
-      const soma = lista.reduce((t, i) => t + i.valorCentavos, 0);
-      const cabeca = `<div class="conta-grupo-topo estado-${g.id}"><span class="conta-grupo-titulo">${g.titulo} <span class="conta-grupo-qtd">${lista.length}</span></span><span class="conta-grupo-soma mono" data-valor>${formatarBRL(soma)}</span></div>`;
-      const corpo = `${g.dica ? `<div class="conta-grupo-dica">${g.dica}</div>` : ""}${g.id === "a_pagar" ? porSemana(lista, hoje) : lista.map((i) => cartaoConta(i, hoje)).join("")}`;
-      return g.id === "paga"
-        ? `<details class="conta-grupo estado-paga"><summary>${cabeca}</summary>${corpo}</details>`
-        : `<section class="conta-grupo">${cabeca}${corpo}</section>`;
+      const [rotulo, dica] = T.grupos[g];
+      const soma = lista.filter((i) => !i.incerta).reduce((t, i) => t + i.valorCentavos, 0);
+      const cabecaGrupo = `<div class="conta-grupo-topo estado-${g}"><span class="conta-grupo-titulo">${rotulo} <span class="conta-grupo-qtd">${lista.length}</span></span><span class="conta-grupo-soma mono" data-valor>${formatarBRL(soma)}</span></div>`;
+      const corpo = `${dica ? `<div class="conta-grupo-dica">${dica}</div>` : ""}${g === "a_pagar" ? porSemana(lista, hoje) : lista.map((i) => cartaoConta(i, hoje)).join("")}`;
+      return g === "paga"
+        ? `<details class="conta-grupo estado-paga"><summary>${cabecaGrupo}</summary>${corpo}</details>`
+        : `<section class="conta-grupo">${cabecaGrupo}${corpo}</section>`;
     }).join("")}
-    ${s.quantidade === 0 ? `<div class="vazio">Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.</div>` : ""}
+    ${s.quantidade === 0 && !dados.itens.length ? `<div class="vazio">${T.vazio}</div>` : ""}
   `;
 
-  container.querySelector("#mes-prev").addEventListener("click", () => trocarMes(tempo.somarMeses(mesVisivel, -1)));
-  container.querySelector("#mes-next").addEventListener("click", () => trocarMes(tempo.somarMeses(mesVisivel, 1)));
+  container.querySelectorAll("[data-lado]").forEach((b) => b.addEventListener("click", () => { lado = b.dataset.lado; renderizar(); }));
   container.querySelectorAll(".conta-card").forEach((el) => {
-    const item = painel.itens.find((i) => i.chave === el.dataset.chave);
+    const item = dados.itens.find((i) => i.chave === el.dataset.chave);
     el.querySelector("[data-pagar]")?.addEventListener("click", (ev) => pagar(item, ev.currentTarget));
     el.querySelector("[data-mais]")?.addEventListener("click", () => abrirMais(item));
   });
+  container.querySelector("#mes-prev").addEventListener("click", () => trocarMes(tempo.somarMeses(mesVisivel, -1)));
+  container.querySelector("#mes-next").addEventListener("click", () => trocarMes(tempo.somarMeses(mesVisivel, 1)));
 }
 
 async function pagar(item, botao, valorCentavos) {
@@ -169,7 +202,7 @@ async function pagar(item, botao, valorCentavos) {
     if (item.tipo === "transacao") desfazer = await darBaixaTransacao(item.transacaoId, { valorCentavos });
     else if (item.tipo === "evento") desfazer = await darBaixaEvento(item.evento, { valorCentavos });
     else if (item.tipo === "fatura") desfazer = await darBaixaFatura({ faturaId: item.faturaId, cartaoId: item.cartaoId, valorCentavos: valorCentavos || item.valorCentavos, descricao: item.descricao });
-    mostrarToast(`${item.descricao} paga.`, { acao: { rotulo: "Desfazer", fn: async () => {
+    mostrarToast(TEXTOS[lado].pronto(item.descricao), { acao: { rotulo: "Desfazer", fn: async () => {
       try { await desfazerBaixa(desfazer); mostrarToast("Desfeito."); } catch (e) { mostrarToast(e.message || "Não consegui desfazer."); }
     } } });
   } catch (e) {
@@ -185,12 +218,12 @@ function abrirMais(item) {
       <h2>${escapeHtml(item.descricao)}</h2>
       <p class="tela-sub" style="margin-bottom:14px;"><span data-valor>${formatarBRL(item.valorCentavos)}</span> · ${escapeHtml(quando(item, painel.hoje))}</p>
       ${podeOutroValor ? `
-        <div class="field"><label for="outro-valor">Paguei outro valor</label>
+        <div class="field"><label for="outro-valor">${lado === "receber" ? "Recebi outro valor" : "Paguei outro valor"}</label>
           <input type="text" inputmode="decimal" id="outro-valor" placeholder="${formatarBRL(item.valorCentavos).replace("R$ ", "")}"></div>
         <div class="erro-form" id="outro-erro" hidden></div>` : ""}
       <div class="modal-actions" style="flex-wrap:wrap;">
         <button class="btn btn-ghost" data-m="origem">Abrir o cadastro</button>
-        ${podeOutroValor ? `<button class="btn btn-primary" data-m="pagar">Pagar esse valor</button>` : ""}
+        ${podeOutroValor ? `<button class="btn btn-primary" data-m="pagar">${lado === "receber" ? "Receber esse valor" : "Pagar esse valor"}</button>` : ""}
         <button class="btn btn-ghost" data-m="fechar">Fechar</button>
       </div>
     </div>`);

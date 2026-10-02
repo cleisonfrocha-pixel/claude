@@ -42,6 +42,15 @@ export function criarTelaComAbas(config) {
     nav.querySelectorAll("[data-aba]").forEach((btn) => {
       btn.addEventListener("click", () => selecionar(btn.dataset.aba));
     });
+    // Quando as abas não cabem na tela, um esmaecido na borda mostra que tem mais.
+    const marcarRolagem = () => {
+      nav.classList.toggle("rola-direita", nav.scrollWidth - nav.clientWidth - nav.scrollLeft > 8);
+      nav.classList.toggle("rola-esquerda", nav.scrollLeft > 8);
+    };
+    nav.addEventListener("scroll", marcarRolagem, { passive: true });
+    requestAnimationFrame(marcarRolagem);
+    const ativo = nav.querySelector(".ativo");
+    if (ativo && ativo.scrollIntoView) requestAnimationFrame(() => nav.scrollTo({ left: Math.max(0, ativo.offsetLeft - 24), behavior: "auto" }));
     const flut = config.botaoFlutuante;
     if (flut && abaAtiva !== flut.aba) {
       const fab = document.createElement("button");

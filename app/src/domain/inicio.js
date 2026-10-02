@@ -33,7 +33,8 @@ export function proximosDias({ compromissos, entradas, hoje, dias = 7 }) {
     ...(compromissos || []).map((c) => ({ ...c, tipo: "saida" })),
     ...(entradas || []).map((e) => ({ ...e, tipo: "entrada" })),
   ].filter((i) => i.data && i.data <= limite);
-  return itens.sort((a, b) => (b.atrasado ? 1 : 0) - (a.atrasado ? 1 : 0) || a.data.localeCompare(b.data));
+  // Atrasado primeiro; depois por data; verba sem dia fixo por último.
+  return itens.sort((a, b) => (b.atrasado ? 1 : 0) - (a.atrasado ? 1 : 0) || (a.semDia ? 1 : 0) - (b.semDia ? 1 : 0) || a.data.localeCompare(b.data));
 }
 
 /** O que falta para o painel enxergar a vida inteira. Cada item aponta o

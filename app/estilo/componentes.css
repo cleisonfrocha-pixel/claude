@@ -827,3 +827,19 @@
 .bloco-link .titulo { font-weight: 700; }
 .bloco-link .resumo { grid-column: 1; font-size: 13px; color: var(--text-muted); }
 .bloco-link .seta { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: var(--accent); font-weight: 700; font-size: 13px; }
+
+.lado-seletor { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 12px; border-radius: 999px; background: var(--surface-2); }
+.lado-opcao { border: 0; background: transparent; color: var(--text-muted); font: inherit; font-weight: 700; font-size: 14px; padding: 8px 16px; min-height: 40px; border-radius: 999px; cursor: pointer; }
+.lado-opcao span { margin-left: 4px; font-size: 12px; opacity: .8; }
+.lado-opcao.ativo { background: var(--accent-fill); color: var(--accent-ink); }
+.conta-card.incerta { border-style: dashed; opacity: .8; }
+
+/* ---- polimento: abas que rolam e alvos de toque ---- */
+.subabas.rola-direita { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+.subabas.rola-esquerda { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
+.subabas.rola-direita.rola-esquerda { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
+@media (pointer: coarse) {
+  .btn-mini { min-height: 44px; min-width: 44px; }
+  .modulo-chip { min-height: 44px; }
+  .icon-btn { min-width: 44px; min-height: 44px; }
+}

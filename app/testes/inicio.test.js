@@ -40,3 +40,11 @@ test("completar retrato: metas de proteção em branco pedem preenchimento; inve
   assert.ok(completarRetrato({ ...base, metas: { custoDesejadoCentavos: null, metaRecuperacaoCentavos: null, investimentoMinimoMensalCentavos: 0 } }).some((f) => f.id === "metas-protecao"));
   assert.ok(!completarRetrato({ ...base, metas: { custoDesejadoCentavos: 1, metaRecuperacaoCentavos: 1, investimentoMinimoMensalCentavos: 0 } }).some((f) => f.id === "metas-protecao"));
 });
+
+test("próximos dias: verba sem dia fixo vai por último e nunca disfarça de data", () => {
+  const r = proximosDias({
+    compromissos: [{ descricao: "Mercado", data: "2026-10-01", valorCentavos: 100, semDia: true }, { descricao: "Luz", data: "2026-10-05", valorCentavos: 100 }],
+    entradas: [], hoje: "2026-10-02", dias: 7,
+  });
+  assert.deepEqual(r.map((i) => i.descricao), ["Luz", "Mercado"]);
+});

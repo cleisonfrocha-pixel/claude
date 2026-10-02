@@ -126,7 +126,7 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
       const data = atrasado ? de : dataOriginal;
       if (data < de || data > ate) continue;
       eventos.push({
-        data, tipo: "receita", valorCentavos: valor.valorCentavos, certeza: valor.certeza, virtual: true, atrasado,
+        data, vencimento: dataOriginal, tipo: "receita", valorCentavos: valor.valorCentavos, certeza: valor.certeza, virtual: true, atrasado,
         descricao: valor.piso ? `${f.nome} (pior mês recente)` : f.nome,
         origem: { tipo: "fonteRenda", id: f.id },
       });

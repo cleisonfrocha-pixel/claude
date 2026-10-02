@@ -2,11 +2,12 @@
 // estado de cada conta. Recalcula quando qualquer cadastro mudar.
 
 import { carregarBase, assinarBase } from "./base.js";
-import { contasDoMes } from "../domain/contasDoMes.js";
+import { contasDoMes, entradasDoMes } from "../domain/contasDoMes.js";
 import { hojeISO } from "../domain/tempo.js";
 
 function montar(base, competencia) {
-  return { ...contasDoMes({ ...base, competencia, hoje: hojeISO() }), hoje: hojeISO(), contas: base.contas };
+  const hoje = hojeISO();
+  return { ...contasDoMes({ ...base, competencia, hoje }), entradas: entradasDoMes({ ...base, competencia, hoje }), hoje, contas: base.contas };
 }
 
 export async function calcularContasDoMes(competencia) {

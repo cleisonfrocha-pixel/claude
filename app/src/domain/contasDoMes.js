@@ -119,3 +119,70 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
     },
   };
 }
+
+/**
+ * O lado de quem recebe: as entradas do mês com o mesmo vocabulário de estado
+ * (`paga` = recebida, `atrasada` = o dia esperado passou e não caiu, `hoje`,
+ * `a_pagar` = ainda a receber). Entrada incerta aparece com `incerta: true` e
+ * fica FORA dos totais (CLAUDE.md: incerto não é dinheiro garantido).
+ */
+export function entradasDoMes({ transacoes, fontesRenda, recorrencias, cartoes, competencia, hoje }) {
+  const itens = [];
+  const competenciaHoje = competenciaDeData(hoje);
+  const mesAtual = competencia === competenciaHoje;
+  const mesPassado = competencia < competenciaHoje;
+  const novo = (base) => {
+    const estado = estadoDe(base.vencimento, hoje, base.paga);
+    itens.push({ ...base, estado, diasAtraso: estado === "atrasada" && base.vencimento ? diasEntre(base.vencimento, hoje) : 0 });
+  };
+
+  for (const t of transacoes || []) {
+    if (t.tipo !== "receita" || t.status === "cancelado") continue;
+    const paga = t.status === "pago";
+    const aberta = ABERTO.has(statusEfetivo(t, hoje));
+    const doMes = t.competencia === competencia || (paga && t.pagoEm && competenciaDeData(t.pagoEm) === competencia);
+    const atrasadaDeAntes = mesAtual && aberta && t.competencia < competencia;
+    if (!doMes && !atrasadaDeAntes) continue;
+    novo({
+      chave: `t:${t.id}`, tipo: "transacao", transacaoId: t.id, descricao: t.descricao || "Entrada",
+      valorCentavos: Number(t.valorCentavos) || 0, vencimento: t.data, paga, pagoEm: paga ? (t.pagoEm || t.data) : null,
+      incerta: !paga && t.certeza === "incerto",
+      origem: t.fonteRendaId ? { tipo: "fonteRenda", id: t.fonteRendaId } : { tipo: "transacao", id: t.id },
+    });
+  }
+
+  if (!mesPassado) {
+    const fim = dataDeCompetencia(competencia, diasNoMes(competencia));
+    for (const e of eventosFuturos({ transacoes, dividas: [], recorrencias, fontesRenda, cartoes, de: hoje, ate: fim, hoje })) {
+      if (e.tipo !== "receita" || !e.origem || !["fonteRenda", "recorrencia"].includes(e.origem.tipo)) continue;
+      const venc = e.vencimento || e.data;
+      if (competenciaDeData(venc) !== competencia) continue;
+      novo({
+        chave: `e:${e.origem.tipo}:${e.origem.id}:${venc}`, tipo: "evento", evento: { ...e, data: venc }, descricao: e.descricao,
+        valorCentavos: e.valorCentavos, vencimento: venc, paga: false, incerta: e.certeza === "incerto", origem: e.origem,
+      });
+    }
+  }
+
+  itens.sort((a, b) => ORDEM_ESTADOS.indexOf(a.estado) - ORDEM_ESTADOS.indexOf(b.estado)
+    || (a.vencimento || "9999").localeCompare(b.vencimento || "9999") || a.descricao.localeCompare(b.descricao));
+
+  const contaveis = itens.filter((i) => !i.incerta);
+  const soma = (l) => l.reduce((s, i) => s + i.valorCentavos, 0);
+  const pagas = contaveis.filter((i) => i.estado === "paga");
+  const faltam = contaveis.filter((i) => i.estado !== "paga");
+  const totalCentavos = soma(contaveis);
+  const atrasadas = contaveis.filter((i) => i.estado === "atrasada");
+  return {
+    competencia, itens,
+    grupos: Object.fromEntries(ORDEM_ESTADOS.map((e) => [e, itens.filter((i) => i.estado === e)])),
+    resumo: {
+      quantidade: contaveis.length, quantidadePagas: pagas.length,
+      totalCentavos, pagoCentavos: soma(pagas), faltaCentavos: soma(faltam),
+      atrasadasCentavos: soma(atrasadas), quantidadeAtrasadas: atrasadas.length,
+      incertasCentavos: soma(itens.filter((i) => i.incerta)),
+      percentualPago: totalCentavos > 0 ? Math.round((soma(pagas) / totalCentavos) * 100) : 0,
+      proxima: faltam.filter((i) => i.vencimento && i.vencimento >= hoje)[0] || null,
+    },
+  };
+}

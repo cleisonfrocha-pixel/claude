@@ -1477,3 +1477,18 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Plano passou de 6 para 4 abas: Fechamento virou um card na Visão geral e
   Perguntar virou botão flutuante.
 - Testes ajustados (anomalias, decisões, casal). 426 passando.
+
+### Sprint 45: A receber e polimento mobile/desktop — 02/10/2026
+
+- Dinheiro › A pagar ganhou o outro lado: **A receber** (seletor no topo). Mesmos
+  estados (caiu, cai hoje, a receber, "ainda não caiu" quando passou do dia
+  esperado), barra de progresso e **Recebi** em um toque com Desfazer. Entrada
+  incerta aparece tracejada e nunca entra nos totais. `entradasDoMes`
+  (`domain/contasDoMes.js`) + 3 testes.
+- Abas que não cabem na tela mostram esmaecido na borda e rolam até a aba
+  ativa; botões e chips com alvo de toque de 44px em tela de toque.
+- Início: verba "sem dia fixo" aparece como "no mês" (e por último), não como
+  uma data que já passou.
+- Fora do pacote por decisão: campo de data em dd/mm/aaaa. O navegador mostra
+  o formato do aparelho; a data por extenso aparece embaixo de todo campo de
+  data pra nunca haver dúvida. 430 testes passando.

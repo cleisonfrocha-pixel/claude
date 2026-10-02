@@ -105,3 +105,40 @@ test("conta atrasada de setembro paga hoje conta como paga em outubro", () => {
   assert.equal(out.itens[0].pagoEm, "2026-10-12");
   assert.equal(out.resumo.quantidadePagas, 1);
 });
+
+import { entradasDoMes } from "../src/domain/contasDoMes.js";
+
+const fonte = (o) => ({ id: "f1", nome: "Sociable", tipo: "recorrente", ativa: true, valorEsperadoCentavos: 520000, diaRecebimento: 5, pessoaId: "p1", ...o });
+
+test("entradas: renda esperada vira a receber; passou do dia sem cair vira atrasada", () => {
+  const futuro = entradasDoMes({ competencia: "2026-10", hoje: "2026-10-02", fontesRenda: [fonte()], transacoes: [] });
+  assert.equal(futuro.itens[0].estado, "a_pagar");
+  assert.equal(futuro.itens[0].vencimento, "2026-10-05");
+  const passou = entradasDoMes({ competencia: "2026-10", hoje: "2026-10-12", fontesRenda: [fonte()], transacoes: [] });
+  assert.equal(passou.itens[0].estado, "atrasada");
+  assert.equal(passou.itens[0].diasAtraso, 7);
+});
+
+test("entradas: recebida conta como paga e a fonte não projeta de novo no mês", () => {
+  const r = entradasDoMes({
+    competencia: "2026-10", hoje: "2026-10-12", fontesRenda: [fonte()],
+    transacoes: [{ id: "x", tipo: "receita", status: "pago", competencia: "2026-10", data: "2026-10-05", valorCentavos: 520000, fonteRendaId: "f1", descricao: "Sociable" }],
+  });
+  assert.equal(r.itens.length, 1);
+  assert.equal(r.itens[0].estado, "paga");
+  assert.equal(r.resumo.percentualPago, 100);
+});
+
+test("entradas: incerta aparece mas nunca entra nos totais", () => {
+  const r = entradasDoMes({
+    competencia: "2026-10", hoje: "2026-10-02", fontesRenda: [],
+    transacoes: [
+      { id: "a", tipo: "receita", status: "previsto", competencia: "2026-10", data: "2026-10-20", valorCentavos: 500000, certeza: "incerto", descricao: "Del Poente" },
+      { id: "b", tipo: "receita", status: "previsto", competencia: "2026-10", data: "2026-10-10", valorCentavos: 100000, certeza: "provavel", descricao: "Gábbia" },
+    ],
+  });
+  assert.equal(r.itens.length, 2);
+  assert.equal(r.resumo.totalCentavos, 100000);
+  assert.equal(r.resumo.incertasCentavos, 500000);
+  assert.equal(r.resumo.quantidade, 1);
+});

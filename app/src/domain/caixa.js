@@ -57,7 +57,7 @@ export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horiz
     if (t.status !== "atrasado" && t.data > horizonteAte) continue;
     itens.push({
       tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: Number(t.valorCentavos) || 0,
-      data: t.data, atrasado: statusEfetivo(t, hoje) === "atrasado",
+      data: t.data, atrasado: statusEfetivo(t, hoje) === "atrasado", semDia: !!t.semDia,
     });
   }
 
