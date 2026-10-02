@@ -1219,3 +1219,14 @@ esperar os dados reais.
 - **Bug grave corrigido:** `ligarDicaDeData` (Sprint 30) regravava o texto da
   dica a cada mutação e travava a página ao abrir qualquer formulário com data.
   Agora só escreve quando o texto muda.
+
+### Sprint 33 — "Recebi" e "Paguei" em um toque — ✅ (02/10/2026)
+
+- `dados/baixaRepo.js`: `darBaixaTransacao` (previsto/atrasado vira pago, data real
+  = hoje se a data estava no futuro) e `darBaixaEvento` (renda esperada, parcela de
+  dívida ou recorrência sem lançamento viram lançamento real; parcela de dívida
+  também soma `parcelasPagas`). Nada é digitado: conta, categoria e pessoa vêm do
+  cadastro.
+- Botão na lista de Transações e no detalhe do dia da Agenda.
+- Dia típico de cada fonte de renda (`diaDaFonte`): com 3+ recebimentos reais, a
+  mediana dos últimos 3 vale mais que o dia cadastrado. 3 testes novos (370).

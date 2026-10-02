@@ -20,6 +20,7 @@ import { pessoas, contas, cartoes, categorias, fontesRenda } from "../../dados/r
 import { faturas } from "../../dados/faturasRepo.js";
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
 import { consumirAcao } from "../navegacao.js";
+import { darBaixaTransacao } from "../../dados/baixaRepo.js";
 
 const ROTULO_STATUS = { previsto: "Previsto", agendado: "Agendado", pago: "Pago", atrasado: "Atrasado", cancelado: "Cancelado" };
 const ROTULO_CERTEZA = { confirmado: "Confirmado", provavel: "Provável", incerto: "Incerto" };
@@ -137,6 +138,18 @@ function renderizarLista(doMes) {
       if (item) abrirModalEditarTransacao(item);
     });
   });
+  alvo.querySelectorAll("[data-baixa]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        await darBaixaTransacao(btn.getAttribute("data-baixa"));
+        mostrarToast("Pronto, registrado como pago.");
+      } catch (e) {
+        btn.disabled = false;
+        mostrarToast(e.message || "Não consegui dar baixa.");
+      }
+    });
+  });
   alvo.querySelectorAll("[data-revisar]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       await marcarRevisado(btn.getAttribute("data-revisar"));
@@ -182,6 +195,8 @@ function linhaTransacao(item) {
       ${parcelaTag}
       ${naoRevisado ? `<span class="item-tag atencao" title="Veio do chat ou de extrato e ainda não foi conferido por você">a conferir</span>` : ""}
       <div class="item-acoes">
+        ${["previsto", "agendado", "atrasado"].includes(statusMostrado) && (d.tipo === "receita" || d.tipo === "despesa")
+          ? `<button class="btn-mini btn-baixa" data-baixa="${escapeHtml(item.id)}">${d.tipo === "receita" ? "Recebi" : "Paguei"}</button>` : ""}
         ${naoRevisado ? `<button class="btn-mini" title="Marcar como conferido" data-revisar="${escapeHtml(item.id)}">✓ Conferido</button>` : ""}
         <button class="btn-mini" title="Editar" data-editar="${escapeHtml(item.id)}">Editar</button>
         <button class="btn-mini perigo" title="Apagar" data-apagar="${escapeHtml(item.id)}">Apagar</button>

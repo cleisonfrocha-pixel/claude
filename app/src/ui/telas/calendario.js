@@ -7,7 +7,8 @@
 import * as tempo from "../../domain/tempo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { assinarCalendario } from "../../dados/calendarioRepo.js";
-import { escapeHtml } from "../utilitarios.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
+import { darBaixaEvento } from "../../dados/baixaRepo.js";
 
 const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const ROTULO_TIPO = { despesa: "Despesa", receita: "Receita", fatura: "Fatura de cartão" };
@@ -164,7 +165,25 @@ function renderizarDetalhe() {
         <div class="fatura-linha">
           <span class="rotulo">${item.atrasado ? '<span class="tag-atrasado">Atrasado</span>' : ""}${escapeHtml(item.descricao)}<small>${escapeHtml(ROTULO_TIPO[item.tipo] || item.tipo)}</small></span>
           <b class="${item.tipo === "receita" ? "valor-pos" : "valor-neg"}" data-valor>${item.tipo === "receita" ? "+" : "−"}${formatarBRL(item.valorCentavos)}</b>
+          ${podeBaixar(item) ? `<button class="btn-mini btn-baixa" data-baixa-evento="${info.itens.indexOf(item)}">${item.tipo === "receita" ? "Recebi" : "Paguei"}</button>` : ""}
         </div>`).join("")}
       ${!info.coberto ? `<div class="erro-form" style="margin-top:10px;">Saldo projetado negativo neste dia: obrigação sem cobertura suficiente.</div>` : ""}
     </div>`;
+  alvo.querySelectorAll("[data-baixa-evento]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const item = info.itens[Number(btn.getAttribute("data-baixa-evento"))];
+      btn.disabled = true;
+      try {
+        await darBaixaEvento({ ...item, data: info.data });
+        mostrarToast("Pronto, registrado como pago.");
+      } catch (e) {
+        btn.disabled = false;
+        mostrarToast(e.message || "Não consegui dar baixa.");
+      }
+    });
+  });
+}
+
+function podeBaixar(item) {
+  return !!(item.virtual && item.origem && ["fonteRenda", "divida", "recorrencia"].includes(item.origem.tipo));
 }

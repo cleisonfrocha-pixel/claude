@@ -52,7 +52,15 @@ function competenciasEntre(de, ate) {
 /** Dia em que uma fonte costuma pagar: o cadastrado; sem ele, o dia do
  * último recebimento dela; sem histórico, o último dia do mês (o mais
  * conservador pro caixa — nunca antecipa dinheiro). */
-function diaDaFonte(fonte, receitasDaFonte) {
+/** Dia típico de recebimento: com 3 ou mais recebimentos reais, vale a
+ * mediana dos últimos 3 (o dinheiro cai quando cai, não quando o cadastro
+ * diz); antes disso, o dia cadastrado; sem nada, a última data conhecida. */
+export function diaDaFonte(fonte, receitasDaFonte) {
+  const pagas = receitasDaFonte.filter((t) => t.status === "pago").sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3);
+  if (pagas.length >= 3) {
+    const dias = pagas.map((t) => Number(t.data.slice(8, 10))).sort((a, b) => a - b);
+    return dias[1];
+  }
   if (Number(fonte.diaRecebimento) >= 1) return Number(fonte.diaRecebimento);
   const ultima = receitasDaFonte.filter((t) => t.status === "pago").sort((a, b) => b.data.localeCompare(a.data))[0];
   return ultima ? Number(ultima.data.slice(8, 10)) : 31;
