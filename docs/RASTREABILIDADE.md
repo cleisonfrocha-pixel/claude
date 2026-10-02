@@ -1365,3 +1365,14 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   (leituras simultâneas viram uma, assinaturas mantêm o cache fresco): 196 → 10
   leituras; (3) `assinarBase` não deixa falha de leitura escapar;
   (4) retrato mensal do patrimônio com id fixo por mês (antes criava cópias).
+
+### Correção: painel em branco (só o logo) — 02/10/2026
+
+- Causa real: `src/ui/navegacao.js` (criado na Sprint 30 e importado pelo
+  `shell.js`) nunca foi publicado. Sem ele o módulo principal falha ao carregar
+  e a página fica só com o cabeçalho, sem nenhuma mensagem. Vinha quebrado desde
+  a Sprint 32. Publicado; a lista de arquivos publicados (95) agora bate com o
+  repositório.
+- Prevenção: `testes/publicacao.test.js` falha se algum import relativo ou
+  `src`/`href` do `index.html` apontar para arquivo inexistente (406 testes).
+  Ao republicar, conferir a lista de arquivos publicados contra `find src estilo`.
