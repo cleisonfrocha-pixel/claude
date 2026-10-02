@@ -1230,3 +1230,15 @@ esperar os dados reais.
 - Botão na lista de Transações e no detalhe do dia da Agenda.
 - Dia típico de cada fonte de renda (`diaDaFonte`): com 3+ recebimentos reais, a
   mediana dos últimos 3 vale mais que o dia cadastrado. 3 testes novos (370).
+
+### Sprint 34 — Início novo — ✅ (02/10/2026)
+
+- Uma pergunta: "Pode gastar até DD/MM: R$ X", com selo de confiança (● alta,
+  ◐ média, ○ baixa) calculado de quanto do dinheiro que vai entrar ainda é só
+  esperado (`domain/inicio.js` → `confiancaDoNumero`).
+- Um único ponto de atenção (o achado mais urgente, com link para o Plano),
+  "Próximos 7 dias" (atrasados primeiro) e "Completar seu retrato" (pessoa sem
+  renda/conta, sem bens, sem metas, dívida sem parcela).
+- Removidos: grade de 7 cartões, carrossel e atalhos redondos. Duas colunas no
+  desktop. `dados/inicioRepo.js` lê tudo do retrato único (`dados/base.js`).
+- 5 testes novos em `inicio.test.js` (375 no total).

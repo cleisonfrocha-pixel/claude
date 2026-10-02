@@ -674,3 +674,25 @@
 }
 .btn-baixa { background: var(--accent-fill); color: var(--accent-ink); border-color: var(--accent-fill); font-weight: 700; }
 .fatura-linha .btn-baixa { margin-left: 10px; flex-shrink: 0; }
+
+/* Sprint 34: Início novo. */
+.inicio-grade { display: grid; gap: 16px; }
+@media (min-width: 900px) { .inicio-grade { grid-template-columns: 1.15fr 1fr; align-items: start; gap: 22px; } }
+.selo-confianca { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0 4px; font-size: 13.5px; line-height: 1.4; }
+.selo-confianca .selo-simbolo { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.inicio-lancar { width: 100%; margin: 14px 0; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.inicio-bloco { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 16px; margin-bottom: 16px; box-shadow: var(--sheen), var(--shadow-sm); }
+.inicio-bloco h3 { margin: 0 0 10px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.inicio-atencao { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 12px; cursor: pointer; color: inherit; font: inherit; min-height: 44px; }
+.inicio-atencao b { display: block; font-size: 14.5px; }
+.inicio-atencao small { display: block; color: var(--text-muted); margin-top: 3px; font-size: 13px; }
+.inicio-atencao .icone-caixa { color: var(--warn); flex-shrink: 0; }
+.inicio-lista { display: flex; flex-direction: column; }
+.inicio-linha { display: grid; grid-template-columns: 74px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.inicio-linha:last-child { border-bottom: 0; }
+.inicio-data { color: var(--text-muted); font-size: 13px; }
+.inicio-desc small { color: var(--text-faint); }
+.inicio-pendencia { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px; padding: 8px 0; background: none; border: 0; border-bottom: 1px solid var(--border); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.inicio-pendencia:last-child { border-bottom: 0; }
+.inicio-pendencia span { color: var(--text-faint); transform: rotate(-90deg); display: inline-flex; }
+.btn-link { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; padding: 10px 0 0; min-height: 44px; }
