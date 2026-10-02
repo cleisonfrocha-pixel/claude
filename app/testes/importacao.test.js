@@ -186,3 +186,31 @@ test("PORTÃO §18: importar o mesmo extrato duas vezes marca tudo como duplicat
   const segunda = prepararCandidatos(bruto, { transacoesExistentes: existentesDepois, categorias, contaId: "c1" });
   assert.equal(segunda.every((c) => c.possivelDuplicata === true), true);
 });
+
+import { conciliarComPrevistos, prepararCandidatos as prepararCand } from "../src/domain/importacao.js";
+
+test("conciliar: linha do extrato casa com o previsto (valor e data próximos) e não vira duplicata", () => {
+  const existentes = [{ id: "t1", contaId: "c1", tipo: "despesa", status: "previsto", valorCentavos: 15000, data: "2026-10-13", descricao: "Conta de Luz", categoriaId: "cat1" }];
+  const [r] = prepararCand([{ data: "2026-10-14", descricao: "ENEL LUZ", valorCentavos: -15650, tipo: "despesa", valido: true }], { transacoesExistentes: existentes, categorias: [], contaId: "c1" });
+  assert.equal(r.possivelDuplicata, false);
+  assert.equal(r.conciliaCom.id, "t1");
+  assert.equal(r.categoriaSugeridaId, "cat1");
+});
+
+test("conciliar: um previsto só casa com uma linha; longe demais não casa", () => {
+  const existentes = [{ id: "t1", contaId: "c1", tipo: "despesa", status: "previsto", valorCentavos: 10000, data: "2026-10-10", descricao: "Internet" }];
+  const cands = [
+    { data: "2026-10-10", descricao: "A", valorCentavos: -10000, tipo: "despesa", valido: true },
+    { data: "2026-10-11", descricao: "B", valorCentavos: -10000, tipo: "despesa", valido: true },
+    { data: "2026-12-01", descricao: "C", valorCentavos: -10000, tipo: "despesa", valido: true },
+  ];
+  const r = conciliarComPrevistos(cands.map((c) => ({ ...c, possivelDuplicata: false, possivelTransferencia: false })), existentes, "c1");
+  assert.equal(r.filter((x) => x.conciliaCom).length, 1);
+  assert.equal(r[2].conciliaCom, null);
+});
+
+test("conciliar: valor só parecido (sem nome parecido) não casa", () => {
+  const existentes = [{ id: "t1", contaId: "c1", tipo: "despesa", status: "previsto", valorCentavos: 8500, data: "2026-10-13", descricao: "Galão de água" }];
+  const [r] = prepararCand([{ data: "2026-10-13", descricao: "Algo que não existe", valorCentavos: -7700, tipo: "despesa", valido: true }], { transacoesExistentes: existentes, categorias: [], contaId: "c1" });
+  assert.equal(r.conciliaCom, null);
+});

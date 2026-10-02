@@ -48,6 +48,7 @@ export default {
 function tagCandidato(c) {
   if (c.possivelDuplicata) return `<span class="item-tag critico">possível duplicata</span>`;
   if (c.possivelTransferencia) return `<span class="item-tag atencao">possível transferência</span>`;
+  if (c.conciliaCom) return `<span class="item-tag">bate com um previsto</span>`;
   if (c.ambiguo) return `<span class="item-tag atencao">sem categoria sugerida</span>`;
   if (!c.valido) return `<span class="item-tag critico">linha inválida</span>`;
   return `<span class="item-tag">pronto</span>`;
@@ -63,12 +64,17 @@ function linhaCandidato(c, i) {
         <div class="item-titulo">${escapeHtml(c.descricao || "(sem descrição)")} ${tagCandidato(c)}</div>
         <div class="item-sub">${c.data ? escapeHtml(formatarData(c.data)) : "data inválida"} · ${c.tipo}
           ${c.possivelDuplicata ? ` · ${escapeHtml(c.motivoDuplicata)}` : ""}</div>
+        ${c.conciliaCom ? `
+          <label class="field-check" style="margin-top:6px;">
+            <input type="checkbox" data-concilia="${i}" ${estado.conciliar ? "checked" : ""}>
+            Dar baixa em “${escapeHtml(c.conciliaCom.descricao || "previsto")}” (previsto ${escapeHtml(formatarBRL(c.conciliaCom.valorCentavos))} em ${escapeHtml(formatarData(c.conciliaCom.data))}) em vez de criar outro lançamento
+          </label>` : ""}
         ${c.possivelTransferencia ? `
           <label class="field-check" style="margin-top:6px;">
             <input type="checkbox" data-transf="${i}" ${estado.confirmarComoTransferencia ? "checked" : ""}>
             Tratar como transferência entre contas próprias (não conta como receita nem despesa)
           </label>` : ""}
-        ${(!c.possivelDuplicata && !c.possivelTransferencia && c.valido) ? `
+        ${(!c.possivelDuplicata && !c.possivelTransferencia && c.valido && !(c.conciliaCom && estado.conciliar)) ? `
           <div class="field" style="margin-top:6px;max-width:260px;">
             <label>Categoria</label>
             <select data-categoria="${i}">
@@ -185,6 +191,7 @@ function ligarEventos() {
         marcado: c.valido && !c.possivelDuplicata,
         categoriaId: c.categoriaSugeridaId || "",
         confirmarComoTransferencia: !!c.possivelTransferencia,
+        conciliar: !!c.conciliaCom,
       }]));
       renderizar();
     });
@@ -202,6 +209,9 @@ function ligarEventos() {
       marcados.get(i).confirmarComoTransferencia = el.checked;
     });
   });
+  container.querySelectorAll("[data-concilia]").forEach((el) => {
+    el.addEventListener("change", () => { marcados.get(Number(el.dataset.concilia)).conciliar = el.checked; });
+  });
   container.querySelectorAll("[data-categoria]").forEach((el) => {
     el.addEventListener("change", () => {
       const i = Number(el.dataset.categoria);
@@ -216,11 +226,11 @@ function ligarEventos() {
       for (const [i, estado] of marcados.entries()) {
         if (!estado.marcado) continue;
         const c = candidatos[i];
-        if (!c.possivelTransferencia && !estado.categoriaId) {
+        if (!c.possivelTransferencia && !(c.conciliaCom && estado.conciliar) && !estado.categoriaId) {
           mostrarToast("Escolha uma categoria para todo lançamento marcado.");
           return;
         }
-        aceitos.push({ candidato: c, categoriaId: estado.categoriaId, confirmarComoTransferencia: estado.confirmarComoTransferencia });
+        aceitos.push({ candidato: c, categoriaId: estado.categoriaId, confirmarComoTransferencia: estado.confirmarComoTransferencia, conciliar: estado.conciliar });
       }
       if (!aceitos.length) { mostrarToast("Nada marcado para importar."); return; }
       const contaId = document.getElementById("imp-conta").value;

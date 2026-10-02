@@ -51,18 +51,22 @@ export default criarTelaCadastro({
   exibir(dados, contexto, id) {
     const pessoa = (contexto.pessoas || []).find((p) => p.valor === dados.pessoaId);
     const visao = visaoDoCartao(dados, id, contexto);
-    const nivel = ROTULO_NIVEL[visao.nivelAlerta];
+    const semUso = !temUso(id, contexto);
+    const nivel = semUso ? null : ROTULO_NIVEL[visao.nivelAlerta];
     return {
       titulo: dados.apelido,
-      sub: `${ROTULO_BANDEIRA[dados.bandeira] || dados.bandeira}${pessoa ? " · " + pessoa.rotulo : ""} · disponível ${formatarBRL(visao.disponivelCentavos)}`,
+      sub: `${ROTULO_BANDEIRA[dados.bandeira] || dados.bandeira}${pessoa ? " · " + pessoa.rotulo : ""} · ${semUso ? "sem dado de uso ainda" : `disponível ${formatarBRL(visao.disponivelCentavos)}`}`,
       valorDireita: formatarBRL(dados.limiteTotalCentavos),
       tag: dados.status !== "ativo" ? dados.status : nivel,
       tagInativa: dados.status !== "ativo",
-      tagClasse: dados.status === "ativo" ? visao.nivelAlerta : null,
+      tagClasse: dados.status === "ativo" && !semUso ? visao.nivelAlerta : null,
     };
   },
   renderExtra(dados, id, contexto) {
     const visao = visaoDoCartao(dados, id, contexto);
+    if (!temUso(id, contexto)) {
+      return `<div class="tela-sub" style="margin:0;">Sem dado de uso ainda: nenhuma compra ou fatura lançada neste cartão. O limite de <span data-valor>${formatarBRL(visao.limiteTotalCentavos)}</span> está cadastrado, mas o quanto já foi usado é desconhecido até chegar a primeira fatura.</div>`;
+    }
     const barraClasse = visao.nivelAlerta !== "normal" ? ` ${visao.nivelAlerta}` : "";
     const largura = Math.min(100, visao.percentualUtilizado);
     return `
@@ -79,6 +83,12 @@ export default criarTelaCadastro({
     `;
   },
 });
+
+/** Cartão sem compra nem fatura não tem "0% usado": tem dado nenhum. */
+function temUso(cartaoId, contexto) {
+  return (contexto.transacoes || []).some((t) => t.dados.cartaoId === cartaoId && t.dados.status !== "cancelado")
+    || (contexto.faturas || []).some((f) => f.dados.cartaoId === cartaoId);
+}
 
 function visaoDoCartao(dados, cartaoId, contexto) {
   const faturasDoCartao = (contexto.faturas || [])

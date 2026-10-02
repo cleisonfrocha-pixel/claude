@@ -10,6 +10,9 @@ import { paraCentavos } from "./dinheiro.js";
 
 const JANELA_TRANSFERENCIA_DIAS = 3;
 const JANELA_DUPLICATA_DIAS = 1;
+const STATUS_ABERTO = new Set(["previsto", "agendado", "atrasado"]);
+const JANELA_CONCILIACAO_DIAS = 10;
+const TOLERANCIA_VALOR = 0.05; // sem nome parecido, só casa valor quase igual
 
 // ---------- CSV ----------
 
@@ -136,7 +139,9 @@ function diferencaEmDias(dataA, dataB) {
  * revisão (§18 — "revisão de lançamentos ambíguos").
  */
 export function detectarDuplicatas(candidatos, transacoesExistentes, contaId) {
-  const existentesDaConta = (transacoesExistentes || []).filter((t) => t.contaId === contaId);
+  // Previsto em aberto não é "duplicata" do extrato: é o mesmo compromisso
+  // esperando confirmação, e quem resolve é `conciliarComPrevistos`.
+  const existentesDaConta = (transacoesExistentes || []).filter((t) => t.contaId === contaId && !STATUS_ABERTO.has(t.status));
   return candidatos.map((c) => {
     if (c.externoId) {
       const porId = existentesDaConta.find((t) => t.origemId === c.externoId);
@@ -184,10 +189,51 @@ export function classificarAmbiguidade(candidatos, categorias) {
   });
 }
 
+function palavras(texto) {
+  return new Set((texto || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((p) => p.length >= 4));
+}
+
+/**
+ * Casa cada linha do extrato com o compromisso PREVISTO que ela confirma
+ * (mesma conta, mesmo tipo, valor próximo e data próxima, ou nome parecido).
+ * Sem isso, o extrato criaria o gasto de novo e o mês contaria o mesmo
+ * dinheiro duas vezes: o previsto e o real. Um previsto só casa com uma linha.
+ * Não decide sozinho: aponta, e a tela deixa desmarcar.
+ */
+export function conciliarComPrevistos(candidatos, transacoesExistentes, contaId) {
+  const abertos = (transacoesExistentes || []).filter((t) => t.contaId === contaId && STATUS_ABERTO.has(t.status));
+  const usados = new Set();
+  return candidatos.map((c) => {
+    if (!c.valido || c.possivelDuplicata || c.possivelTransferencia || !c.data) return { ...c, conciliaCom: null };
+    const valor = Math.abs(c.valorCentavos);
+    const palavrasC = palavras(c.descricao);
+    let melhor = null;
+    for (const t of abertos) {
+      if (usados.has(t.id) || t.tipo !== c.tipo) continue;
+      const dias = Math.abs(diferencaEmDias(t.data, c.data));
+      if (dias > JANELA_CONCILIACAO_DIAS) continue;
+      const dif = Math.abs((Number(t.valorCentavos) || 0) - valor);
+      const parecido = [...palavras(t.descricao)].some((p) => palavrasC.has(p));
+      const valorBate = dif <= (Number(t.valorCentavos) || 0) * TOLERANCIA_VALOR;
+      if (!(valorBate && dias <= 5) && !(parecido && dif <= (Number(t.valorCentavos) || 0) * 0.5)) continue;
+      const pontos = dif + dias * 100 - (parecido ? 1e9 : 0);
+      if (!melhor || pontos < melhor.pontos) melhor = { t, pontos };
+    }
+    if (!melhor) return { ...c, conciliaCom: null };
+    usados.add(melhor.t.id);
+    const t = melhor.t;
+    return {
+      ...c, conciliaCom: { id: t.id, descricao: t.descricao, valorCentavos: t.valorCentavos, data: t.data, categoriaId: t.categoriaId || "" },
+      ambiguo: false, categoriaSugeridaId: t.categoriaId || c.categoriaSugeridaId || null,
+    };
+  });
+}
+
 /** O pipeline inteiro: bruto -> candidato pronto pra revisão, com todas as
  * marcações que a tela de importação precisa mostrar. */
 export function prepararCandidatos(candidatosBrutos, { transacoesExistentes, categorias, contaId }) {
   const comDuplicata = detectarDuplicatas(candidatosBrutos, transacoesExistentes, contaId);
   const comTransferencia = detectarTransferencias(comDuplicata, transacoesExistentes, contaId);
-  return classificarAmbiguidade(comTransferencia, categorias);
+  const classificados = classificarAmbiguidade(comTransferencia, categorias);
+  return conciliarComPrevistos(classificados, transacoesExistentes, contaId);
 }

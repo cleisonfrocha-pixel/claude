@@ -60,6 +60,16 @@ export async function confirmarImportacao({ texto, formato, contaId, aceitos }) 
       criadas.push(id);
       continue;
     }
+    if (c.conciliaCom && item.conciliar !== false) {
+      // Dá baixa no previsto com o valor e a data reais, em vez de criar um
+      // segundo lançamento do mesmo gasto.
+      await transacoes.atualizar(c.conciliaCom.id, {
+        valorCentavos: Math.abs(c.valorCentavos), data: c.data, status: "pago", certeza: "confirmado",
+        origem, origemId: c.externoId || loteId, revisado: false,
+      });
+      criadas.push(c.conciliaCom.id);
+      continue;
+    }
     const id = await criarSimples({
       tipo: c.tipo, contaId, valorCentavos: Math.abs(c.valorCentavos), data: c.data,
       categoriaId: item.categoriaId || c.categoriaSugeridaId || "",

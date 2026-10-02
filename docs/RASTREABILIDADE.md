@@ -1278,3 +1278,16 @@ esperar os dados reais.
 - Aviso "Patrimônio incompleto" quando há dívida sem nenhum bem do outro lado,
   bem sem valor ou avaliação com mais de 1 ano.
 - 4 testes novos em `bens.test.js` (388 no total).
+
+### Sprint 38 — Extrato e conciliação — ✅ (02/10/2026)
+
+- `conciliarComPrevistos` (`domain/importacao.js`): a linha do extrato casa com o
+  compromisso previsto que ela confirma (mesma conta e tipo; nome parecido, ou
+  valor a até 5% e data a até 5 dias). Ao confirmar, o previsto é baixado com o
+  valor e a data reais em vez de criar um segundo lançamento (antes o mês
+  contava o mesmo gasto duas vezes). Previsto em aberto deixou de ser tratado
+  como "duplicata". A tela deixa desmarcar.
+- Histórico de importações único: lotes de extrato e envios do chat aparecem na
+  mesma lista, com o texto original.
+- Cartão sem compra nem fatura mostra "sem dado de uso ainda", não "0% usado".
+- 3 testes novos (391 no total).
