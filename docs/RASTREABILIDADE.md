@@ -1589,3 +1589,9 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Lançar um gasto (na conta ou no cartão) que combina com uma verba do mês (nome ou categoria) pergunta se desconta dela; a verba fica com o resto, sem dia, e Desfazer restaura.
 - A pagar mostra "verba do mês: gastou X de Y". Teste de camada de dados e de motor. 459 testes nos dois fusos.
 - Os valores das verbas (mercado, lazer, almoço, combustível, anúncios, galão, café, fórmula do Caio) entram no Sprint 55.
+
+## Sprint 53 — dívidas com esteira, Jeep, centros
+- `domain/esteira.js`: oferta (de/por, desconto, economia, validade sem inventar prazo), placar "nome limpo X de N" (protesto que é a mesma dívida não conta duas vezes), acordo da oferta em parcelas, barra do financiamento (pagas/total, já pago, falta pagar, marcos, valor do bem com aviso de avaliação velha), gasto por centro (casa, negócio, galpão).
+- Dívida sem acordo pesa pelo valor cobrado com juros em todas as telas (Bradesco R$ 10.064,16, não R$ 5.546,04).
+- Tela Dívidas: placar, tag "oferta −64%", bloco com valor de origem, cobrado, oferta, economia e validade; Jeep com barra, já pago e falta pagar. Campos novos: valor com juros, oferta, protesto, CNPJ, cartório, o que trava.
+- Campo `centro` nas transações e dívidas (preenchido no Sprint 55; a leitura por centro entra nas telas do Sprint 54). 466 testes nos dois fusos.

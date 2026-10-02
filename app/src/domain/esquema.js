@@ -122,6 +122,7 @@ export function padraoTransacao(dados = {}) {
     dividaId: null, // despesa que paga uma parcela de dívida (§11) — opcional
     pagoEm: null, // dia em que a baixa foi dada (a data do lançamento continua sendo o vencimento)
     foiPrevisto: false, // era uma conta marcada pra pagar e foi baixada: segue contando em "A pagar" como paga
+    centro: "", // casa | negocio | galpao ("" = casa)
     origem: "manual",
     origemId: null,
     revisado: true,
@@ -178,6 +179,21 @@ export function padraoDivida(dados = {}) {
     // 1 paga primeiro, número maior atrasa primeiro. null = não definida
     // — o motor protege pelo juro mais alto até o usuário decidir.
     prioridadePagamento: null,
+    // Esteira (Sprint 53): o que o credor cobra com juros, a oferta de desconto
+    // ({ valorCentavos, validade|null, origem }), se há protesto, de onde veio.
+    valorComJurosCentavos: 0,
+    oferta: null,
+    ofertaValorCentavos: 0, // a mesma oferta, em campos soltos (formulário)
+    ofertaValidade: "",
+    ofertaOrigem: "",
+    protestada: false,
+    mesmaDividaDe: null, // id da dívida que é a mesma (protesto da conta que já está no Serasa)
+    credorCnpj: "",
+    cartorio: "",
+    bemId: null, // bem que a dívida atinge (EDP cortou a luz do galpão)
+    bloqueio: "", // o que está travado por causa dela
+    quitadaEm: null,
+    centro: "", // casa | negocio | galpao
     ...dados,
   };
 }

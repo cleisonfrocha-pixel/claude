@@ -51,7 +51,8 @@ export function taxaMensalEfetiva(divida) {
  * só aparece na simulação, que diz isso em voz alta. */
 export function calcularSaldoAtual(divida) {
   const parcela = Number(divida.valorParcelaCentavos) || 0;
-  if (!(parcela > 0)) return Math.max(0, Number(divida.saldoOriginalCentavos) || 0);
+  // Sem acordo, vale o que o credor cobra hoje (com juros) se o cadastro tem esse número.
+  if (!(parcela > 0)) return Math.max(0, Number(divida.valorComJurosCentavos) || 0, Number(divida.saldoOriginalCentavos) || 0);
   return Math.round(valorPresente(parcela, parcelasRestantes(divida), taxaMensalEfetiva(divida)));
 }
 
