@@ -32,8 +32,23 @@ async function iniciar() {
   shell.inicializar(document.getElementById("conteudo-principal"));
 }
 
+async function iniciarComRedeDeSeguranca() {
+  try {
+    await iniciar();
+  } catch (erro) {
+    // Sem isso, um erro aqui (ex.: a capability `db` falhando ao resolver,
+    // um documento com formato inesperado) deixa a tela em branco sem
+    // nenhuma pista — nem para o usuário reportar, nem para depurar depois.
+    // window.mostrarErroFatal vem do script inline em index.html.
+    if (typeof window.mostrarErroFatal === "function") {
+      window.mostrarErroFatal("Erro ao iniciar o painel.", erro && erro.stack ? erro.stack : erro);
+    }
+    throw erro;
+  }
+}
+
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", iniciar);
+  document.addEventListener("DOMContentLoaded", iniciarComRedeDeSeguranca);
 } else {
-  iniciar();
+  iniciarComRedeDeSeguranca();
 }

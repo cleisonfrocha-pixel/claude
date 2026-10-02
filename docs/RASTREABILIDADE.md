@@ -1139,3 +1139,27 @@ esperar os dados reais.
   pagamento, o investimento mínimo derrubando uma parcela, e a diferença
   entre "dívida sem pagar" (reserva intocada, viável) e "essencial sem
   cobrir" (reserva usada, pode apertar de verdade). 358 testes.
+
+## Sprint 28 · rede de segurança contra tela em branco no boot (02/10/2026)
+
+- Motivo: relato do Cleison de que "o app aparentemente tá com erro para
+  abrir". Investigação extensa (sintaxe, clique em cada módulo do zero,
+  integridade dos 76 arquivos publicados) não reproduziu nenhum erro — mas
+  só cobria o modo local (sem a capability `db` real), que é justamente o
+  caminho usado quando ele abre pelo link de verdade, e o Cleison não
+  conseguiu descrever o sintoma com mais detalhe.
+- Achado real, independente da causa exata: `index.html`/`src/main.js` não
+  tinham nenhuma rede de segurança — se qualquer passo da inicialização
+  (resolver a capability `db`, `garantirEsquema`, semear categorias)
+  lançasse uma exceção, a tela ficava em branco sem nenhuma pista, nem
+  para o usuário reportar, nem para depurar depois. Era exatamente o
+  formato do sintoma relatado.
+- Correção: `index.html` ganhou `window.mostrarErroFatal` + listeners de
+  `error`/`unhandledrejection` (cobre até falha no carregamento de um
+  módulo, antes de `main.js` sequer rodar); `src/main.js` envolve
+  `iniciar()` num try/catch que chama `mostrarErroFatal` com a stack. Em
+  vez de tela em branco, agora aparece "O painel não conseguiu abrir" com
+  o erro exato — o que o Cleison pode printar e mandar.
+- Verificado via Playwright: carga normal sem regressão (358 testes
+  continuam passando) e acionamento manual de `mostrarErroFatal`
+  mostrando a tela de erro corretamente.

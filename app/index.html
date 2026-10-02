@@ -13,6 +13,50 @@
   }
 })();
 </script>
+<script>
+(function () {
+  // Rede de segurança para "o painel não abre": sem isso, qualquer erro
+  // antes do primeiro render (import de módulo que falha, exceção dentro
+  // de main.js, promise rejeitada) deixa a tela em branco sem pista
+  // nenhuma — nem para o usuário reportar, nem para depurar depois.
+  // window.mostrarErroFatal é chamado por main.js quando ele mesmo pega
+  // um erro durante a inicialização; os listeners abaixo cobrem o que
+  // escapa disso (ex.: um módulo que nem chega a executar).
+  var mostrado = false;
+  window.mostrarErroFatal = function (mensagem, detalhe) {
+    if (mostrado) return;
+    mostrado = true;
+    var raiz = document.createElement("div");
+    raiz.setAttribute("style", "position:fixed;inset:0;z-index:9999;background:#141413;color:#faf9f5;font:14px -apple-system,BlinkMacSystemFont,sans-serif;padding:24px;overflow:auto;");
+    var titulo = document.createElement("div");
+    titulo.textContent = "O painel não conseguiu abrir.";
+    titulo.setAttribute("style", "font-size:17px;font-weight:700;margin-bottom:8px;");
+    var corpo = document.createElement("div");
+    corpo.textContent = mensagem || "Erro desconhecido durante a inicialização.";
+    corpo.setAttribute("style", "margin-bottom:12px;");
+    var sub = document.createElement("div");
+    sub.textContent = "Manda um print desta tela para eu corrigir.";
+    sub.setAttribute("style", "color:#b8b6ad;margin-bottom:12px;");
+    raiz.appendChild(titulo);
+    raiz.appendChild(corpo);
+    raiz.appendChild(sub);
+    if (detalhe) {
+      var pre = document.createElement("pre");
+      pre.textContent = String(detalhe);
+      pre.setAttribute("style", "white-space:pre-wrap;word-break:break-word;font-size:12px;color:#8a8780;background:#1f1e1b;padding:10px;border-radius:8px;");
+      raiz.appendChild(pre);
+    }
+    document.body.appendChild(raiz);
+  };
+  window.addEventListener("error", function (ev) {
+    window.mostrarErroFatal("Erro ao carregar o painel: " + (ev.message || "erro sem descrição") + ".", ev.filename ? ev.filename + ":" + ev.lineno : "");
+  });
+  window.addEventListener("unhandledrejection", function (ev) {
+    var razao = ev.reason;
+    window.mostrarErroFatal("Erro ao carregar o painel.", razao && razao.stack ? razao.stack : razao);
+  });
+})();
+</script>
 <title>Cleison Rocha · Painel Financeiro</title>
 <link rel="stylesheet" href="estilo/tokens.css">
 <link rel="stylesheet" href="estilo/componentes.css">
