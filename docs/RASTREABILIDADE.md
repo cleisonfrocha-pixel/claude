@@ -1423,3 +1423,24 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   das transações.
 - Testes: `contasDoMes.test.js` (estados, progresso, cartão x fatura, atraso
   herdado, parcela de dívida, verba sem dia, paga em outro mês). 418 passando.
+
+### Sprint 42: mapa dos próximos 12 meses e o que vem em dezembro — 02/10/2026
+
+- Pedido do Cleison: o aluguel (R$ 2.900, dia 2, a partir de dezembro) precisa
+  caber na renda "sem me afogar".
+- `domain/mapa12.js`: mês a mês, quanto entra e sai de dinheiro seguro
+  (confirmado + provável, nunca o incerto), a sobra e o saldo em conta no fim
+  do mês. Sai do mesmo motor diário da projeção, cortado por mês (sem conta
+  própria). `marcosDosProximosMeses`: aluguel que começa, renda que acaba
+  (fonte com `fim`), recorrência que termina, parcela que quita.
+  `acharBuraco`: mês em que a sobra despenca e passa a ser negativa, ponto
+  mais baixo do saldo e quanto falta (por mês e no total). O mês corrente
+  (só o resto) nunca conta como virada.
+- Plano › Visão geral › "Pra onde você vai": cartão "O que vem aí, e cabe"
+  (ou "muda o jogo" com o buraco, três jeitos de fechar e link pro cadastro
+  de origem, §17) e a lista mês a mês com barra de sobra e marcos.
+- Com os dados reais de hoje: dezembro fecha com +R$ 4.167 mesmo com o aluguel;
+  janeiro (Gedi/Tony deixa de pagar, custos do Gedi terminam) com +R$ 3.167.
+  Aviso explícito: ainda não há histórico de gasto do dia a dia (mercado,
+  lazer), então os meses de frente estão mais folgados do que a vida real.
+- Testes: `mapa12.test.js` (7). 425 passando.

@@ -8,6 +8,7 @@ import { gastoDiaADiaMensal } from "../domain/previstos.js";
 import { visaoDoMes, sobraDoMes } from "../domain/mes.js";
 import { calcularVisaoConsolidada } from "../domain/dividas.js";
 import { alavancas } from "../domain/planoGeral.js";
+import { mapaDeMeses } from "../domain/mapa12.js";
 import { hojeISO, competenciaDeData } from "../domain/tempo.js";
 
 const HORIZONTES = [
@@ -31,8 +32,11 @@ export function calcularPlanoGeral(base, hoje = hojeISO()) {
     return { ...h, saldoFinalSeguroCentavos: r.saldoFinalSeguroCentavos, saidaCritica: r.saidaCritica, entradasIncertoCentavos: r.entradasIncertoCentavos };
   });
 
+  const mapa = mapaDeMeses({ ...base, saldoInicialCentavos, gastoDiaADiaMensalCentavos, hoje });
+
   return {
     competencia,
+    mapa,
     agora: {
       saldoInicialCentavos,
       rendaConfirmadaCentavos: visao.rendaConfirmadaCentavos,

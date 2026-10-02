@@ -11,7 +11,7 @@ import { assinarPlanoGeral } from "../../dados/planoGeralRepo.js";
 import { agruparAchados } from "../../domain/planoGeral.js";
 import { navegar } from "../navegacao.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
-import { formatarData } from "../../domain/tempo.js";
+import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 
 const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
@@ -195,7 +195,49 @@ function blocoOndeVoceEsta(g) {
     </section>`;
 }
 
+const MES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const mesCurto = (c) => `${MES_CURTO[Number(c.slice(5, 7)) - 1]}/${c.slice(2, 4)}`;
+const DESTINO_MARCO = { recorrencia: { modulo: "dinheiro", aba: "recorrencias" }, fonteRenda: { modulo: "dinheiro", aba: "renda" }, divida: { modulo: "dividas" } };
+
+function cartaoVemAi(mapa) {
+  if (!mapa.marcos.length) return "";
+  const meses = mapa.linhas.filter((l) => !l.atual);
+  const pior = meses.reduce((m, l) => (!m || l.sobraCentavos < m.sobraCentavos ? l : m), null);
+  const sinal = (m) => (m.tipo === "saida_nova" || m.tipo === "entrada_acaba" ? "−" : "+");
+  const classe = (m) => (m.tipo === "saida_nova" || m.tipo === "entrada_acaba" ? "valor-neg" : "valor-pos");
+  return `
+    <div class="mapa-buraco${pior && pior.sobraCentavos < 0 ? "" : " cabe"}">
+      <div class="titulo">O que vem aí${pior && pior.sobraCentavos < 0 ? "" : ", e cabe"}</div>
+      <ul class="mapa-marcos">${mapa.marcos.map((m) => `<li><b>${escapeHtml(mesCurto(m.competencia))}</b> <span class="${classe(m)}">${sinal(m)}<span data-valor>${formatarBRL(m.valorCentavos)}</span></span> ${escapeHtml(m.texto)}</li>`).join("")}</ul>
+      ${pior ? `<div class="texto">Mesmo com isso, o pior mês dos próximos 12 (${escapeHtml(mesCurto(pior.competencia))}) ainda fecha com <b class="${pior.sobraCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${pior.sobraCentavos >= 0 ? "+" : ""}${formatarBRL(pior.sobraCentavos)}</b>, contando só renda confirmada ou provável.</div>` : ""}
+    </div>`;
+}
+
+function cartaoDoBuraco(mapa) {
+  const b = mapa.buraco;
+  if (!b || !b.mesDaVirada) return cartaoVemAi(mapa);
+  const virada = mapa.linhas.find((l) => l.competencia === b.mesDaVirada);
+  const antes = mapa.linhas[mapa.linhas.indexOf(virada) - 1];
+  const rotulo = competenciaLabel(b.mesDaVirada).split(" ")[0];
+  const meses = b.deficitMensalCentavos > 0 && b.saldoAntesDaViradaCentavos > 0 ? Math.floor(b.saldoAntesDaViradaCentavos / b.deficitMensalCentavos) : 0;
+  const marcos = virada.marcos;
+  return `
+    <div class="mapa-buraco">
+      <div class="titulo">${escapeHtml(rotulo)} muda o jogo: o mês deixa de se pagar</div>
+      <div class="texto">${antes ? `A sobra mensal vai de <b data-valor>${formatarBRL(antes.sobraCentavos)}</b> pra <b class="valor-neg" data-valor>${formatarBRL(virada.sobraCentavos)}</b>.` : `A sobra do mês fica em <b class="valor-neg" data-valor>${formatarBRL(virada.sobraCentavos)}</b>.`}
+        A partir daí faltam <b data-valor>${formatarBRL(b.deficitMensalCentavos)}</b> por mês.</div>
+      ${marcos.length ? `<ul class="mapa-marcos">${marcos.map((m, i) => `<li><span class="${m.tipo.startsWith("entrada_acaba") || m.tipo === "saida_nova" ? "valor-neg" : "valor-pos"}">${m.tipo === "saida_nova" || m.tipo === "entrada_acaba" ? "−" : "+"}<span data-valor>${formatarBRL(m.valorCentavos)}</span></span> ${escapeHtml(m.texto)} <button class="btn-link" data-marco="${i}">ver</button></li>`).join("")}</ul>` : ""}
+      ${b.saldoAntesDaViradaCentavos != null ? `<div class="texto">Seu saldo previsto no fim de ${escapeHtml(antes ? mesCurto(antes.competencia) : "agora")} é <b data-valor>${formatarBRL(b.saldoAntesDaViradaCentavos)}</b>${meses > 0 ? `, o que cobre cerca de ${meses} ${meses === 1 ? "mês" : "meses"} nesse ritmo` : ""}.</div>` : ""}
+      ${b.faltaParaAguentarCentavos > 0
+        ? `<div class="texto">Pra atravessar os 12 meses sem o saldo ficar negativo ainda faltam <b class="valor-neg" data-valor>${formatarBRL(b.faltaParaAguentarCentavos)}</b>.</div>`
+        : `<div class="texto">Com o que você junta até lá, o saldo aguenta os 12 meses.</div>`}
+      <div class="texto"><b>Pra fechar:</b> entrar <span data-valor>${formatarBRL(b.deficitMensalCentavos)}</span> a mais por mês, cortar o mesmo valor por mês, ou juntar antes o que falta acima.</div>
+    </div>`;
+}
+
 function blocoPraOndeVai(g) {
+  const m = g.mapa;
+  const maior = Math.max(1, ...m.linhas.map((l) => Math.abs(l.sobraCentavos)));
   return `
     <section class="inicio-bloco">
       <h3>Pra onde você vai</h3>
@@ -206,6 +248,21 @@ function blocoPraOndeVai(g) {
             <span>${escapeHtml(h.rotulo)}</span>
             <b class="mono" data-valor>${formatarBRL(h.saldoFinalSeguroCentavos)}</b>
             ${h.saidaCritica ? `<small>aperta em ${escapeHtml(formatarData(h.saidaCritica.data))}</small>` : ""}
+          </div>`).join("")}
+      </div>
+      ${cartaoDoBuraco(m)}
+      <h4 class="mapa-titulo">Mês a mês</h4>
+      ${m.semDiaADia ? `<p class="tela-sub" style="margin:0 0 8px;">Ainda sem histórico de gasto do dia a dia (mercado, lazer, imprevistos): os meses de frente aparecem mais folgados do que a vida real. Conforme você lança, isso se corrige.</p>` : ""}
+      <div class="mapa-meses">
+        ${m.linhas.map((l) => `
+          <div class="mapa-mes${l.sobraCentavos < 0 ? " negativo" : ""}">
+            <div class="mapa-mes-topo">
+              <span class="mapa-mes-nome">${escapeHtml(mesCurto(l.competencia))}${l.atual ? " <small>(resto)</small>" : ""}</span>
+              <span class="mapa-barra"><i style="width:${Math.round(Math.abs(l.sobraCentavos) / maior * 100)}%"></i></span>
+              <b class="mono ${l.sobraCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${l.sobraCentavos >= 0 ? "+" : ""}${formatarBRL(l.sobraCentavos)}</b>
+            </div>
+            <div class="mapa-mes-sub">${l.atual ? "só o que falta entrar e sair até o fim do mês · " : ""}termina com <span class="mono ${l.saldoFimCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(l.saldoFimCentavos)}</span> em conta${l.entradasIncertasCentavos > 0 ? ` · <span data-valor>${formatarBRL(l.entradasIncertasCentavos)}</span> incertos fora da conta` : ""}</div>
+            ${l.marcos.map((x) => `<div class="mapa-chip ${x.tipo.endsWith("acaba") && x.tipo.startsWith("saida") ? "bom" : x.tipo === "entrada_nova" ? "bom" : "ruim"}">${escapeHtml(x.texto)} · <span data-valor>${formatarBRL(x.valorCentavos)}</span></div>`).join("")}
           </div>`).join("")}
       </div>
     </section>`;
@@ -379,6 +436,13 @@ function renderizar() {
 }
 
 function ligarEventos() {
+  container.querySelectorAll("[data-marco]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const virada = geral.mapa.linhas.find((l) => l.competencia === geral.mapa.buraco?.mesDaVirada);
+      const marco = virada?.marcos[Number(b.dataset.marco)];
+      if (marco) navegar(DESTINO_MARCO[marco.origem.tipo] || { modulo: "dinheiro" });
+    });
+  });
   container.querySelectorAll("[data-alavanca]").forEach((b) => {
     b.addEventListener("click", () => navegar(geral.alavancas[Number(b.dataset.alavanca)].destino));
   });

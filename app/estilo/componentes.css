@@ -789,3 +789,25 @@
 .conta-card.estado-paga .conta-valor { font-weight: 500; }
 
 .toast-acao { margin-left: 10px; background: none; border: 0; color: inherit; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; padding: 4px 6px; }
+
+/* ---- Plano: mapa dos próximos 12 meses ---- */
+.mapa-buraco { background: var(--warn-bg); border: 1px solid var(--warn); border-radius: var(--radius); padding: 14px 16px; margin: 14px 0; }
+.mapa-buraco .titulo { font-weight: 700; color: var(--warn); margin-bottom: 6px; }
+.mapa-buraco .texto { font-size: 14px; margin-top: 6px; }
+.mapa-marcos { list-style: none; margin: 8px 0 0; padding: 0; font-size: 14px; }
+.mapa-marcos li { padding: 4px 0; }
+.mapa-titulo { font-size: 15px; margin: 18px 0 8px; }
+.mapa-mes { padding: 10px 0; border-top: 1px solid var(--border); }
+.mapa-mes-topo { display: flex; align-items: center; gap: 10px; }
+.mapa-mes-nome { flex: 0 0 64px; font-weight: 600; font-size: 14px; }
+.mapa-mes-nome small { color: var(--text-muted); font-weight: 400; }
+.mapa-barra { flex: 1; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.mapa-barra i { display: block; height: 100%; border-radius: 999px; background: var(--good); }
+.mapa-mes.negativo .mapa-barra i { background: var(--danger); }
+.mapa-mes-topo b { flex: 0 0 auto; min-width: 96px; text-align: right; font-size: 14px; }
+.mapa-mes-sub { font-size: 12.5px; color: var(--text-muted); margin: 3px 0 0 74px; }
+.mapa-chip { display: inline-block; margin: 6px 6px 0 74px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; }
+.mapa-chip.ruim { background: var(--danger-bg); color: var(--danger); }
+.mapa-chip.bom { background: var(--good-bg); color: var(--good); }
+.mapa-buraco.cabe { background: var(--good-bg); border-color: var(--good); }
+.mapa-buraco.cabe .titulo { color: var(--good); }
