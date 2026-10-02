@@ -6,6 +6,8 @@ import { criarTelaComAbas } from "./comAbas.js";
 import telaVisaoGeral from "./plano.js";
 import telaPorPessoa from "./planoPessoas.js";
 import telaCaminhos from "./planoCaminhos.js";
+import telaPatrimonio from "./patrimonio.js";
+import telaObjetivos from "./objetivos.js";
 
 export default criarTelaComAbas({
   titulo: "Plano",
@@ -14,5 +16,7 @@ export default criarTelaComAbas({
     { id: "geral", rotulo: "Visão geral", tela: telaVisaoGeral },
     { id: "pessoas", rotulo: "Por pessoa", tela: telaPorPessoa },
     { id: "caminhos", rotulo: "Caminhos", tela: telaCaminhos },
+    { id: "patrimonio", rotulo: "Patrimônio", tela: telaPatrimonio },
+    { id: "metas", rotulo: "Metas", tela: telaObjetivos },
   ],
 });

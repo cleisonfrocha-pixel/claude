@@ -1207,3 +1207,15 @@ esperar os dados reais.
 - Recorrência/transação com `semDia` (dia incerto) só atrasa após o fim do mês.
 - 7 testes novos em `mes.test.js` (incl. cenário Cleison: renda cadastrada,
   nada recebido). 367 testes passando; Playwright com dados reais sem erro JS.
+
+### Sprint 32 — Navegação nova e correção de travamento — ✅ (02/10/2026)
+
+- Barra de baixo: Início · Dinheiro · ＋ · Dívidas · Plano. O ＋ abre uma folha
+  (lançar, importar, ver o que vence, ver dívidas). Configurações virou a
+  engrenagem do topo. Agenda e Renda viraram abas de Dinheiro; Patrimônio e
+  Metas viraram abas de Plano. Destinos antigos redirecionam
+  (`REDIRECIONAMENTOS` em `ui/shell.js`).
+- Celular: alvos de toque de 44px, campos de 16px (sem zoom), abas rolam de lado.
+- **Bug grave corrigido:** `ligarDicaDeData` (Sprint 30) regravava o texto da
+  dica a cada mutação e travava a página ao abrir qualquer formulário com data.
+  Agora só escreve quando o texto muda.

@@ -14,7 +14,7 @@
 import { escapeHtml } from "./utilitarios.js";
 import { icone } from "./icones.js";
 import { abrir as abrirModal, fechar as fecharModal } from "./modal.js";
-import { registrar as registrarNavegacao } from "./navegacao.js";
+import { registrar as registrarNavegacao, navegar } from "./navegacao.js";
 import { criarTelaComAbas } from "./telas/comAbas.js";
 import { criarTelaPlaceholder } from "./telas/placeholder.js";
 import telaInicio from "./telas/inicio.js";
@@ -35,9 +35,11 @@ import telaImportar from "./telas/importar.js";
 
 const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
-  subtitulo: "Contas, cartões, toda a movimentação, e a importação de extratos.",
+  subtitulo: "Tudo que entra e sai: lançamentos, agenda, renda, contas, cartões e extratos.",
   abas: [
     { id: "transacoes", rotulo: "Transações", tela: telaTransacoes },
+    { id: "agenda", rotulo: "Agenda", tela: telaPlanejamento },
+    { id: "renda", rotulo: "Renda", tela: telaRenda },
     { id: "recorrencias", rotulo: "Recorrências", tela: telaRecorrencias },
     { id: "contas", rotulo: "Contas", tela: telaContas },
     { id: "cartoes", rotulo: "Cartões", tela: telaCartoes },
@@ -57,34 +59,32 @@ const telaConfiguracoes = criarTelaComAbas({
 const MODULOS = [
   { id: "inicio", rotulo: "Início", icone: "inicio", tela: telaInicio },
   { id: "dinheiro", rotulo: "Dinheiro", icone: "dinheiro", tela: telaDinheiro },
-  { id: "planejamento", rotulo: "Planejamento", rotuloCurto: "Agenda", icone: "planejamento", tela: telaPlanejamento },
   { id: "dividas", rotulo: "Dívidas", icone: "dividas", tela: telaDividas },
-  { id: "renda", rotulo: "Renda", icone: "renda", tela: telaRenda },
-  { id: "patrimonio", rotulo: "Patrimônio", icone: "patrimonio", tela: telaPatrimonio },
-  { id: "objetivos", rotulo: "Objetivos", icone: "objetivos", tela: telaObjetivos },
   { id: "plano", rotulo: "Plano", icone: "plano", tela: telaPlano },
-  { id: "openfinance", rotulo: "Open Finance", icone: "openfinance", tela: criarTelaPlaceholder({
-      titulo: "Open Finance", descricao: "Conexão automática com instituições financeiras.",
-      itens: "É a única fase que depende de um provedor pago e infraestrutura fora deste painel. Ver docs/ARQUITETURA.md, D4.",
-      faseRef: "Fase 12",
-    }), emBreve: true },
-  { id: "ia", rotulo: "IA", icone: "ia", tela: criarTelaPlaceholder({
-      titulo: "IA", descricao: "Assistente financeiro conversacional.",
-      itens: "Responde sobre a sua vida financeira mostrando sempre os dados de origem, sem backend, dentro da própria página.",
-      faseRef: "Fase 13",
-    }), emBreve: true },
-  { id: "configuracoes", rotulo: "Configurações", icone: "configuracoes", tela: telaConfiguracoes },
+  { id: "configuracoes", rotulo: "Configurações", icone: "configuracoes", tela: telaConfiguracoes, oculto: true },
 ];
 
-// Os 4 destinos mais usados vão pra barra fixa; o resto mora atrás do "Mais".
-const IDS_BARRA_INFERIOR = ["inicio", "dinheiro", "planejamento", "plano"];
+// Telas que viraram aba de outro módulo: quem ainda pede o destino antigo
+// (um atalho, um alerta) cai na aba certa em vez de num módulo que não existe.
+const REDIRECIONAMENTOS = {
+  planejamento: { modulo: "dinheiro", aba: "agenda" },
+  renda: { modulo: "dinheiro", aba: "renda" },
+  patrimonio: { modulo: "plano", aba: "patrimonio" },
+  objetivos: { modulo: "plano", aba: "metas" },
+};
+
+// Barra de baixo: Início · Dinheiro · ＋ · Dívidas · Plano. O ＋ no meio é a
+// ação mais frequente (lançar), não um destino.
+const IDS_ESQUERDA = ["inicio", "dinheiro"];
+const IDS_DIREITA = ["dividas", "plano"];
 
 let moduloAtivo = MODULOS[0].id;
 let containerConteudo = null;
 
 export function inicializar(container) {
   containerConteudo = container;
-  registrarNavegacao(({ modulo, aba }) => {
+  registrarNavegacao((destino) => {
+    const { modulo, aba } = { ...destino, ...(REDIRECIONAMENTOS[destino.modulo] || {}) };
     const m = MODULOS.find((x) => x.id === modulo);
     if (!m) return;
     if (aba && m.tela.definirAba) m.tela.definirAba(aba);
@@ -107,7 +107,7 @@ function renderizarNavegacao() {
 function renderizarNavTopo() {
   const nav = document.getElementById("nav-modulos-inner");
   if (!nav) return;
-  nav.innerHTML = MODULOS.map((m) => `
+  nav.innerHTML = MODULOS.filter((m) => !m.oculto).map((m) => `
     <button class="modulo-chip${m.id === moduloAtivo ? " ativo" : ""}" data-modulo="${escapeHtml(m.id)}">
       ${icone(m.icone, 16)}<span>${escapeHtml(m.rotulo)}</span>${m.emBreve ? '<span class="badge-em-breve">em breve</span>' : ""}
     </button>
@@ -118,47 +118,54 @@ function renderizarNavTopo() {
   atualizarSombraDeRolagem();
 }
 
+function itemBarra(m) {
+  return `
+    <button class="bottom-nav-item${m.id === moduloAtivo ? " ativo" : ""}" data-modulo="${escapeHtml(m.id)}">
+      ${icone(m.icone, 22)}<span>${escapeHtml(m.rotuloCurto || m.rotulo)}</span>
+    </button>`;
+}
+
 function renderizarNavInferior() {
   const nav = document.getElementById("bottom-nav");
   if (!nav) return;
-  const principais = IDS_BARRA_INFERIOR.map((id) => MODULOS.find((m) => m.id === id));
-  const numaAbaSecundaria = MODULOS.filter((m) => !IDS_BARRA_INFERIOR.includes(m.id));
-  const maisAtivo = numaAbaSecundaria.some((m) => m.id === moduloAtivo);
-  nav.innerHTML = principais.map((m) => `
-    <button class="bottom-nav-item${m.id === moduloAtivo ? " ativo" : ""}" data-modulo="${escapeHtml(m.id)}">
-      ${icone(m.icone, 22)}<span>${escapeHtml(m.rotuloCurto || m.rotulo)}</span>
-    </button>
-  `).join("") + `
-    <button class="bottom-nav-item${maisAtivo ? " ativo" : ""}" data-mais>
-      ${icone("mais", 22)}<span>Mais</span>
-    </button>`;
+  const achar = (id) => MODULOS.find((m) => m.id === id);
+  nav.innerHTML = IDS_ESQUERDA.map(achar).map(itemBarra).join("")
+    + `<button class="bottom-nav-mais" data-lancar-rapido aria-label="Lançar">${icone("adicionar", 26)}</button>`
+    + IDS_DIREITA.map(achar).map(itemBarra).join("");
   nav.querySelectorAll("[data-modulo]").forEach((btn) => {
     btn.addEventListener("click", () => selecionarModulo(btn.dataset.modulo));
   });
-  const btnMais = nav.querySelector("[data-mais]");
-  if (btnMais) btnMais.addEventListener("click", () => abrirMenuMais(numaAbaSecundaria));
+  nav.querySelector("[data-lancar-rapido]").addEventListener("click", abrirFolhaDeLancar);
+  const engrenagem = document.getElementById("btn-config");
+  if (engrenagem) {
+    engrenagem.classList.toggle("ativo", moduloAtivo === "configuracoes");
+    engrenagem.onclick = () => selecionarModulo("configuracoes");
+  }
 }
 
-/** Os módulos que não cabem na barra fixa moram aqui, numa folha simples
- * que abre por cima (reaproveita o modal existente, sem componente novo). */
-function abrirMenuMais(modulos) {
-  const html = `
+/** O ＋ do meio: uma folha com as quatro coisas que a pessoa faz todo dia. */
+function abrirFolhaDeLancar() {
+  const opcoes = [
+    { id: "nova-transacao", rotulo: "Lançar um gasto ou recebimento", ic: "adicionar", destino: { modulo: "dinheiro", aba: "transacoes", acao: "nova-transacao" } },
+    { id: "importar", rotulo: "Importar um extrato", ic: "dinheiro", destino: { modulo: "dinheiro", aba: "importar" } },
+    { id: "agenda", rotulo: "Ver o que vence", ic: "planejamento", destino: { modulo: "dinheiro", aba: "agenda" } },
+    { id: "divida", rotulo: "Ver minhas dívidas", ic: "dividas", destino: { modulo: "dividas" } },
+  ];
+  abrirModal(`
     <div class="modal">
-      <h2>Mais</h2>
+      <h2>O que você quer fazer?</h2>
       <div class="lista-cartoes">
-        ${modulos.map((m) => `
-          <button class="item-cartao" data-modulo="${escapeHtml(m.id)}" style="width:100%;text-align:left;cursor:pointer;font:inherit;">
-            <div class="item-avatar">${icone(m.icone, 20)}</div>
-            <div class="item-corpo"><div class="item-titulo">${escapeHtml(m.rotulo)}</div></div>
-            ${m.emBreve ? '<span class="item-tag">em breve</span>' : ""}
+        ${opcoes.map((o) => `
+          <button class="item-cartao folha-opcao" data-opcao="${o.id}">
+            <div class="item-avatar">${icone(o.ic, 20)}</div>
+            <div class="item-corpo"><div class="item-titulo">${escapeHtml(o.rotulo)}</div></div>
           </button>`).join("")}
       </div>
-    </div>`;
-  abrirModal(html);
-  document.querySelectorAll("#overlay-modal [data-modulo]").forEach((btn) => {
+    </div>`);
+  document.querySelectorAll("#overlay-modal [data-opcao]").forEach((btn) => {
     btn.addEventListener("click", () => {
       fecharModal();
-      selecionarModulo(btn.dataset.modulo);
+      navegar(opcoes.find((o) => o.id === btn.dataset.opcao).destino);
     });
   });
 }
@@ -176,6 +183,7 @@ function atualizarSombraDeRolagem() {
 }
 
 function selecionarModulo(id, forcar = false) {
+  if (REDIRECIONAMENTOS[id]) return navegar(REDIRECIONAMENTOS[id]);
   if (id === moduloAtivo && !forcar) return;
   const anterior = MODULOS.find((m) => m.id === moduloAtivo);
   if (anterior && anterior.tela.desmontar) anterior.tela.desmontar();

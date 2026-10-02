@@ -44,7 +44,7 @@ let estadoObjetivos = null;
 let container = null;
 
 function irPara(modulo) {
-  document.querySelector(`[data-modulo="${modulo}"]`)?.click();
+  navegar({ modulo });
 }
 
 export default {

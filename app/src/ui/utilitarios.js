@@ -46,7 +46,10 @@ export function ligarDicaDeData() {
       dica.className = "dica-data";
       input.insertAdjacentElement("afterend", dica);
     }
-    dica.textContent = extenso(input.value);
+    // Só escreve se mudou: gravar o mesmo texto já dispara o observer de
+    // novo, e o laço travava a página inteira ao abrir qualquer formulário.
+    const texto = extenso(input.value);
+    if (dica.textContent !== texto) dica.textContent = texto;
   };
   const varrer = () => document.querySelectorAll('input[type="date"]').forEach(atualizar);
   new MutationObserver(varrer).observe(document.body, { childList: true, subtree: true });

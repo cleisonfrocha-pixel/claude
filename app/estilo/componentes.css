@@ -639,3 +639,36 @@
 /* Sprint 30: campo escondido nunca aparece, e a data ganha dica por extenso. */
 [hidden] { display: none !important; }
 .dica-data { display: block; color: var(--text-faint); font-size: 12.5px; margin-top: 4px; text-transform: capitalize; }
+
+/* Sprint 32: navegação nova (Início · Dinheiro · ＋ · Dívidas · Plano), engrenagem
+   no topo, alvos de toque de 44px e teclado sem zoom no celular. */
+.btn-engrenagem {
+  width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-engrenagem.ativo { color: var(--accent); border-color: var(--accent); }
+.bottom-nav-mais {
+  flex: 0 0 56px; width: 56px; height: 56px; margin-top: -22px; border-radius: 50%; border: 4px solid var(--bg);
+  background: linear-gradient(135deg, var(--accent-fill-2), var(--accent-fill) 70%); color: var(--accent-ink);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 8px 18px -6px rgba(91, 33, 182, .7);
+}
+.folha-opcao { width: 100%; text-align: left; cursor: pointer; font: inherit; min-height: 56px; }
+@media (max-width: 860px) {
+  .bottom-nav { align-items: center; }
+  .bottom-nav-item { min-height: 48px; }
+}
+@media (max-width: 640px) {
+  .field input, .field select, .field textarea { min-height: 44px; font-size: 16px; }
+  .btn, .modulo-chip { min-height: 44px; }
+  .btn-mini { min-height: 40px; }
+  .subabas { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -20px; padding-inline: 20px; }
+  .subabas::-webkit-scrollbar { display: none; }
+}
+@media (max-width: 640px) {
+  .topbar-inner { flex-wrap: nowrap; }
+  .topbar-actions { flex-shrink: 0; }
+  .modo-local-badge { display: none; }
+  .wordmark-nome small { display: none; }
+}

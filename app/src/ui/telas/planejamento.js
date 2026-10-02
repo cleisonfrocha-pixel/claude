@@ -8,8 +8,6 @@ import telaCalendario from "./calendario.js";
 import telaFluxoCaixa from "./fluxoCaixa.js";
 
 export default criarTelaComAbas({
-  titulo: "Planejamento",
-  subtitulo: "O que ainda vai acontecer com o seu dinheiro, e até onde a trajetória aguenta.",
   abas: [
     { id: "calendario", rotulo: "Calendário", tela: telaCalendario },
     { id: "fluxo", rotulo: "Fluxo de caixa", tela: telaFluxoCaixa },
