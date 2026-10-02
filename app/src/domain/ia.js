@@ -16,6 +16,10 @@ export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, 
   const add = (fonte, texto) => linhas.push({ fonte, texto });
   const c = inicio?.caixa;
   if (c) {
+    if (inicio.contasMes?.resumo?.quantidade) {
+      const r = inicio.contasMes.resumo;
+      add("Contas do mês", `${r.quantidadePagas} de ${r.quantidade} contas pagas (${R(r.pagoCentavos)} de ${R(r.totalCentavos)}); faltam ${R(r.faltaCentavos)}${r.quantidadeAtrasadas ? `; ${r.quantidadeAtrasadas} atrasada(s) (${R(r.atrasadasCentavos)}): ${inicio.contasMes.atrasadas.map((i) => i.descricao).join(", ")}` : "; nada atrasado"}.`);
+    }
     add("Início", `Hoje é ${hoje}. Em conta (sem a reserva): ${R(c.saldoAtualCentavos)}. Vai entrar nos próximos ${inicio.horizonteDias} dias (confirmado e provável): ${R(c.entradasPrevistasCentavos)}. Vai sair: ${R(c.comprometidoCentavos)}. Pode gastar até ${c.horizonteAte}: ${R(c.seguroParaGastarCentavos)} (é o ponto mais baixo do saldo${c.diaMaisApertado ? `, em ${c.diaMaisApertado}` : ""}).`);
     const f = inicio.confianca;
     add("Início", `Confiança do número: ${f.nivel}. ${f.frase}${f.esperadoCentavos ? ` Ainda esperado, não recebido: ${R(f.esperadoCentavos)} de ${R(f.totalCentavos)}.` : ""}`);
@@ -26,6 +30,12 @@ export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, 
   if (a) {
     add("Plano · Onde você está", `Mês atual: recebido ${R(a.rendaConfirmadaCentavos)}, esperado ${R(a.rendaProvavelCentavos)}${a.rendaIncertaCentavos ? `, incerto (fora da conta) ${R(a.rendaIncertaCentavos)}` : ""}; gastos do mês ${R(a.gastoCentavos)}; parcelas de dívida ${R(a.parcelasCentavos)}; ${a.sobraCentavos < 0 ? "FALTA" : "sobra"} no mês ${R(Math.abs(a.sobraCentavos))}.`);
     add("Plano · Pra onde você vai", (geral.futuro || []).map((h) => `${h.rotulo}: saldo ${R(h.saldoFinalSeguroCentavos)}${h.saidaCritica ? ` (aperta em ${h.saidaCritica.data})` : ""}`).join("; "));
+    const m = geral.mapa;
+    if (m) {
+      for (const l of m.linhas.slice(0, 12)) add("Plano · Próximos meses", `${l.competencia}${l.atual ? " (só o resto do mês)" : ""}: sobra ${R(l.sobraCentavos)}, termina com ${R(l.saldoFimCentavos)} em conta${l.marcos.length ? `; muda: ${l.marcos.map((x) => `${x.texto} (${R(x.valorCentavos)})`).join(", ")}` : ""}.`);
+      if (m.semDiaADia) add("Plano · Próximos meses", "Atenção: ainda não há histórico de gasto do dia a dia (mercado, lazer); os meses futuros estão mais folgados que a vida real.");
+      if (m.buraco?.mesDaVirada) add("Plano · Próximos meses", `Em ${m.buraco.mesDaVirada} o mês deixa de se pagar: faltam ${R(m.buraco.deficitMensalCentavos)} por mês.`);
+    }
     for (const l of geral.alavancas || []) add("Plano · Alavancas", `${l.titulo}: +${R(l.impactoMensalCentavos)}/mês. ${l.premissa}`);
   }
   for (const f of fontesRenda || []) {
@@ -46,7 +56,26 @@ export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, 
     for (const m of fe.mudancas || []) add("Fechamento", `Gasto em ${m.nome}: ${R(m.anteriorCentavos)} -> ${R(m.atualCentavos)}`);
   }
   for (const x of (achados || []).slice(0, 8)) add("Alertas do Plano", `[${x.urgencia}] ${x.titulo}. Sugestão: ${x.acaoSugerida || "-"}`);
-  return linhas;
+  return limitarRetrato(linhas);
+}
+
+export const LIMITE_RETRATO_CARACTERES = 12000;
+
+/** O prompt tem teto: se o retrato passar dele, as últimas linhas (as de
+ * menor prioridade) saem, e a última linha avisa que houve corte, pra IA
+ * dizer "não tenho esse dado" em vez de inventar. */
+export function limitarRetrato(linhas, limite = LIMITE_RETRATO_CARACTERES) {
+  let total = 0;
+  const saida = [];
+  for (const l of linhas) {
+    total += l.fonte.length + l.texto.length + 4;
+    if (total > limite) {
+      saida.push({ fonte: "Aviso", texto: "O retrato foi cortado por ser grande: parte dos dados não está aqui. Diga que não tem esse dado em vez de supor." });
+      break;
+    }
+    saida.push(l);
+  }
+  return saida;
 }
 
 export const INSTRUCOES_IA = `Você é o assistente do painel financeiro de uma família brasileira. Fale em português do Brasil, simples, sem jargão, como a um amigo que não entende de finanças. Regras:

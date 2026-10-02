@@ -6,6 +6,8 @@
 // incompleto" (mesma regra do §9/§17 — todo alerta aponta os dados que o
 // originaram).
 
+import { faturasContadasEmDobro } from "./cartoes.js";
+
 const ITENS_COMPLETUDE = [
   { chave: "pessoa", rotulo: "Nenhuma pessoa cadastrada.", ok: (d) => d.pessoas.length > 0 },
   { chave: "conta", rotulo: "Nenhuma conta cadastrada.", ok: (d) => d.contas.length > 0 },
@@ -28,6 +30,13 @@ export function calcularCompletudeGeral(dados) {
  * faltando", é "dado presente mas ainda não confirmado". */
 export function identificarItensAConfirmar({ transacoes, dividas }) {
   const itens = [];
+  const dobro = faturasContadasEmDobro(transacoes);
+  if (dobro.length) {
+    itens.push({
+      chave: "fatura_em_dobro", quantidade: dobro.length,
+      rotulo: `${dobro.length} fatura${dobro.length > 1 ? "s" : ""} de cartão com resumo e compras detalhadas juntos (pode estar contando em dobro). Veja em Dinheiro › Cartões.`,
+    });
+  }
   const incertas = (transacoes || []).filter((t) => t.certeza === "incerto" && t.status !== "cancelado");
   if (incertas.length) {
     itens.push({

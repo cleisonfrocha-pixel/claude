@@ -31,7 +31,7 @@ async function carregarTudo() {
     dividas: comId(listaDividas),
     fontesRenda: comId(listaFontesRenda),
     ativos: comId(listaAtivos),
-    transacoes: listaTransacoes.map((t) => t.dados),
+    transacoes: comId(listaTransacoes),
   };
 }
 

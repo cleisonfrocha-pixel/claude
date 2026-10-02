@@ -1492,3 +1492,20 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
 - Fora do pacote por decisão: campo de data em dd/mm/aaaa. O navegador mostra
   o formato do aparelho; a data por extenso aparece embaixo de todo campo de
   data pra nunca haver dúvida. 430 testes passando.
+
+### Sprint 46: fatura em resumo x compras, IA com o mapa, checklist de publicação — 02/10/2026
+
+- Fatura lançada em resumo ("Compras até o fechamento…") + compras detalhadas
+  da mesma fatura contam o mesmo dinheiro duas vezes. `faturasContadasEmDobro`
+  (`domain/cartoes.js`) detecta; Dinheiro › Cartões mostra o aviso e o botão
+  **Cancelar o resumo** (cancelar, não apagar: dá pra reverter); Plano ›
+  Qualidade dos dados também avisa. Nada é decidido sozinho.
+- IA: o retrato agora inclui o mapa dos próximos 12 meses (sobra, saldo e
+  marcos como o aluguel de dezembro) e as contas do mês (atrasadas); o prompt
+  tem teto de 12.000 caracteres, com aviso de corte pra IA dizer "não tenho
+  esse dado". O teste real com a IA do claude.ai só pode ser feito pelo
+  usuário abrindo o painel (a capacidade `sample` não existe fora dele): fica
+  como validação pendente do dono.
+- `ferramentas/arquivos-para-publicar.js` + `docs/PUBLICACAO.md`: lista o que
+  publicar (tudo ou só o que mudou) e confere a lista publicada contra o
+  repositório, pra não repetir o arquivo esquecido de 02/10. 434 testes.

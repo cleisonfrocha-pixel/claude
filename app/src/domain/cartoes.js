@@ -84,3 +84,30 @@ export function calcularVisaoCartao({ cartao, transacoesDoCartao, faturasDoCarta
     faturaAtual, proximaFatura, comprometimentoFuturo,
   };
 }
+
+// ---- fatura lançada em resumo x compras detalhadas ----
+// Enquanto a pessoa não tem o extrato do cartão, a fatura entra como UM
+// lançamento resumido ("Compras até o fechamento…"). Quando as compras de
+// verdade chegam, somar as duas coisas conta o mesmo dinheiro duas vezes
+// (CLAUDE.md: compra no cartão ≠ pagamento da fatura; nada de contar em dobro).
+// Em vez de adivinhar, o painel avisa e deixa cancelar o resumo com um toque.
+
+export const PADRAO_RESUMO_FATURA = /^compras (até o fechamento|previstas)/i;
+
+export function ehResumoDeFatura(t) {
+  return !!t.resumoDeFatura || PADRAO_RESUMO_FATURA.test(t.descricao || "");
+}
+
+/** Faturas que têm resumo E compras detalhadas ao mesmo tempo. `transacoes`
+ * precisa trazer `id`. Cancelado não conta. */
+export function faturasContadasEmDobro(transacoes) {
+  const porFatura = new Map();
+  for (const t of transacoes || []) {
+    if (!t.faturaId || t.tipo !== "despesa" || t.status === "cancelado") continue;
+    if (!porFatura.has(t.faturaId)) porFatura.set(t.faturaId, { faturaId: t.faturaId, cartaoId: t.cartaoId || null, resumos: [], resumoCentavos: 0, detalhadoCentavos: 0 });
+    const f = porFatura.get(t.faturaId);
+    const v = Number(t.valorCentavos) || 0;
+    if (ehResumoDeFatura(t)) { f.resumos.push(t.id); f.resumoCentavos += v; } else f.detalhadoCentavos += v;
+  }
+  return [...porFatura.values()].filter((f) => f.resumos.length && f.detalhadoCentavos > 0);
+}

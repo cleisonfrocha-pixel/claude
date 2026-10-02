@@ -34,3 +34,24 @@ test("turnos: instruções primeiro, dados dentro, pergunta por último; histór
 test("instruções: só lê, não inventa, incerto não é garantido, cita fontes", () => {
   for (const trecho of ["SOMENTE", "Você só lê", "nunca é dinheiro garantido", "Baseado em:"]) assert.ok(INSTRUCOES_IA.includes(trecho), trecho);
 });
+
+import { limitarRetrato } from "../src/domain/ia.js";
+
+test("retrato grande é cortado com aviso, nunca passa do teto do prompt", () => {
+  const linhas = Array.from({ length: 400 }, (_, i) => ({ fonte: "Fonte", texto: `linha ${i} ${"x".repeat(80)}` }));
+  const r = limitarRetrato(linhas, 5000);
+  const total = r.reduce((s, l) => s + l.fonte.length + l.texto.length + 4, 0);
+  assert.ok(total < 5500);
+  assert.equal(r.at(-1).fonte, "Aviso");
+  assert.equal(limitarRetrato(linhas.slice(0, 5)).length, 5);
+});
+
+test("retrato traz o mapa dos próximos meses e as contas do mês", () => {
+  const geral = { agora: { rendaConfirmadaCentavos: 0, rendaProvavelCentavos: 0, rendaIncertaCentavos: 0, gastoCentavos: 0, parcelasCentavos: 0, sobraCentavos: 0 }, futuro: [], alavancas: [],
+    mapa: { linhas: [{ competencia: "2026-12", atual: false, sobraCentavos: 416736, saldoFimCentavos: 1585570, marcos: [{ texto: "Aluguel da casa começa", valorCentavos: 290000 }] }], semDiaADia: true, buraco: null } };
+  const inicio2 = { ...inicio, contasMes: { resumo: { quantidade: 37, quantidadePagas: 0, pagoCentavos: 0, totalCentavos: 2049067, faltaCentavos: 2049067, quantidadeAtrasadas: 3, atrasadasCentavos: 24961 }, atrasadas: [{ descricao: "Conta de Luz" }] } };
+  const txt = montarRetratoParaIA({ hoje: "2026-10-03", inicio: inicio2, geral, dividas: [], fontesRenda: [], achados: [], ativos: [] }).map((l) => `[${l.fonte}] ${l.texto}`).join("\n");
+  assert.match(txt, /\[Plano · Próximos meses\] 2026-12: sobra R\$\s?4\.167,36.*Aluguel da casa começa/);
+  assert.match(txt, /\[Contas do mês\] 0 de 37 contas pagas.*3 atrasada\(s\).*Conta de Luz/);
+  assert.match(txt, /sem histórico|ainda não há histórico/);
+});

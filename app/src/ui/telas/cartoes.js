@@ -5,8 +5,8 @@ import { faturas } from "../../dados/faturasRepo.js";
 import { BANDEIRAS_CARTAO } from "../../domain/esquema.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO, competenciaLabel } from "../../domain/tempo.js";
-import { calcularVisaoCartao, dataFechamentoFatura } from "../../domain/cartoes.js";
-import { escapeHtml } from "../utilitarios.js";
+import { calcularVisaoCartao, dataFechamentoFatura, faturasContadasEmDobro } from "../../domain/cartoes.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
 
 const ROTULO_BANDEIRA = {
   visa: "Visa", mastercard: "Mastercard", elo: "Elo", amex: "American Express", outra: "Outra",
@@ -62,6 +62,17 @@ export default criarTelaCadastro({
       tagClasse: dados.status === "ativo" && !semUso ? visao.nivelAlerta : null,
     };
   },
+  aoRenderizarExtra(dados, id, contexto, elExtra) {
+    elExtra.querySelectorAll("[data-cancelar-resumo]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try {
+          for (const tid of btn.dataset.cancelarResumo.split(",")) await transacoes.atualizar(tid, { status: "cancelado" });
+          mostrarToast("Resumo cancelado. A fatura agora vale só as compras detalhadas.");
+        } catch (e) { btn.disabled = false; mostrarToast(e.message || "Não consegui cancelar."); }
+      });
+    });
+  },
   renderExtra(dados, id, contexto) {
     const visao = visaoDoCartao(dados, id, contexto);
     if (!temUso(id, contexto)) {
@@ -69,7 +80,14 @@ export default criarTelaCadastro({
     }
     const barraClasse = visao.nivelAlerta !== "normal" ? ` ${visao.nivelAlerta}` : "";
     const largura = Math.min(100, visao.percentualUtilizado);
+    const dobro = dobrosDoCartao(id, contexto);
     return `
+      ${dobro.map((d) => `
+        <div class="alerta-cobertura" style="margin:0 0 12px;">
+          <div class="titulo">Fatura contada em dobro</div>
+          <div class="texto">Tem <b data-valor>${formatarBRL(d.resumoCentavos)}</b> num lançamento resumido e mais <b data-valor>${formatarBRL(d.detalhadoCentavos)}</b> em compras detalhadas. Se as compras já cobrem a fatura, cancele o resumo pra não contar duas vezes.</div>
+          <button class="btn btn-ghost" data-cancelar-resumo="${escapeHtml(d.resumos.join(","))}">Cancelar o resumo (<span data-valor>${formatarBRL(d.resumoCentavos)}</span>)</button>
+        </div>`).join("")}
       <div class="tela-sub" style="margin:0 0 4px;">Utilizado <span data-valor>${formatarBRL(visao.utilizadoCentavos)}</span> de <span data-valor>${formatarBRL(visao.limiteTotalCentavos)}</span> (${Math.round(visao.percentualUtilizado)}%)</div>
       <div class="barra-limite${barraClasse}"><span style="width:${largura}%"></span></div>
       ${linhaFatura("Fatura atual", visao.faturaAtual, visao.faturaAtual ? (visao.faturaAtual.fechada
@@ -83,6 +101,11 @@ export default criarTelaCadastro({
     `;
   },
 });
+
+function dobrosDoCartao(cartaoId, contexto) {
+  const todas = (contexto.transacoes || []).map((t) => ({ id: t.id, ...t.dados }));
+  return faturasContadasEmDobro(todas).filter((d) => d.cartaoId === cartaoId);
+}
 
 /** Cartão sem compra nem fatura não tem "0% usado": tem dado nenhum. */
 function temUso(cartaoId, contexto) {

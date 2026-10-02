@@ -106,3 +106,25 @@ test("PORTÃO DA FASE 3: parcela 1/10 aparece na fatura atual e as outras 9 como
   assert.equal(r.utilizadoCentavos, 40000, "as 4 parcelas juntas comprometem o limite, sem duplicar");
   assert.equal(r.comprometimentoFuturo.length, 2, "parcelas 3 e 4 aparecem como compromisso futuro, além da próxima fatura");
 });
+
+import { faturasContadasEmDobro, ehResumoDeFatura } from "../src/domain/cartoes.js";
+
+test("fatura em resumo + compras detalhadas é contada em dobro; só uma das duas, não", () => {
+  const resumo = { id: "r", tipo: "despesa", faturaId: "f1", cartaoId: "c1", valorCentavos: 229700, descricao: "Compras até o fechamento (fatura OUT)", status: "pago" };
+  const compra = { id: "c", tipo: "despesa", faturaId: "f1", cartaoId: "c1", valorCentavos: 4500, descricao: "Uber", status: "pago" };
+  assert.ok(ehResumoDeFatura(resumo));
+  assert.ok(!ehResumoDeFatura(compra));
+  assert.deepEqual(faturasContadasEmDobro([resumo]), []);
+  assert.deepEqual(faturasContadasEmDobro([compra]), []);
+  const d = faturasContadasEmDobro([resumo, compra]);
+  assert.equal(d.length, 1);
+  assert.equal(d[0].resumoCentavos, 229700);
+  assert.equal(d[0].detalhadoCentavos, 4500);
+  assert.deepEqual(d[0].resumos, ["r"]);
+});
+
+test("resumo cancelado deixa de contar em dobro", () => {
+  const resumo = { id: "r", tipo: "despesa", faturaId: "f1", valorCentavos: 229700, descricao: "Compras previstas (fatura NOV)", status: "cancelado" };
+  const compra = { id: "c", tipo: "despesa", faturaId: "f1", valorCentavos: 4500, descricao: "Uber", status: "pago" };
+  assert.deepEqual(faturasContadasEmDobro([resumo, compra]), []);
+});
