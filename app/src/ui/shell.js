@@ -20,6 +20,7 @@ import { criarTelaPlaceholder } from "./telas/placeholder.js";
 import telaInicio from "./telas/inicio.js";
 import telaContas from "./telas/contas.js";
 import telaCartoes from "./telas/cartoes.js";
+import telaAPagar from "./telas/contasAPagar.js";
 import telaTransacoes from "./telas/transacoes.js";
 import telaRecorrencias from "./telas/recorrencias.js";
 import telaPessoas from "./telas/pessoas.js";
@@ -39,6 +40,7 @@ const telaDinheiro = criarTelaComAbas({
   titulo: "Dinheiro",
   subtitulo: "Tudo que entra e sai: lançamentos, agenda, renda, contas, cartões e extratos.",
   abas: [
+    { id: "apagar", rotulo: "A pagar", tela: telaAPagar },
     { id: "transacoes", rotulo: "Transações", tela: telaTransacoes },
     { id: "agenda", rotulo: "Agenda", tela: telaPlanejamento },
     { id: "renda", rotulo: "Renda", tela: telaRenda },

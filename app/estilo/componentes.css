@@ -599,7 +599,7 @@
 
 /* ---- toast ---- */
 .toast {
-  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%); background: var(--text); color: var(--bg);
   padding: 12px 20px; border-radius: 999px; font-size: 14px; box-shadow: var(--shadow); z-index: 60;
   max-width: calc(100% - 32px); text-align: center;
@@ -733,3 +733,59 @@
 .ia-bolha.voce { align-self: flex-end; background: linear-gradient(135deg, var(--accent-fill-2), var(--accent-fill) 70%); color: var(--accent-ink); }
 .ia-bolha.ia { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); }
 .ia-sugestoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---- A pagar: cada conta com seu estado e seu peso visual ---- */
+.mes-progresso { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 6px 0 18px; }
+.mes-progresso-topo { display: flex; align-items: baseline; gap: 6px; font-size: 15px; }
+.mes-progresso-topo b { font-size: 20px; }
+.mes-progresso-topo span { color: var(--text-muted); }
+.mes-progresso-pct { margin-left: auto; font-weight: 700; color: var(--text) !important; }
+.mes-progresso .barra-limite { height: 10px; margin: 10px 0 8px; }
+.mes-progresso .barra-limite span { transition: width .4s ease; }
+.mes-progresso-valores { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--text-muted); }
+.mes-progresso-valores b { color: var(--text); }
+.mes-progresso-msg { margin-top: 10px; font-size: 14px; color: var(--text-muted); }
+.mes-progresso-msg.alerta { color: var(--danger); font-weight: 600; }
+.mes-progresso-msg.ok { color: var(--good); font-weight: 600; }
+
+.conta-grupo { margin-bottom: 18px; }
+.conta-grupo > summary { list-style: none; cursor: pointer; }
+.conta-grupo > summary::-webkit-details-marker { display: none; }
+.conta-grupo-topo { display: flex; justify-content: space-between; align-items: baseline; margin: 0 2px 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; color: var(--text-muted); }
+.conta-grupo-topo.estado-atrasada { color: var(--danger); }
+.conta-grupo-topo.estado-hoje { color: var(--warn); }
+.conta-grupo-topo.estado-paga { color: var(--good); }
+.conta-grupo-qtd { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--surface-2); color: var(--text); text-align: center; font-size: 12px; }
+.conta-grupo-dica { font-size: 13px; color: var(--text-muted); margin: -2px 2px 8px; }
+.conta-grupo[open] > summary .conta-grupo-topo::after { content: ""; }
+
+.conta-faixa { font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin: 12px 2px 6px; }
+.conta-card { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 10px; margin-bottom: 8px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--border); }
+.conta-marca { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px; border: 2px solid var(--border); color: transparent; }
+.conta-corpo { flex: 1; min-width: 0; }
+.conta-titulo { font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.conta-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+.conta-direita { text-align: right; flex: 0 0 auto; }
+.conta-valor { font-weight: 700; font-size: 15px; }
+.conta-acoes { display: flex; gap: 6px; justify-content: flex-end; align-items: center; margin-top: 6px; }
+.conta-mais { min-width: 36px; padding: 4px 0; }
+.conta-pagar { min-height: 36px; padding: 6px 14px; }
+.conta-selo { font-size: 12px; font-weight: 700; color: var(--good); }
+
+/* atrasada: pesa mais, é o que pede ação agora */
+.conta-card.estado-atrasada { border-left-color: var(--danger); background: var(--danger-bg); border-color: var(--danger); }
+.conta-card.estado-atrasada .conta-marca { background: var(--danger); border-color: var(--danger); color: #fff; }
+.conta-card.estado-atrasada .conta-sub { color: var(--danger); font-weight: 600; }
+.conta-card.estado-atrasada .conta-pagar { background: var(--danger); border-color: var(--danger); color: #fff; }
+/* vence hoje: chama atenção sem gritar */
+.conta-card.estado-hoje { border-left-color: var(--warn); background: var(--warn-bg); }
+.conta-card.estado-hoje .conta-marca { border-color: var(--warn); }
+.conta-card.estado-hoje .conta-sub { color: var(--warn); font-weight: 600; }
+/* a pagar: neutro */
+.conta-card.estado-a_pagar { border-left-color: var(--text-faint); }
+/* paga: some do caminho, sem apagar a informação */
+.conta-card.estado-paga { border-left-color: var(--good); background: transparent; opacity: .72; }
+.conta-card.estado-paga .conta-marca { background: var(--good); border-color: var(--good); color: #fff; }
+.conta-card.estado-paga .conta-valor { font-weight: 500; }
+
+.toast-acao { margin-left: 10px; background: none; border: 0; color: inherit; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; padding: 4px 6px; }

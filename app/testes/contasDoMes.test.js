@@ -1,0 +1,107 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { contasDoMes } from "../src/domain/contasDoMes.js";
+
+const HOJE = "2026-10-12";
+const cats = [{ id: "ess", essencial: true }, { id: "lazer", essencial: false }, { id: "div", grupo: "dividas" }];
+const t = (o) => ({ tipo: "despesa", status: "previsto", competencia: "2026-10", categoriaId: "lazer", valorCentavos: 10000, ...o });
+
+test("estado de cada conta: atrasada, vence hoje, a pagar, paga", () => {
+  const r = contasDoMes({
+    competencia: "2026-10", hoje: HOJE, categorias: cats,
+    transacoes: [
+      t({ id: "a", descricao: "Luz", data: "2026-10-05" }),
+      t({ id: "b", descricao: "Água", data: "2026-10-12" }),
+      t({ id: "c", descricao: "Internet", data: "2026-10-20" }),
+      t({ id: "d", descricao: "Aluguel", data: "2026-10-02", status: "pago", categoriaId: "ess" }),
+    ],
+  });
+  const estado = (id) => r.itens.find((i) => i.transacaoId === id).estado;
+  assert.equal(estado("a"), "atrasada");
+  assert.equal(estado("b"), "hoje");
+  assert.equal(estado("c"), "a_pagar");
+  assert.equal(estado("d"), "paga");
+  assert.equal(r.itens.find((i) => i.transacaoId === "a").diasAtraso, 7);
+  assert.deepEqual(r.itens.map((i) => i.transacaoId), ["a", "b", "c", "d"]);
+});
+
+test("progresso sai da leitura: pago / total, atrasadas somadas", () => {
+  const r = contasDoMes({
+    competencia: "2026-10", hoje: HOJE, categorias: cats,
+    transacoes: [
+      t({ id: "a", data: "2026-10-05", valorCentavos: 30000 }),
+      t({ id: "d", data: "2026-10-02", status: "pago", categoriaId: "ess", valorCentavos: 10000 }),
+    ],
+  });
+  assert.equal(r.resumo.totalCentavos, 40000);
+  assert.equal(r.resumo.pagoCentavos, 10000);
+  assert.equal(r.resumo.faltaCentavos, 30000);
+  assert.equal(r.resumo.percentualPago, 25);
+  assert.equal(r.resumo.atrasadasCentavos, 30000);
+});
+
+test("compra no cartão não é conta; a fatura é (e uma vez só)", () => {
+  const r = contasDoMes({
+    competencia: "2026-10", hoje: HOJE, categorias: cats,
+    cartoes: [{ id: "c1", apelido: "Nubank", diaFechamento: 11, diaVencimento: 18 }],
+    faturas: [{ id: "f1", cartaoId: "c1", competencia: "2026-10", status: "aberta" }],
+    transacoes: [
+      t({ id: "x", cartaoId: "c1", faturaId: "f1", data: "2026-10-03", valorCentavos: 50000 }),
+      t({ id: "y", cartaoId: "c1", faturaId: "f1", data: "2026-10-04", valorCentavos: 25000 }),
+    ],
+  });
+  assert.equal(r.itens.length, 1);
+  assert.equal(r.itens[0].tipo, "fatura");
+  assert.equal(r.itens[0].valorCentavos, 75000);
+});
+
+test("fatura paga entra como paga; gasto avulso pago não é conta", () => {
+  const r = contasDoMes({
+    competencia: "2026-10", hoje: HOJE, categorias: cats,
+    cartoes: [{ id: "c1", apelido: "Nubank", diaFechamento: 1, diaVencimento: 8 }],
+    faturas: [{ id: "f1", cartaoId: "c1", competencia: "2026-10", status: "paga" }],
+    transacoes: [
+      t({ id: "x", cartaoId: "c1", faturaId: "f1", data: "2026-09-03", competencia: "2026-09", valorCentavos: 50000 }),
+      t({ id: "mercado", data: "2026-10-03", status: "pago", valorCentavos: 9000 }),
+      t({ id: "baixada", data: "2026-10-03", status: "pago", foiPrevisto: true }),
+    ],
+  });
+  assert.deepEqual(r.itens.map((i) => i.chave).sort(), ["f:f1", "t:baixada"]);
+  assert.ok(r.itens.every((i) => i.estado === "paga"));
+});
+
+test("conta atrasada de mês anterior aparece no mês atual; mês futuro não herda atraso", () => {
+  const velha = t({ id: "gato", competencia: "2026-09", data: "2026-09-28", status: "atrasado", valorCentavos: 3500 });
+  const atual = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes: [velha] });
+  assert.equal(atual.itens[0].estado, "atrasada");
+  const futuro = contasDoMes({ competencia: "2026-11", hoje: HOJE, categorias: cats, transacoes: [velha] });
+  assert.equal(futuro.itens.length, 0);
+});
+
+test("parcela de dívida sem lançamento vira conta com o vencimento original", () => {
+  const r = contasDoMes({
+    competencia: "2026-10", hoje: HOJE, categorias: cats,
+    dividas: [{ id: "d1", nome: "Jeep", valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 19, dataInicio: "2025-03-04", saldoOriginalCentavos: 19898220 }],
+    transacoes: [],
+  });
+  // 20ª parcela = 04/10/2026, já vencida em 12/10 → atrasada, com o dia certo
+  const p = r.itens.find((i) => i.origem?.tipo === "divida");
+  assert.ok(p);
+  assert.equal(p.vencimento, "2026-10-04");
+  assert.equal(p.estado, "atrasada");
+  assert.equal(p.diasAtraso, 8);
+});
+
+test("conta sem dia fixo (verba) fica a pagar até o mês acabar", () => {
+  const r = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes: [t({ id: "v", data: "2026-10-01", semDia: true })] });
+  assert.equal(r.itens[0].estado, "a_pagar");
+  assert.equal(r.itens[0].semDia, true);
+});
+
+test("conta atrasada de setembro paga hoje conta como paga em outubro", () => {
+  const paga = t({ id: "gato", competencia: "2026-09", data: "2026-09-28", status: "pago", foiPrevisto: true, pagoEm: "2026-10-12", valorCentavos: 3500 });
+  const out = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes: [paga] });
+  assert.equal(out.itens[0].estado, "paga");
+  assert.equal(out.itens[0].pagoEm, "2026-10-12");
+  assert.equal(out.resumo.quantidadePagas, 1);
+});

@@ -115,6 +115,8 @@ export function padraoTransacao(dados = {}) {
     semDia: false, // verba do mês: gasto sem dia fixo — nunca vira "atrasado" dentro do mês
     fonteRendaId: null, // só usado quando tipo é receita (§12) — opcional
     dividaId: null, // despesa que paga uma parcela de dívida (§11) — opcional
+    pagoEm: null, // dia em que a baixa foi dada (a data do lançamento continua sendo o vencimento)
+    foiPrevisto: false, // era uma conta marcada pra pagar e foi baixada: segue contando em "A pagar" como paga
     origem: "manual",
     origemId: null,
     revisado: true,

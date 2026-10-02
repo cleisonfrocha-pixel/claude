@@ -28,3 +28,8 @@ export async function obterOuCriarFatura(cartaoId, competencia) {
 export async function marcarFaturaPaga(faturaId) {
   return db.atualizar(CAMINHO, faturaId, { status: "paga" });
 }
+
+/** Volta a fatura para aberta (desfazer o pagamento). */
+export async function reabrirFatura(faturaId) {
+  return db.atualizar(CAMINHO, faturaId, { status: "aberta" });
+}

@@ -22,13 +22,22 @@ export function iniciais(nome) {
 }
 
 let toastTimer = null;
-export function mostrarToast(mensagem) {
+export function mostrarToast(mensagem, { acao } = {}) {
   const el = document.getElementById("toast");
   if (!el) return;
   el.textContent = mensagem;
+  if (acao) {
+    // Aviso com um botão (ex.: "Desfazer"): fica um pouco mais na tela.
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "toast-acao";
+    botao.textContent = acao.rotulo;
+    botao.addEventListener("click", () => { el.hidden = true; clearTimeout(toastTimer); acao.fn(); });
+    el.append(" ", botao);
+  }
   el.hidden = false;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
+  toastTimer = setTimeout(() => { el.hidden = true; }, acao ? 7000 : 2600);
 }
 
 /** Campo de data nativo segue o idioma do aparelho (em alguns, mês/dia).

@@ -18,7 +18,7 @@ const REPOS = { contas, cartoes, faturas, categorias, pessoas, dividas, fontesRe
 export async function carregarBase() {
   const nomes = Object.keys(REPOS);
   const [listaTransacoes, ...listas] = await Promise.all([transacoes.listar(), ...nomes.map((n) => REPOS[n].listar())]);
-  const base = { transacoes: listaTransacoes.map((t) => t.dados) };
+  const base = { transacoes: comId(listaTransacoes) };
   nomes.forEach((n, i) => { base[n] = comId(listas[i]); });
   return base;
 }

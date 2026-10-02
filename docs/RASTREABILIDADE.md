@@ -1401,3 +1401,25 @@ Subidos pelo chat. Fonte de renda ganhou `fim` ("só até dezembro" do Gedi/Tony
   em dia. Por pessoa e IA separam os dois grupos.
 - Testes: bens (classificação, visão consolidada, leitura do bem), patrimônio
   (variação de dívidas), decisões. 410 passando.
+
+### Sprint 41: contas com estado visual (Dinheiro › A pagar) — 02/10/2026
+
+- Pedido do Cleison: conta paga, conta a pagar e conta atrasada não podem ter o
+  mesmo peso visual; sensação de aplicativo, nível intermediário.
+- `domain/contasDoMes.js`: cada conta do mês (lançamento previsto, parcela de
+  dívida, recorrência, fatura) com estado `atrasada | hoje | a_pagar | paga`,
+  dias de atraso e progresso (pago/total, calculado na leitura). Compra no
+  cartão não é conta (entra pela fatura). Conta atrasada de mês anterior
+  aparece no mês atual; conta de setembro paga hoje conta como paga em outubro
+  (campo `pagoEm`).
+- Tela "A pagar" (primeira aba de Dinheiro): barra de progresso do mês,
+  grupos Atrasadas (vermelho, pesa mais), Vencem hoje (âmbar), A pagar (por
+  semana) e Pagas (recolhido, esmaecido, com ✓). "Paguei" em um toque com aviso
+  curto e **Desfazer**; menu ⋯ com "Paguei outro valor" e "Abrir o cadastro".
+- `baixaRepo`: baixa devolve como desfazer; nova baixa de fatura (conta de
+  pagamento do cartão, sem virar despesa nova); `desfazerBaixa` apaga o
+  lançamento criado, restaura o anterior, devolve a parcela da dívida e reabre
+  a fatura. Schema: `foiPrevisto`, `pagoEm`. `base.js` passou a trazer o `id`
+  das transações.
+- Testes: `contasDoMes.test.js` (estados, progresso, cartão x fatura, atraso
+  herdado, parcela de dívida, verba sem dia, paga em outro mês). 418 passando.

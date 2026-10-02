@@ -145,7 +145,7 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
       if (lista.some((t) => t.dividaId === d.id && t.competencia === c && t.status !== "cancelado")) continue;
       const atrasado = vencimento < de;
       eventos.push({
-        data: atrasado ? de : vencimento, tipo: "despesa", valorCentavos: parcela, certeza: "confirmado", virtual: true, atrasado,
+        data: atrasado ? de : vencimento, vencimento, tipo: "despesa", valorCentavos: parcela, certeza: "confirmado", virtual: true, atrasado,
         descricao: `Parcela ${k + 1}/${total} · ${d.nome}`,
         origem: { tipo: "divida", id: d.id },
       });
