@@ -1686,3 +1686,8 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - Para os planos que eu gero: skill `.claude/skills/gerar-plano` e regra no CLAUDE.md, que obrigam a ler o perfil antes.
 - Hoje a regra do dinheiro fechado é verificável assim: incerto nunca entra, GEDI e Mercado Livre não têm entrada projetada, galpão não tem aluguel, cota da GEDI não é ativo nem dívida. Entradas "prováveis" (renda recorrente combinada que ainda não caiu) continuam aparecendo, separadas do garantido.
 - 500 testes nos dois fusos.
+
+## Correção do perfil (03/10/2026, mais tarde)
+- "Gedi / Tony" (R$ 3.500 por mês até dezembro) é troca de trabalho por cota, não dinheiro no bolso. A fonte foi desativada do caixa. Efeito medido: o pior dia dos próximos 30 dias passou de -R$ 69,37 para -R$ 709,06 e o saldo em 12 meses de R$ 25.700 para R$ 15.200 (R$ 10.500 que não existiam, 3 meses x R$ 3.500).
+- Galpão: o número de R$ 250 a 260 mil de investimento foi descartado pelo Cleison.
+- Mercado Livre: a verba de ~R$ 1.000 vai no cartão e não sai da renda; os R$ 250 do programa Decola já foram usados e não voltam. Nada disso entra no caixa.

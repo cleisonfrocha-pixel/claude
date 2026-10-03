@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizadoEm": "2026-10-03T12:00:00.000Z",
+  "atualizadoEm": "2026-10-03T15:00:00.000Z",
   "regras": {
     "contarSoDinheiroFechado": true
   },
@@ -18,17 +18,17 @@
     {
       "id": "gedi",
       "titulo": "GEDI",
-      "texto": "O Cleison é CMO da GEDI, uma startup de compliance de medicina ocupacional ainda em MVP.\nTem direito a uma cota de 10% da empresa, que vale R$ 25 mil, dos quais cerca de R$ 13 mil já foram pagos com trabalho. Ele não vai pagar em dinheiro.\nEle traz clientes pra GEDI e usa a receita deles pra pagar equipe e tráfego, e não fica com o lucro dessas contas. Isso não é dívida de caixa, e a cota não conta como patrimônio nem como renda.\nEle decide até novembro se entra como sócio ou se sai sem dívida, e ainda não decidiu. Esse prazo pesa no plano."
+      "texto": "O Cleison é CMO da GEDI, uma startup de compliance de medicina ocupacional ainda em MVP.\nTem direito a uma cota de 10% da empresa, que vale R$ 25 mil, dos quais cerca de R$ 13 mil já foram pagos com trabalho. Ele não vai pagar em dinheiro.\nOs R$ 3.500 por mês do Tony (GEDI), até dezembro, NÃO são renda: é troca de trabalho por cota. Nada disso entra no bolso, tudo abate a cota dele. Por isso a fonte \"Gedi / Tony\" não conta no caixa nem no plano.\nEle também traz clientes pra GEDI e usa a receita deles pra pagar equipe e tráfego, e não fica com o lucro dessas contas. Isso não é dívida de caixa, e a cota não conta como patrimônio nem como renda.\nEle decide até novembro se entra como sócio ou se sai sem dívida, e ainda não decidiu. Esse prazo pesa no plano."
     },
     {
       "id": "ml",
       "titulo": "Mercado Livre",
-      "texto": "Loja de itens de supermercado em kits. A ideia é entrar depois com produtos de margem.\nA verba é de cerca de R$ 1.000, mais um crédito de R$ 250 da plataforma em anúncios. Ele vende primeiro e só depois compra o item no atacado.\nAs primeiras 10 vendas dão prejuízo de propósito: é custo pra ativar a conta. Alguns kits, como o de leite condensado, custam mais do que vendem, então é preciso limitar unidades por pedido.\nA entrega é por Flex, com uma empresa de motoboy que cobra por pacote e fatura de 15 em 15 dias.\nA conta está no CPF dele e deve migrar pro CNPJ da Carolina, mas uma dívida do Mercado Pago no CPF trava isso."
+      "texto": "Loja de itens de supermercado em kits. A ideia é entrar depois com produtos de margem.\nA verba de cerca de R$ 1.000 é o que ele pretende disponibilizar, mas no cartão de crédito. Não sai da renda dele. Ele vende primeiro e só depois compra o item no atacado.\nOs R$ 250 de crédito em anúncios são do programa Decola do Mercado Livre. Já foram usados no mês passado e não voltam: foi uma compra. Não é caixa e nunca entra na conta.\nAs primeiras 10 vendas dão prejuízo de propósito: é custo pra ativar a conta. Alguns kits, como o de leite condensado, custam mais do que vendem, então é preciso limitar unidades por pedido.\nA entrega é por Flex, com uma empresa de motoboy que cobra por pacote e fatura de 15 em 15 dias.\nA conta está no CPF dele e deve migrar pro CNPJ da Carolina, mas uma dívida do Mercado Pago no CPF trava isso."
     },
     {
       "id": "galpao",
       "titulo": "Galpão",
-      "texto": "É dele, em Mogi das Cruzes: 127 m² cobertos e 100 m² descobertos.\nJá investiu cerca de R$ 200 mil, mais uns R$ 50 a 60 mil em manutenção recente.\nJá rendeu R$ 4.500 por mês de aluguel até o último contrato acabar. Hoje não rende nada, e nenhum plano pode contar com aluguel dele.\nA obra precisa terminar em outubro. O pai dele é sócio no desenvolvimento do espaço.\nVai virar o estoque da loja do Mercado Livre."
+      "texto": "É dele, em Mogi das Cruzes: 127 m² cobertos e 100 m² descobertos.\nJá rendeu R$ 4.500 por mês de aluguel até o último contrato acabar. Hoje não rende nada, e nenhum plano pode contar com aluguel dele.\nA obra precisa terminar em outubro. O pai dele é sócio no desenvolvimento do espaço.\nVai virar o estoque da loja do Mercado Livre.\nValores de investimento: ele descartou a informação de R$ 250 a 260 mil (não é verdade). Não use esse número."
     },
     {
       "id": "momento",
@@ -43,7 +43,7 @@
     {
       "id": "lacunas",
       "titulo": "O que o painel ainda não sabe",
-      "texto": "Vendas e custos reais da loja do Mercado Livre, inclusive o custo do Flex.\nSe o que sobra na conta depois de pagar equipe e tráfego da GEDI é dele ou da empresa.\nO que mais sai da conta da Carolina por mês, além da Shopee.\nCustos do galpão (energia, água, obra) e quanto falta pra terminar.\nGastos anuais (IPVA, seguro, IPTU, escola, 13º).\nData exata da decisão da GEDI.\nQuanto o galpão custou ao todo: o painel tem R$ 150 mil de compra e o Cleison falou em cerca de R$ 200 mil mais R$ 50 a 60 mil de manutenção."
+      "texto": "Vendas e custos reais da loja do Mercado Livre, inclusive o custo do Flex.\nO que sobra na conta depois de pagar equipe e tráfego com a receita dos clientes da GEDI (ex.: Del Poente) é dele ou da empresa?\nO que mais sai da conta da Carolina por mês, além da Shopee.\nCustos do galpão (energia, água, obra) e quanto falta pra terminar.\nGastos anuais (IPVA, seguro, IPTU, escola, 13º).\nData exata da decisão da GEDI.\nQuanto o galpão custou: o painel tem R$ 150 mil de compra."
     }
   ],
   "prazos": [
