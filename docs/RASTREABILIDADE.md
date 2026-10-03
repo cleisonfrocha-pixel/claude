@@ -1666,3 +1666,14 @@ Pendências conhecidas: Paguei em compra planejada de cartão ("Compras prevista
 - "Fechei esse acordo": a oferta vira dívida com parcelas (à vista ou em N vezes) e passa a aparecer em A pagar; o valor antigo fica guardado em `acordoDe`.
 - Financiamento (Jeep): a linha mostra "19 de 60 parcelas pagas, próxima: parcela 20, dia 04/10", barra de evolução com "Já pago R$ 63.011,03" e "Falta R$ 135.971,17", e o botão "Paguei a parcela 20" abre a pergunta de onde saiu e dá baixa (parcela vira 20 de 60).
 - Folha Paguei: se a data escolhida é igual ou anterior ao dia em que o saldo da conta foi conferido, ela diz que o saldo já considera o pagamento.
+
+## Rodada 9b: aba Relatórios (03/10/2026)
+Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o dinheiro está indo". Ficou no Plano, como aba nova, porque é leitura e análise, não lançamento; a navegação de baixo continua com 4 itens.
+- Pra onde vai o dinheiro do mês: rosca por grupo (parte do todo) e barras por categoria em dois tons (já pago x ainda a pagar), mais os 5 maiores gastos. Navega por mês.
+- Entra e sai nos próximos 12 meses: colunas de entra e sai e a linha do saldo (uma escala só, em reais), do mesmo cálculo do Plano.
+- Gastos que passam batido: assinaturas e pequenos fixos, por mês e por ano.
+- Cartões: fatura em aberto, dia em que sai da conta e limite livre.
+- Quanto você deve de verdade: dívidas pelo valor real (com o desconto das ofertas) e a economia.
+- Toda figura tem legenda, valores à vista e "Ver em tabela". Paleta categórica de 8 posições, claro e escuro. Sem biblioteca: HTML e SVG.
+- Novo grupo de categoria "Negócio" (Equipe e freelancers, Ferramentas de trabalho e Escritório passam para ele), senão 46% do mês aparecia como "Outros".
+- Motor: `domain/relatorios.js` (gastosDoMes, vazamentos, composicaoDeDividas, serieMensal), 4 testes. 495 testes nos dois fusos.

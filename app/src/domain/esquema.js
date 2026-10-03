@@ -11,7 +11,7 @@ export const TIPOS_CONTA = ["corrente", "poupanca", "investimento", "dinheiro", 
 export const STATUS_CONTA = ["ativa", "encerrada"];
 export const BANDEIRAS_CARTAO = ["visa", "mastercard", "elo", "amex", "outra"];
 export const STATUS_CARTAO = ["ativo", "cancelado", "bloqueado"];
-export const GRUPOS_CATEGORIA = ["moradia", "transporte", "alimentacao", "saude", "educacao", "filho", "lazer", "dividas", "renda", "outros"];
+export const GRUPOS_CATEGORIA = ["moradia", "transporte", "alimentacao", "saude", "educacao", "filho", "lazer", "dividas", "negocio", "renda", "outros"];
 export const NATUREZAS_CATEGORIA = ["receita", "despesa", "transferencia"];
 
 // Transações — ver docs/MODELO-DE-DADOS.md, "Movimentação — Fase 1".

@@ -4,7 +4,7 @@ import { GRUPOS_CATEGORIA, NATUREZAS_CATEGORIA } from "../../domain/esquema.js";
 
 const ROTULO_GRUPO = {
   moradia: "Moradia", transporte: "Transporte", alimentacao: "Alimentação", saude: "Saúde",
-  educacao: "Educação", filho: "Filho", lazer: "Lazer", dividas: "Dívidas", renda: "Renda", outros: "Outros",
+  educacao: "Educação", filho: "Filho", lazer: "Lazer", dividas: "Dívidas", negocio: "Negócio", renda: "Renda", outros: "Outros",
 };
 const ROTULO_NATUREZA = { receita: "Receita", despesa: "Despesa", transferencia: "Transferência" };
 
