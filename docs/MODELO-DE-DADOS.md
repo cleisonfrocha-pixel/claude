@@ -123,6 +123,12 @@ dedicada a **guardar** cenários nomeados para comparar depois é outra
 exigência, do §22 (Cenários e simulador de realidade, Fase 14) — se e
 quando essa fase chegar, é o lugar certo para essa coleção nascer.
 
+### Campos acrescentados nas rodadas 8 a 10 (cartões e dívidas)
+
+- `cartoes.diaPagamentoHabitual`: dia do mês em que a fatura costuma sair da conta (dia seguinte ao fechamento, quando ele "pedala"). Vale só entre o fechamento e o vencimento.
+- `cartoes.usoMensalCentavos`: quanto ele costuma gastar por mês no cartão. O motor (`domain/previstos.js`) soma, para cada fatura que ainda não fechou, o que falta entre esse uso e o que já está nela, como saída estimada (provável, nunca garantida) no dia do pagamento. Gasto fixo ligado ao cartão entra no uso, não soma duas vezes.
+- `dividas.pagaComTrabalho`, `abatimentoDesde`, `abatimentoMensalCentavos`, `abatimentoDia`, `abatimentoAte`, `abatimentosUnicos[]`: dívida que o trabalho paga (cota da GEDI). O saldo vale em `abatimentoDesde` (em `valorComJurosCentavos`) e cai a cada abatimento, calculado na leitura (`abatimentosPorTrabalho`). Não gera parcela, não entra no caixa, não atrasa. Classe própria: `trabalho`.
+
 ## Renda e orçamento — Fase 8
 
 ```
