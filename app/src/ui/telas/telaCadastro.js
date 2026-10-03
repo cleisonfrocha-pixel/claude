@@ -101,6 +101,7 @@ export function criarTelaCadastro(config) {
           </div>
           ${v.valorDireita != null ? `<div class="item-valor" data-valor>${escapeHtml(v.valorDireita)}</div>` : ""}
           ${v.tag ? `<span class="item-tag${v.tagInativa ? " inativa" : ""}${v.tagClasse ? " " + escapeHtml(v.tagClasse) : ""}">${escapeHtml(v.tag)}</span>` : ""}
+          ${v.evolucaoHtml || ""}
           ${v.barra ? `<div class="item-barra"><div class="barra-limite"><span style="width:${Math.max(0, Math.min(100, v.barra.percentual))}%"></span></div><div class="item-barra-texto"><span>${escapeHtml(v.barra.esquerda || "")}</span><span data-valor>${escapeHtml(v.barra.direita || "")}</span></div></div>` : ""}
           <div class="item-acoes">
             ${v.acaoPrimaria ? `<button class="btn-mini btn-baixa" data-acao="primaria">${escapeHtml(v.acaoPrimaria)}</button>` : ""}

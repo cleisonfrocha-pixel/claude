@@ -139,6 +139,36 @@ export function dataProximoVencimento(divida) {
   return dataDaParcela(divida, Number(divida.parcelasPagas) || 0);
 }
 
+/** Evolução de uma dívida em três pedaços que somam o total: já pago, já previsto (o que está
+ * agendado dentro do horizonte, contrato firme) e o que fica para depois. Financiamento conta por
+ * parcela; dívida paga com trabalho conta por abatimento. Calculado na leitura, nada gravado. */
+export function evolucaoDaDivida(divida, hoje = hojeISO(), { meses = 12 } = {}) {
+  if (divida.pagaComTrabalho) {
+    const total = Number(divida.saldoOriginalCentavos) || 0;
+    const saldo = calcularSaldoAtual(divida, hoje);
+    const fim = divida.abatimentoAte ? dataDeCompetencia(divida.abatimentoAte, 28) : dataDeCompetencia(somarMeses(competenciaDeData(hoje), meses), 28);
+    const limite = [fim, ...(divida.abatimentosUnicos || []).map((u) => u.data)].filter(Boolean).sort().pop();
+    const futuros = abatimentosPorTrabalho(divida, limite).filter((a) => a.data > hoje);
+    let previsto = 0;
+    for (const a of futuros) previsto += a.valorCentavos;
+    previsto = Math.min(saldo, previsto);
+    return {
+      tipo: "trabalho", totalCentavos: total, pagoCentavos: Math.max(0, total - saldo), previstoCentavos: previsto, depoisCentavos: saldo - previsto,
+      faltaCentavos: saldo, unidadesPrevistas: futuros.length, unidadesRestantes: futuros.length, previstoAte: futuros.length ? futuros[futuros.length - 1].data : null,
+    };
+  }
+  const parcela = Number(divida.valorParcelaCentavos) || 0;
+  const qtd = Number(divida.quantidadeParcelas) || 0;
+  const pagas = Math.min(qtd, Number(divida.parcelasPagas) || 0);
+  const restantes = Math.max(0, qtd - pagas);
+  const previstas = Math.min(restantes, meses);
+  return {
+    tipo: "parcelas", totalCentavos: parcela * qtd, pagoCentavos: parcela * pagas, previstoCentavos: parcela * previstas, depoisCentavos: parcela * (restantes - previstas),
+    faltaCentavos: parcela * restantes, unidadesPagas: pagas, unidadesPrevistas: previstas, unidadesDepois: restantes - previstas, unidadesRestantes: restantes, unidadesTotal: qtd,
+    previstoAte: previstas ? dataDaParcela(divida, pagas + previstas - 1) : null, quitaEm: dataEstimadaQuitacao(divida),
+  };
+}
+
 /** A data da ÚLTIMA parcela — quando a dívida quita, sem nenhum aporte extra.
  * Dívida sem acordo (parcela zero) não tem data: não quita sozinha. */
 export function dataEstimadaQuitacao(divida) {

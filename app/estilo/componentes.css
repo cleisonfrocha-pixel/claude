@@ -862,3 +862,26 @@
 .item-barra-texto { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text-muted); margin-top: 5px; flex-wrap: wrap; }
 
 .btn-atualizar-saldo { width: 100%; margin: 2px 0 10px; min-height: 44px; font-size: 14px; }
+
+/* Barra de evolução (ui/barraEvolucao.js): pago, previsto e falta somando o total. */
+.evo { margin: 10px 0 4px; width: 100%; }
+.evo-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 13.5px; color: var(--text-muted); }
+.evo-topo b { font-size: 18px; color: var(--text); }
+.evo-barra { display: flex; gap: 2px; height: 14px; margin: 8px 0 10px; border-radius: 999px; overflow: hidden; background: var(--surface); }
+.evo-seg { display: block; min-width: 4px; height: 100%; }
+.evo-seg.pago, .evo-ponto.pago { background: var(--good); }
+.evo-seg.previsto, .evo-ponto.previsto { background: var(--accent); }
+.evo-seg.atrasado, .evo-ponto.atrasado { background: var(--danger); }
+.evo-seg.falta, .evo-ponto.falta { background: color-mix(in srgb, var(--text-muted) 38%, transparent); }
+.evo-seg.previsto { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.28) 0 4px, transparent 4px 8px); }
+.evo-legenda { display: grid; gap: 8px; }
+.evo-linha { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: start; font-size: 14px; }
+.evo-ponto { width: 12px; height: 12px; border-radius: 4px; margin-top: 3px; }
+.evo-rotulo small, .evo-valor small { display: block; font-size: 12.5px; color: var(--text-muted); font-weight: 400; }
+.evo-valor { text-align: right; }
+.evo-rodape { margin-top: 10px; font-size: 13.5px; color: var(--text-muted); }
+.evo-compacta .evo-linha { font-size: 13.5px; }
+.item-cartao > .evo { flex: 1 1 100%; order: 5; }
+
+.pesa-ponto { color: var(--danger); font-size: 11px; vertical-align: middle; }
+.inicio-linha.pesa { background: color-mix(in srgb, var(--danger) 7%, transparent); border-radius: 10px; }

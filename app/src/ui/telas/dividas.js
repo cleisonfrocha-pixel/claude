@@ -5,12 +5,13 @@
 // os hooks de item expansível (Fase 3) e de visão consolidada / interação
 // no painel expandido (Fase 6).
 
+import { barraEvolucao } from "../barraEvolucao.js";
 import { criarTelaCadastro } from "./telaCadastro.js";
 import { dividas, pessoas, ativos } from "../../dados/repositorios.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO, somarDias } from "../../domain/tempo.js";
 import {
-  calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao,
+  calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao, evolucaoDaDivida,
   statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva, classificarDivida,
 } from "../../domain/dividas.js";
 import { separarDividas } from "../../domain/bens.js";
@@ -63,6 +64,38 @@ function abrirFechamentoDeAcordo(id, dados) {
       await dividas.atualizar(id, acordoDaOferta(dados, { parcelas, primeiraParcela: data }));
       modal.fechar();
     } catch (e) { erro.textContent = e.message || "Não consegui fechar o acordo."; erro.hidden = false; }
+  });
+}
+
+const ddmm = (d) => formatarData(d).slice(0, 5);
+const mesAno = (d) => `${d.slice(5, 7)}/${d.slice(2, 4)}`;
+const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+
+/** Barra de evolução do financiamento ou da dívida paga com trabalho: total, já pago, já previsto e falta. */
+function evolucaoHtml(dados, hoje) {
+  const e = evolucaoDaDivida(dados, hoje);
+  if (e.tipo === "trabalho") {
+    return barraEvolucao({
+      totalRotulo: "Valor da cota", totalCentavos: e.totalCentavos,
+      segmentos: [
+        { tipo: "pago", rotulo: "Já abatido com trabalho", centavos: e.pagoCentavos },
+        { tipo: "previsto", rotulo: "Já previsto (abatimentos até a data final)", centavos: e.previstoCentavos, detalhe: e.unidadesPrevistas ? `${plural(e.unidadesPrevistas, "abatimento", "abatimentos")}, até ${ddmm(e.previstoAte)}` : "" },
+        { tipo: "falta", rotulo: "Ainda sem previsão", centavos: e.depoisCentavos },
+      ],
+      rodape: e.faltaCentavos > 0
+        ? `Falta abater <b data-valor>${formatarBRL(e.faltaCentavos)}</b>. Previsão, não garantia: depende de o trabalho seguir até lá.`
+        : "Cota toda abatida.",
+    });
+  }
+  const prox = dataProximoVencimento(dados);
+  return barraEvolucao({
+    totalRotulo: `Valor total (${e.unidadesTotal} parcelas)`, totalCentavos: e.totalCentavos,
+    segmentos: [
+      { tipo: "pago", rotulo: "Já pago", centavos: e.pagoCentavos, detalhe: `${e.unidadesPagas} de ${e.unidadesTotal} parcelas` },
+      { tipo: "previsto", rotulo: "Já previsto (garantido pelo contrato)", centavos: e.previstoCentavos, detalhe: e.unidadesPrevistas ? `${plural(e.unidadesPrevistas, "parcela", "parcelas")}, até ${ddmm(e.previstoAte)}/${e.previstoAte.slice(2, 4)}` : "" },
+      { tipo: "falta", rotulo: "Falta depois disso", centavos: e.depoisCentavos, detalhe: e.unidadesDepois ? `${plural(e.unidadesDepois, "parcela", "parcelas")}${e.quitaEm ? `, quita em ${formatarData(e.quitaEm)}` : ""}` : "" },
+    ],
+    rodape: `Faltam <b>${plural(e.unidadesRestantes, "parcela", "parcelas")}</b> (<b data-valor>${formatarBRL(e.faltaCentavos)}</b>)${prox ? ` · próxima: parcela ${e.unidadesPagas + 1}, dia ${formatarData(prox).slice(0, 5)}` : ""}.`,
   });
 }
 
@@ -157,6 +190,7 @@ export default criarTelaCadastro({
         titulo: dados.nome,
         sub: `${dados.credor ? dados.credor + " · " : ""}paga com trabalho, não sai dinheiro${dados.abatimentoMensalCentavos ? ` · abate ${formatarBRL(dados.abatimentoMensalCentavos)} por mês${dados.abatimentoAte ? " até " + dados.abatimentoAte.slice(5, 7) + "/" + dados.abatimentoAte.slice(2, 4) : ""}` : ""}${zera ? ` · zera em ${formatarData(zera)}` : ""}`,
         valorDireita: formatarBRL(calcularSaldoAtual(dados, hoje)),
+        evolucaoHtml: evolucaoHtml(dados, hoje),
         tag: status === "quitada" ? "quitada" : "sem caixa",
         tagClasse: status === "quitada" ? null : "ok",
         tagInativa: status === "quitada",
@@ -174,7 +208,7 @@ export default criarTelaCadastro({
         valorDireita: `${formatarBRL(dados.valorParcelaCentavos)}/mês`,
         tag: prox && prox < hoje ? "atrasada" : "em dia",
         tagClasse: prox && prox < hoje ? "critico" : "ok",
-        barra: { percentual: prog.percentual, esquerda: `Já pago ${formatarBRL(prog.jaPagoCentavos)} (${prog.percentual}%)`, direita: `Falta ${formatarBRL(prog.faltaPagarCentavos)}` },
+        evolucaoHtml: evolucaoHtml(dados, hoje),
         acaoPrimaria: venceLogo || (prox && prox < hoje) ? `Paguei a parcela ${numProx}` : null,
       };
     }
@@ -190,6 +224,16 @@ export default criarTelaCadastro({
 
   renderExtra(dados, id, contexto) {
     const saldoAtual = calcularSaldoAtual(dados);
+    if (dados.pagaComTrabalho) {
+      const zera = dataEstimadaQuitacao(dados);
+      return `
+        <div class="tela-sub" style="margin:0 0 10px;">Esta dívida é paga com trabalho, não com dinheiro: nada sai da sua conta e nada entra no caixa. O saldo cai a cada abatimento.</div>
+        <div class="fatura-linha"><span class="rotulo">Valor da cota</span><b data-valor>${formatarBRL(dados.saldoOriginalCentavos)}</b></div>
+        <div class="fatura-linha"><span class="rotulo">Falta abater hoje</span><b data-valor>${formatarBRL(saldoAtual)}</b></div>
+        <div class="fatura-linha"><span class="rotulo">Abatimento por mês<small>no dia ${dados.abatimentoDia || 24}${dados.abatimentoAte ? ", até " + mesAno(dados.abatimentoAte + "-01") : ""}</small></span><b data-valor>${formatarBRL(dados.abatimentoMensalCentavos)}</b></div>
+        ${(dados.abatimentosUnicos || []).map((u) => `<div class="fatura-linha"><span class="rotulo">Abatimento avulso<small>${escapeHtml(u.nota || "")} · ${escapeHtml(formatarData(u.data))}</small></span><b data-valor>${formatarBRL(u.valorCentavos)}</b></div>`).join("")}
+        ${zera ? `<div class="fatura-linha"><span class="rotulo">Zera em</span><b>${escapeHtml(formatarData(zera))}</b></div>` : ""}`;
+    }
     const oferta = ofertaDaDivida(dados, hojeISO());
     const bem = (contexto?.ativos || []).find((a) => a.dividaId === id || a.id === dados.bemId);
     const prog = classificarDivida(dados, hojeISO()) === "financiamento" ? progressoDoFinanciamento(dados, bem, hojeISO()) : null;
@@ -203,10 +247,7 @@ export default criarTelaCadastro({
         <div class="tela-sub" style="margin:6px 0 0;">${oferta.vencida ? "Oferta vencida em " + escapeHtml(formatarData(oferta.validade)) : oferta.validade ? "Vale até " + escapeHtml(formatarData(oferta.validade)) : "Sem prazo informado"}.</div>
       </div>` : "";
     const blocoProgresso = prog ? `
-      <div class="tela-sub" style="margin:0 0 4px;">${prog.pagas} de ${prog.total} parcelas pagas (${prog.percentual}%)${prog.proximoMarco ? ` · ${prog.parcelasAteOProximoMarco} até ${prog.proximoMarco}%` : ""}</div>
-      <div class="barra-limite"><span style="width:${prog.percentual}%"></span></div>
-      <div class="fatura-linha"><span class="rotulo">Já foi pago (parcelas em dia)</span><b data-valor>${formatarBRL(prog.jaPagoCentavos)}</b></div>
-      <div class="fatura-linha"><span class="rotulo">Falta pagar</span><b data-valor>${formatarBRL(prog.faltaPagarCentavos)}</b></div>
+      ${prog.proximoMarco ? `<div class="tela-sub" style="margin:0 0 6px;">Faltam ${prog.parcelasAteOProximoMarco} parcelas para chegar a ${prog.proximoMarco}% pago.</div>` : ""}
       ${prog.valorDoBemCentavos ? `<div class="tela-sub" style="margin:6px 0 10px;opacity:.75;">Vale cerca de <span data-valor>${formatarBRL(prog.valorDoBemCentavos)}</span> (avaliado em ${escapeHtml(formatarData(prog.avaliadoEm))}${prog.avaliacaoVelha ? ", já faz tempo: atualize" : ""}).</div>` : ""}` : "";
     const total = Number(dados.quantidadeParcelas) || 0;
     const percentualPago = total > 0 ? Math.min(100, ((Number(dados.parcelasPagas) || 0) / total) * 100) : 0;

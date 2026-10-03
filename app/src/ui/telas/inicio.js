@@ -16,6 +16,8 @@ import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
 import { navegar } from "../navegacao.js";
 import { abrirAtualizarSaldo } from "../atualizarSaldo.js";
+import { barraEvolucao } from "../barraEvolucao.js";
+import { agendaDaHome } from "../../domain/inicio.js";
 
 let pararInicio = null;
 let pararDecisoes = null;
@@ -70,11 +72,17 @@ function blocoContasDoMes(c) {
   return `
     <section class="inicio-bloco">
       <h3>Contas de ${escapeHtml(competenciaLabel(c.competencia).split(" ")[0].toLowerCase())}</h3>
-      <div class="mes-progresso-topo"><b>${r.quantidadePagas} de ${r.quantidade}</b> <span>pagas</span><span class="mes-progresso-pct">${r.percentualPago}%</span></div>
-      <div class="barra-limite ${r.quantidadeAtrasadas ? "critico" : ""}"><span style="width:${r.percentualPago}%"></span></div>
+      ${barraEvolucao({
+        compacta: true, totalRotulo: `Total do mês (${r.quantidade} contas)`, totalCentavos: r.pagoCentavos + r.faltaCentavos,
+        segmentos: [
+          { tipo: "pago", rotulo: "Já pago", centavos: r.pagoCentavos, detalhe: `${r.quantidadePagas} de ${r.quantidade}` },
+          ...(r.atrasadasCentavos > 0 ? [{ tipo: "atrasado", rotulo: "Atrasado", centavos: r.atrasadasCentavos, detalhe: `${r.quantidadeAtrasadas} ${r.quantidadeAtrasadas === 1 ? "conta" : "contas"}` }] : []),
+          { tipo: "previsto", rotulo: "Ainda a pagar (previsto)", centavos: Math.max(0, r.faltaCentavos - r.atrasadasCentavos) },
+        ],
+      })}
       ${r.quantidadeAtrasadas
         ? `<div class="mes-progresso-msg alerta">${r.quantidadeAtrasadas} ${r.quantidadeAtrasadas === 1 ? "conta atrasada" : "contas atrasadas"} (<span data-valor>${formatarBRL(r.atrasadasCentavos)}</span>): ${escapeHtml(c.atrasadas.map((i) => i.descricao).join(", "))}${r.quantidadeAtrasadas > c.atrasadas.length ? "…" : ""}</div>`
-        : `<div class="mes-progresso-msg ${tudo ? "ok" : ""}">${tudo ? "Mês em dia: tudo pago." : `Nada atrasado. Faltam <span data-valor>${formatarBRL(r.faltaCentavos)}</span>.`}</div>`}
+        : `<div class="mes-progresso-msg ${tudo ? "ok" : ""}">${tudo ? "Mês em dia: tudo pago." : "Nada atrasado."}</div>`}
       <button class="btn-link" data-ir-contas>Ver as contas e dar baixa</button>
     </section>`;
 }
@@ -103,7 +111,7 @@ function blocoSituacao(sit) {
     <section class="inicio-bloco">
       <h3><span style="color:${COR_ZONA[z]};">●</span> ${escapeHtml(ROTULO_ZONA[z])} ${ajudaHtml("A zona compara o ponto mais baixo que o seu caixa toca nos próximos 30 dias com o que você já precisa pagar num mês. Negativo ou abaixo de meio mês de obrigações é risco; até um mês, apertado; acima, confortável.")}</h3>
       <p class="tela-sub" style="margin:0 0 6px;color:var(--text);">${escapeHtml(sit.decisao.texto)}</p>
-      <p class="tela-sub" style="margin:0 0 12px;opacity:.75;">Pior dia dos próximos ${estadoInicio?.horizonteDias || 30} dias: ${sit.diaMaisApertado ? escapeHtml(formatarData(sit.diaMaisApertado).slice(0, 5)) : "nenhum"}, com o caixa em <span data-valor>${formatarBRL(sit.menorPontoCentavos)}</span>${sit.menorPontoGarantidoCentavos !== sit.menorPontoCentavos ? ` (<span data-valor>${formatarBRL(sit.menorPontoGarantidoCentavos)}</span> contando só o confirmado)` : ""}.</p>
+      ${sit.decisao.dataCritica && sit.decisao.dataCritica === sit.diaMaisApertado ? "" : `<p class="tela-sub" style="margin:0 0 12px;opacity:.75;">Pior dia dos próximos ${estadoInicio?.horizonteDias || 30} dias: ${sit.diaMaisApertado ? escapeHtml(formatarData(sit.diaMaisApertado).slice(0, 5)) : "nenhum"}, com o caixa em <span data-valor>${formatarBRL(sit.menorPontoCentavos)}</span>${sit.menorPontoGarantidoCentavos !== sit.menorPontoCentavos ? ` (<span data-valor>${formatarBRL(sit.menorPontoGarantidoCentavos)}</span> contando só o confirmado)` : ""}.</p>`}
       <div class="home-saldo-metricas" style="margin:0 0 8px;">
         <div class="home-metrica"><span>Na conta hoje</span><b data-valor>${formatarBRL(sit.naContaCentavos)}</b></div>
         <div class="home-metrica"><span>Já tem dono ${ate}</span><b data-valor>−${formatarBRL(sit.comprometido.totalCentavos)}</b></div>
@@ -117,23 +125,6 @@ function blocoSituacao(sit) {
         ${grupos.map((g) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(ROTULO_GRUPO[g])}</span><b data-valor>${formatarBRL(sit.comprometido.grupos[g].totalCentavos)}</b></div>
           <div class="tela-sub" style="margin:0 0 6px;">${escapeHtml(sit.comprometido.grupos[g].itens.slice(0, 3).map((i) => i.descricao).join(", "))}${sit.comprometido.grupos[g].itens.length > 3 ? "…" : ""}</div>`).join("")}
       </details>` : ""}
-    </section>`;
-}
-
-function blocoPesaAgora(pesa) {
-  if (!pesa.length) return "";
-  return `
-    <section class="inicio-bloco">
-      <h3>O que pesa agora</h3>
-      <div class="inicio-lista">
-        ${pesa.map((i) => `
-          <div class="inicio-linha">
-            <span class="inicio-data">${i.atrasado ? `<span class="tag-atrasado">Atrasado</span>` : escapeHtml(formatarData(i.vencimento || i.data).slice(0, 5))}</span>
-            <span class="inicio-desc">${escapeHtml(i.descricao || "")}<small style="display:block;opacity:.7;">${escapeHtml(i.razoes.slice(0, 2).join(" · "))}</small></span>
-            <b class="mono valor-neg" data-valor>−${formatarBRL(i.valorCentavos)}</b>
-          </div>`).join("")}
-      </div>
-      <button class="btn-link" data-ir-contas>Ver todas as contas</button>
     </section>`;
 }
 
@@ -211,22 +202,23 @@ function blocoPrazos(prazos) {
     </section>`;
 }
 
-function blocoProximos(proximos) {
-  if (!proximos.length) {
+function blocoAgenda(lista) {
+  if (!lista.length) {
     return `<section class="inicio-bloco"><h3>Próximos 7 dias</h3><p class="tela-sub" style="margin:0;">Nada vence nem entra nesta semana.</p></section>`;
   }
+  const algumPesa = lista.some((i) => i.pesa);
   return `
     <section class="inicio-bloco">
-      <h3>Próximos 7 dias</h3>
+      <h3>Próximos 7 dias ${algumPesa ? ajudaHtml("O que sai e o que entra, na ordem. As saídas marcadas com ● pesam: têm consequência real se atrasar (corte, juros, valor alto). O motivo aparece embaixo.") : ""}</h3>
       <div class="inicio-lista">
-        ${proximos.slice(0, 8).map((i) => `
-          <div class="inicio-linha">
-            <span class="inicio-data">${i.atrasado ? `<span class="tag-atrasado">Atrasado</span><small class="inicio-venc">venceu ${escapeHtml(formatarData(i.vencimento || i.data).slice(0, 5))}</small>` : i.semDia ? "no mês" : escapeHtml(formatarData(i.data))}</span>
-            <span class="inicio-desc">${escapeHtml(i.descricao || "")}${i.certeza && i.certeza !== "confirmado" && i.tipo === "entrada" ? " <small>(esperado)</small>" : ""}</span>
+        ${lista.slice(0, 10).map((i) => `
+          <div class="inicio-linha${i.pesa ? " pesa" : ""}">
+            <span class="inicio-data">${i.atrasado ? `<span class="tag-atrasado">Atrasado</span><small class="inicio-venc">venceu ${escapeHtml(formatarData(i.vencimento || i.data).slice(0, 5))}</small>` : i.semDia ? "no mês" : escapeHtml(formatarData(i.data).slice(0, 5))}</span>
+            <span class="inicio-desc">${i.pesa ? `<span class="pesa-ponto" title="Pesa">●</span> ` : ""}${escapeHtml(i.descricao || "")}${i.certeza && i.certeza !== "confirmado" && i.tipo === "entrada" ? " <small>(esperado)</small>" : ""}${i.pesa && i.razoes.length ? `<small style="display:block;opacity:.7;">${escapeHtml(i.razoes.slice(0, 2).join(" · "))}</small>` : ""}</span>
             <b class="mono ${i.tipo === "entrada" ? "valor-pos" : "valor-neg"}" data-valor>${i.tipo === "entrada" ? "+" : "−"}${formatarBRL(i.valorCentavos)}</b>
           </div>`).join("")}
       </div>
-      <button class="btn-link" data-ir-agenda>Abrir a agenda</button>
+      <button class="btn-link" data-ir-contas>Ver todas as contas</button> <button class="btn-link" data-ir-agenda>Abrir a agenda</button>
     </section>`;
 }
 
@@ -276,7 +268,7 @@ function renderizar() {
         </div>
         <button class="btn btn-primary inicio-lancar" data-lancar>${icone("adicionar", 18)} Lançar</button>
         ${blocoSituacao(situacao)}
-        ${blocoPesaAgora(pesa)}
+        ${blocoAgenda(agendaDaHome({ proximos, pesa }))}
         ${blocoCartoes(cartoes)}
         ${blocoPosso()}
         ${blocoContasDoMes(contasMes)}
@@ -284,7 +276,6 @@ function renderizar() {
       </div>
       <div class="inicio-lateral">
         ${blocoPrazos(estadoInicio.prazos)}
-        ${blocoProximos(proximos)}
         ${blocoRetrato(retrato)}
       </div>
     </div>`;

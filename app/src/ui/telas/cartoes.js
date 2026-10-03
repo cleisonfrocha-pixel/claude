@@ -1,3 +1,4 @@
+import { barraEvolucao } from "../barraEvolucao.js";
 import { criarTelaCadastro } from "./telaCadastro.js";
 import { cartoes, pessoas, contas } from "../../dados/repositorios.js";
 import { transacoes } from "../../dados/transacoesRepo.js";
@@ -82,8 +83,6 @@ export default criarTelaCadastro({
     if (!temUso(id, contexto)) {
       return `<div class="tela-sub" style="margin:0;">Sem dado de uso ainda: nenhuma compra ou fatura lançada neste cartão. O limite de <span data-valor>${formatarBRL(visao.limiteTotalCentavos)}</span> está cadastrado, mas o quanto já foi usado é desconhecido até chegar a primeira fatura.</div>`;
     }
-    const barraClasse = visao.nivelAlerta !== "normal" ? ` ${visao.nivelAlerta}` : "";
-    const largura = Math.min(100, visao.percentualUtilizado);
     const dobro = dobrosDoCartao(id, contexto);
     return `
       ${dobro.map((d) => `
@@ -92,8 +91,10 @@ export default criarTelaCadastro({
           <div class="texto">Tem <b data-valor>${formatarBRL(d.resumoCentavos)}</b> num lançamento resumido e mais <b data-valor>${formatarBRL(d.detalhadoCentavos)}</b> em compras detalhadas. Se as compras já cobrem a fatura, cancele o resumo pra não contar duas vezes.</div>
           <button class="btn btn-ghost" data-cancelar-resumo="${escapeHtml(d.resumos.join(","))}">Cancelar o resumo (<span data-valor>${formatarBRL(d.resumoCentavos)}</span>)</button>
         </div>`).join("")}
-      <div class="tela-sub" style="margin:0 0 4px;">Utilizado <span data-valor>${formatarBRL(visao.utilizadoCentavos)}</span> de <span data-valor>${formatarBRL(visao.limiteTotalCentavos)}</span> (${Math.round(visao.percentualUtilizado)}%)</div>
-      <div class="barra-limite${barraClasse}"><span style="width:${largura}%"></span></div>
+      ${barraEvolucao({ totalRotulo: "Limite total", totalCentavos: visao.limiteTotalCentavos, segmentos: [
+        { tipo: visao.nivelAlerta !== "normal" ? "atrasado" : "previsto", rotulo: "Já usado", centavos: Math.min(visao.utilizadoCentavos, visao.limiteTotalCentavos) },
+        { tipo: "falta", rotulo: "Limite livre", centavos: Math.max(0, visao.limiteTotalCentavos - visao.utilizadoCentavos) },
+      ] })}
       ${linhaFatura("Fatura atual", visao.faturaAtual, visao.faturaAtual ? (visao.faturaAtual.fechada
         ? `Fechada · vence ${formatarData(visao.faturaAtual.vencimento)}`
         : `Em aberto · fecha ${formatarData(dataFechamentoFatura(dados, visao.faturaAtual.competencia))}, vence ${formatarData(visao.faturaAtual.vencimento)}`) : null)}

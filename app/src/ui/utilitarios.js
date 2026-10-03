@@ -15,7 +15,7 @@ export function escapeHtml(s) {
 
 /** Iniciais para o "avatar" de texto de um item de lista. */
 export function iniciais(nome) {
-  const partes = String(nome || "").trim().split(/\s+/).filter(Boolean);
+  const partes = String(nome || "").trim().split(/\s+/).filter((p) => /^\p{L}/u.test(p)); // "(10%)" e números não viram inicial
   if (!partes.length) return "?";
   if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
   return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();

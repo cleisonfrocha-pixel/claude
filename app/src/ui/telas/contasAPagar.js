@@ -10,6 +10,7 @@ import { baixarComPergunta } from "../baixaUI.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { navegar } from "../navegacao.js";
 import * as modal from "../modal.js";
+import { barraEvolucao } from "../barraEvolucao.js";
 import { abrirLancamento, editarLancamento } from "./transacoes.js";
 import { ajustarEvento } from "../../dados/baixaRepo.js";
 import { carregarBase } from "../../dados/base.js";
@@ -29,7 +30,7 @@ let lado = "pagar";
 const TEXTOS = {
   pagar: {
     titulo: "A pagar", sub: "Cada conta do mês com o seu estado. Toque em Paguei quando pagar.", botao: "Paguei", selo: "Paga",
-    unidade: "contas pagas", feito: "pagos", falta: "faltam", vazio: "Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.",
+    unidade: "contas pagas", feito: "pagos", falta: "faltam", totalRotulo: "Total de contas do mês", jaFeito: "Já pago", atrasadoRotulo: "Atrasado", previstoRotulo: "Ainda a pagar (previsto)", umAtrasado: "conta atrasada", variosAtrasados: "contas atrasadas", umFalta: "conta a vencer", variosFalta: "contas a vencer", vazio: "Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.",
     grupos: { atrasada: ["Atrasadas", "Pagando estas primeiro, o mês sai do vermelho."], hoje: ["Vencem hoje", ""], a_pagar: ["A pagar", ""], paga: ["Pagas", ""] },
     pronto: (d) => `${d} paga.`,
     adicionar: "+ Adicionar conta a pagar",
@@ -37,7 +38,7 @@ const TEXTOS = {
   },
   receber: {
     titulo: "A receber", sub: "O que deve entrar no mês. Toque em Recebi quando o dinheiro cair.", botao: "Recebi", selo: "Recebida",
-    unidade: "entradas recebidas", feito: "recebidos", falta: "faltam", vazio: "Nenhuma entrada prevista neste mês. Cadastre em Renda.",
+    unidade: "entradas recebidas", feito: "recebidos", falta: "faltam", totalRotulo: "Total a receber no mês", jaFeito: "Já recebido", atrasadoRotulo: "Ainda não caiu", previstoRotulo: "Ainda vai entrar (previsto)", umAtrasado: "entrada atrasada", variosAtrasados: "entradas atrasadas", umFalta: "entrada a cair", variosFalta: "entradas a cair", vazio: "Nenhuma entrada prevista neste mês. Cadastre em Renda.",
     grupos: { atrasada: ["Ainda não caíram", "Passou do dia esperado. Vale conferir com quem paga."], hoje: ["Caem hoje", ""], a_pagar: ["A receber", ""], paga: ["Recebidas", ""] },
     pronto: (d) => `${d} recebida.`,
     adicionar: "+ Adicionar entrada",
@@ -168,15 +169,14 @@ function renderizar() {
     </div>
 
     <div class="mes-progresso">
-      <div class="mes-progresso-topo">
-        <b>${s.quantidadePagas} de ${s.quantidade}</b> <span>${T.unidade}</span>
-        <span class="mes-progresso-pct">${s.percentualPago}%</span>
-      </div>
-      <div class="barra-limite ${classeBarra}"><span style="width:${s.percentualPago}%"></span></div>
-      <div class="mes-progresso-valores">
-        <span><span data-valor>${formatarBRL(s.pagoCentavos)}</span> ${T.feito}</span>
-        <span>${T.falta} <b data-valor>${formatarBRL(s.faltaCentavos)}</b></span>
-      </div>
+      ${barraEvolucao({
+        totalRotulo: T.totalRotulo, totalCentavos: s.pagoCentavos + s.faltaCentavos,
+        segmentos: [
+          { tipo: "pago", rotulo: T.jaFeito, centavos: s.pagoCentavos, detalhe: `${s.quantidadePagas} de ${s.quantidade} ${T.unidade}` },
+          ...(s.atrasadasCentavos > 0 ? [{ tipo: "atrasado", rotulo: T.atrasadoRotulo, centavos: s.atrasadasCentavos, detalhe: plural(s.quantidadeAtrasadas, T.umAtrasado, T.variosAtrasados) }] : []),
+          { tipo: "previsto", rotulo: T.previstoRotulo, centavos: Math.max(0, s.faltaCentavos - s.atrasadasCentavos), detalhe: plural(Math.max(0, s.quantidade - s.quantidadePagas - s.quantidadeAtrasadas), T.umFalta, T.variosFalta) },
+        ],
+      })}
       <div class="mes-progresso-msg ${s.quantidadeAtrasadas && lado === "pagar" ? "alerta" : s.faltaCentavos === 0 && s.quantidade ? "ok" : ""}">${escapeHtml(mensagemDoMes(dados))}</div>
       ${lado === "receber" && s.incertasCentavos > 0 ? `<div class="mes-progresso-msg">Mais <span data-valor>${formatarBRL(s.incertasCentavos)}</span> são incertos e ficam fora da conta.</div>` : ""}
     </div>

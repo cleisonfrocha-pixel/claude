@@ -37,6 +37,21 @@ export function proximosDias({ compromissos, entradas, hoje, dias = 7 }) {
   return itens.sort((a, b) => (b.atrasado ? 1 : 0) - (a.atrasado ? 1 : 0) || (a.semDia ? 1 : 0) - (b.semDia ? 1 : 0) || a.data.localeCompare(b.data));
 }
 
+/** Uma lista só para a Home: o que sai e entra nos próximos dias, com as saídas que PESAM marcadas
+ * (e o porquê). Antes eram duas listas ("O que pesa agora" e "Próximos 7 dias") repetindo os mesmos
+ * itens. Um item pesado que cai depois da janela entra na lista mesmo assim, para não sumir. */
+export function agendaDaHome({ proximos, pesa }) {
+  const chave = (i) => `${i.descricao}|${i.valorCentavos}|${i.vencimento || i.data}`;
+  const pesados = new Map((pesa || []).map((p) => [chave(p), p]));
+  const lista = (proximos || []).map((i) => {
+    const p = i.tipo === "saida" ? pesados.get(chave(i)) : null;
+    if (p) pesados.delete(chave(i));
+    return p ? { ...i, pesa: true, razoes: p.razoes || [] } : i;
+  });
+  for (const p of pesados.values()) lista.push({ ...p, tipo: "saida", pesa: true, razoes: p.razoes || [] });
+  return lista.sort((a, b) => (b.atrasado ? 1 : 0) - (a.atrasado ? 1 : 0) || (a.semDia ? 1 : 0) - (b.semDia ? 1 : 0) || (a.data || "").localeCompare(b.data || ""));
+}
+
 /** O que falta para o painel enxergar a vida inteira. Cada item aponta o
  * dado que está faltando e a tela onde se resolve. */
 export function completarRetrato({ pessoas, contas, cartoes, fontesRenda, dividas, ativos, objetivos, metas, hoje }) {

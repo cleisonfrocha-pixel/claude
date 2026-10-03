@@ -3,6 +3,7 @@
 // Tela bespoke (como Dívidas e Renda): a compatibilidade com a margem
 // depende de renda, custos e dívidas, não só da lista de objetivos.
 
+import { barraEvolucao } from "../barraEvolucao.js";
 import { objetivos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelObjetivos } from "../../dados/objetivosRepo.js";
 import { simularNovoPrazo, simularMetaReversa } from "../../domain/objetivos.js";
@@ -54,11 +55,11 @@ function cartaoObjetivo(o) {
 }
 
 function detalheObjetivo(o) {
-  const largura = Math.min(100, o.progressoPercentual);
   return `
-    <div class="tela-sub" style="margin:0 0 4px;"><span data-valor>${formatarBRL(o.valorAtualCalculadoCentavos)}</span> de <span data-valor>${formatarBRL(o.valorAlvoCentavos)}</span> (${o.progressoPercentual}%)</div>
-    <div class="barra-limite${o.progressoPercentual >= 100 ? "" : ""}"><span style="width:${largura}%"></span></div>
-    <div class="fatura-linha"><span class="rotulo">Falta</span><b data-valor>${formatarBRL(o.faltaCentavos)}</b></div>
+    ${barraEvolucao({ totalRotulo: "Meta", totalCentavos: o.valorAlvoCentavos, segmentos: [
+      { tipo: "pago", rotulo: "Já guardado", centavos: Math.min(o.valorAtualCalculadoCentavos, o.valorAlvoCentavos) },
+      { tipo: "falta", rotulo: "Falta", centavos: o.faltaCentavos },
+    ] })}
     <div class="fatura-linha"><span class="rotulo">Meses restantes</span><b>${o.mesesRestantes}</b></div>
     <div class="fatura-linha"><span class="rotulo">Necessário por mês</span><b data-valor>${formatarBRL(o.valorNecessarioPorMesCentavos)}</b></div>
     <div class="fatura-linha"><span class="rotulo">Sobra do mês hoje</span><b data-valor>${formatarBRL(o.margemCentavos)}</b></div>

@@ -48,3 +48,18 @@ test("próximos dias: verba sem dia fixo vai por último e nunca disfarça de da
   });
   assert.deepEqual(r.map((i) => i.descricao), ["Luz", "Mercado"]);
 });
+
+test("agenda da Home: uma lista só, com as saídas que pesam marcadas e sem repetir", async () => {
+  const { agendaDaHome } = await import("../src/domain/inicio.js");
+  const jeep = { tipo: "saida", descricao: "Jeep", valorCentavos: 331637, data: "2026-11-04", vencimento: "2026-11-04" };
+  const luz = { tipo: "saida", descricao: "Luz", valorCentavos: 15000, data: "2026-10-05", vencimento: "2026-10-05" };
+  const entrada = { tipo: "entrada", descricao: "Salário", valorCentavos: 475000, data: "2026-10-07" };
+  const atrasada = { tipo: "saida", descricao: "EDP", valorCentavos: 24338, data: "2026-10-03", vencimento: "2026-09-20", atrasado: true };
+  const lista = agendaDaHome({ proximos: [entrada, luz, atrasada], pesa: [{ ...luz, razoes: ["essencial"] }, { ...jeep, razoes: ["parcela"] }] });
+  assert.equal(lista.length, 4);                                     // luz não repete
+  assert.equal(lista[0].descricao, "EDP");                           // atrasado primeiro
+  assert.equal(lista.find((i) => i.descricao === "Luz").pesa, true);
+  assert.deepEqual(lista.find((i) => i.descricao === "Luz").razoes, ["essencial"]);
+  assert.equal(lista.find((i) => i.descricao === "Jeep").pesa, true); // pesado fora dos 7 dias não some
+  assert.equal(lista.find((i) => i.descricao === "Salário").pesa, undefined);
+});

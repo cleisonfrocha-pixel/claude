@@ -140,3 +140,27 @@ test("dívida paga com trabalho (cota da GEDI): o saldo cai a cada abatimento, n
   assert.equal(v.quantidadeProblemas, 0);
   assert.deepEqual(validarDivida(padraoDivida({ ...cota, pessoaId: "p1" })), []);
 });
+
+test("evolução da dívida: pago + previsto + depois somam o total (financiamento e cota paga com trabalho)", async () => {
+  const { evolucaoDaDivida } = await import("../src/domain/dividas.js");
+  const jeep = divida({ nome: "Jeep", saldoOriginalCentavos: 19898220, valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 20, dataInicio: "2025-03-04" });
+  const e = evolucaoDaDivida(jeep, "2026-10-03");
+  assert.equal(e.totalCentavos, 331637 * 60);
+  assert.equal(e.pagoCentavos, 331637 * 20);
+  assert.equal(e.previstoCentavos, 331637 * 12);
+  assert.equal(e.depoisCentavos, 331637 * 28);
+  assert.equal(e.pagoCentavos + e.previstoCentavos + e.depoisCentavos, e.totalCentavos);
+  assert.equal(e.unidadesRestantes, 40);
+  assert.equal(e.previstoAte, "2027-10-04");
+  const cota = divida({
+    nome: "Cota", pagaComTrabalho: true, saldoOriginalCentavos: 2500000, valorComJurosCentavos: 1200000, valorParcelaCentavos: 0, quantidadeParcelas: 1, dataInicio: "2026-12-24",
+    abatimentoDesde: "2026-10-03", abatimentoMensalCentavos: 350000, abatimentoDia: 24, abatimentoAte: "2026-12", abatimentosUnicos: [{ data: "2026-10-05", valorCentavos: 150000 }],
+  });
+  const c = evolucaoDaDivida(cota, "2026-10-03");
+  assert.equal(c.pagoCentavos, 1300000);
+  assert.equal(c.previstoCentavos, 1200000);
+  assert.equal(c.depoisCentavos, 0);
+  assert.equal(c.pagoCentavos + c.previstoCentavos + c.depoisCentavos, c.totalCentavos);
+  assert.equal(c.previstoAte, "2026-12-24");
+  assert.equal(evolucaoDaDivida(cota, "2026-11-30").pagoCentavos, 1300000 + 150000 + 700000);
+});
