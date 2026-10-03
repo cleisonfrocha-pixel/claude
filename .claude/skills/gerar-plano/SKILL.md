@@ -21,9 +21,13 @@ pra qualquer pessoa está errado.
 - **Só dinheiro fechado.** Serviço em negociação, ideia de projeto e expectativa de venda não existem até
   fecharem. Nunca projete venda do Mercado Livre, aluguel do galpão ou retorno da GEDI como entrada.
 - **Cota da GEDI não é dívida de caixa, nem patrimônio, nem renda.** Os R$ 3.500 por mês do Tony até dezembro
-  são troca de trabalho por cota: não entram no bolso e NUNCA entram no caixa nem no plano (a fonte "Gedi / Tony"
-  está desativada de propósito). A receita dos clientes da GEDI paga equipe e tráfego e o Cleison não fica com o
-  lucro dessas contas: não trate essa sobra como dinheiro livre dele até ele confirmar de quem é.
+  ENTRAM na conta dele (fonte "Gedi / Tony", ativa). Ele paga equipe (R$ 2.500) e tráfego (R$ 1.000) com esse dinheiro:
+  líquido zero no caixa, os dois lados ficam no plano. O trabalho dele também abate R$ 3.500 por mês da dívida de
+  R$ 25 mil da cota: isso NÃO é dinheiro, é só cota ficando mais paga, nunca entra no caixa. Do Del Poente (R$ 5.000)
+  R$ 3.000 já pagam a equipe, ele fica com uns R$ 500 (no máximo R$ 1.000) e o resto (R$ 1.500) vai pro caixa da GEDI
+  (previsto "Aporte na GEDI").
+- **Cartões: pagamento antecipado.** Ele paga a fatura no dia seguinte ao fechamento (Nubank dia 12, Pagseguro dia 5,
+  Shopee dia 2) pra liberar o limite. Planeje a saída da fatura nesse dia, não no vencimento.
 - **Mercado Livre:** a verba de cerca de R$ 1.000 vai no cartão e não sai da renda; os R$ 250 do programa Decola
   já foram usados e não voltam. Nada disso vira entrada. **Galpão:** não use o número de R$ 250 a 260 mil de investimento.
 - **Filho é gasto essencial.** Nunca entra em corte.

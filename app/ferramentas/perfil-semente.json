@@ -1,6 +1,6 @@
 {
   "versao": 1,
-  "atualizadoEm": "2026-10-03T15:00:00.000Z",
+  "atualizadoEm": "2026-10-03T18:30:00.000Z",
   "regras": {
     "contarSoDinheiroFechado": true
   },
@@ -16,9 +16,14 @@
       "texto": "Só conta dinheiro fechado. Serviço em negociação, ideia de projeto e expectativa de venda não existem pra ele até fecharem. Nenhum plano pode depender disso e não existe projeção otimista.\nDinheiro esperado fica separado do garantido, e o incerto nunca entra."
     },
     {
+      "id": "cartoes",
+      "titulo": "Cartões: pagar no dia seguinte ao fechamento",
+      "texto": "Ele antecipa o pagamento da fatura pro melhor dia de compra (o dia seguinte ao fechamento), pra liberar o limite inteiro de novo. Não espera o vencimento.\nNubank PF e PJ: fecha dia 11, vence 18, paga dia 12. Pagseguro: fecha 4, vence 11, paga dia 5. Shopee da Carolina: fecha 1, vence 10, paga dia 2.\nNo painel isso é o \"dia de pagamento habitual\" de cada cartão. A saída da fatura cai nesse dia, não no vencimento. Isso é pedalada de limite, não dinheiro a mais: a compra continua saindo do caixa quando a fatura é paga."
+    },
+    {
       "id": "gedi",
       "titulo": "GEDI",
-      "texto": "O Cleison é CMO da GEDI, uma startup de compliance de medicina ocupacional ainda em MVP.\nTem direito a uma cota de 10% da empresa, que vale R$ 25 mil, dos quais cerca de R$ 13 mil já foram pagos com trabalho. Ele não vai pagar em dinheiro.\nOs R$ 3.500 por mês do Tony (GEDI), até dezembro, NÃO são renda: é troca de trabalho por cota. Nada disso entra no bolso, tudo abate a cota dele. Por isso a fonte \"Gedi / Tony\" não conta no caixa nem no plano.\nEle também traz clientes pra GEDI e usa a receita deles pra pagar equipe e tráfego, e não fica com o lucro dessas contas. Isso não é dívida de caixa, e a cota não conta como patrimônio nem como renda.\nEle decide até novembro se entra como sócio ou se sai sem dívida, e ainda não decidiu. Esse prazo pesa no plano."
+      "texto": "O Cleison é CMO da GEDI, uma startup de compliance de medicina ocupacional ainda em MVP.\nTem direito a uma cota de 10% da empresa, que vale R$ 25 mil, dos quais cerca de R$ 13 mil já foram pagos com trabalho. Ele não vai pagar em dinheiro.\nOs R$ 3.500 por mês do Tony (GEDI), até dezembro, ENTRAM na conta dele (fonte \"Gedi / Tony\", dia 24). Ele paga a equipe com esse dinheiro (R$ 2.500) e coloca R$ 1.000 em tráfego, e isso fecha os R$ 3.500. O efeito líquido no caixa dele é zero: entra 3.500, sai 3.500. Os dois lados ficam no painel.\nAlém disso, o trabalho dele abate mais R$ 3.500 por mês da dívida de R$ 25 mil da cota. Esse abatimento NÃO é dinheiro e não aparece no caixa: é só a cota ficando mais paga.\nEle também traz clientes pra GEDI. Do Del Poente (R$ 5.000 em 05/10), R$ 3.000 já saem pra equipe (Brena, Felipe e Giu, finais do serviço). Sobram R$ 2.000: uns R$ 500 ficam pra ele (no máximo R$ 1.000) e o resto vai pro caixa da GEDI e abate a cota (previsto \"Aporte na GEDI\" de R$ 1.500; vira R$ 1.000 se ele ficar com R$ 1.000). A cota não conta como patrimônio nem como renda.\nEle decide até novembro se entra como sócio ou se sai sem dívida, e ainda não decidiu. Esse prazo pesa no plano."
     },
     {
       "id": "ml",
@@ -43,7 +48,7 @@
     {
       "id": "lacunas",
       "titulo": "O que o painel ainda não sabe",
-      "texto": "Vendas e custos reais da loja do Mercado Livre, inclusive o custo do Flex.\nO que sobra na conta depois de pagar equipe e tráfego com a receita dos clientes da GEDI (ex.: Del Poente) é dele ou da empresa?\nO que mais sai da conta da Carolina por mês, além da Shopee.\nCustos do galpão (energia, água, obra) e quanto falta pra terminar.\nGastos anuais (IPVA, seguro, IPTU, escola, 13º).\nData exata da decisão da GEDI.\nQuanto o galpão custou: o painel tem R$ 150 mil de compra."
+      "texto": "Vendas e custos reais da loja do Mercado Livre, inclusive o custo do Flex.\nO que mais sai da conta da Carolina por mês, além da Shopee.\nCustos do galpão (energia, água, obra) e quanto falta pra terminar.\nGastos anuais (IPVA, seguro, IPTU, escola, 13º).\nData exata da decisão da GEDI.\nQuanto o galpão custou: o painel tem R$ 150 mil de compra."
     }
   ],
   "prazos": [

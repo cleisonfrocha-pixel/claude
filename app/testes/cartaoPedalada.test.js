@@ -22,6 +22,17 @@ test("linha do tempo: fatura pesa no dia habitual, mantendo o vencimento real", 
   assert.equal(d.itens.find((i) => i.tipo === "fatura").vencimento, "2026-10-18");
 });
 
+test("dia habitual já passou e a fatura segue aberta: pesa hoje, mas não está atrasada (o vencimento é depois)", () => {
+  const dias = compromissosPorDia({ transacoes: [compra({})], faturas: fat, cartoes: [{ ...nubank, diaPagamentoHabitual: 12 }], de: "2026-10-14", ate: "2026-10-31", hoje: "2026-10-14", extras: [] });
+  const d = dias.find((x) => x.itens.some((i) => i.tipo === "fatura"));
+  const f = d.itens.find((i) => i.tipo === "fatura");
+  assert.equal(d.data, "2026-10-14");
+  assert.equal(f.atrasado, false);
+  assert.equal(f.vencimento, "2026-10-18");
+  const vencida = compromissosPorDia({ transacoes: [compra({})], faturas: fat, cartoes: [{ ...nubank, diaPagamentoHabitual: 12 }], de: "2026-10-20", ate: "2026-10-31", hoje: "2026-10-20", extras: [] });
+  assert.equal(vencida.flatMap((x) => x.itens).find((i) => i.tipo === "fatura").atrasado, true);
+});
+
 test("limite livre informado vale a partir da data; só compra posterior reduz", () => {
   const cartao = { ...nubank, limiteLivreInformado: { valorCentavos: 25000, em: "2026-10-02" } };
   const v = calcularVisaoCartao({ cartao, transacoesDoCartao: [compra({ data: "2026-10-01" }), compra({ id: "n", data: "2026-10-04", valorCentavos: 5000 })], faturasDoCartao: fat, hoje: "2026-10-05" });

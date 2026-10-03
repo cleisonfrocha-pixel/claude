@@ -44,7 +44,8 @@
   .inicio-desc { min-width: 0; overflow-wrap: anywhere; }
   .fatura-linha { gap: 10px; }
   .fatura-linha .rotulo { min-width: 0; overflow-wrap: anywhere; }
-  .inicio-lancar { width: 100%; min-height: 50px; border-radius: 16px; font-size: 16px; }
+  .inicio-lancar, .btn-adicionar-conta { width: 100%; min-height: 50px; border-radius: 16px; font-size: 16px; }
+  .tela-head:has(.btn-adicionar-conta) > div { display: none; }
 
   /* ---- títulos e abas do módulo ---- */
   .tela-head { margin: 8px 0 8px; gap: 8px; }

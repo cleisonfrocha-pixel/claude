@@ -1688,6 +1688,14 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - 500 testes nos dois fusos.
 
 ## Correção do perfil (03/10/2026, mais tarde)
-- "Gedi / Tony" (R$ 3.500 por mês até dezembro) é troca de trabalho por cota, não dinheiro no bolso. A fonte foi desativada do caixa. Efeito medido: o pior dia dos próximos 30 dias passou de -R$ 69,37 para -R$ 709,06 e o saldo em 12 meses de R$ 25.700 para R$ 15.200 (R$ 10.500 que não existiam, 3 meses x R$ 3.500).
+- (Revertido na seção seguinte.) Eu havia lido "Gedi / Tony" como troca de trabalho sem dinheiro e desativei a fonte. Estava errado.
 - Galpão: o número de R$ 250 a 260 mil de investimento foi descartado pelo Cleison.
 - Mercado Livre: a verba de ~R$ 1.000 vai no cartão e não sai da renda; os R$ 250 do programa Decola já foram usados e não voltam. Nada disso entra no caixa.
+
+## Correções do Cleison e ajustes (03/10/2026, noite)
+- **Gedi / Tony, certo:** os R$ 3.500 por mês (até dezembro) ENTRAM na conta. Ele paga a equipe (R$ 2.500) e coloca R$ 1.000 em tráfego, o que fecha os R$ 3.500. Efeito líquido no caixa: zero. O trabalho dele também abate R$ 3.500 por mês da dívida de R$ 25 mil da cota, mas isso é só abatimento, não é dinheiro e não entra no painel. A fonte foi reativada (nome "Gedi / Tony (passa direto: paga equipe e tráfego)", cai na conta Next dia 24). Perfil, `perfil-semente.json` e skill `gerar-plano` corrigidos. Os números de -R$ 709 e R$ 15.200 da seção anterior eram efeito desse erro.
+- **Jeep pago (parcela 20/60, 03/10):** conferido com o banco real em A pagar (em Pagas), Dívidas (20 de 60, próxima parcela 21 em 04/11), Contas (saldo do Next), Plano e Relatórios (parcelas de dívida R$ 3.316,37) e Início (contagem de contas pagas).
+- **Botão de adicionar:** A pagar tem "+ Adicionar conta a pagar" e A receber tem "+ Adicionar entrada", no topo da tela (largura total no celular). Abre o formulário já como previsto, só pedindo valor, vencimento, conta e categoria. A lista, o caixa e o Início atualizam sozinhos. Código: `abrirLancamento(preset)` em `ui/telas/transacoes.js`.
+- **Cartões, pagamento antecipado:** `diaPagamentoHabitual` = dia seguinte ao fechamento. Nubank PF e PJ dia 12, Pagseguro dia 5, Shopee da Carolina dia 2. A saída da fatura cai nesse dia, o vencimento real fica guardado.
+- **Fatura com o dia habitual já passado:** continua pesando hoje no caixa, mas não aparece mais como "já está atrasada" (o vencimento ainda não passou). Teste novo em `cartaoPedalada.test.js`. 501 testes nos dois fusos.
+- **Del Poente (R$ 5.000 em 05/10):** R$ 3.000 já saem pra equipe (Brena R$ 1.300, Felipe R$ 700, Giu R$ 1.000), ele fica com uns R$ 500 e o resto vira "Aporte na GEDI (do Del Poente, abate a cota)" de R$ 1.500, previsto em 05/10. Premissa: se ficar com R$ 1.000, o aporte vira R$ 1.000.

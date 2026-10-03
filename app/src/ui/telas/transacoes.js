@@ -53,6 +53,14 @@ export default {
   },
 };
 
+/** Abre o formulário de lançar a partir de fora da tela (A pagar / A receber), já como
+ * conta a pagar ou entrada a receber. `preset` = { tipo, status, titulo, dica, rotuloData }. */
+export async function abrirLancamento(preset = {}) {
+  await carregarContexto();
+  if (!lista.length) lista = await transacoes.listar();
+  abrirModalNovaTransacao(preset);
+}
+
 async function carregarContexto() {
   const [p, c, ca, cat, fa, fr] = await Promise.all([
     pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), faturas.listar(), fontesRenda.listar(),
@@ -110,7 +118,7 @@ function renderizar() {
 
   renderizarLista(doMes);
 
-  container.querySelector("#btn-nova-transacao").addEventListener("click", abrirModalNovaTransacao);
+  container.querySelector("#btn-nova-transacao").addEventListener("click", () => abrirModalNovaTransacao());
   ligarFiltros();
   container.querySelector("#mes-prev").addEventListener("click", () => { mes = tempo.somarMeses(mes, -1); renderizar(); });
   container.querySelector("#mes-next").addEventListener("click", () => { mes = tempo.somarMeses(mes, 1); renderizar(); });
@@ -161,7 +169,7 @@ function renderizarLista(doMes) {
   if (!doMes.length) {
     alvo.innerHTML = haFiltroAtivo(filtros) ? `<div class="vazio">Nada encontrado com esses filtros.</div>` : `<div class="vazio">Nenhuma transação em ${escapeHtml(tempo.competenciaLabel(mes))}.
       <div><button class="btn btn-primary" id="vazio-nova">+ Nova transação</button></div></div>`;
-    alvo.querySelector("#vazio-nova")?.addEventListener("click", abrirModalNovaTransacao);
+    alvo.querySelector("#vazio-nova")?.addEventListener("click", () => abrirModalNovaTransacao());
     return;
   }
   const ordenada = doMes.slice().sort((a, b) => (b.dados.data || "").localeCompare(a.dados.data || ""));
@@ -470,11 +478,12 @@ const MODOS = [
   { id: "pagamento_fatura", rotulo: "Pagar fatura" },
 ];
 
-function abrirModalNovaTransacao() {
+function abrirModalNovaTransacao(preset = {}) {
   const html = `
     <div class="modal">
-      <h2>Nova transação</h2>
-      <div class="subabas" role="tablist" id="modos-transacao" style="margin-bottom:16px;">
+      <h2>${escapeHtml(preset.titulo || "Nova transação")}</h2>
+      ${preset.dica ? `<p class="tela-sub" style="margin:-6px 0 12px;">${escapeHtml(preset.dica)}</p>` : ""}
+      <div class="subabas" role="tablist" id="modos-transacao" style="margin-bottom:16px;" ${preset.tipo ? "hidden" : ""}>
         ${MODOS.map((m, i) => `<button type="button" class="modulo-chip${i === 0 ? " ativo" : ""}" data-modo="${m.id}">${escapeHtml(m.rotulo)}</button>`).join("")}
       </div>
       <div id="erro-formulario"></div>
@@ -495,7 +504,25 @@ function abrirModalNovaTransacao() {
     });
   });
   renderCamposModo("simples");
+  aplicarPreset(preset);
   document.getElementById("form-transacao").addEventListener("submit", onSubmitTransacao);
+}
+
+function aplicarPreset(preset) {
+  if (preset.tipo) {
+    const grupo = document.querySelector('input[name="s-tipo"]')?.closest(".field");
+    if (grupo) grupo.hidden = true;
+    const radio = document.querySelector(`input[name="s-tipo"][value="${preset.tipo}"]`);
+    if (radio) { radio.checked = true; radio.dispatchEvent(new Event("change")); }
+  }
+  if (preset.status) {
+    const st = document.getElementById("s-status");
+    if (st) st.value = preset.status;
+  }
+  if (preset.rotuloData) {
+    const rot = document.querySelector('label[for="s-data"]');
+    if (rot) rot.textContent = preset.rotuloData;
+  }
 }
 
 function modoAtivo() {

@@ -10,6 +10,7 @@ import { baixarComPergunta } from "../baixaUI.js";
 import { escapeHtml } from "../utilitarios.js";
 import { navegar } from "../navegacao.js";
 import * as modal from "../modal.js";
+import { abrirLancamento } from "./transacoes.js";
 
 const GRUPOS = ["atrasada", "hoje", "a_pagar", "paga"];
 const DESTINO_ORIGEM = {
@@ -28,12 +29,16 @@ const TEXTOS = {
     unidade: "contas pagas", feito: "pagos", falta: "faltam", vazio: "Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.",
     grupos: { atrasada: ["Atrasadas", "Pagando estas primeiro, o mês sai do vermelho."], hoje: ["Vencem hoje", ""], a_pagar: ["A pagar", ""], paga: ["Pagas", ""] },
     pronto: (d) => `${d} paga.`,
+    adicionar: "+ Adicionar conta a pagar",
+    preset: { tipo: "despesa", status: "previsto", titulo: "Adicionar conta a pagar", dica: "Esqueceu uma conta? Coloque o valor e o dia que vence. Ela entra na lista e no caixa.", rotuloData: "Vence em" },
   },
   receber: {
     titulo: "A receber", sub: "O que deve entrar no mês. Toque em Recebi quando o dinheiro cair.", botao: "Recebi", selo: "Recebida",
     unidade: "entradas recebidas", feito: "recebidos", falta: "faltam", vazio: "Nenhuma entrada prevista neste mês. Cadastre em Renda.",
     grupos: { atrasada: ["Ainda não caíram", "Passou do dia esperado. Vale conferir com quem paga."], hoje: ["Caem hoje", ""], a_pagar: ["A receber", ""], paga: ["Recebidas", ""] },
     pronto: (d) => `${d} recebida.`,
+    adicionar: "+ Adicionar entrada",
+    preset: { tipo: "receita", status: "previsto", titulo: "Adicionar entrada a receber", dica: "Vai cair um dinheiro que não está na lista? Coloque o valor e o dia. Se não for certo, marque como Provável ou Incerto.", rotuloData: "Cai em" },
   },
 };
 let mesVisivel = tempo.competenciaAtual();
@@ -137,7 +142,8 @@ function renderizar() {
   if (!container) return;
   const T = TEXTOS[lado];
   const cabeca = `<div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">${T.titulo}</h2>
-    <p class="tela-sub">${T.sub}</p></div></div>`;
+    <p class="tela-sub">${T.sub}</p></div>
+    <button class="btn btn-primary btn-adicionar-conta" id="btn-adicionar-conta">${T.adicionar}</button></div>`;
   if (!painel) { container.innerHTML = `${cabeca}<p class="tela-sub">Carregando…</p>`; return; }
 
   const dados = dadosDoLado();
@@ -186,6 +192,7 @@ function renderizar() {
     ${s.quantidade === 0 && !dados.itens.length ? `<div class="vazio">${T.vazio}</div>` : ""}
   `;
 
+  container.querySelector("#btn-adicionar-conta")?.addEventListener("click", () => abrirLancamento(T.preset));
   container.querySelectorAll("[data-lado]").forEach((b) => b.addEventListener("click", () => { lado = b.dataset.lado; renderizar(); }));
   container.querySelectorAll(".conta-card").forEach((el) => {
     const item = dados.itens.find((i) => i.chave === el.dataset.chave);

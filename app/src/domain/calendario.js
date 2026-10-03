@@ -40,8 +40,9 @@ export function repartirVerba(t, de) {
 export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje, extras = [] }) {
   const porDia = new Map();
   function item(dataOriginal, valorComSinal, dados) {
-    // Compromisso vencido e não pago não some do futuro: pesa hoje.
-    const data = dados.atrasado && dataOriginal && dataOriginal < de ? de : dataOriginal;
+    // Compromisso vencido e não pago não some do futuro: pesa hoje. Fatura cujo dia
+    // habitual de pagamento (pedalada) já passou também: o dinheiro ainda não saiu.
+    const data = (dados.atrasado || dados.pagamentoPassado) && dataOriginal && dataOriginal < de ? de : dataOriginal;
     if (!data || data < de || data > ate) return;
     dados = { vencimento: dataOriginal, ...dados };
     if (!porDia.has(data)) porDia.set(data, { data, entradasCentavos: 0, saidasCentavos: 0, itens: [] });
@@ -97,7 +98,7 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     const saida = dataPagamentoPrevisto(cartao, f.competencia);
     item(saida, -total, {
       vencimento,
-      tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? saida < hoje : false, certeza: "confirmado",
+      tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: total, atrasado: hoje ? vencimento < hoje : false, pagamentoPassado: hoje ? saida < hoje : false, certeza: "confirmado",
       faturaId: f.id, cartaoId: cartao.id, contaPagamentoId: cartao.contaPagamentoId || null, origem: { tipo: "fatura", id: f.id },
     });
   }
