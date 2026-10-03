@@ -173,7 +173,7 @@ function renderizarLista(doMes) {
   alvo.innerHTML = (aConferir.length > 1 ? `
     <div class="nota-incerto" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
       <span>${aConferir.length} lançamentos deste mês vieram do chat ou de extrato e ainda não foram conferidos por você.</span>
-      <button class="btn-mini" id="conferir-todos">✓ Conferi todos</button>
+      <button class="btn-mini" id="conferir-todos">✓ Dados certos em todos</button>
     </div>` : "") + visiveis.map((t) => linhaTransacao(t)).join("");
   const btnTodos = alvo.querySelector("#conferir-todos");
   if (btnTodos) btnTodos.addEventListener("click", async () => {
@@ -204,7 +204,7 @@ function renderizarLista(doMes) {
   alvo.querySelectorAll("[data-revisar]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       await marcarRevisado(btn.getAttribute("data-revisar"));
-      mostrarToast("Lançamento marcado como conferido.");
+      mostrarToast("Dados conferidos. Isso não muda os números: para dar baixa, use Paguei ou Recebi.");
     });
   });
 }
@@ -248,7 +248,7 @@ function linhaTransacao(item) {
       <div class="item-acoes">
         ${["previsto", "agendado", "atrasado"].includes(statusMostrado) && (d.tipo === "receita" || d.tipo === "despesa")
           ? `<button class="btn-mini btn-baixa" data-baixa="${escapeHtml(item.id)}">${d.tipo === "receita" ? "Recebi" : "Paguei"}</button>` : ""}
-        ${naoRevisado ? `<button class="btn-mini" title="Marcar como conferido" data-revisar="${escapeHtml(item.id)}">✓ Conferido</button>` : ""}
+        ${naoRevisado ? `<button class="btn-mini" title="Os dados deste lançamento estão certos. Não muda nenhum número; para dar baixa use Paguei ou Recebi." data-revisar="${escapeHtml(item.id)}">✓ Dados certos</button>` : ""}
         <button class="btn-mini" title="Editar" data-editar="${escapeHtml(item.id)}">Editar</button>
         <button class="btn-mini perigo" title="Apagar" data-apagar="${escapeHtml(item.id)}">Apagar</button>
       </div>
@@ -329,6 +329,12 @@ function abrirModalEditarTransacaoSimples(item) {
     try {
       const tipo = document.querySelector('input[name="e-tipo"]:checked').value;
       const onde = document.getElementById("e-onde") ? document.getElementById("e-onde").value : "conta";
+      // Marcar uma conta aberta como "Pago" pela edição tem que fazer o que o Paguei faz: perguntar de
+      // onde saiu e descontar do saldo. Só mudar o rótulo deixava a conta sumir da lista sem o saldo mexer.
+      const statusEscolhido = document.getElementById("e-status").value;
+      // Lê o formulário ANTES de fechar o modal: depois de fechado, os campos não existem mais.
+      const lido = { valorCentavos: paraCentavos(document.getElementById("e-valor").value), contaId: document.getElementById("e-conta")?.value || null, descricao: document.getElementById("e-descricao").value.trim() };
+      const virarPago = statusEscolhido === "pago" && ["previsto", "agendado", "atrasado"].includes(item.dados.status) && onde === "conta" && ["despesa", "receita"].includes(tipo);
       await transacoes.atualizar(item.id, {
         tipo,
         valorCentavos: paraCentavos(document.getElementById("e-valor").value),
@@ -340,11 +346,16 @@ function abrirModalEditarTransacaoSimples(item) {
         pessoaId: document.getElementById("e-pessoa").value,
         fonteRendaId: document.getElementById("e-fonteRenda")?.value || null,
         descricao: document.getElementById("e-descricao").value.trim(),
-        status: document.getElementById("e-status").value,
+        status: virarPago ? item.dados.status : statusEscolhido,
         certeza: document.getElementById("e-certeza").value,
       });
-      mostrarToast("Transação atualizada.");
       fecharModal();
+      if (virarPago) {
+        const feito = await baixarComPergunta({ tipo: "transacao", transacaoId: item.id, descricao: lido.descricao || item.dados.descricao || "Conta", valorCentavos: lido.valorCentavos, contaSugeridaId: lido.contaId, origem: item.dados.dividaId ? { tipo: "divida", id: item.dados.dividaId } : null }, tipo);
+        if (!feito) mostrarToast("Salvo, mas a conta continua em aberto: ninguém disse de onde saiu o dinheiro.");
+      } else {
+        mostrarToast("Transação atualizada.");
+      }
     } catch (erro) {
       const msg = erro instanceof ErroDeValidacao ? erro.erros.join(" ") : "Não foi possível salvar. Tente novamente.";
       erroEl.innerHTML = `<div class="erro-form">${escapeHtml(msg)}</div>`;
@@ -492,11 +503,21 @@ function modoAtivo() {
   return el ? el.getAttribute("data-modo") : "simples";
 }
 
+/** Conta que vem marcada ao lançar: a mais usada nos lançamentos. Antes vinha a primeira da lista
+ * por nome, e um gasto seu caía na conta de outra pessoa sem ninguém perceber. */
+function contaPadraoId() {
+  const uso = new Map();
+  for (const t of lista) { const c = t.dados.contaId; if (c && t.dados.tipo !== "transferencia") uso.set(c, (uso.get(c) || 0) + 1); }
+  const ativas = contexto.contas.filter((c) => c.dados.status === "ativa").map((c) => c.id);
+  return [...uso.entries()].filter(([id]) => ativas.includes(id)).sort((a, b) => b[1] - a[1])[0]?.[0] || ativas[0] || null;
+}
+
 function campoOndeConta(idPrefixo, permiteCartao, atual) {
+  const preferida = atual?.contaId || contaPadraoId();
   const contasOpts = opcoes(contexto.contas.filter((c) => c.dados.status === "ativa"), (c) => c.id, (c) => c.dados.nome);
   if (!permiteCartao) {
     return `<div class="field"><label for="${idPrefixo}-conta">Conta</label>
-      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual?.contaId === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
+      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${preferida === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
   }
   const cartoesOpts = opcoes(contexto.cartoes.filter((c) => c.dados.status === "ativo"), (c) => c.id, (c) => c.dados.apelido);
   const ondeAtual = atual?.cartaoId ? "cartao" : "conta";
@@ -508,7 +529,7 @@ function campoOndeConta(idPrefixo, permiteCartao, atual) {
       </select>
     </div>
     <div class="field" id="${idPrefixo}-campo-conta" ${ondeAtual === "cartao" ? "hidden" : ""}><label for="${idPrefixo}-conta">Conta</label>
-      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual?.contaId === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>
+      <select id="${idPrefixo}-conta">${contasOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${preferida === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>
     <div class="field" id="${idPrefixo}-campo-cartao" ${ondeAtual === "conta" ? "hidden" : ""}><label for="${idPrefixo}-cartao">Cartão</label>
       <select id="${idPrefixo}-cartao">${cartoesOpts.map((o) => `<option value="${escapeHtml(o.valor)}" ${atual?.cartaoId === o.valor ? "selected" : ""}>${escapeHtml(o.rotulo)}</option>`).join("")}</select></div>`;
 }
@@ -686,6 +707,14 @@ async function onSubmitTransacao(ev) {
         status: document.getElementById("s-status").value,
         certeza: document.getElementById("s-certeza").value,
       };
+      // Gasto pago com data até o dia do saldo conferido da conta: o saldo já inclui, então não mexe. Avisa.
+      let avisoSaldo = "";
+      if (lancamento.status === "pago" && lancamento.contaId && lancamento.tipo !== "transferencia") {
+        const conta = contexto.contas.find((c) => c.id === lancamento.contaId)?.dados;
+        if (conta?.dataSaldoInicial && lancamento.data <= conta.dataSaldoInicial) {
+          avisoSaldo = ` Atenção: ${conta.nome} foi conferida em ${tempo.formatarData(conta.dataSaldoInicial)}. Como a data é igual ou anterior, o saldo já considera este lançamento e não muda.`;
+        }
+      }
       // Se isso paga uma conta que já está na lista, dá baixa nela em vez de duplicar.
       const quita = await perguntarSeQuita(lancamento);
       if (quita === null) return;
@@ -696,7 +725,7 @@ async function onSubmitTransacao(ev) {
         return;
       }
       await criarSimples({ ...lancamento, pagoEm: lancamento.status === "pago" ? lancamento.data : null });
-      mostrarToast("Transação lançada.");
+      mostrarToast("Transação lançada." + avisoSaldo);
     } else if (modo === "transferencia") {
       await criarTransferencia({
         contaOrigemId: document.getElementById("tr-origem").value,

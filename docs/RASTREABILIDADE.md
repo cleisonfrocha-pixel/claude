@@ -1643,3 +1643,14 @@ As 12 perguntas e onde cada uma é respondida hoje:
 | Saindo do buraco? | Plano › Evolução (precisa de dois meses fechados com dados) |
 Resultado com os dados reais: Em conta R$ 8.831,61, 04/10 faltam R$ 69,37 antes do Del Poente, zona de risco, e com "Posso gastar?" R$ 1.000 o painel diz que na conta não cabe e no Nubank PJ cabe. Sem erros de página, celular e desktop.
 Limites conhecidos: a Evolução só compara com dois meses fechados com movimento; o pior momento do caixa só existe a partir de 03/10 (quando o painel começou a guardar). Verbas de anúncios e Morelli continuam fora do cartão.
+
+## Rodada 8: auditoria funcional ação por ação (03/10/2026)
+Método: com o banco real carregado num navegador (celular), cada ação do usuário foi feita pela tela e os números de Início, A pagar, Contas e Agenda foram comparados antes e depois (modo local e modo `db` simulado, com leituras assíncronas).
+Funcionam e propagam certo: Paguei (A pagar e Transações), Recebi, Paguei a parcela do Jeep (parcela paga, contagem de parcelas, saldo), pagar fatura, lançar gasto pago e previsto, transferência, conferir saldo, cancelar conta.
+Quebras encontradas e corrigidas:
+1. **Editar > Situação "Pago" não descontava do saldo.** A conta sumia dos compromissos e o saldo não mexia: o "pode gastar" subia o valor da conta (R$ 1.400 de dinheiro que não existia) e a conta não contava como paga. Agora marcar Pago pela edição abre a pergunta "de onde saiu" e dá baixa como o Paguei. Também pegou um erro de leitura do formulário depois de fechado.
+2. **Conta padrão do Lançar** vinha a primeira por ordem alfabética (Conta da Carolina) e o gasto caía na conta errada sem aviso. Agora vem a mais usada.
+3. **Gasto pago com data até o dia do saldo conferido** não muda o saldo (o saldo já inclui). Sem aviso, parecia que "não mudou nada". Agora o aviso aparece ao lançar.
+4. **"✓ Conferido"** parecia "tá ok" e não muda número nenhum. Virou "✓ Dados certos", com texto e aviso dizendo que para dar baixa é Paguei ou Recebi.
+5. **Zona de risco com número positivo** confundia. O Início agora diz o pior dia dos próximos 30 dias e o valor do caixa nele (e, se difere, o valor só com o confirmado).
+Pendências conhecidas: Paguei em compra planejada de cartão ("Compras previstas") e a mensagem da aba Renda ("Há déficit" com "o mês fecha no papel") ainda se contradizem; "Sobra no mês" (Plano) e "resto de outubro" usam bases diferentes e precisam de uma ponte escrita; contas Nubank e Next têm datas de saldo diferentes.

@@ -101,7 +101,8 @@ function blocoSituacao(sit) {
   return `
     <section class="inicio-bloco">
       <h3><span style="color:${COR_ZONA[z]};">●</span> ${escapeHtml(ROTULO_ZONA[z])} ${ajudaHtml("A zona compara o ponto mais baixo que o seu caixa toca nos próximos 30 dias com o que você já precisa pagar num mês. Negativo ou abaixo de meio mês de obrigações é risco; até um mês, apertado; acima, confortável.")}</h3>
-      <p class="tela-sub" style="margin:0 0 12px;color:var(--text);">${escapeHtml(sit.decisao.texto)}</p>
+      <p class="tela-sub" style="margin:0 0 6px;color:var(--text);">${escapeHtml(sit.decisao.texto)}</p>
+      <p class="tela-sub" style="margin:0 0 12px;opacity:.75;">Pior dia dos próximos ${estadoInicio?.horizonteDias || 30} dias: ${sit.diaMaisApertado ? escapeHtml(formatarData(sit.diaMaisApertado).slice(0, 5)) : "nenhum"}, com o caixa em <span data-valor>${formatarBRL(sit.menorPontoCentavos)}</span>${sit.menorPontoGarantidoCentavos !== sit.menorPontoCentavos ? ` (<span data-valor>${formatarBRL(sit.menorPontoGarantidoCentavos)}</span> contando só o confirmado)` : ""}.</p>
       <div class="home-saldo-metricas" style="margin:0 0 8px;">
         <div class="home-metrica"><span>Na conta hoje</span><b data-valor>${formatarBRL(sit.naContaCentavos)}</b></div>
         <div class="home-metrica"><span>Já tem dono ${ate}</span><b data-valor>−${formatarBRL(sit.comprometido.totalCentavos)}</b></div>
