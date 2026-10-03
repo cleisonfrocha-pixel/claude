@@ -1624,3 +1624,22 @@ Decisões padrão usadas (a confirmar com o Cleison): cortes da zona 0,5 e 1 mê
 - `domain/evolucao.js`: série dos últimos 6 meses (contas pagas com atraso, resultado, pior momento do caixa, dívida total, patrimônio líquido) e tendência (melhorando, estável, piorando, sem dados) comparando os dois últimos meses fechados. Mês sem dado fica "sem dado". Indicador de bola de neve (tendência piorando com parcelas ≥ 40% da renda do último mês ou dívida sem acordo).
 - `dados/evolucaoRepo.js`: guarda o instantâneo do caixa do mês (`instantaneosCaixa`, um documento por competência, pior momento e máximo de atrasadas) quando o Início é calculado.
 - Plano ganhou a aba Evolução. 490 testes nos dois fusos.
+
+## Sprint 62: reauditoria da Rodada 7 (03/10/2026, banco real, celular e desktop)
+As 12 perguntas e onde cada uma é respondida hoje:
+| Pergunta | Onde |
+|---|---|
+| Como estou hoje? | Início: zona (hoje, Zona de risco) e a frase de decisão |
+| Quanto tenho disponível? | Início: Livre garantido e Livre com o provável |
+| Quanto preciso guardar? | Início: "Já tem dono" por grupo |
+| Quanto posso gastar? | Início: número do topo e "Posso gastar?" |
+| O que vai sair? | Início: "O que pesa agora" e Próximos 7 dias |
+| Quando entra dinheiro? | Início: "até a próxima entrada" (Del Poente, 05/10) |
+| Momento mais apertado? | Início: frase de decisão e Evolução (pior momento) |
+| Posso usar o cartão? | Início: Cartões (quanto cabe agora) e "Posso gastar?" |
+| Quanto da próxima fatura? | Início: Cartões |
+| Bola de neve? | Plano › Evolução |
+| O que precisa de atenção? | Início: "O que pesa agora" |
+| Saindo do buraco? | Plano › Evolução (precisa de dois meses fechados com dados) |
+Resultado com os dados reais: Em conta R$ 8.831,61, 04/10 faltam R$ 69,37 antes do Del Poente, zona de risco, e com "Posso gastar?" R$ 1.000 o painel diz que na conta não cabe e no Nubank PJ cabe. Sem erros de página, celular e desktop.
+Limites conhecidos: a Evolução só compara com dois meses fechados com movimento; o pior momento do caixa só existe a partir de 03/10 (quando o painel começou a guardar). Verbas de anúncios e Morelli continuam fora do cartão.

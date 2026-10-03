@@ -91,11 +91,12 @@ function blocoAteAProximaEntrada(caixa) {
   return `<section class="inicio-bloco"><h3>Até o dinheiro entrar</h3>${linhaEntrada}${linhaBuraco}</section>`;
 }
 
+const curto = (t) => String(t || "").replace(/\s*\(.*$/, "").trim();
 const COR_ZONA = { confortavel: "var(--accent)", apertado: "var(--warn)", risco: "var(--danger)" };
 
 function blocoSituacao(sit) {
   const z = sit.zona;
-  const ate = sit.ate ? `até ${formatarData(sit.ate.data).slice(0, 5)} (${escapeHtml(sit.ate.descricao || "próxima entrada")})` : "no horizonte";
+  const ate = sit.ate ? `até ${formatarData(sit.ate.data).slice(0, 5)} (${escapeHtml(curto(sit.ate.descricao) || "próxima entrada")})` : "no horizonte";
   const grupos = GRUPOS.filter((g) => sit.comprometido.grupos[g].totalCentavos > 0);
   return `
     <section class="inicio-bloco">
@@ -252,7 +253,7 @@ function renderizar() {
               <button class="home-topo-acao" id="botao-ocultar-home" title="Ocultar valores" aria-label="Ocultar valores"></button>
             </div>
           </div>
-          <div class="home-saldo-rotulo" style="cursor:default;">Pode gastar até ${situacao.ate ? escapeHtml(formatarData(situacao.ate.data)) + " (" + escapeHtml(situacao.ate.descricao || "próxima entrada") + ")" : escapeHtml(formatarData(horizonteAte))} ${ajudaHtml("É o que dá pra gastar sem faltar dinheiro pra nenhuma conta até o dinheiro entrar de novo: o que está em conta, menos o que já tem dono, olhando o pior momento do caminho.")}</div>
+          <div class="home-saldo-rotulo" style="cursor:default;">Pode gastar até ${situacao.ate ? escapeHtml(formatarData(situacao.ate.data)) + " (" + escapeHtml(curto(situacao.ate.descricao) || "próxima entrada") + ")" : escapeHtml(formatarData(horizonteAte))} ${ajudaHtml("É o que dá pra gastar sem faltar dinheiro pra nenhuma conta até o dinheiro entrar de novo: o que está em conta, menos o que já tem dono, olhando o pior momento do caminho.")}</div>
           <div class="home-saldo-valor${situacao.livreProvavelCentavos < 0 ? " negativo" : ""}" data-valor>${formatarBRL(situacao.livreProvavelCentavos)}</div>
           <div class="selo-confianca ${confianca.nivel}" title="${escapeHtml(confianca.frase)}">
             <span class="selo-simbolo">${confianca.simbolo}</span>
