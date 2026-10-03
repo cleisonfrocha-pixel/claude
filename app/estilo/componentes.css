@@ -885,3 +885,12 @@
 
 .pesa-ponto { color: var(--danger); font-size: 11px; vertical-align: middle; }
 .inicio-linha.pesa { background: color-mix(in srgb, var(--danger) 7%, transparent); border-radius: 10px; }
+
+/* Variante com uma barra para cada pedaço (dívidas: pago, previsto, falta). */
+.evo-separadas .evo-topo { margin-bottom: 4px; }
+.evo-sep { margin-top: 12px; }
+.evo-sep-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; font-size: 14px; }
+.evo-sep-topo .evo-rotulo { display: block; }
+.evo-sep-topo .evo-rotulo .evo-ponto { display: inline-block; margin: 0 8px 0 0; vertical-align: -1px; }
+.evo-trilho { height: 12px; margin-top: 6px; border-radius: 999px; background: var(--surface); overflow: hidden; }
+.evo-trilho .evo-seg { height: 100%; min-width: 0; border-radius: 999px; }

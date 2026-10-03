@@ -76,11 +76,11 @@ function evolucaoHtml(dados, hoje) {
   const e = evolucaoDaDivida(dados, hoje);
   if (e.tipo === "trabalho") {
     return barraEvolucao({
-      totalRotulo: "Valor da cota", totalCentavos: e.totalCentavos,
+      separadas: true, totalRotulo: "Valor da cota", totalCentavos: e.totalCentavos,
       segmentos: [
         { tipo: "pago", rotulo: "Já abatido com trabalho", centavos: e.pagoCentavos },
-        { tipo: "previsto", rotulo: "Já previsto (abatimentos até a data final)", centavos: e.previstoCentavos, detalhe: e.unidadesPrevistas ? `${plural(e.unidadesPrevistas, "abatimento", "abatimentos")}, até ${ddmm(e.previstoAte)}` : "" },
-        { tipo: "falta", rotulo: "Ainda sem previsão", centavos: e.depoisCentavos },
+        { tipo: "previsto", rotulo: "Já previsto, ainda vai entrar", centavos: e.previstoCentavos, detalhe: e.unidadesPrevistas ? `${plural(e.unidadesPrevistas, "abatimento", "abatimentos")}, até ${ddmm(e.previstoAte)}` : "" },
+        { tipo: "falta", rotulo: "Falta além do que já está previsto", centavos: e.depoisCentavos },
       ],
       rodape: e.faltaCentavos > 0
         ? `Falta abater <b data-valor>${formatarBRL(e.faltaCentavos)}</b>. Previsão, não garantia: depende de o trabalho seguir até lá.`
@@ -89,7 +89,7 @@ function evolucaoHtml(dados, hoje) {
   }
   const prox = dataProximoVencimento(dados);
   return barraEvolucao({
-    totalRotulo: `Valor total (${e.unidadesTotal} parcelas)`, totalCentavos: e.totalCentavos,
+    separadas: true, totalRotulo: `Valor total (${e.unidadesTotal} parcelas)`, totalCentavos: e.totalCentavos,
     segmentos: [
       { tipo: "pago", rotulo: "Já pago", centavos: e.pagoCentavos, detalhe: `${e.unidadesPagas} de ${e.unidadesTotal} parcelas` },
       { tipo: "previsto", rotulo: "Já previsto (garantido pelo contrato)", centavos: e.previstoCentavos, detalhe: e.unidadesPrevistas ? `${plural(e.unidadesPrevistas, "parcela", "parcelas")}, até ${ddmm(e.previstoAte)}/${e.previstoAte.slice(2, 4)}` : "" },
