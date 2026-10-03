@@ -178,6 +178,7 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
     livreCentavos,
     seguroParaGastarCentavos,
     seguroAteAProximaEntradaCentavos,
+    pontos,
     proximaEntrada,
     primeiroBuraco,
     diaMaisApertado,
