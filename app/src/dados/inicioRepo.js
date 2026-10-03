@@ -12,6 +12,7 @@ import { oQuePesa } from "../domain/prioridade.js";
 import { cartoesNoCaixa } from "../domain/cartaoNoCaixa.js";
 import { simularGasto } from "../domain/simularGasto.js";
 import { carregarBase } from "./base.js";
+import { registrarInstantaneo } from "./evolucaoRepo.js";
 
 const HORIZONTE_DIAS = 30;
 
@@ -19,6 +20,8 @@ export function calcularInicio(base, hoje = hojeISO(), metas = null) {
   const caixa = calcularClarezaDeCaixa({ ...base, hoje, horizonteDias: HORIZONTE_DIAS });
   const situacao = lerSituacao({ ...base, hoje, horizonteDias: HORIZONTE_DIAS });
   const contexto = { categorias: base.categorias, dividas: base.dividas, hoje };
+  // Guarda o pior momento do mês para a aba Evolução. Fora do cálculo: falha aqui não derruba o Início.
+  registrarInstantaneo(base, situacao, hoje).catch((e) => console.error("Instantâneo de caixa:", e));
   return {
     caixa,
     situacao,

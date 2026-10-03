@@ -1619,3 +1619,8 @@ Pendente: validade das ofertas (não informada, ficou "sem prazo informado"), va
 - S59 `domain/simularGasto.js`: veredito cabe, cabe no cartão, adiar até dd/mm ou não cabe. Não escreve nada.
 - S60 Início: zona e frase de decisão, os quatro números, "o que pesa agora", cartões, "Posso gastar?" e os alertas do Plano viram atalho quando já há "o que pesa". Testes de motor: 486 nos dois fusos.
 Decisões padrão usadas (a confirmar com o Cleison): cortes da zona 0,5 e 1 mês de obrigações; verbas de anúncios e Morelli não foram movidas para o cartão.
+
+## Sprint 61: evolução
+- `domain/evolucao.js`: série dos últimos 6 meses (contas pagas com atraso, resultado, pior momento do caixa, dívida total, patrimônio líquido) e tendência (melhorando, estável, piorando, sem dados) comparando os dois últimos meses fechados. Mês sem dado fica "sem dado". Indicador de bola de neve (tendência piorando com parcelas ≥ 40% da renda do último mês ou dívida sem acordo).
+- `dados/evolucaoRepo.js`: guarda o instantâneo do caixa do mês (`instantaneosCaixa`, um documento por competência, pior momento e máximo de atrasadas) quando o Início é calculado.
+- Plano ganhou a aba Evolução. 490 testes nos dois fusos.
