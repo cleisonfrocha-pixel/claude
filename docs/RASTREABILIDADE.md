@@ -1710,3 +1710,9 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - **Cota da GEDI em Dívidas:** "Cota GEDI (10%)", paga com trabalho: R$ 12.000 em 03/10, abate R$ 3.500 por mês (dia 24) até dez/26 e R$ 1.500 do Del Poente em 05/10, zera em 24/12/2026. Fica no grupo "Pagas com trabalho", fora do caixa e do "fora do plano". Não virou ativo de patrimônio: só quando ele decidir ser sócio. Teste em `dividas.test.js`.
 - **Mercado Livre (posição de 03/10):** conta "Mercado Pago (loja)", entradas prováveis de R$ 140,61 (29/10) e R$ 18,48 (30/10), compras de estoque de R$ 127,50 (06/10) e R$ 355,29 (15/10) e embalagem estimada de R$ 15, na categoria "Estoque e revenda". Perfil atualizado.
 - 506 testes nos dois fusos.
+
+## Rodada 11 (03/10/2026): barra de evolução e Home sem repetição
+- **Barra de evolução** (`ui/barraEvolucao.js`): valor total, e três pedaços que somam o total (já pago, já previsto, falta), cada um com rótulo, valor e porcentagem escritos (a cor não carrega a informação sozinha). Usada em: financiamento do Jeep, Cota GEDI, A pagar, A receber, "Contas de outubro" no Início, metas e limite dos cartões.
+- Jeep: total R$ 198.982,20, pago 20 parcelas, "já previsto (garantido pelo contrato)" = próximas 12 parcelas, falta depois disso = 28. Faltam 40 parcelas (21 a 60). Cota GEDI: já abatido, já previsto (abatimentos até a data final) e ainda sem previsão. Motor: `evolucaoDaDivida` (`domain/dividas.js`), teste em `dividas.test.js`.
+- **Home**: "O que pesa agora" e "Próximos 7 dias" repetiam os mesmos itens. Virou uma lista só (`agendaDaHome`), com ● nas saídas que pesam e o motivo embaixo; item pesado fora dos 7 dias continua aparecendo. A linha "Pior dia" some quando é o mesmo dia já dito na decisão. Teste em `inicio.test.js`.
+- 508 testes nos dois fusos.
