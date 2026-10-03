@@ -104,7 +104,7 @@ export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horiz
  * `horizonteDias` (padrão 30) é o "horizonte escolhido" do §4 nesta fase —
  * um valor fixo até a Fase 5 trazer 7/30/90/365 lado a lado.
  */
-export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, hoje, horizonteDias = 30 }) {
+export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, dividas, recorrencias, fontesRenda, hoje, horizonteDias = 30, soConfirmado = false }) {
   const horizonteAte = somarDias(hoje, horizonteDias);
 
   const contasAtivas = (contas || []).filter((c) => c.status === "ativa");
@@ -136,21 +136,23 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
     const saldoAntes = saldo;
     for (const i of dia.itens) {
       if (i.tipo === "receita") {
-        if (i.certeza === "incerto") continue;
+        if (i.certeza === "incerto" || (soConfirmado && (i.certeza || "confirmado") !== "confirmado")) continue;
         saldo += i.valorCentavos; entradasPrevistasCentavos += i.valorCentavos;
       } else {
         saldo -= i.valorCentavos; comprometidoCentavos += i.valorCentavos;
         compromissos.push({
           tipo: i.origem?.tipo === "divida" ? "parcela" : i.tipo, descricao: i.descricao, valorCentavos: i.valorCentavos,
           data: dia.data, vencimento: i.vencimento || dia.data, atrasado: !!i.atrasado, semDia: !!i.semDia, origem: i.origem,
+          categoriaId: i.categoriaId || null, transacaoId: i.transacaoId || null, faturaId: i.faturaId || null,
         });
       }
     }
     if (saldo < menorSaldoCentavos) { menorSaldoCentavos = saldo; diaMaisApertado = dia.data; }
     pontos.push({ data: dia.data, saldoCentavos: saldo });
     if (!proximaEntrada && dia.data > hoje) {
-      const e = dia.itens.find((i) => i.tipo === "receita" && i.certeza !== "incerto");
-      if (e) proximaEntrada = { data: dia.data, valorCentavos: dia.itens.filter((i) => i.tipo === "receita" && i.certeza !== "incerto").reduce((a, i) => a + i.valorCentavos, 0), descricao: e.descricao, certeza: e.certeza || "confirmado" };
+      const conta = (i) => i.tipo === "receita" && i.certeza !== "incerto" && !(soConfirmado && (i.certeza || "confirmado") !== "confirmado");
+      const e = dia.itens.find(conta);
+      if (e) proximaEntrada = { data: dia.data, valorCentavos: dia.itens.filter(conta).reduce((a, i) => a + i.valorCentavos, 0), descricao: e.descricao, certeza: e.certeza || "confirmado" };
     }
     if (!primeiroBuraco && saldo < 0) {
       primeiroBuraco = {
@@ -184,7 +186,7 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
       contasOperacao: saldosOperacao,
       contasReserva: saldosReserva,
       compromissos: compromissos.sort((a, b) => (a.data || "").localeCompare(b.data || "")),
-      entradas: dias.flatMap((d) => d.itens.filter((i) => i.tipo === "receita" && i.certeza !== "incerto").map((i) => ({ ...i, data: d.data }))),
+      entradas: dias.flatMap((d) => d.itens.filter((i) => i.tipo === "receita" && i.certeza !== "incerto" && !(soConfirmado && (i.certeza || "confirmado") !== "confirmado")).map((i) => ({ ...i, data: d.data }))),
     },
   };
 }
