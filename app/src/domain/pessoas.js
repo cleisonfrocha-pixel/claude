@@ -127,9 +127,9 @@ export function calcularDesequilibrio(porPessoa) {
  * um "sem dono" só quando existe algo sem responsável, e a casa. A
  * participação de cada um na renda e no custo da casa sai daqui também.
  */
-export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, categorias, transacoes, dividas, ativos, competencia, hoje, fontesRenda, recorrencias }) {
+export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, faturas, categorias, transacoes, dividas, ativos, competencia, hoje, fontesRenda, recorrencias }) {
   const projetar = (pessoaId) => (fontesRenda || recorrencias
-    ? visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, competencia, hoje, pessoaId })
+    ? visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, faturas, competencia, hoje, pessoaId })
     : null);
   const contexto = {
     contasPorId: new Map((contas || []).map((c) => [c.id, c])),

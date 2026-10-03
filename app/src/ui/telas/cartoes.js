@@ -37,6 +37,7 @@ export default criarTelaCadastro({
     { id: "diaFechamento", rotulo: "Dia de fechamento", tipo: "numero", min: 1, max: 31, obrigatorio: true },
     { id: "diaVencimento", rotulo: "Dia de vencimento", tipo: "numero", min: 1, max: 31, obrigatorio: true },
     { id: "diaPagamentoHabitual", rotulo: "Dia em que você costuma pagar a fatura (opcional)", tipo: "numero", min: 1, max: 31 },
+    { id: "usoMensalCentavos", rotulo: "Quanto você costuma gastar por mês neste cartão (opcional, entra na projeção)", tipo: "moeda" },
     { id: "limiteLivreCentavos", rotulo: "Limite livre que o app do banco mostra hoje (opcional)", tipo: "moeda" },
     { id: "limiteLivreEm", rotulo: "Dia em que você viu esse limite", tipo: "data" },
   ],

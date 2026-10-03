@@ -117,3 +117,26 @@ test("calcularVisaoConsolidada: data de quitação total é a mais distante entr
   const v = calcularVisaoConsolidada(dividas, "2026-02-01");
   assert.equal(v.dataQuitacaoTotal, "2027-12-10");
 });
+
+test("dívida paga com trabalho (cota da GEDI): o saldo cai a cada abatimento, não pede dinheiro e não atrasa", async () => {
+  const { classificarDivida } = await import("../src/domain/dividas.js");
+  const { validarDivida, padraoDivida } = await import("../src/domain/esquema.js");
+  const cota = divida({
+    nome: "Cota GEDI", pagaComTrabalho: true, saldoOriginalCentavos: 2500000, valorComJurosCentavos: 1200000, valorParcelaCentavos: 0, quantidadeParcelas: 1, parcelasPagas: 0,
+    dataInicio: "2026-12-24", abatimentoDesde: "2026-10-03", abatimentoMensalCentavos: 350000, abatimentoDia: 24, abatimentoAte: "2026-12",
+    abatimentosUnicos: [{ data: "2026-10-05", valorCentavos: 150000 }],
+  });
+  assert.equal(calcularSaldoAtual(cota, "2026-10-03"), 1200000);
+  assert.equal(calcularSaldoAtual(cota, "2026-10-05"), 1050000);   // aporte do Del Poente
+  assert.equal(calcularSaldoAtual(cota, "2026-10-24"), 700000);    // + 3.500 do trabalho
+  assert.equal(calcularSaldoAtual(cota, "2026-12-24"), 0);          // zera em dezembro
+  assert.equal(calcularSaldoAtual(cota, "2027-03-01"), 0);          // não passa de zero nem abate depois do fim
+  assert.equal(dataEstimadaQuitacao(cota), "2026-12-24");
+  assert.equal(statusDivida(cota, "2026-11-30"), "ativa");          // nunca "atrasada"
+  assert.equal(statusDivida(cota, "2026-12-24"), "quitada");
+  assert.equal(classificarDivida(cota, "2026-10-10"), "trabalho");
+  const v = calcularVisaoConsolidada([cota], "2026-10-10");
+  assert.equal(v.quantidadeSemAcordo, 0);
+  assert.equal(v.quantidadeProblemas, 0);
+  assert.deepEqual(validarDivida(padraoDivida({ ...cota, pessoaId: "p1" })), []);
+});

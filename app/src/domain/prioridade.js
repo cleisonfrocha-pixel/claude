@@ -20,7 +20,7 @@ export function pesarSaida(c, { categorias = [], dividas = [], hoje }) {
   const soma = (n, razao) => { peso += n; razoes.push(razao); };
 
   if (c.atrasado) soma(35, "já está atrasada");
-  if (c.tipo === "fatura") soma(20, "fatura de cartão");
+  if (c.tipo === "fatura" || c.origem?.tipo === "cartaoUso") soma(20, "fatura de cartão");
   if (c.tipo === "parcela" || c.origem?.tipo === "divida") soma(20, "parcela");
   if (cat?.essencial) soma(15, "essencial");
   if (divida && (divida.emRisco || divida.negativada)) soma(15, "dívida em risco");

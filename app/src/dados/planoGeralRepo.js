@@ -34,7 +34,7 @@ export function calcularPlanoGeral(base, hoje = hojeISO()) {
 
   // Dívidas ativas sem parcela e sem data de pagamento: não entram no mapa dos meses, e o saldo futuro
   // aparece mais folgado do que é. O plano diz isso em voz alta em vez de esconder.
-  const foraDoPlano = base.dividas.filter((d) => statusDivida(d, hoje) !== "quitada" && !d.mesmaDividaDe && !(Number(d.valorParcelaCentavos) > 0))
+  const foraDoPlano = base.dividas.filter((d) => statusDivida(d, hoje) !== "quitada" && !d.mesmaDividaDe && !d.pagaComTrabalho && !(Number(d.valorParcelaCentavos) > 0))
     .map((d) => ({ id: d.id, nome: d.nome, valorCentavos: calcularSaldoAtual(d, hoje) })).filter((d) => d.valorCentavos > 0);
 
   const mapa = mapaDeMeses({ ...base, saldoInicialCentavos, gastoDiaADiaMensalCentavos, hoje });

@@ -59,3 +59,16 @@ test("composição das dívidas usa o valor real (com desconto) e soma a economi
   assert.equal(c.problemasCentavos, 352246);
   assert.ok(c.financiamentosCentavos > 0);
 });
+
+test("gastos do mês: cada grupo traz as categorias e os lançamentos que o compõem (a soma fecha)", () => {
+  const r = gastosDoMes({ categorias, dividas: [], recorrencias: [], cartoes: [], competencia: "2026-10", hoje, transacoes: [
+    t({ id: "1", categoriaId: "a", valorCentavos: 12700, descricao: "iCloud" }),
+    t({ id: "2", valorCentavos: 50000, descricao: "Sem categoria aqui" }),
+    t({ id: "3", categoriaId: "m", valorCentavos: 30000, descricao: "Feira" }),
+  ] });
+  const outros = r.grupos.find((g) => g.grupo === "outros");
+  assert.equal(outros.totalCentavos, 62700);
+  assert.deepEqual(outros.categorias.map((c) => c.nome).sort(), ["Assinaturas", "Sem categoria"]);
+  assert.equal(outros.categorias.flatMap((c) => c.itens).reduce((s, i) => s + i.valorCentavos, 0), outros.totalCentavos);
+  assert.ok(outros.categorias.flatMap((c) => c.itens).some((i) => i.descricao === "Sem categoria aqui"));
+});

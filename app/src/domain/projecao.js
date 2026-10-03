@@ -61,7 +61,7 @@ export function calcularHorizonte({ transacoes, faturas, cartoes, dividas, recor
   const horizonteAte = somarDias(hoje, dias);
   // Renda cadastrada, parcela de dívida e conta mensal ainda não gerada
   // também são futuro — ver domain/previstos.js.
-  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: horizonteAte, hoje, gastoDiaADiaMensalCentavos });
+  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, faturas, de: hoje, ate: horizonteAte, hoje, gastoDiaADiaMensalCentavos });
   const todosOsDias = compromissosPorDia({ transacoes, faturas, cartoes, de: hoje, ate: horizonteAte, hoje, extras });
   const diasSeparados = separarPorCerteza(todosOsDias);
 

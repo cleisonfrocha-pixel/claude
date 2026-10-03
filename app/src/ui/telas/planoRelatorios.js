@@ -48,6 +48,14 @@ function renderizar() {
     ajudaHtml("Soma de tudo que sai no mês: o que já foi pago e o que ainda está previsto, parcelas de dívida e recorrências incluídas. Compra no cartão conta na data da compra, e pagar a fatura não conta de novo.")) :
     bloco("Pra onde vai o dinheiro", `<p class="tela-sub">Nenhum gasto registrado neste mês.</p>`);
 
+  // O que tem dentro de cada fatia (inclusive "Demais" e "Outros"): grupo > categoria > lançamento.
+  const blocoDentro = g.totalCentavos > 0 ? bloco("O que tem dentro de cada grupo",
+    `<p class="tela-sub" style="margin:0 0 10px;">Toque num grupo para ver as categorias e cada gasto que entrou na conta.</p>` +
+    g.grupos.map((gr) => `<details class="inicio-detalhe rel-grupo"><summary><span>${escapeHtml(gr.nome)}</span> <b data-valor>${formatarBRL(gr.totalCentavos)}</b> <small>${Math.round(gr.pct * 100)}%</small></summary>
+      ${gr.categorias.map((c) => `<div class="rel-categoria"><div class="fatura-linha"><span class="rotulo"><b>${escapeHtml(c.nome)}</b></span><b data-valor>${formatarBRL(c.totalCentavos)}</b></div>
+        ${c.itens.map((i) => `<div class="fatura-linha rel-item"><span class="rotulo">${escapeHtml(i.descricao)}<small>${i.pago ? "já pago" : "ainda vai sair"}</small></span><span data-valor>${formatarBRL(i.valorCentavos)}</span></div>`).join("")}</div>`).join("")}
+    </details>`).join("")) : "";
+
   const blocoCats = g.totalCentavos > 0 ? bloco("Cada categoria",
     barrasRanking({ titulo: "Gastos do mês por categoria", doisTons: true, linhas: g.categorias.slice(0, 12).map((c) => ({ rotulo: c.nome, valorCentavos: c.totalCentavos, pagoCentavos: c.pagoCentavos, sub: `${Math.round(c.pct * 100)}% do mês${c.essencial ? " · essencial" : ""}` })) }) +
     (g.categorias.length > 12 ? `<p class="tela-sub">Mais ${g.categorias.length - 12} categorias menores não aparecem aqui; veja na tabela.</p>` : "")) : "";
@@ -75,9 +83,9 @@ function renderizar() {
   const blocoDividas = d.itens.length ? bloco("Quanto você deve de verdade",
     `<div class="rel-numero" data-valor>${formatarBRL(d.totalCentavos)}</div>
      <div class="rel-dica">Dívidas em atraso ou negativadas: <b data-valor>${formatarBRL(d.problemasCentavos)}</b> · financiamentos em dia: <b data-valor>${formatarBRL(d.financiamentosCentavos)}</b>.${d.economiaCentavos > 0 ? ` Com as ofertas, você deixa de pagar <b class="valor-pos" data-valor>${formatarBRL(d.economiaCentavos)}</b>.` : ""}</div>
-     ${barrasRanking({ titulo: "Dívidas por valor real", cor1: 7, linhas: d.itens.slice(0, 10).map((i) => ({ rotulo: i.nome, valorCentavos: i.valorCentavos, sub: i.classe === "financiamento" ? "financiamento em dia" : i.economiaCentavos ? `com desconto: economiza ${formatarBRL(i.economiaCentavos)}` : "" })) })}`) : "";
+     ${barrasRanking({ titulo: "Dívidas por valor real", cor1: 7, linhas: d.itens.slice(0, 10).map((i) => ({ rotulo: i.nome, valorCentavos: i.valorCentavos, sub: i.classe === "trabalho" ? "paga com trabalho, não sai dinheiro" : i.classe === "financiamento" ? "financiamento em dia" : i.economiaCentavos ? `com desconto: economiza ${formatarBRL(i.economiaCentavos)}` : "" })) })}`) : "";
 
-  container.innerHTML = `<div class="viz-raiz">${nav}${blocoMes}${blocoCats}${blocoMaiores}${blocoAno}${blocoVaza}${blocoCartoes}${blocoDividas}</div>`;
+  container.innerHTML = `<div class="viz-raiz">${nav}${blocoMes}${blocoDentro}${blocoCats}${blocoMaiores}${blocoAno}${blocoVaza}${blocoCartoes}${blocoDividas}</div>`;
   ligarNav();
 }
 

@@ -111,6 +111,7 @@ export default criarTelaCadastro({
     return [
       ...(d.problemas.length ? [{ titulo: "Dívidas pra resolver", sub: `<span data-valor>${formatarBRL(d.totalProblemasCentavos)}</span> atrasados, negativados ou sem acordo`, ids: ids(d.problemas) }] : []),
       { titulo: "Financiamentos em dia", sub: d.financiamentos.length ? `<span data-valor>${formatarBRL(d.parcelasFinanciamentosCentavos)}</span> por mês, pagos certinho` : "", ids: ids(d.financiamentos) },
+      ...(d.trabalho.length ? [{ titulo: "Pagas com trabalho", sub: `<span data-valor>${formatarBRL(d.totalTrabalhoCentavos)}</span> a abater, sem sair dinheiro do bolso`, ids: ids(d.trabalho) }] : []),
       ...(d.quitadas.length ? [{ titulo: "Quitadas", ids: ids(d.quitadas) }] : []),
     ];
   },
@@ -150,6 +151,17 @@ export default criarTelaCadastro({
     const negativadaAtiva = dados.negativada && status !== "quitada";
     const financiamento = classificarDivida(dados, hoje) === "financiamento";
     const oferta = ofertaDaDivida(dados, hoje);
+    if (dados.pagaComTrabalho) {
+      const zera = dataEstimadaQuitacao(dados);
+      return {
+        titulo: dados.nome,
+        sub: `${dados.credor ? dados.credor + " · " : ""}paga com trabalho, não sai dinheiro${dados.abatimentoMensalCentavos ? ` · abate ${formatarBRL(dados.abatimentoMensalCentavos)} por mês${dados.abatimentoAte ? " até " + dados.abatimentoAte.slice(5, 7) + "/" + dados.abatimentoAte.slice(2, 4) : ""}` : ""}${zera ? ` · zera em ${formatarData(zera)}` : ""}`,
+        valorDireita: formatarBRL(calcularSaldoAtual(dados, hoje)),
+        tag: status === "quitada" ? "quitada" : "sem caixa",
+        tagClasse: status === "quitada" ? null : "ok",
+        tagInativa: status === "quitada",
+      };
+    }
     if (financiamento) {
       const quit = dataEstimadaQuitacao(dados);
       const prog = progressoDoFinanciamento(dados, null, hoje);

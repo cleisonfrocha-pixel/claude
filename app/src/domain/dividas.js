@@ -66,7 +66,48 @@ export function ofertaVigente(divida, hoje = hojeISO()) {
   return { valorCentavos: valor, validade: o.validade || null, origem: o.origem || "" };
 }
 
+/** Dívida que o trabalho paga (cota da GEDI): nada sai do bolso. O saldo vale na data
+ * `abatimentoDesde` e cai a cada abatimento: o mensal (no `abatimentoDia`, até o mês
+ * `abatimentoAte`) e os avulsos (`abatimentosUnicos`: { data, valorCentavos }). Tudo calculado
+ * na leitura, nada gravado. Devolve a lista de abatimentos já ocorridos até `hoje`. */
+export function abatimentosPorTrabalho(divida, hoje = hojeISO()) {
+  if (!divida.pagaComTrabalho) return [];
+  const desde = divida.abatimentoDesde || "";
+  const lista = [];
+  const mensal = Number(divida.abatimentoMensalCentavos) || 0;
+  if (mensal > 0 && desde) {
+    const dia = Number(divida.abatimentoDia) || 24;
+    const ultimo = divida.abatimentoAte && divida.abatimentoAte < competenciaDeData(hoje) ? divida.abatimentoAte : competenciaDeData(hoje);
+    for (let c = competenciaDeData(desde); c <= ultimo; c = somarMeses(c, 1)) {
+      const data = dataDeCompetencia(c, dia);
+      if (data > desde && data <= hoje) lista.push({ data, valorCentavos: mensal });
+    }
+  }
+  for (const u of divida.abatimentosUnicos || []) {
+    if (u.data && u.data > desde && u.data <= hoje) lista.push({ data: u.data, valorCentavos: Number(u.valorCentavos) || 0 });
+  }
+  return lista.sort((a, b) => a.data.localeCompare(b.data));
+}
+
+/** Quando o trabalho (somado aos avulsos) zera a dívida; null se não zera dentro do `abatimentoAte`. */
+export function dataQuitacaoPorTrabalho(divida) {
+  if (!divida.pagaComTrabalho) return null;
+  const base = Number(divida.valorComJurosCentavos) || Number(divida.saldoOriginalCentavos) || 0;
+  const fim = divida.abatimentoAte ? dataDeCompetencia(divida.abatimentoAte, 28) : "9999-12-31";
+  const ate = [fim, ...(divida.abatimentosUnicos || []).map((u) => u.data)].filter(Boolean).sort().pop();
+  const todos = abatimentosPorTrabalho(divida, ate);
+  let falta = base;
+  for (const a of todos) { falta -= a.valorCentavos; if (falta <= 0) return a.data; }
+  return null;
+}
+
+function saldoPorTrabalho(divida, hoje) {
+  const base = Number(divida.valorComJurosCentavos) || Number(divida.saldoOriginalCentavos) || 0;
+  return Math.max(0, base - abatimentosPorTrabalho(divida, hoje).reduce((s, a) => s + a.valorCentavos, 0));
+}
+
 export function calcularSaldoAtual(divida, hoje = hojeISO()) {
+  if (divida.pagaComTrabalho) return saldoPorTrabalho(divida, hoje);
   const parcela = Number(divida.valorParcelaCentavos) || 0;
   // Sem acordo, vale o que a pessoa realmente vai pagar: a oferta de quitação, se
   // existe e ainda vale (R$ 10.064 cobrados, R$ 3.522 na oferta: a dívida real é
@@ -101,6 +142,7 @@ export function dataProximoVencimento(divida) {
 /** A data da ÚLTIMA parcela — quando a dívida quita, sem nenhum aporte extra.
  * Dívida sem acordo (parcela zero) não tem data: não quita sozinha. */
 export function dataEstimadaQuitacao(divida) {
+  if (divida.pagaComTrabalho) return dataQuitacaoPorTrabalho(divida);
   const total = Number(divida.quantidadeParcelas) || 0;
   if (total <= 0) return null;
   if (!(Number(divida.valorParcelaCentavos) > 0)) return null;
@@ -110,6 +152,7 @@ export function dataEstimadaQuitacao(divida) {
 /** Status sempre derivado na leitura: quitada (nada mais a pagar), atrasada
  * (a próxima parcela já devia ter vencido), ou ativa. */
 export function statusDivida(divida, hoje) {
+  if (divida.pagaComTrabalho) return saldoPorTrabalho(divida, hoje || hojeISO()) <= 0 ? "quitada" : "ativa"; // trabalho não atrasa parcela
   if (parcelasRestantes(divida) <= 0) return "quitada";
   const proximo = dataProximoVencimento(divida);
   if (proximo && hoje && proximo < hoje) return "atrasada";
@@ -123,6 +166,7 @@ export function statusDivida(divida, hoje) {
  * decide quando o usuário quer forçar um lado. Quitada fica de fora. */
 export function classificarDivida(divida, hoje) {
   if (statusDivida(divida, hoje) === "quitada") return "quitada";
+  if (divida.pagaComTrabalho) return "trabalho";
   if (divida.tipo === "financiamento" || divida.tipo === "divida") {
     // Mesmo marcado como financiamento, atraso e nome sujo viram dívida.
     if (divida.tipo === "financiamento" && (divida.negativada || statusDivida(divida, hoje) === "atrasada")) return "divida";
@@ -141,7 +185,7 @@ export function calcularVisaoConsolidada(dividas, hoje) {
   const atrasadas = ativas.filter((d) => statusDivida(d, hoje) === "atrasada");
   const emRisco = ativas.filter((d) => d.emRisco);
   const negativadas = ativas.filter((d) => d.negativada);
-  const semAcordo = ativas.filter((d) => !(Number(d.valorParcelaCentavos) > 0));
+  const semAcordo = ativas.filter((d) => !d.pagaComTrabalho && !(Number(d.valorParcelaCentavos) > 0));
 
   const saldoTotalAtualCentavos = ativas.reduce((s, d) => s + calcularSaldoAtual(d), 0);
   const saldoTotalOriginalCentavos = todas.reduce((s, d) => s + (Number(d.saldoOriginalCentavos) || 0), 0);

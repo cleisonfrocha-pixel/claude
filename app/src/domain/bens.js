@@ -39,10 +39,12 @@ export function separarDividas(dividas, hoje) {
   const problemas = grupo("divida");
   const financiamentos = grupo("financiamento");
   const quitadas = grupo("quitada");
+  const trabalho = grupo("trabalho");
   const soma = (l) => l.reduce((s, d) => s + calcularSaldoAtual(d), 0);
   const parcelas = (l) => l.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0);
   return {
-    problemas, financiamentos, quitadas,
+    problemas, financiamentos, quitadas, trabalho,
+    totalTrabalhoCentavos: soma(trabalho),
     totalProblemasCentavos: soma(problemas),
     totalFinanciamentosCentavos: soma(financiamentos),
     parcelasProblemasCentavos: parcelas(problemas),

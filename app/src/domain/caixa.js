@@ -117,7 +117,7 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
   const saldoAtualCentavos = saldosOperacao.reduce((s, x) => s + x.saldoCentavos, 0);
   const saldoReservaCentavos = saldosReserva.reduce((s, x) => s + x.saldoCentavos, 0);
 
-  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: horizonteAte, hoje });
+  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, faturas, de: hoje, ate: horizonteAte, hoje });
   // Uma trilha só: o que sai, o que entra e o ponto mais baixo saem dos MESMOS
   // itens. Antes "vai sair" somava uma lista e o "pode gastar" caminhava outra
   // (a trilha descartava despesa de data passada que não era atrasada) e os

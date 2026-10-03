@@ -45,3 +45,13 @@
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .rel-numero { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -.01em; }
 .rel-dica { font-size: 13.5px; color: var(--text-muted); margin: 4px 0 10px; }
+
+.rel-grupo summary { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rel-grupo summary small { opacity: .7; }
+.rel-categoria { margin: 10px 0 4px; }
+.rel-item { padding-left: 12px; font-size: 14px; opacity: .92; }
+.rel-grupo { border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); padding: 6px 0; }
+.rel-grupo summary { cursor: pointer; min-height: 44px; align-items: center; list-style: none; }
+.rel-grupo summary::-webkit-details-marker { display: none; }
+.rel-grupo summary::after { content: "+"; margin-left: auto; font-size: 20px; opacity: .7; }
+.rel-grupo[open] summary::after { content: "−"; }

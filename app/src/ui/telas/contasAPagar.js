@@ -4,13 +4,15 @@
 // leitura (domain/contasDoMes.js), nunca gravado.
 
 import * as tempo from "../../domain/tempo.js";
-import { formatarBRL } from "../../domain/dinheiro.js";
+import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
 import { assinarContasDoMes } from "../../dados/contasRepo.js";
 import { baixarComPergunta } from "../baixaUI.js";
-import { escapeHtml } from "../utilitarios.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { navegar } from "../navegacao.js";
 import * as modal from "../modal.js";
-import { abrirLancamento } from "./transacoes.js";
+import { abrirLancamento, editarLancamento } from "./transacoes.js";
+import { ajustarEvento } from "../../dados/baixaRepo.js";
+import { carregarBase } from "../../dados/base.js";
 
 const GRUPOS = ["atrasada", "hoje", "a_pagar", "paga"];
 const DESTINO_ORIGEM = {
@@ -18,6 +20,7 @@ const DESTINO_ORIGEM = {
   divida: { modulo: "dividas" },
   fatura: { modulo: "dinheiro", aba: "cartoes" },
   transacao: { modulo: "dinheiro", aba: "transacoes" },
+  cartaoUso: { modulo: "dinheiro", aba: "cartoes" },
 };
 
 // "pagar" = contas do mês; "receber" = entradas do mês. Mesma tela, mesmos
@@ -99,7 +102,7 @@ function cartaoConta(i, hoje) {
       <div class="conta-direita">
         <div class="conta-valor mono" data-valor>${formatarBRL(i.valorCentavos)}</div>
         <div class="conta-acoes">
-          ${paga ? `<span class="conta-selo">${TEXTOS[lado].selo}</span>` : `<button class="btn-mini btn-baixa conta-pagar" data-pagar>${TEXTOS[lado].botao}</button>`}
+          ${paga ? `<span class="conta-selo">${TEXTOS[lado].selo}</span>` : i.estimativa ? `<span class="conta-selo">estimativa</span>` : `<button class="btn-mini btn-baixa conta-pagar" data-pagar>${TEXTOS[lado].botao}</button>`}
           <button class="btn-mini conta-mais" data-mais aria-label="Mais opções de ${escapeHtml(i.descricao)}">⋯</button>
         </div>
       </div>
@@ -215,11 +218,51 @@ function abrirMais(item) {
       <h2>${escapeHtml(item.descricao)}</h2>
       <p class="tela-sub" style="margin-bottom:14px;"><span data-valor>${formatarBRL(item.valorCentavos)}</span> · ${escapeHtml(quando(item, painel.hoje))}</p>
       <div class="modal-actions" style="flex-wrap:wrap;">
+        ${item.transacaoId ? `<button class="btn btn-primary" data-m="editar">Editar valor, dia e conta</button>` : item.evento && !item.estimativa ? `<button class="btn btn-primary" data-m="ajustar">Editar só este mês</button>` : ""}
         <button class="btn btn-ghost" data-m="origem">Abrir o cadastro</button>
         <button class="btn btn-ghost" data-m="fechar">Fechar</button>
       </div>
     </div>`);
   const raiz = document.getElementById("overlay-modal");
   raiz.querySelector('[data-m="fechar"]').addEventListener("click", () => modal.fechar());
+  raiz.querySelector('[data-m="editar"]')?.addEventListener("click", () => { modal.fechar(); editarLancamento(item.transacaoId); });
+  raiz.querySelector('[data-m="ajustar"]')?.addEventListener("click", () => { modal.fechar(); abrirAjusteDoMes(item); });
   raiz.querySelector('[data-m="origem"]').addEventListener("click", () => { modal.fechar(); navegar(DESTINO_ORIGEM[item.origem?.tipo] || DESTINO_ORIGEM.transacao); });
+}
+
+/** Item que ainda é só previsão (renda esperada, parcela, recorrência): ajusta valor, dia e conta só neste mês. */
+async function abrirAjusteDoMes(item) {
+  const base = await carregarBase();
+  const ativas = base.contas.filter((c) => c.status === "ativa");
+  const e = item.evento;
+  const dinheiro = (c) => (c / 100).toFixed(2).replace(".", ",");
+  modal.abrir(`
+    <div class="modal">
+      <h2>Editar ${escapeHtml(item.descricao)}</h2>
+      <p class="tela-sub" style="margin-bottom:12px;">Muda só este mês. Os outros meses continuam como no cadastro.</p>
+      <div class="row2">
+        <div class="field"><label for="aj-valor">Valor</label><input type="text" inputmode="decimal" id="aj-valor" value="${dinheiro(item.valorCentavos)}"></div>
+        <div class="field"><label for="aj-data">${lado === "receber" ? "Cai em" : "Vence em"}</label><input type="date" id="aj-data" value="${escapeHtml(e.vencimento || e.data)}"></div>
+      </div>
+      <div class="field"><label for="aj-conta">Conta</label>
+        <select id="aj-conta"><option value="">Padrão do cadastro</option>${ativas.map((c) => `<option value="${escapeHtml(c.id)}" ${item.contaSugeridaId === c.id ? "selected" : ""}>${escapeHtml(c.nome)}</option>`).join("")}</select></div>
+      <div class="erro-form" id="aj-erro" hidden></div>
+      <div class="modal-actions"><button class="btn btn-ghost" data-aj="cancelar">Cancelar</button><button class="btn btn-primary" data-aj="salvar">Salvar</button></div>
+    </div>`);
+  const raiz = document.getElementById("overlay-modal");
+  raiz.querySelector('[data-aj="cancelar"]').addEventListener("click", () => modal.fechar());
+  raiz.querySelector('[data-aj="salvar"]').addEventListener("click", async (ev) => {
+    ev.currentTarget.disabled = true;
+    const valor = {
+      valorCentavos: paraCentavos(raiz.querySelector("#aj-valor").value), data: raiz.querySelector("#aj-data").value, contaId: raiz.querySelector("#aj-conta").value || null,
+    };
+    try {
+      await ajustarEvento(e, valor);
+      modal.fechar();
+      mostrarToast("Ajustado só neste mês.");
+    } catch (erro) {
+      ev.currentTarget.disabled = false;
+      const el = raiz.querySelector("#aj-erro"); el.textContent = erro.message || "Não foi possível salvar."; el.hidden = false;
+    }
+  });
 }

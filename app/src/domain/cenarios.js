@@ -83,7 +83,7 @@ function media(valores) {
  * abaixo, já refaz esse desconto por conta própria (renda menos o custo
  * médio menos as parcelas do mês). Partir de `livreCentavos` descontaria o
  * mesmo compromisso duas vezes no primeiro mês. */
-export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, recorrencias, cartoes, ativos, clareza, competencia, hoje, investimentoMinimoMensalCentavos = 0 }) {
+export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRenda, recorrencias, cartoes, faturas, ativos, clareza, competencia, hoje, investimentoMinimoMensalCentavos = 0 }) {
   let meses = mesesComMovimento(transacoes, competencia, MESES_HISTORICO);
   let rendas = meses.map((c) => calcularRendaAtual(transacoes, c));
   let custos = meses.map((c) => calcularCustos(transacoes, categorias, c));
@@ -92,7 +92,7 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
   // sair — serve de base. Não inventa nada: só lê o que foi cadastrado.
   const semHistorico = !meses.length;
   if (semHistorico) {
-    const v = visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, competencia, hoje });
+    const v = visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, faturas, competencia, hoje });
     meses = [competencia];
     rendas = [v.rendaContavelCentavos];
     custos = [{ essencialCentavos: v.essencialCentavos, atualCentavos: v.gastoCentavos, discricionarioCentavos: v.gastoCentavos - v.essencialCentavos, faturaSemDetalheCentavos: 0 }];

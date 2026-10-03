@@ -15,6 +15,7 @@ import { escapeHtml, ajudaHtml } from "../utilitarios.js";
 import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
 import { navegar } from "../navegacao.js";
+import { abrirAtualizarSaldo } from "../atualizarSaldo.js";
 
 let pararInicio = null;
 let pararDecisoes = null;
@@ -107,6 +108,7 @@ function blocoSituacao(sit) {
         <div class="home-metrica"><span>Na conta hoje</span><b data-valor>${formatarBRL(sit.naContaCentavos)}</b></div>
         <div class="home-metrica"><span>Já tem dono ${ate}</span><b data-valor>−${formatarBRL(sit.comprometido.totalCentavos)}</b></div>
       </div>
+      <button class="btn btn-ghost btn-atualizar-saldo" data-atualizar-saldo>Saldo diferente do banco? Atualizar saldo</button>
       <div class="home-saldo-metricas" style="margin:0 0 8px;">
         <div class="home-metrica"><span>Livre garantido ${ajudaHtml("Conta só entrada confirmada. É o número mais seguro.")}</span><b class="${sit.livreGarantidoCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreGarantidoCentavos)}</b></div>
         <div class="home-metrica"><span>Livre com o provável ${ajudaHtml("Conta também a entrada provável (renda fixa que ainda não caiu). Entrada incerta nunca entra.")}</span><b class="${sit.livreProvavelCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreProvavelCentavos)}</b></div>
@@ -288,6 +290,7 @@ function renderizar() {
     </div>`;
 
   container.querySelector("[data-lancar]").addEventListener("click", () => irPara({ modulo: "dinheiro", aba: "transacoes", acao: "nova-transacao" }));
+  container.querySelectorAll("[data-atualizar-saldo]").forEach((b) => b.addEventListener("click", abrirAtualizarSaldo));
   container.querySelectorAll("[data-ir-contas]").forEach((b) => b.addEventListener("click", () => irPara({ modulo: "dinheiro", aba: "apagar" })));
   container.querySelectorAll("[data-ir-plano]").forEach((b) => b.addEventListener("click", () => irPara("plano")));
   container.querySelectorAll("[data-ir-agenda]").forEach((b) => b.addEventListener("click", () => irPara("planejamento")));

@@ -79,6 +79,7 @@ export function padraoCartao(dados = {}) {
     limiteLivreCentavos: null,
     limiteLivreEm: "",
     diaPagamentoHabitual: 0,
+    usoMensalCentavos: 0,
     diaFechamento: 1,
     diaVencimento: 10,
     status: "ativo",
@@ -194,6 +195,13 @@ export function padraoDivida(dados = {}) {
     bloqueio: "", // o que está travado por causa dela
     quitadaEm: null,
     centro: "", // casa | negocio | galpao
+    // Paga com trabalho, não com dinheiro (cota da GEDI): o saldo cai a cada abatimento.
+    pagaComTrabalho: false,
+    abatimentoDesde: "", // data em que o saldo (valorComJuros) vale
+    abatimentoMensalCentavos: 0,
+    abatimentoDia: 24,
+    abatimentoAte: "", // "AAAA-MM" do último mês que abate
+    abatimentosUnicos: [], // [{ data, valorCentavos, nota }]
     ...dados,
   };
 }
@@ -305,7 +313,7 @@ export function validarDivida(d) {
   if (!Number.isFinite(d.saldoOriginalCentavos) || d.saldoOriginalCentavos <= 0) erros.push("Saldo original precisa ser maior que zero.");
   // Dívida negativada ainda sem acordo (Serasa/SPC) não tem parcela: é um
   // saldo devido parado. Só nesse caso a parcela pode ser zero.
-  const semAcordo = (d.negativada || d.protestada || d.tipo === "divida") && d.valorParcelaCentavos === 0;
+  const semAcordo = (d.negativada || d.protestada || d.pagaComTrabalho || d.tipo === "divida") && d.valorParcelaCentavos === 0;
   if (!semAcordo && (!Number.isFinite(d.valorParcelaCentavos) || d.valorParcelaCentavos <= 0)) {
     erros.push("Valor da parcela precisa ser maior que zero (pode ser zero só em dívida negativada, protestada ou marcada como dívida, ainda sem acordo).");
   }

@@ -16,7 +16,7 @@ export const NOME_GRUPO = {
  * Conta a despesa pela data da compra (cartão incluso); pagamento de fatura e transferência nunca entram
  * (já contaram nas compras). Parcela de dívida e recorrência ainda sem lançamento entram pelo calendário.
  */
-export function gastosDoMes({ transacoes, categorias, dividas, recorrencias, cartoes, competencia, hoje }) {
+export function gastosDoMes({ transacoes, categorias, dividas, recorrencias, cartoes, faturas, competencia, hoje }) {
   const cat = new Map((categorias || []).map((c) => [c.id, c]));
   const itens = [];
   for (const t of transacoes || []) {
@@ -28,18 +28,18 @@ export function gastosDoMes({ transacoes, categorias, dividas, recorrencias, car
     const de = inicio > hoje ? inicio : hoje;
     const ate = dataDeCompetencia(competencia, diasNoMes(competencia));
     const catDividas = (categorias || []).find((c) => c.grupo === "dividas" && c.natureza === "despesa")?.id || null;
-    for (const e of eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda: [], cartoes, de, ate, hoje })) {
+    for (const e of eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda: [], cartoes, faturas, de, ate, hoje })) {
       if (e.tipo !== "despesa" || !e.virtual) continue;
       if (competenciaDeData(e.vencimento || e.data) !== competencia) continue;
       const rec = e.origem?.tipo === "recorrencia" ? (recorrencias || []).find((r) => r.id === e.origem.id) : null;
-      itens.push({ categoriaId: rec ? rec.categoriaId || null : e.origem?.tipo === "divida" ? catDividas : null, valorCentavos: Number(e.valorCentavos) || 0, pago: false, descricao: e.descricao || "Despesa", id: null });
+      itens.push({ semCategoriaNome: e.origem?.tipo === "cartaoUso" ? "Cartões (uso habitual)" : null, categoriaId: rec ? rec.categoriaId || null : e.origem?.tipo === "divida" ? catDividas : null, valorCentavos: Number(e.valorCentavos) || 0, pago: false, descricao: e.descricao || "Despesa", id: null });
     }
   }
   const porCat = new Map();
   for (const i of itens) {
-    const k = i.categoriaId || "sem";
+    const k = i.categoriaId || i.semCategoriaNome || "sem";
     const c = cat.get(i.categoriaId);
-    if (!porCat.has(k)) porCat.set(k, { categoriaId: i.categoriaId, nome: c?.nome || "Sem categoria", grupo: c?.grupo || "outros", essencial: !!c?.essencial, totalCentavos: 0, pagoCentavos: 0, previstoCentavos: 0, itens: [] });
+    if (!porCat.has(k)) porCat.set(k, { categoriaId: i.categoriaId, nome: c?.nome || i.semCategoriaNome || "Sem categoria", grupo: c?.grupo || "outros", essencial: !!c?.essencial, totalCentavos: 0, pagoCentavos: 0, previstoCentavos: 0, itens: [] });
     const r = porCat.get(k);
     r.totalCentavos += i.valorCentavos;
     if (i.pago) r.pagoCentavos += i.valorCentavos; else r.previstoCentavos += i.valorCentavos;
@@ -49,8 +49,9 @@ export function gastosDoMes({ transacoes, categorias, dividas, recorrencias, car
   const categoriasOrdenadas = [...porCat.values()].map((r) => ({ ...r, pct: total > 0 ? r.totalCentavos / total : 0, itens: r.itens.sort((a, b) => b.valorCentavos - a.valorCentavos) })).sort((a, b) => b.totalCentavos - a.totalCentavos);
   const porGrupo = new Map();
   for (const r of categoriasOrdenadas) {
-    if (!porGrupo.has(r.grupo)) porGrupo.set(r.grupo, { grupo: r.grupo, nome: NOME_GRUPO[r.grupo] || r.grupo, totalCentavos: 0, pagoCentavos: 0, previstoCentavos: 0 });
+    if (!porGrupo.has(r.grupo)) porGrupo.set(r.grupo, { grupo: r.grupo, nome: NOME_GRUPO[r.grupo] || r.grupo, totalCentavos: 0, pagoCentavos: 0, previstoCentavos: 0, categorias: [] });
     const g = porGrupo.get(r.grupo);
+    g.categorias.push(r);
     g.totalCentavos += r.totalCentavos; g.pagoCentavos += r.pagoCentavos; g.previstoCentavos += r.previstoCentavos;
   }
   const grupos = [...porGrupo.values()].map((g) => ({ ...g, pct: total > 0 ? g.totalCentavos / total : 0 })).sort((a, b) => b.totalCentavos - a.totalCentavos);

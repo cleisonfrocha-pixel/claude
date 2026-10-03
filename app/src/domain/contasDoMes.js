@@ -39,7 +39,7 @@ function itensAbertosDaLinhaDoTempo({ transacoes, faturas, cartoes, dividas, rec
   const competenciaHoje = competenciaDeData(hoje);
   if (competencia < competenciaHoje) return [];
   const fim = dataDeCompetencia(competencia, diasNoMes(competencia));
-  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: fim, hoje });
+  const extras = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, faturas, de: hoje, ate: fim, hoje });
   // Conta aberta sem conta de saída definida continua sendo conta a pagar.
   const comConta = (transacoes || []).map((t) => (t.contaId || t.tipo === "receita" || t.cartaoId || t.faturaId ? t : { ...t, contaId: SEM_CONTA }));
   const dias = compromissosPorDia({ transacoes: comConta, faturas, cartoes, de: hoje, ate: fim, hoje, extras });
@@ -87,7 +87,7 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
       novo({ chave: `t:${i.transacaoId}`, tipo: "transacao", transacaoId: i.transacaoId, descricao: i.descricao, contaSugeridaId: i.contaId && i.contaId !== SEM_CONTA ? i.contaId : null, valorCentavos: i.valorCentavos, vencimento: i.vencimento, semDia: !!i.semDia, paga: false, categoriaId: i.categoriaId || null, origem: i.origem });
     } else if (i.evento) {
       const e = { ...i.evento, data: i.evento.vencimento || i.vencimento || i.evento.data };
-      novo({ chave: `e:${i.origem.tipo}:${i.origem.id}:${e.data}`, tipo: "evento", evento: e, descricao: i.descricao, contaSugeridaId: rec?.contaId || null, valorCentavos: i.valorCentavos, vencimento: e.data, paga: false, origem: i.origem });
+      novo({ chave: `e:${i.origem.tipo}:${i.origem.id}:${e.data}`, tipo: "evento", evento: e, estimativa: !!e.estimativa, descricao: i.descricao, contaSugeridaId: rec?.contaId || null, valorCentavos: i.valorCentavos, vencimento: e.data, paga: false, origem: i.origem });
     }
   }
 

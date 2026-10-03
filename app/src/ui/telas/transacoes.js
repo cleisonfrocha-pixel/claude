@@ -61,6 +61,15 @@ export async function abrirLancamento(preset = {}) {
   abrirModalNovaTransacao(preset);
 }
 
+/** Abre o formulário de edição de um lançamento já gravado, sem sair da tela de onde foi chamado. */
+export async function editarLancamento(transacaoId) {
+  await carregarContexto();
+  lista = await transacoes.listar();
+  const item = lista.find((t) => t.id === transacaoId);
+  if (!item) { mostrarToast("Não achei esse lançamento."); return; }
+  abrirModalEditarTransacao(item);
+}
+
 async function carregarContexto() {
   const [p, c, ca, cat, fa, fr] = await Promise.all([
     pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), faturas.listar(), fontesRenda.listar(),

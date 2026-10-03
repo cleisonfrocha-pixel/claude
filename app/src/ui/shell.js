@@ -15,6 +15,7 @@ import { escapeHtml } from "./utilitarios.js";
 import { icone } from "./icones.js";
 import { abrir as abrirModal, fechar as fecharModal } from "./modal.js";
 import { registrar as registrarNavegacao, navegar } from "./navegacao.js";
+import { abrirAtualizarSaldo } from "./atualizarSaldo.js";
 import { criarTelaComAbas } from "./telas/comAbas.js";
 import { criarTelaPlaceholder } from "./telas/placeholder.js";
 import telaInicio from "./telas/inicio.js";
@@ -155,6 +156,7 @@ function renderizarNavInferior() {
 function abrirFolhaDeLancar() {
   const opcoes = [
     { id: "nova-transacao", rotulo: "Lançar um gasto ou recebimento", ic: "adicionar", destino: { modulo: "dinheiro", aba: "transacoes", acao: "nova-transacao" } },
+    { id: "saldo", rotulo: "Atualizar o saldo das contas", ic: "dinheiro", acao: abrirAtualizarSaldo },
     { id: "importar", rotulo: "Importar um extrato", ic: "dinheiro", destino: { modulo: "dinheiro", aba: "importar" } },
     { id: "agenda", rotulo: "Ver o que vence", ic: "planejamento", destino: { modulo: "dinheiro", aba: "agenda" } },
     { id: "divida", rotulo: "Ver minhas dívidas", ic: "dividas", destino: { modulo: "dividas" } },
@@ -173,7 +175,8 @@ function abrirFolhaDeLancar() {
   document.querySelectorAll("#overlay-modal [data-opcao]").forEach((btn) => {
     btn.addEventListener("click", () => {
       fecharModal();
-      navegar(opcoes.find((o) => o.id === btn.dataset.opcao).destino);
+      const op = opcoes.find((o) => o.id === btn.dataset.opcao);
+      if (op.acao) op.acao(); else navegar(op.destino);
     });
   });
 }

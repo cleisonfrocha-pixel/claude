@@ -9,7 +9,7 @@
 // apontar o cadastro que o gerou (§9/§17).
 
 import { somarMeses, competenciaDeData, dataDeCompetencia } from "./tempo.js";
-import { competenciaFatura, dataVencimentoFatura } from "./transacoes.js";
+import { competenciaFatura, dataVencimentoFatura, dataPagamentoPrevisto } from "./transacoes.js";
 import { dataDaParcela, parcelasRestantes } from "./dividas.js";
 
 const MESES_PISO_VARIAVEL = 3;
@@ -95,7 +95,7 @@ function valorDaFonte(fonte, receitasDaFonte, competenciaHoje) {
  * Nunca duplica o que já está lançado: mês com receita da fonte, com o
  * lançamento da recorrência ou com lançamento ligado à parcela é pulado.
  */
-export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de, ate, hoje, gastoDiaADiaMensalCentavos = 0 }) {
+export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, faturas, de, ate, hoje, gastoDiaADiaMensalCentavos = 0 }) {
   const eventos = [];
   const lista = transacoes || [];
   const competenciaHoje = competenciaDeData(hoje || de);
@@ -171,6 +171,33 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
         data, tipo: r.tipo === "receita" ? "receita" : "despesa", valorCentavos: valor, certeza: "provavel", virtual: true,
         descricao: cartao ? `${r.descricao} (no ${cartao.apelido || "cartão"})` : r.descricao,
         origem: { tipo: "recorrencia", id: r.id },
+      });
+    }
+  }
+
+  // Uso habitual do cartão: quem paga a fatura quase no limite todo mês não pode ter
+  // a conta do cartão "sumindo" depois dos meses já lançados. Para cada fatura que
+  // ainda não fechou, o que falta entre o uso habitual e o que já está nela vira uma
+  // saída estimada no dia em que a fatura costuma sair da conta. É estimativa
+  // (certeza provável), nunca dinheiro garantido, e não duplica o que já foi lançado.
+  for (const cartao of cartoes || []) {
+    const uso = Number(cartao.usoMensalCentavos) || 0;
+    if (!(uso > 0) || cartao.status === "encerrado") continue;
+    for (const c of competenciasEntre(somarMeses(competenciaDeData(de), -1), somarMeses(competenciaDeData(ate), 1))) {
+      if (dataDeCompetencia(c, cartao.diaFechamento || 1) < (hoje || de)) continue; // já fechou: vale o que está lançado
+      const fatura = (faturas || []).find((f) => f.cartaoId === cartao.id && f.competencia === c);
+      if (fatura?.status === "paga") continue;
+      const jaNaFatura = fatura
+        ? lista.filter((t) => t.faturaId === fatura.id && t.tipo === "despesa" && t.status !== "cancelado").reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0)
+        : 0;
+      const falta = uso - jaNaFatura;
+      if (falta <= 0) continue;
+      const data = dataPagamentoPrevisto(cartao, c);
+      if (data < de || data > ate) continue;
+      eventos.push({
+        data, vencimento: dataVencimentoFatura(cartao, c), tipo: "despesa", valorCentavos: falta, certeza: "provavel", virtual: true, estimativa: true,
+        descricao: `Uso habitual do ${cartao.apelido || "cartão"} (ainda vai entrar na fatura)`,
+        origem: { tipo: "cartaoUso", id: cartao.id }, cartaoId: cartao.id,
       });
     }
   }

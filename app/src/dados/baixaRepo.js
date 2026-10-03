@@ -144,3 +144,42 @@ export async function darBaixaEvento(evento, { valorCentavos, contaId, cartaoId,
   }
   throw new Error("Esse item é uma estimativa, não um compromisso que dá pra baixar.");
 }
+
+/** Muda valor, dia e conta de um compromisso que ainda é só previsão (renda esperada, parcela de
+ * dívida, recorrência sem lançamento) SÓ NESTE MÊS: grava um lançamento previsto ligado ao cadastro,
+ * e o previsto automático daquele mês deixa de aparecer. O cadastro (os outros meses) não muda. */
+export async function ajustarEvento(evento, { valorCentavos, data, contaId } = {}) {
+  const valor = Number(valorCentavos) > 0 ? Number(valorCentavos) : evento.valorCentavos;
+  const dia = data || evento.data;
+  const competencia = competenciaDeData(evento.vencimento || evento.data);
+  const [contas, categorias, fontes, listaDividas, recs] = await Promise.all([
+    lerTudo("contas"), lerTudo("categorias"), lerTudo("fontesRenda"), lerTudo("dividas"), lerTudo("recorrencias"),
+  ]);
+  const base = { valorCentavos: valor, data: dia, competencia, status: "previsto", certeza: evento.certeza === "incerto" ? "incerto" : evento.certeza === "confirmado" ? "confirmado" : "provavel", foiPrevisto: false, pagoEm: null };
+  const escolhida = contaId ? contas.find((c) => c.id === contaId && c.status === "ativa") : null;
+  const { tipo, id } = evento.origem || {};
+  if (tipo === "fonteRenda") {
+    const f = fontes.find((x) => x.id === id);
+    if (!f) throw new Error("Fonte de renda não encontrada.");
+    const conta = escolhida || contas.find((c) => c.id === f.contaId && c.status === "ativa") || contaPadrao(contas, f.pessoaId);
+    const cat = categorias.find((c) => c.natureza === "receita" && c.ativa !== false && c.id === f.categoriaId) || categorias.find((c) => c.natureza === "receita" && c.ativa !== false);
+    if (!conta || !cat) throw new Error("Falta uma conta ativa ou uma categoria de receita.");
+    return criarSimples({ ...base, tipo: "receita", contaId: conta.id, categoriaId: cat.id, pessoaId: f.pessoaId, descricao: f.nome, fonteRendaId: f.id });
+  }
+  if (tipo === "divida") {
+    const d = listaDividas.find((x) => x.id === id);
+    if (!d) throw new Error("Dívida não encontrada.");
+    const conta = escolhida || contaPadrao(contas, d.pessoaId);
+    const cat = categorias.find((c) => c.grupo === "dividas" && c.natureza === "despesa" && c.ativa !== false);
+    if (!conta || !cat) throw new Error("Falta uma conta ativa ou a categoria de dívidas.");
+    return criarSimples({ ...base, certeza: "confirmado", tipo: "despesa", contaId: conta.id, categoriaId: cat.id, pessoaId: d.pessoaId, descricao: evento.descricao, dividaId: d.id });
+  }
+  if (tipo === "recorrencia") {
+    const r = recs.find((x) => x.id === id);
+    if (!r) throw new Error("Recorrência não encontrada.");
+    const ehReceita = r.tipo === "receita";
+    return criarSimples({ ...base, tipo: ehReceita ? "receita" : "despesa", contaId: r.cartaoId && !ehReceita ? null : (escolhida?.id || r.contaId || contaPadrao(contas, r.pessoaId)?.id || null), cartaoId: !ehReceita ? (r.cartaoId || null) : null,
+      categoriaId: r.categoriaId, pessoaId: r.pessoaId, descricao: r.descricao, recorrenciaId: r.id, ...(r.semDia ? { semDia: true } : {}) });
+  }
+  throw new Error("Esse item é uma estimativa, não dá pra ajustar.");
+}

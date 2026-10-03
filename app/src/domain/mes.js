@@ -23,7 +23,7 @@ const ABERTO = new Set(["previsto", "agendado", "atrasado"]);
  * @param {object} p
  * @param {string} [p.pessoaId] - restringe a uma pessoa (renda e gasto dela)
  */
-export function visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, competencia, hoje, pessoaId }) {
+export function visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, dividas, cartoes, faturas, competencia, hoje, pessoaId }) {
   const essencialPorCategoria = new Map((categorias || []).map((c) => [c.id, !!c.essencial]));
   const grupoDividas = new Set((categorias || []).filter((c) => c.grupo === "dividas").map((c) => c.id));
   const recPorId = new Map((recorrencias || []).map((r) => [r.id, r]));
@@ -64,7 +64,7 @@ export function visaoDoMes({ transacoes, categorias, fontesRenda, recorrencias, 
   }
 
   const fim = dataDeCompetencia(competencia, diasNoMes(competencia));
-  const eventos = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, de: hoje, ate: fim, hoje });
+  const eventos = eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda, cartoes, faturas, de: hoje, ate: fim, hoje });
   for (const e of eventos) {
     if (e.data < `${competencia}-01`) continue;
     const v = e.valorCentavos;

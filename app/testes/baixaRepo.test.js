@@ -7,7 +7,8 @@ const memoria = new Map();
 globalThis.window = { localStorage: { getItem: (k) => (memoria.has(k) ? memoria.get(k) : null), setItem: (k, v) => memoria.set(k, v), removeItem: (k) => memoria.delete(k) } };
 
 const db = await import("../src/dados/db.js");
-const { darBaixaTransacao, desfazerBaixa } = await import("../src/dados/baixaRepo.js");
+const { darBaixaTransacao, desfazerBaixa, ajustarEvento } = await import("../src/dados/baixaRepo.js");
+const { eventosFuturos } = await import("../src/domain/previstos.js");
 const { opcoesDePagamento, conferirSaldo } = await import("../src/dados/pagamentoRepo.js");
 const { calcularSaldoConta } = await import("../src/domain/caixa.js");
 
@@ -91,4 +92,24 @@ test("verba do mês: gastar R$ 80 em 'Mercado' deixa a verba com o resto, ainda 
   assert.equal(resto.semDia, true);
   await desfazerBaixa(d);
   assert.equal((await db.listar("transacoes")).filter((t) => t.dados.descricao === "Mercado do mês").length, 1);
+});
+
+test("editar só este mês: a recorrência ganha um previsto no mês, o automático some e o cadastro não muda", async () => {
+  const { next } = await semear();
+  const rec = await db.criar("recorrencias", { descricao: "Internet", tipo: "despesa", valorEstimadoCentavos: 15790, diaBase: 10, inicio: "2026-10", ativa: true, contaId: next, categoriaId: "cat", pessoaId: "p", periodicidade: "mensal", semDia: false });
+  const lerTudo = async () => ({ transacoes: (await db.listar("transacoes")).map((t) => ({ id: t.id, ...t.dados })), recorrencias: (await db.listar("recorrencias")).map((r) => ({ id: r.id, ...r.dados })) });
+  let est = await lerTudo();
+  const antes = eventosFuturos({ ...est, dividas: [], fontesRenda: [], cartoes: [], de: HOJE, ate: "2026-10-31", hoje: HOJE }).find((e) => e.descricao === "Internet");
+  assert.equal(antes.valorCentavos, 15790);
+  await ajustarEvento(antes, { valorCentavos: 19900, data: "2026-10-15" });
+  est = await lerTudo();
+  const depois = eventosFuturos({ ...est, dividas: [], fontesRenda: [], cartoes: [], de: HOJE, ate: "2026-10-31", hoje: HOJE }).filter((e) => e.descricao === "Internet");
+  assert.equal(depois.length, 0);                                  // o automático deste mês saiu
+  const nova = est.transacoes.find((t) => t.recorrenciaId === rec);
+  assert.equal(nova.valorCentavos, 19900);
+  assert.equal(nova.data, "2026-10-15");
+  assert.equal(nova.status, "previsto");
+  assert.equal(est.recorrencias[0].valorEstimadoCentavos, 15790);  // cadastro intacto
+  const nov = eventosFuturos({ ...est, dividas: [], fontesRenda: [], cartoes: [], de: HOJE, ate: "2026-11-30", hoje: HOJE }).find((e) => e.descricao === "Internet" && e.data.startsWith("2026-11"));
+  assert.equal(nov.valorCentavos, 15790);                          // outros meses seguem o cadastro
 });
