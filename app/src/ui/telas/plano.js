@@ -261,7 +261,7 @@ function blocoPraOndeVai(g) {
               <span class="mapa-barra"><i style="width:${Math.round(Math.abs(l.sobraCentavos) / maior * 100)}%"></i></span>
               <b class="mono ${l.sobraCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${l.sobraCentavos >= 0 ? "+" : ""}${formatarBRL(l.sobraCentavos)}</b>
             </div>
-            <div class="mapa-mes-sub">${l.atual ? "só o que falta entrar e sair até o fim do mês · " : ""}termina com <span class="mono ${l.saldoFimCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(l.saldoFimCentavos)}</span> em conta${l.entradasIncertasCentavos > 0 ? ` · <span data-valor>${formatarBRL(l.entradasIncertasCentavos)}</span> incertos fora da conta` : ""}</div>
+            <div class="mapa-mes-sub">${l.atual ? "só o que falta entrar e sair até o fim do mês (a Sobra no mês lá em cima olha o mês inteiro, inclusive o que já aconteceu) · " : ""}termina com <span class="mono ${l.saldoFimCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(l.saldoFimCentavos)}</span> em conta${l.entradasIncertasCentavos > 0 ? ` · <span data-valor>${formatarBRL(l.entradasIncertasCentavos)}</span> incertos fora da conta` : ""}</div>
             ${l.marcos.map((x) => `<div class="mapa-chip ${x.tipo.endsWith("acaba") && x.tipo.startsWith("saida") ? "bom" : x.tipo === "entrada_nova" ? "bom" : "ruim"}">${escapeHtml(x.texto)} · <span data-valor>${formatarBRL(x.valorCentavos)}</span></div>`).join("")}
           </div>`).join("")}
       </div>

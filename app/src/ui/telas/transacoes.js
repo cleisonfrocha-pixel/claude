@@ -247,7 +247,7 @@ function linhaTransacao(item) {
       ${naoRevisado ? `<span class="item-tag atencao" title="Veio do chat ou de extrato e ainda não foi conferido por você">a conferir</span>` : ""}
       <div class="item-acoes">
         ${["previsto", "agendado", "atrasado"].includes(statusMostrado) && (d.tipo === "receita" || d.tipo === "despesa")
-          ? `<button class="btn-mini btn-baixa" data-baixa="${escapeHtml(item.id)}">${d.tipo === "receita" ? "Recebi" : "Paguei"}</button>` : ""}
+          ? `<button class="btn-mini btn-baixa" data-baixa="${escapeHtml(item.id)}">${d.tipo === "receita" ? "Recebi" : d.cartaoId ? "Comprei" : "Paguei"}</button>` : ""}
         ${naoRevisado ? `<button class="btn-mini" title="Os dados deste lançamento estão certos. Não muda nenhum número; para dar baixa use Paguei ou Recebi." data-revisar="${escapeHtml(item.id)}">✓ Dados certos</button>` : ""}
         <button class="btn-mini" title="Editar" data-editar="${escapeHtml(item.id)}">Editar</button>
         <button class="btn-mini perigo" title="Apagar" data-apagar="${escapeHtml(item.id)}">Apagar</button>

@@ -57,12 +57,13 @@ function blocoCausaDeficit(cd) {
   if (!cd.temDeficit) {
     return `<div class="alerta-tudo-coberto">Sem déficit este mês: a renda cobre o essencial, os compromissos e ainda sobra caixa.</div>`;
   }
+  const soTiming = cd.causas.length === 1 && cd.causas[0].tipo === "timing";
   return `
     <div class="alerta-cobertura">
-      <div class="titulo">${cd.causas.length > 1 ? "Déficit por combinação de causas" : "Há déficit este mês"}</div>
-      ${cd.causas.map((c) => `
-        <div class="texto" style="margin-top:6px;"><b>${escapeHtml(ROTULO_CAUSA[c.tipo])}</b>: ${escapeHtml(c.titulo)}. ${textoCausa(c)}</div>
-      `).join("")}
+      <div class="titulo">${soTiming ? "O mês fecha, mas o caixa aperta por datas" : cd.causas.length > 1 ? "Déficit por combinação de causas" : "Há déficit este mês"}</div>
+      ${cd.causas.map((c) => soTiming
+        ? `<div class="texto" style="margin-top:6px;">${textoCausa(c)}</div>`
+        : `<div class="texto" style="margin-top:6px;"><b>${escapeHtml(ROTULO_CAUSA[c.tipo])}</b>: ${escapeHtml(c.titulo)}. ${textoCausa(c)}</div>`).join("")}
       ${!cd.causas.length ? `<div class="texto">O caixa fechou negativo por uma diferença pequena, sem uma causa que se destaque.</div>` : ""}
     </div>`;
 }
