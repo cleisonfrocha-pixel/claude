@@ -1654,3 +1654,9 @@ Quebras encontradas e corrigidas:
 4. **"✓ Conferido"** parecia "tá ok" e não muda número nenhum. Virou "✓ Dados certos", com texto e aviso dizendo que para dar baixa é Paguei ou Recebi.
 5. **Zona de risco com número positivo** confundia. O Início agora diz o pior dia dos próximos 30 dias e o valor do caixa nele (e, se difere, o valor só com o confirmado).
 Pendências conhecidas: Paguei em compra planejada de cartão ("Compras previstas") e a mensagem da aba Renda ("Há déficit" com "o mês fecha no papel") ainda se contradizem; "Sobra no mês" (Plano) e "resto de outubro" usam bases diferentes e precisam de uma ponte escrita; contas Nubank e Next têm datas de saldo diferentes.
+
+## Modo app no celular (03/10/2026)
+- `estilo/app-mobile.css` (até 860px): barra do topo fixa com vidro e área segura, abas do módulo coladas sob o topo (rolam de lado, com encaixe), navegação de baixo com vidro e marcador da aba ativa, folhas que sobem de baixo com alça e botões fixos no rodapé, alvos de toque de 44 a 48px, campos de 16px (sem zoom do iPhone), toque com resposta (encolhe ao apertar), entrada suave de tela, aviso e botão flutuante acima da navegação.
+- Corrigido: o Início passava da largura da tela (430px em 390px) por causa de uma coluna de grade sem limite; Receita/Despesa eram bolinhas soltas sem estilo e agora são um controle segmentado; título repetido dentro de cada aba some no celular.
+- `index.html`: viewport com `viewport-fit=cover`, `theme-color` e metas de aplicativo (tela cheia ao "Adicionar à tela de início").
+- Medido em 390px e 360px com o banco real: nenhuma tela com rolagem lateral, nenhum botão abaixo de 36px, nenhum campo abaixo de 16px.
