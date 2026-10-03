@@ -7,13 +7,23 @@ import { confiancaDoNumero, proximosDias, completarRetrato } from "../domain/ini
 import { obterMetas } from "./orcamentoRepo.js";
 import { contasDoMes } from "../domain/contasDoMes.js";
 import { hojeISO, competenciaDeData } from "../domain/tempo.js";
+import { lerSituacao } from "../domain/situacao.js";
+import { oQuePesa } from "../domain/prioridade.js";
+import { cartoesNoCaixa } from "../domain/cartaoNoCaixa.js";
+import { simularGasto } from "../domain/simularGasto.js";
+import { carregarBase } from "./base.js";
 
 const HORIZONTE_DIAS = 30;
 
 export function calcularInicio(base, hoje = hojeISO(), metas = null) {
   const caixa = calcularClarezaDeCaixa({ ...base, hoje, horizonteDias: HORIZONTE_DIAS });
+  const situacao = lerSituacao({ ...base, hoje, horizonteDias: HORIZONTE_DIAS });
+  const contexto = { categorias: base.categorias, dividas: base.dividas, hoje };
   return {
     caixa,
+    situacao,
+    pesa: oQuePesa(caixa.detalhes.compromissos, contexto, { max: 3 }),
+    cartoes: cartoesNoCaixa({ cartoes: base.cartoes, faturas: base.faturas, transacoes: base.transacoes, pontos: caixa.pontos, naContaCentavos: caixa.saldoAtualCentavos, hoje }),
     confianca: confiancaDoNumero(caixa.detalhes.entradas),
     proximos: proximosDias({ compromissos: caixa.detalhes.compromissos, entradas: caixa.detalhes.entradas, hoje, dias: 7 }),
     retrato: completarRetrato({ ...base, metas, hoje }),
@@ -28,4 +38,10 @@ export function calcularInicio(base, hoje = hojeISO(), metas = null) {
 
 export function assinarInicio(cb) {
   return assinarBase(async (base) => calcularInicio(base, hojeISO(), await obterMetas()), cb);
+}
+
+/** "Posso gastar X?": simula sobre o dado de agora e não grava nada. */
+export async function simularPeloPainel(gasto, hoje = hojeISO()) {
+  const base = await carregarBase();
+  return simularGasto({ ...base, hoje, horizonteDias: HORIZONTE_DIAS }, gasto);
 }

@@ -6,9 +6,10 @@
 // módulo já tem seu lugar na barra de navegação.
 
 import { pessoas, contas } from "../../dados/repositorios.js";
-import { assinarInicio } from "../../dados/inicioRepo.js";
+import { assinarInicio, simularPeloPainel } from "../../dados/inicioRepo.js";
+import { ROTULO_GRUPO, GRUPOS, ROTULO_ZONA } from "../../domain/situacao.js";
 import { assinarPainelDecisoes } from "../../dados/decisoesRepo.js";
-import { formatarBRL } from "../../domain/dinheiro.js";
+import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { escapeHtml, ajudaHtml } from "../utilitarios.js";
 import { icone } from "../icones.js";
@@ -90,12 +91,99 @@ function blocoAteAProximaEntrada(caixa) {
   return `<section class="inicio-bloco"><h3>Até o dinheiro entrar</h3>${linhaEntrada}${linhaBuraco}</section>`;
 }
 
-function blocoPontoDeAtencao() {
+const COR_ZONA = { confortavel: "var(--accent)", apertado: "var(--warn)", risco: "var(--danger)" };
+
+function blocoSituacao(sit) {
+  const z = sit.zona;
+  const ate = sit.ate ? `até ${formatarData(sit.ate.data).slice(0, 5)} (${escapeHtml(sit.ate.descricao || "próxima entrada")})` : "no horizonte";
+  const grupos = GRUPOS.filter((g) => sit.comprometido.grupos[g].totalCentavos > 0);
+  return `
+    <section class="inicio-bloco">
+      <h3><span style="color:${COR_ZONA[z]};">●</span> ${escapeHtml(ROTULO_ZONA[z])} ${ajudaHtml("A zona compara o ponto mais baixo que o seu caixa toca nos próximos 30 dias com o que você já precisa pagar num mês. Negativo ou abaixo de meio mês de obrigações é risco; até um mês, apertado; acima, confortável.")}</h3>
+      <p class="tela-sub" style="margin:0 0 12px;color:var(--text);">${escapeHtml(sit.decisao.texto)}</p>
+      <div class="home-saldo-metricas" style="margin:0 0 8px;">
+        <div class="home-metrica"><span>Na conta hoje</span><b data-valor>${formatarBRL(sit.naContaCentavos)}</b></div>
+        <div class="home-metrica"><span>Já tem dono ${ate}</span><b data-valor>−${formatarBRL(sit.comprometido.totalCentavos)}</b></div>
+      </div>
+      <div class="home-saldo-metricas" style="margin:0 0 8px;">
+        <div class="home-metrica"><span>Livre garantido ${ajudaHtml("Conta só entrada confirmada. É o número mais seguro.")}</span><b class="${sit.livreGarantidoCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreGarantidoCentavos)}</b></div>
+        <div class="home-metrica"><span>Livre com o provável ${ajudaHtml("Conta também a entrada provável (renda fixa que ainda não caiu). Entrada incerta nunca entra.")}</span><b class="${sit.livreProvavelCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreProvavelCentavos)}</b></div>
+      </div>
+      ${grupos.length ? `<details class="inicio-detalhe"><summary>O que já tem dono</summary>
+        ${grupos.map((g) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(ROTULO_GRUPO[g])}</span><b data-valor>${formatarBRL(sit.comprometido.grupos[g].totalCentavos)}</b></div>
+          <div class="tela-sub" style="margin:0 0 6px;">${escapeHtml(sit.comprometido.grupos[g].itens.slice(0, 3).map((i) => i.descricao).join(", "))}${sit.comprometido.grupos[g].itens.length > 3 ? "…" : ""}</div>`).join("")}
+      </details>` : ""}
+    </section>`;
+}
+
+function blocoPesaAgora(pesa) {
+  if (!pesa.length) return "";
+  return `
+    <section class="inicio-bloco">
+      <h3>O que pesa agora</h3>
+      <div class="inicio-lista">
+        ${pesa.map((i) => `
+          <div class="inicio-linha">
+            <span class="inicio-data">${i.atrasado ? `<span class="tag-atrasado">Atrasado</span>` : escapeHtml(formatarData(i.vencimento || i.data).slice(0, 5))}</span>
+            <span class="inicio-desc">${escapeHtml(i.descricao || "")}<small style="display:block;opacity:.7;">${escapeHtml(i.razoes.slice(0, 2).join(" · "))}</small></span>
+            <b class="mono valor-neg" data-valor>−${formatarBRL(i.valorCentavos)}</b>
+          </div>`).join("")}
+      </div>
+      <button class="btn-link" data-ir-contas>Ver todas as contas</button>
+    </section>`;
+}
+
+function blocoCartoes(cartoes) {
+  const lista = (cartoes || []).filter((c) => c.limiteTotalCentavos > 0 || c.proximaFatura.jaNaFaturaCentavos > 0);
+  if (!lista.length) return "";
+  return `
+    <section class="inicio-bloco">
+      <h3>Cartões ${ajudaHtml("Compra no cartão já é compromisso, mas o dinheiro só sai da conta no dia em que você paga a fatura. O limite livre nunca é somado ao seu saldo.")}</h3>
+      ${lista.map((c) => `
+        <div class="fatura-linha"><span class="rotulo">${escapeHtml(c.apelido)}<small>fatura ${formatarBRL(c.proximaFatura.jaNaFaturaCentavos)} · sai da conta ${escapeHtml(formatarData(c.proximaFatura.saiEm).slice(0, 5))}${c.caixaCobreAFatura ? "" : " · <span class='valor-neg'>o caixa não cobre</span>"}</small></span>
+          <b data-valor>${formatarBRL(c.quantoCabeCentavos)}<small style="display:block;font-weight:400;opacity:.7;">cabe agora${c.limiteDecide ? " (limite)" : " (caixa)"}</small></b></div>`).join("")}
+    </section>`;
+}
+
+function blocoPosso() {
+  return `
+    <section class="inicio-bloco">
+      <h3>Posso gastar? ${ajudaHtml("Digite um valor e veja se cabe, se cabe no cartão ou se é melhor adiar. É só uma conta: nada é lançado.")}</h3>
+      <div class="simulador-linha">
+        <div class="field"><label for="posso-valor">Valor</label><input type="text" inputmode="decimal" id="posso-valor" placeholder="0,00"></div>
+        <button class="btn btn-ghost btn-sm" type="button" data-posso>Ver</button>
+      </div>
+      <div id="posso-resultado" class="tela-sub" style="margin-top:8px;"></div>
+    </section>`;
+}
+
+function textoDoVeredito(v) {
+  const dm = (d) => formatarData(d).slice(0, 5);
+  if (v.veredito === "cabe") return `<b class="valor-pos">Cabe.</b> O ponto mais baixo do caixa fica em <span data-valor>${formatarBRL(v.menorPontoDepoisCentavos)}</span>.`;
+  if (v.veredito === "cabe_no_cartao") return `<b>Na conta, não. No cartão ${escapeHtml(v.cartaoApelido)}, sim.</b> A fatura sai da conta em ${dm(v.saiDaContaEm)} e fica coberta.${v.quebraEm ? ` Na conta, faltaria dinheiro em ${dm(v.quebraEm)}.` : ""}`;
+  if (v.veredito === "adiar") return `<b>Agora faltaria dinheiro${v.quebraEm ? ` em ${dm(v.quebraEm)}` : ""}.</b> Cabe se você esperar até ${dm(v.adiarAte)}.`;
+  return `<b class="valor-neg">Não cabe.</b> ${v.quebraEm ? `Faltaria dinheiro em ${dm(v.quebraEm)}. ` : ""}${escapeHtml(v.motivo || "Nem adiando dentro dos próximos 30 dias.")}`;
+}
+
+function ligarPosso() {
+  const botao = container?.querySelector("[data-posso]");
+  if (!botao) return;
+  botao.addEventListener("click", async () => {
+    const alvo = container.querySelector("#posso-resultado");
+    const valor = paraCentavos(container.querySelector("#posso-valor").value);
+    if (!(valor > 0)) { alvo.textContent = "Informe um valor maior que zero."; return; }
+    alvo.textContent = "Calculando…";
+    try { alvo.innerHTML = textoDoVeredito(await simularPeloPainel({ valorCentavos: valor })) + `<div style="opacity:.7;margin-top:4px;">Isto é uma simulação. Nada foi lançado.</div>`; }
+    catch { alvo.textContent = "Não consegui simular agora."; }
+  });
+}
+
+function blocoPontoDeAtencao(temPesa) {
   const achado = (estadoDecisoes?.achadosPendentes || [])[0];
-  if (!achado) {
-    return `<section class="inicio-bloco"><h3>Atenção</h3><p class="tela-sub" style="margin:0;">Nada pedindo atenção agora.</p></section>`;
-  }
+  if (!achado) return "";
   const mais = estadoDecisoes.achadosPendentes.length - 1;
+  // Já há "o que pesa agora" no topo: os alertas do Plano viram um atalho, não uma segunda lista.
+  if (temPesa) return `<section class="inicio-bloco"><button class="btn-link" data-ir-plano>${mais + 1} ${mais === 0 ? "alerta no Plano" : "alertas no Plano"}</button></section>`;
   return `
     <section class="inicio-bloco">
       <h3>Pede atenção agora</h3>
@@ -143,7 +231,7 @@ function blocoRetrato(retrato) {
 
 function renderizar() {
   if (!container || !estadoInicio) return;
-  const { caixa, confianca, proximos, retrato, horizonteDias, contasMes } = estadoInicio;
+  const { caixa, confianca, proximos, retrato, horizonteDias, contasMes, situacao, pesa, cartoes } = estadoInicio;
   const { saldoAtualCentavos, saldoReservaCentavos, comprometidoCentavos, entradasPrevistasCentavos, seguroParaGastarCentavos, diaMaisApertado, horizonteAte } = caixa;
   const negativo = seguroParaGastarCentavos < 0;
   const explicacao = negativo
@@ -164,26 +252,22 @@ function renderizar() {
               <button class="home-topo-acao" id="botao-ocultar-home" title="Ocultar valores" aria-label="Ocultar valores"></button>
             </div>
           </div>
-          <div class="home-saldo-rotulo" style="cursor:default;">Pode gastar até ${escapeHtml(formatarData(horizonteAte))} ${ajudaHtml("É o que dá pra gastar sem faltar dinheiro pra nenhuma conta até essa data: o que está em conta, mais o que vai entrar, menos o que vai sair, olhando o pior momento do caminho.")}</div>
-          <div class="home-saldo-valor${negativo ? " negativo" : ""}" data-valor>${formatarBRL(seguroParaGastarCentavos)}</div>
-          <div class="home-saldo-sub">${explicacao}</div>
+          <div class="home-saldo-rotulo" style="cursor:default;">Pode gastar até ${situacao.ate ? escapeHtml(formatarData(situacao.ate.data)) + " (" + escapeHtml(situacao.ate.descricao || "próxima entrada") + ")" : escapeHtml(formatarData(horizonteAte))} ${ajudaHtml("É o que dá pra gastar sem faltar dinheiro pra nenhuma conta até o dinheiro entrar de novo: o que está em conta, menos o que já tem dono, olhando o pior momento do caminho.")}</div>
+          <div class="home-saldo-valor${situacao.livreProvavelCentavos < 0 ? " negativo" : ""}" data-valor>${formatarBRL(situacao.livreProvavelCentavos)}</div>
           <div class="selo-confianca ${confianca.nivel}" title="${escapeHtml(confianca.frase)}">
             <span class="selo-simbolo">${confianca.simbolo}</span>
             <span><b>${escapeHtml(confianca.rotulo)}.</b> ${escapeHtml(confianca.frase)}${esperado}</span>
           </div>
-          <div class="home-saldo-metricas">
-            <div class="home-metrica"><span>Em conta hoje</span><b data-valor>${formatarBRL(saldoAtualCentavos)}</b></div>
-            <div class="home-metrica"><span>Vai entrar</span><b data-valor>+${formatarBRL(entradasPrevistasCentavos || 0)}</b></div>
-            <div class="home-metrica"><span>Vai sair</span><b data-valor>−${formatarBRL(comprometidoCentavos)}</b></div>
-          </div>
-          <div class="home-saldo-sub" style="margin-top:10px;">Saldo previsto em ${horizonteDias} dias: <b data-valor>${formatarBRL(saldoAtualCentavos + (entradasPrevistasCentavos || 0) - comprometidoCentavos)}</b> ${ajudaHtml("É o que sobra em conta no fim do período: em conta hoje, mais o que vai entrar, menos o que vai sair. O número de cima é o ponto mais baixo no caminho, por isso é menor.")}</div>
           ${saldoReservaCentavos !== 0 ? `
             <div class="home-reserva-inline"><span>Em reserva/segurança</span><b data-valor>${formatarBRL(saldoReservaCentavos)}</b></div>` : ""}
         </div>
         <button class="btn btn-primary inicio-lancar" data-lancar>${icone("adicionar", 18)} Lançar</button>
-        ${blocoAteAProximaEntrada(caixa)}
+        ${blocoSituacao(situacao)}
+        ${blocoPesaAgora(pesa)}
+        ${blocoCartoes(cartoes)}
+        ${blocoPosso()}
         ${blocoContasDoMes(contasMes)}
-        ${blocoPontoDeAtencao()}
+        ${blocoPontoDeAtencao(pesa.length > 0)}
       </div>
       <div class="inicio-lateral">
         ${blocoProximos(proximos)}
@@ -197,6 +281,7 @@ function renderizar() {
   container.querySelectorAll("[data-ir-agenda]").forEach((b) => b.addEventListener("click", () => irPara("planejamento")));
   container.querySelectorAll("[data-retrato]").forEach((b) => b.addEventListener("click", () => irPara(retrato[Number(b.dataset.retrato)].destino)));
   ligarBotaoOcultar();
+  ligarPosso();
 }
 
 function ligarBotaoOcultar() {

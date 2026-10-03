@@ -51,7 +51,8 @@ export function simularGasto(estado, { valorCentavos, forma = "conta", cartaoId 
     const info = lista.find((c) => c.cartaoId === id);
     if (!info) return null;
     const depois = depoisDe("cartao", id);
-    return { info, depois, cabe: valorCentavos <= info.limiteLivreCentavos && depois.seguroParaGastarCentavos >= 0 };
+    // Compra no cartão só pesa a partir do dia em que a fatura sai: um buraco que já existia antes disso não é culpa dela.
+    return { info, depois, cabe: valorCentavos <= info.limiteLivreCentavos && info.folgaNoDiaCentavos - valorCentavos >= 0 };
   };
 
   if (forma === "cartao" && cartaoId) {

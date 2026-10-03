@@ -1611,3 +1611,11 @@ Subido pelo chat (lote nwm5rxt5f20rhynoa4cs, desfaz com "desfaz o último envio"
 - Dívidas: EDP ×3 (nov/dez/jan; a de nov também tem protesto), Bradesco (de R$ 10.064,16 por R$ 3.522,46, −64%), Mercado Pago (R$ 12.857,70 por R$ 3.214,42, −75%), protestos de R$ 3.473,75, R$ 1.164,98 e R$ 288,36, água do galpão (~R$ 1.000). Placar: nome limpo 0 de 8.
 Reauditoria com o banco real: Em conta R$ 8.831,61; "o que quebra" mostra 04/10 faltando R$ 69,37 (Jeep vence um dia antes do Del Poente cair), por conta das 3 atrasadas e das camisetas de R$ 1.400. Início e A pagar batem; o Início olha 30 dias e A pagar olha o mês, por isso os totais diferem.
 Pendente: validade das ofertas (não informada, ficou "sem prazo informado"), valor do repasse da Carolina, custos/aluguel do galpão (ele disse que atualiza depois), FIPE mensal.
+
+## Sprints 56 a 60: do painel de dados ao painel de situação (Rodada 7)
+- S56 `domain/situacao.js`: na conta, o que já tem dono até a próxima entrada (por grupo), livre garantido (só confirmado) e livre com o provável (incerto fora dos dois), zona (cortes explícitos: negativo ou abaixo de meio mês de obrigações = risco; até um mês = apertado) e a próxima decisão em uma frase. `calcularClarezaDeCaixa` ganhou `soConfirmado` e devolve `pontos`.
+- S57 `domain/prioridade.js`: peso por consequência real (atraso, cartão, parcela, essencial, dívida em risco, trava, vence em até 3 dias, valor); assinatura e verba pesam menos. `oQuePesa` devolve no máximo 3.
+- S58 `domain/cartaoNoCaixa.js`: por cartão, limite livre, fatura, dia em que sai da conta, se o caixa cobre e quanto cabe agora (o menor entre o limite e a folga do caixa no dia da fatura). Limite nunca soma ao saldo.
+- S59 `domain/simularGasto.js`: veredito cabe, cabe no cartão, adiar até dd/mm ou não cabe. Não escreve nada.
+- S60 Início: zona e frase de decisão, os quatro números, "o que pesa agora", cartões, "Posso gastar?" e os alertas do Plano viram atalho quando já há "o que pesa". Testes de motor: 486 nos dois fusos.
+Decisões padrão usadas (a confirmar com o Cleison): cortes da zona 0,5 e 1 mês de obrigações; verbas de anúncios e Morelli não foram movidas para o cartão.
