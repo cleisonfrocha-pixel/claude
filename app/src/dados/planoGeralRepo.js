@@ -6,7 +6,7 @@ import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularHorizonte } from "../domain/projecao.js";
 import { gastoDiaADiaMensal } from "../domain/previstos.js";
 import { visaoDoMes, sobraDoMes } from "../domain/mes.js";
-import { calcularVisaoConsolidada } from "../domain/dividas.js";
+import { calcularVisaoConsolidada, calcularSaldoAtual, statusDivida } from "../domain/dividas.js";
 import { alavancas } from "../domain/planoGeral.js";
 import { mapaDeMeses } from "../domain/mapa12.js";
 import { hojeISO, competenciaDeData } from "../domain/tempo.js";
@@ -32,11 +32,17 @@ export function calcularPlanoGeral(base, hoje = hojeISO()) {
     return { ...h, saldoFinalSeguroCentavos: r.saldoFinalSeguroCentavos, saidaCritica: r.saidaCritica, entradasIncertoCentavos: r.entradasIncertoCentavos };
   });
 
+  // Dívidas ativas sem parcela e sem data de pagamento: não entram no mapa dos meses, e o saldo futuro
+  // aparece mais folgado do que é. O plano diz isso em voz alta em vez de esconder.
+  const foraDoPlano = base.dividas.filter((d) => statusDivida(d, hoje) !== "quitada" && !d.mesmaDividaDe && !(Number(d.valorParcelaCentavos) > 0))
+    .map((d) => ({ id: d.id, nome: d.nome, valorCentavos: calcularSaldoAtual(d, hoje) })).filter((d) => d.valorCentavos > 0);
+
   const mapa = mapaDeMeses({ ...base, saldoInicialCentavos, gastoDiaADiaMensalCentavos, hoje });
 
   return {
     competencia,
     mapa,
+    foraDoPlano: { quantidade: foraDoPlano.length, totalCentavos: foraDoPlano.reduce((t, d) => t + d.valorCentavos, 0), itens: foraDoPlano },
     agora: {
       saldoInicialCentavos,
       rendaConfirmadaCentavos: visao.rendaConfirmadaCentavos,

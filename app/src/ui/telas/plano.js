@@ -251,6 +251,7 @@ function blocoPraOndeVai(g) {
           </div>`).join("")}
       </div>
       ${cartaoDoBuraco(m)}
+      ${g.foraDoPlano && g.foraDoPlano.quantidade ? `<div class="mes-progresso-msg alerta" style="margin:12px 0;"><b>Fora desta conta:</b> ${g.foraDoPlano.quantidade} dívidas, <span data-valor>${formatarBRL(g.foraDoPlano.totalCentavos)}</span> (já com os descontos), ainda sem parcela nem data. Enquanto não tiverem data de pagamento, o saldo dos meses abaixo fica mais folgado do que a realidade. <button class="btn-link" data-ir-dividas>Definir como e quando pagar</button></div>` : ""}
       <h4 class="mapa-titulo">Mês a mês</h4>
       ${m.semDiaADia ? `<p class="tela-sub" style="margin:0 0 8px;">Ainda sem histórico de gasto do dia a dia (mercado, lazer, imprevistos): os meses de frente aparecem mais folgados do que a vida real. Conforme você lança, isso se corrige.</p>` : ""}
       <div class="mapa-meses">
@@ -442,6 +443,7 @@ function renderizar() {
 }
 
 function ligarEventos() {
+  container.querySelector("[data-ir-dividas]")?.addEventListener("click", () => navegar({ modulo: "dividas" }));
   container.querySelector("[data-ir-fechamento]")?.addEventListener("click", () => navegar({ modulo: "plano", aba: "fechamento" }));
   container.querySelectorAll("[data-marco]").forEach((b) => {
     b.addEventListener("click", () => {
