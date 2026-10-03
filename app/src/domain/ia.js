@@ -6,13 +6,15 @@
 
 import { formatarBRL } from "./dinheiro.js";
 import { calcularSaldoAtual, parcelasRestantes, statusDivida, classificarDivida } from "./dividas.js";
+import { perfilParaIA, instrucoesDoPerfil } from "./perfil.js";
 
 const R = (c) => formatarBRL(Number(c) || 0);
 
 /** Retrato compacto, em linhas "[fonte] texto", pronto para o prompt e para
  * a tela "Dados usados". `p` junta os painéis já calculados. */
-export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, fontesRenda, achados, ativos }) {
-  const linhas = [];
+export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, fontesRenda, achados, ativos, perfil }) {
+  // O perfil vai primeiro: se o retrato passar do limite, o que é cortado são as últimas linhas, nunca quem a pessoa é.
+  const linhas = [...perfilParaIA(perfil, hoje)];
   const add = (fonte, texto) => linhas.push({ fonte, texto });
   const c = inicio?.caixa;
   if (c) {
@@ -89,7 +91,8 @@ export const INSTRUCOES_IA = `Você é o assistente do painel financeiro de uma 
 /** Monta as "turns" para sample(): instruções + dados + conversa até aqui. */
 export function montarTurnos({ retrato, historico, pergunta }) {
   const dados = retrato.map((l) => `[${l.fonte}] ${l.texto}`).join("\n");
-  const base = `${INSTRUCOES_IA}\n\nDADOS (retrato atual do painel, calculado agora):\n${dados}`;
+  const extra = retrato.some((l) => l.fonte.startsWith("Perfil")) ? instrucoesDoPerfil(true) : "";
+  const base = `${INSTRUCOES_IA}${extra}\n\nDADOS (retrato atual do painel, calculado agora):\n${dados}`;
   const recente = (historico || []).slice(-6);
   const turnos = [{ role: "user", content: base }];
   if (recente.length) turnos.push({ role: "assistant", content: "Entendi as regras e li os dados. Pode perguntar." });

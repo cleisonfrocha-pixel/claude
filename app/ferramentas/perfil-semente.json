@@ -1,0 +1,63 @@
+{
+  "versao": 1,
+  "atualizadoEm": "2026-10-03T12:00:00.000Z",
+  "regras": {
+    "contarSoDinheiroFechado": true
+  },
+  "secoes": [
+    {
+      "id": "quem",
+      "titulo": "Quem somos",
+      "texto": "Cleison e Carolina, casal, com um filho pequeno (Caio). O gasto com o filho é essencial: nunca é corte.\nO painel é só dos dois e nunca vai ser vendido. Eles estão numa situação financeira ruim e querem sair dela.\nHoje o Cleison decide tudo numa planilha simples. Ele não entende de finanças e o dia dele é muito corrido: se o painel confundir mais do que ajudar, ele volta pra planilha. O que ele quer é clareza e estímulo pra dar a volta por cima."
+    },
+    {
+      "id": "regra",
+      "titulo": "Regra do dinheiro",
+      "texto": "Só conta dinheiro fechado. Serviço em negociação, ideia de projeto e expectativa de venda não existem pra ele até fecharem. Nenhum plano pode depender disso e não existe projeção otimista.\nDinheiro esperado fica separado do garantido, e o incerto nunca entra."
+    },
+    {
+      "id": "gedi",
+      "titulo": "GEDI",
+      "texto": "O Cleison é CMO da GEDI, uma startup de compliance de medicina ocupacional ainda em MVP.\nTem direito a uma cota de 10% da empresa, que vale R$ 25 mil, dos quais cerca de R$ 13 mil já foram pagos com trabalho. Ele não vai pagar em dinheiro.\nEle traz clientes pra GEDI e usa a receita deles pra pagar equipe e tráfego, e não fica com o lucro dessas contas. Isso não é dívida de caixa, e a cota não conta como patrimônio nem como renda.\nEle decide até novembro se entra como sócio ou se sai sem dívida, e ainda não decidiu. Esse prazo pesa no plano."
+    },
+    {
+      "id": "ml",
+      "titulo": "Mercado Livre",
+      "texto": "Loja de itens de supermercado em kits. A ideia é entrar depois com produtos de margem.\nA verba é de cerca de R$ 1.000, mais um crédito de R$ 250 da plataforma em anúncios. Ele vende primeiro e só depois compra o item no atacado.\nAs primeiras 10 vendas dão prejuízo de propósito: é custo pra ativar a conta. Alguns kits, como o de leite condensado, custam mais do que vendem, então é preciso limitar unidades por pedido.\nA entrega é por Flex, com uma empresa de motoboy que cobra por pacote e fatura de 15 em 15 dias.\nA conta está no CPF dele e deve migrar pro CNPJ da Carolina, mas uma dívida do Mercado Pago no CPF trava isso."
+    },
+    {
+      "id": "galpao",
+      "titulo": "Galpão",
+      "texto": "É dele, em Mogi das Cruzes: 127 m² cobertos e 100 m² descobertos.\nJá investiu cerca de R$ 200 mil, mais uns R$ 50 a 60 mil em manutenção recente.\nJá rendeu R$ 4.500 por mês de aluguel até o último contrato acabar. Hoje não rende nada, e nenhum plano pode contar com aluguel dele.\nA obra precisa terminar em outubro. O pai dele é sócio no desenvolvimento do espaço.\nVai virar o estoque da loja do Mercado Livre."
+    },
+    {
+      "id": "momento",
+      "titulo": "Momento e prioridades",
+      "texto": "Em 01/10 ele estava sem fôlego, sobrevivendo até terminar a obra do galpão.\nPrioridades de outubro, nesta ordem de atenção: vender a GEDI, terminar a obra do galpão e iniciar o e-commerce.\nTem um filho pequeno, que é gasto essencial."
+    },
+    {
+      "id": "tom",
+      "titulo": "Como falar com ele",
+      "texto": "Direto, honesto e informal. Sem texto genérico de IA e sem travessão.\nSe ele insistir sem argumento novo, manter a posição. Se estiver complicando demais em vez de executar, avisar.\nTodo plano parte de quem ele é, do momento e dos prazos. Plano que serviria pra qualquer pessoa está errado."
+    },
+    {
+      "id": "lacunas",
+      "titulo": "O que o painel ainda não sabe",
+      "texto": "Vendas e custos reais da loja do Mercado Livre, inclusive o custo do Flex.\nSe o que sobra na conta depois de pagar equipe e tráfego da GEDI é dele ou da empresa.\nO que mais sai da conta da Carolina por mês, além da Shopee.\nCustos do galpão (energia, água, obra) e quanto falta pra terminar.\nGastos anuais (IPVA, seguro, IPTU, escola, 13º).\nData exata da decisão da GEDI.\nQuanto o galpão custou ao todo: o painel tem R$ 150 mil de compra e o Cleison falou em cerca de R$ 200 mil mais R$ 50 a 60 mil de manutenção."
+    }
+  ],
+  "prazos": [
+    {
+      "id": "obra",
+      "data": "2026-10-31",
+      "titulo": "Obra do galpão precisa terminar",
+      "nota": "pai é sócio no desenvolvimento"
+    },
+    {
+      "id": "gedi",
+      "data": "2026-11-30",
+      "titulo": "Decidir: entrar como sócio da GEDI ou sair sem dívida",
+      "nota": "dia exato a confirmar"
+    }
+  ]
+}

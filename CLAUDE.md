@@ -23,6 +23,12 @@ Produto construído sobre a base do **Painel GEDI**, seguindo o
 - **Todo alerta e toda ação apontam os dados que os originaram.** Exigência do
   §9 e do §17 — sem isso o produto vira palpite.
 
+## Plano personalizado: ler o perfil antes
+
+Antes de gerar ou revisar qualquer plano, leia o perfil da casa (`perfil/casa` no banco do painel; cópia em
+`app/ferramentas/perfil-semente.json`) e siga `.claude/skills/gerar-plano/SKILL.md`. O painel é só do Cleison e da
+Carolina: plano genérico é erro. Só dinheiro fechado conta. A IA do painel (aba Perguntar) lê o mesmo perfil.
+
 ## Regras de código
 
 - `src/domain/` é puro: sem `document`, sem `window`, sem `claude`. É o que

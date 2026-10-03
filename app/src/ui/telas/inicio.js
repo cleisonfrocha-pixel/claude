@@ -200,6 +200,15 @@ function blocoPontoDeAtencao(temPesa) {
     </section>`;
 }
 
+function blocoPrazos(prazos) {
+  if (!prazos || !prazos.length) return "";
+  return `
+    <section class="inicio-bloco">
+      <h3>Datas que pesam ${ajudaHtml("São as datas do seu perfil (Configurações > Sobre nós) que mudam o plano, como a decisão da GEDI e o fim da obra.")}</h3>
+      ${prazos.map((p) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(p.titulo)}<small>${escapeHtml(formatarData(p.data))}${p.nota ? " · " + escapeHtml(p.nota) : ""}</small></span><b>${p.diasAte < 0 ? "passou" : p.diasAte === 0 ? "hoje" : p.diasAte === 1 ? "amanhã" : `${p.diasAte} dias`}</b></div>`).join("")}
+    </section>`;
+}
+
 function blocoProximos(proximos) {
   if (!proximos.length) {
     return `<section class="inicio-bloco"><h3>Próximos 7 dias</h3><p class="tela-sub" style="margin:0;">Nada vence nem entra nesta semana.</p></section>`;
@@ -272,6 +281,7 @@ function renderizar() {
         ${blocoPontoDeAtencao(pesa.length > 0)}
       </div>
       <div class="inicio-lateral">
+        ${blocoPrazos(estadoInicio.prazos)}
         ${blocoProximos(proximos)}
         ${blocoRetrato(retrato)}
       </div>

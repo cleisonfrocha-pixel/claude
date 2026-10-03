@@ -1677,3 +1677,12 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - Toda figura tem legenda, valores à vista e "Ver em tabela". Paleta categórica de 8 posições, claro e escuro. Sem biblioteca: HTML e SVG.
 - Novo grupo de categoria "Negócio" (Equipe e freelancers, Ferramentas de trabalho e Escritório passam para ele), senão 46% do mês aparecia como "Outros".
 - Motor: `domain/relatorios.js` (gastosDoMes, vazamentos, composicaoDeDividas, serieMensal), 4 testes. 495 testes nos dois fusos.
+
+## Perfil da casa: a base de conhecimento do plano (03/10/2026)
+- O Cleison passou quem ele é e o que o painel não sabia: regra do dinheiro fechado, GEDI (cota de 10%, decisão até novembro), Mercado Livre, galpão, momento (obra e prioridades de outubro), jeito de falar.
+- `domain/perfil.js` + `dados/perfilRepo.js`: um documento `perfil/casa` no banco, seções em texto livre, regra "só dinheiro fechado" e prazos com data. Tela Configurações > Sobre nós para ler e editar. Cópia versionada em `app/ferramentas/perfil-semente.json`.
+- A IA do painel (aba Perguntar) lê o perfil primeiro (as linhas dele nunca são cortadas) e recebe as regras de tom: direto, informal, sem travessão, mantém a posição sem argumento novo, avisa se ele complicar, só dinheiro fechado.
+- Início ganhou "Datas que pesam" (obra do galpão em 31/10, decisão da GEDI em 30/11, dia exato a confirmar).
+- Para os planos que eu gero: skill `.claude/skills/gerar-plano` e regra no CLAUDE.md, que obrigam a ler o perfil antes.
+- Hoje a regra do dinheiro fechado é verificável assim: incerto nunca entra, GEDI e Mercado Livre não têm entrada projetada, galpão não tem aluguel, cota da GEDI não é ativo nem dívida. Entradas "prováveis" (renda recorrente combinada que ainda não caiu) continuam aparecendo, separadas do garantido.
+- 500 testes nos dois fusos.

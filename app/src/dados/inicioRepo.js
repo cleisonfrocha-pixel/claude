@@ -13,10 +13,12 @@ import { cartoesNoCaixa } from "../domain/cartaoNoCaixa.js";
 import { simularGasto } from "../domain/simularGasto.js";
 import { carregarBase } from "./base.js";
 import { registrarInstantaneo } from "./evolucaoRepo.js";
+import { lerPerfil } from "./perfilRepo.js";
+import { prazosQueVem } from "../domain/perfil.js";
 
 const HORIZONTE_DIAS = 30;
 
-export function calcularInicio(base, hoje = hojeISO(), metas = null) {
+export function calcularInicio(base, hoje = hojeISO(), metas = null, perfil = null) {
   const caixa = calcularClarezaDeCaixa({ ...base, hoje, horizonteDias: HORIZONTE_DIAS });
   const situacao = lerSituacao({ ...base, hoje, horizonteDias: HORIZONTE_DIAS });
   const contexto = { categorias: base.categorias, dividas: base.dividas, hoje };
@@ -35,12 +37,13 @@ export function calcularInicio(base, hoje = hojeISO(), metas = null) {
       const c = contasDoMes({ ...base, competencia, hoje });
       return { competencia, resumo: c.resumo, atrasadas: c.grupos.atrasada.slice(0, 3) };
     })(),
+    prazos: prazosQueVem(perfil, hoje, { dias: 90 }),
     horizonteDias: HORIZONTE_DIAS,
   };
 }
 
 export function assinarInicio(cb) {
-  return assinarBase(async (base) => calcularInicio(base, hojeISO(), await obterMetas()), cb);
+  return assinarBase(async (base) => calcularInicio(base, hojeISO(), await obterMetas(), await lerPerfil()), cb);
 }
 
 /** "Posso gastar X?": simula sobre o dado de agora e não grava nada. */

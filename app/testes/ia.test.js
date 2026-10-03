@@ -55,3 +55,16 @@ test("retrato traz o mapa dos próximos meses e as contas do mês", () => {
   assert.match(txt, /\[Contas do mês\] 0 de 37 contas pagas.*3 atrasada\(s\).*Conta de Luz/);
   assert.match(txt, /sem histórico|ainda não há histórico/);
 });
+
+import { padraoPerfil } from "../src/domain/perfil.js";
+test("perfil entra na IA: primeiras linhas do retrato (nunca cortadas) e regras de tom nas instruções", () => {
+  const perfil = padraoPerfil({ secoes: [{ id: "g", titulo: "GEDI", texto: "Cota de 10%." }], prazos: [{ id: "p", data: "2026-11-30", titulo: "Decidir GEDI" }] });
+  const r = montarRetratoParaIA({ hoje: "2026-10-03", inicio, dividas: [], fontesRenda: [], achados: [], ativos: [], perfil });
+  assert.equal(r[0].fonte, "Perfil");
+  assert.ok(r.some((l) => l.fonte === "Perfil · GEDI"));
+  const t = montarTurnos({ retrato: r, historico: [], pergunta: "plano?" });
+  assert.match(t[0].content, /sem travessão/);
+  assert.match(t[0].content, /Decidir GEDI/);
+  const sem = montarTurnos({ retrato: montarRetratoParaIA({ hoje: "2026-10-03", inicio, dividas: [], fontesRenda: [], achados: [], ativos: [] }), historico: [], pergunta: "x" });
+  assert.doesNotMatch(sem[0].content, /sem travessão/);
+});
