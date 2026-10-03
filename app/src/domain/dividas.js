@@ -7,7 +7,7 @@
 // (bullet do blueprint) só divide de verdade pela renda a partir da Fase 8
 // (§12, Renda) — até lá, mostra o comprometimento mensal em centavos.
 
-import { somarMeses, competenciaDeData, dataDeCompetencia } from "./tempo.js";
+import { somarMeses, competenciaDeData, dataDeCompetencia, hojeISO } from "./tempo.js";
 
 export const STATUS_DIVIDA = ["ativa", "atrasada", "quitada"];
 
@@ -49,10 +49,32 @@ export function taxaMensalEfetiva(divida) {
  *
  * Sem acordo (parcela zero) é o saldo cadastrado: o crescimento por juros
  * só aparece na simulação, que diz isso em voz alta. */
-export function calcularSaldoAtual(divida) {
+/** O que o credor cobra hoje, sem desconto: o valor com juros, se o cadastro tem. */
+export function valorCobradoSemOfertaCentavos(divida) {
+  return Math.max(0, Number(divida.valorComJurosCentavos) || 0, Number(divida.saldoOriginalCentavos) || 0);
+}
+
+/** Oferta de quitação que ainda vale: com valor e sem validade vencida. Devolve
+ * { valorCentavos, validade, origem } ou null. Aceita a oferta guardada como
+ * objeto ou nos campos soltos do formulário. */
+export function ofertaVigente(divida, hoje = hojeISO()) {
+  const o = divida.oferta || (Number(divida.ofertaValorCentavos) > 0
+    ? { valorCentavos: divida.ofertaValorCentavos, validade: divida.ofertaValidade || null, origem: divida.ofertaOrigem || "" } : null);
+  const valor = Number(o?.valorCentavos) || 0;
+  if (!(valor > 0)) return null;
+  if (o.validade && hoje && o.validade < hoje) return null;
+  return { valorCentavos: valor, validade: o.validade || null, origem: o.origem || "" };
+}
+
+export function calcularSaldoAtual(divida, hoje = hojeISO()) {
   const parcela = Number(divida.valorParcelaCentavos) || 0;
-  // Sem acordo, vale o que o credor cobra hoje (com juros) se o cadastro tem esse número.
-  if (!(parcela > 0)) return Math.max(0, Number(divida.valorComJurosCentavos) || 0, Number(divida.saldoOriginalCentavos) || 0);
+  // Sem acordo, vale o que a pessoa realmente vai pagar: a oferta de quitação, se
+  // existe e ainda vale (R$ 10.064 cobrados, R$ 3.522 na oferta: a dívida real é
+  // R$ 3.522). Sem oferta, o valor cobrado com juros.
+  if (!(parcela > 0)) {
+    const oferta = ofertaVigente(divida, hoje);
+    return oferta ? oferta.valorCentavos : valorCobradoSemOfertaCentavos(divida);
+  }
   return Math.round(valorPresente(parcela, parcelasRestantes(divida), taxaMensalEfetiva(divida)));
 }
 

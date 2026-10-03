@@ -1660,3 +1660,9 @@ Pendências conhecidas: Paguei em compra planejada de cartão ("Compras prevista
 - Corrigido: o Início passava da largura da tela (430px em 390px) por causa de uma coluna de grade sem limite; Receita/Despesa eram bolinhas soltas sem estilo e agora são um controle segmentado; título repetido dentro de cada aba some no celular.
 - `index.html`: viewport com `viewport-fit=cover`, `theme-color` e metas de aplicativo (tela cheia ao "Adicionar à tela de início").
 - Medido em 390px e 360px com o banco real: nenhuma tela com rolagem lateral, nenhum botão abaixo de 36px, nenhum campo abaixo de 16px.
+
+## Rodada 9a: valor real da dívida (03/10/2026)
+- Dívida com oferta de desconto vigente vale a oferta, em todas as telas (Bradesco R$ 3.522,46, não R$ 10.064,16; Mercado Pago R$ 3.214,42). O valor cobrado e a economia aparecem ao lado ("de R$ 10.064,16 por R$ 3.522,46, economiza R$ 6.541,70"). Oferta com validade vencida volta ao valor cobrado. `calcularSaldoAtual` é a única regra.
+- "Fechei esse acordo": a oferta vira dívida com parcelas (à vista ou em N vezes) e passa a aparecer em A pagar; o valor antigo fica guardado em `acordoDe`.
+- Financiamento (Jeep): a linha mostra "19 de 60 parcelas pagas, próxima: parcela 20, dia 04/10", barra de evolução com "Já pago R$ 63.011,03" e "Falta R$ 135.971,17", e o botão "Paguei a parcela 20" abre a pergunta de onde saiu e dá baixa (parcela vira 20 de 60).
+- Folha Paguei: se a data escolhida é igual ou anterior ao dia em que o saldo da conta foi conferido, ela diz que o saldo já considera o pagamento.

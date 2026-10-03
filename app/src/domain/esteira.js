@@ -1,18 +1,16 @@
 // Dívidas com esteira: oferta de desconto, placar "nome limpo", acordo em
 // parcelas e a barra do financiamento (Jeep). Puro (CLAUDE.md): sem tela, sem banco.
 
-import { calcularSaldoAtual, parcelasRestantes } from "./dividas.js";
+import { calcularSaldoAtual, parcelasRestantes, valorCobradoSemOfertaCentavos } from "./dividas.js";
 import { competenciaDeData } from "./tempo.js";
 
 function diasEntre(a, b) {
   return Math.round((new Date(`${b}T12:00:00Z`) - new Date(`${a}T12:00:00Z`)) / 86400000);
 }
 
-/** O que a dívida vale hoje no papel: com juros (o que o credor cobra) se o
- * cadastro tem esse número; senão o saldo cadastrado. */
+/** O que o credor cobra hoje, sem o desconto. */
 export function valorCobradoCentavos(d) {
-  const comJuros = Number(d.valorComJurosCentavos) || 0;
-  return comJuros > 0 ? comJuros : calcularSaldoAtual(d);
+  return valorCobradoSemOfertaCentavos(d) || calcularSaldoAtual(d);
 }
 
 /** Oferta de quitação com desconto (Serasa Limpa Nome, acordo no app do banco).
@@ -50,7 +48,7 @@ export function placarNomeLimpo(dividas) {
     limpas: limpas.length,
     faltam: sujas.length - limpas.length,
     faltamIds: sujas.filter((d) => !quitada(d)).map((d) => d.id),
-    valorQueFaltaCentavos: sujas.filter((d) => !quitada(d)).reduce((s, d) => s + valorCobradoCentavos(d), 0),
+    valorQueFaltaCentavos: sujas.filter((d) => !quitada(d)).reduce((s, d) => s + calcularSaldoAtual(d), 0),
   };
 }
 
@@ -67,7 +65,7 @@ export function acordoDaOferta(d, { parcelas = 1, primeiraParcela }) {
     parcelasPagas: 0,
     valorParcelaCentavos: Math.round(o.valorCentavos / n),
     dataInicio: primeiraParcela,
-    oferta: null,
+    oferta: null, ofertaValorCentavos: 0, ofertaValidade: "", ofertaOrigem: "",
     acordoDe: { cobradoCentavos: o.cobradoCentavos, economiaCentavos: o.economiaCentavos, origem: o.origem },
   };
 }

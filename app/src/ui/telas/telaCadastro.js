@@ -101,7 +101,9 @@ export function criarTelaCadastro(config) {
           </div>
           ${v.valorDireita != null ? `<div class="item-valor" data-valor>${escapeHtml(v.valorDireita)}</div>` : ""}
           ${v.tag ? `<span class="item-tag${v.tagInativa ? " inativa" : ""}${v.tagClasse ? " " + escapeHtml(v.tagClasse) : ""}">${escapeHtml(v.tag)}</span>` : ""}
+          ${v.barra ? `<div class="item-barra"><div class="barra-limite"><span style="width:${Math.max(0, Math.min(100, v.barra.percentual))}%"></span></div><div class="item-barra-texto"><span>${escapeHtml(v.barra.esquerda || "")}</span><span data-valor>${escapeHtml(v.barra.direita || "")}</span></div></div>` : ""}
           <div class="item-acoes">
+            ${v.acaoPrimaria ? `<button class="btn-mini btn-baixa" data-acao="primaria">${escapeHtml(v.acaoPrimaria)}</button>` : ""}
             ${expansivel ? `<button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" aria-expanded="${aberto}">${aberto ? "Fechar" : (config.rotuloDetalhes || "Detalhes")}</button>` : ""}
             <button class="btn-mini" data-acao="editar">Editar</button>
             <button class="btn-mini perigo" data-acao="apagar">Apagar</button>
@@ -128,6 +130,14 @@ export function criarTelaCadastro(config) {
         if (elExtra) config.aoRenderizarExtra(item.dados, item.id, contexto, elExtra);
       });
     }
+    alvo.querySelectorAll('[data-acao="primaria"]').forEach((btn) => {
+      btn.addEventListener("click", async (ev) => {
+        const item = itens.find((i) => i.id === ev.target.closest(".item-cartao").dataset.id);
+        if (!item || typeof config.aoAcaoPrimaria !== "function") return;
+        btn.disabled = true;
+        try { await config.aoAcaoPrimaria(item, contexto); } finally { btn.disabled = false; }
+      });
+    });
     alvo.querySelectorAll('[data-acao="editar"]').forEach((btn) => {
       btn.addEventListener("click", (ev) => {
         const id = ev.target.closest(".item-cartao").dataset.id;

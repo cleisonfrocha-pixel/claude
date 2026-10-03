@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ofertaDaDivida, placarNomeLimpo, acordoDaOferta, progressoDoFinanciamento, gastoPorCentro } from "../src/domain/esteira.js";
+import { valorCobradoCentavos, ofertaDaDivida, placarNomeLimpo, acordoDaOferta, progressoDoFinanciamento, gastoPorCentro } from "../src/domain/esteira.js";
 
 const bradesco = { id: "b", nome: "Bradesco", saldoOriginalCentavos: 554604, valorComJurosCentavos: 1006416, quantidadeParcelas: 1, parcelasPagas: 0, negativada: true, oferta: { valorCentavos: 352246, origem: "Serasa", validade: null } };
 
@@ -64,7 +64,20 @@ test("gasto por centro: sem centro é da casa; cancelado e outro mês ficam fora
 });
 
 import { calcularSaldoAtual } from "../src/domain/dividas.js";
-test("dívida sem acordo pesa pelo valor cobrado com juros, em todas as telas", () => {
-  assert.equal(calcularSaldoAtual(bradesco), 1006416);
-  assert.equal(calcularSaldoAtual({ ...bradesco, valorComJurosCentavos: 0 }), 554604);
+test("dívida com oferta vigente vale a oferta (R$ 3.522,46), não os R$ 10.064,16 cobrados", () => {
+  assert.equal(calcularSaldoAtual(bradesco, "2026-10-03"), 352246);
+  assert.equal(valorCobradoCentavos(bradesco), 1006416);
+  assert.equal(calcularSaldoAtual({ ...bradesco, oferta: { valorCentavos: 352246, validade: "2026-09-01" } }, "2026-10-03"), 1006416); // venceu: volta ao cobrado
+  assert.equal(calcularSaldoAtual({ ...bradesco, oferta: null }, "2026-10-03"), 1006416);
+  assert.equal(calcularSaldoAtual({ ...bradesco, oferta: null, valorComJurosCentavos: 0 }, "2026-10-03"), 554604);
+  const flat = { ...bradesco, oferta: null, ofertaValorCentavos: 352246 };
+  assert.equal(calcularSaldoAtual(flat, "2026-10-03"), 352246);
+});
+
+test("fechar o acordo zera os campos da oferta e vira parcela", () => {
+  const patch = acordoDaOferta(bradesco, { parcelas: 1, primeiraParcela: "2026-10-20" });
+  const depois = { ...bradesco, ...patch };
+  assert.equal(depois.ofertaValorCentavos, 0);
+  assert.equal(depois.valorParcelaCentavos, 352246);
+  assert.equal(calcularSaldoAtual(depois, "2026-10-03"), 352246);
 });

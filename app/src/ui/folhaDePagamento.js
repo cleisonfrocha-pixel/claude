@@ -28,7 +28,7 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
   return new Promise((resolver) => {
     let confirmado = false;
     const opcoes = [
-      ...contas.map((c) => ({ chave: `conta:${c.id}`, titulo: c.nome, sub: [c.pessoa, c.ehReserva ? "reserva" : ""].filter(Boolean).join(" · "), direita: formatarBRL(c.saldoCentavos), saldo: c.saldoCentavos })),
+      ...contas.map((c) => ({ chave: `conta:${c.id}`, titulo: c.nome, sub: [c.pessoa, c.ehReserva ? "reserva" : ""].filter(Boolean).join(" · "), direita: formatarBRL(c.saldoCentavos), saldo: c.saldoCentavos, saldoDesde: c.saldoDesde })),
       ...cartoes.map((c) => ({ chave: `cartao:${c.id}`, titulo: `Cartão ${c.apelido}`, sub: "o dinheiro só sai quando a fatura for paga", direita: `${formatarBRL(c.disponivelCentavos)} livres`, limite: c.disponivelCentavos, pagadora: c.contaPagadoraNome, saldoPagadora: c.saldoPagadoraCentavos, pagaEm: c.pagaEm })),
     ];
     modal.abrir(`
@@ -71,7 +71,10 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
       const o = opcaoAtual();
       const alvo = q("#fp-depois");
       if (!o || !(v > 0)) { alvo.innerHTML = ""; return; }
-      if (o.chave.startsWith("conta:")) {
+      if (o.chave.startsWith("conta:") && o.saldoDesde && dataAtual() <= o.saldoDesde) {
+        // O saldo desta conta foi conferido num dia igual ou posterior: ele já inclui este pagamento.
+        alvo.innerHTML = `${escapeHtml(o.titulo)} foi conferida em ${escapeHtml(formatarData(o.saldoDesde))}. Como o pagamento é dessa data ou anterior, o saldo <b>já considera</b> e fica em <span class="mono" data-valor>${formatarBRL(o.saldo)}</span>. A conta sai da lista de a pagar.`;
+      } else if (o.chave.startsWith("conta:")) {
         const depois = o.saldo + (entrada ? v : -v);
         alvo.innerHTML = `${escapeHtml(o.titulo)}: <span class="mono" data-valor>${formatarBRL(o.saldo)}</span> → <b class="mono ${depois < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(depois)}</b>${depois < 0 ? " <span class='valor-neg'>(fica negativa)</span>" : ""}`;
       } else {

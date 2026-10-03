@@ -8,14 +8,16 @@
 import { criarTelaCadastro } from "./telaCadastro.js";
 import { dividas, pessoas, ativos } from "../../dados/repositorios.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
-import { formatarData, hojeISO } from "../../domain/tempo.js";
+import { formatarData, hojeISO, somarDias } from "../../domain/tempo.js";
 import {
   calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao,
   statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva, classificarDivida,
 } from "../../domain/dividas.js";
 import { separarDividas } from "../../domain/bens.js";
 import { simularAporteExtra, simularQuitacaoAntecipada } from "../../domain/simuladorDividas.js";
-import { ofertaDaDivida, placarNomeLimpo, progressoDoFinanciamento } from "../../domain/esteira.js";
+import { ofertaDaDivida, placarNomeLimpo, progressoDoFinanciamento, acordoDaOferta } from "../../domain/esteira.js";
+import { baixarComPergunta } from "../baixaUI.js";
+import * as modal from "../modal.js";
 import { escapeHtml } from "../utilitarios.js";
 
 const ROTULO_STATUS = { atrasada: "atrasada", quitada: "quitada" };
@@ -35,6 +37,33 @@ function resultadoSimulacaoHtml(r) {
       ${r.mesesEconomizados > 0 ? `${mesesTxt(r.mesesEconomizados)} a menos que o ritmo atual (${mesesTxt(r.base.meses)}).` : "Não muda o prazo em relação ao ritmo atual."}
       Isto é uma simulação. Nada foi alterado na dívida.
     </div>`;
+}
+
+/** "Fechei esse acordo": a oferta vira dívida com parcelas, que passam a aparecer em A pagar. O valor antigo fica guardado. */
+function abrirFechamentoDeAcordo(id, dados) {
+  const oferta = ofertaDaDivida(dados, hojeISO());
+  if (!oferta) return;
+  modal.abrir(`
+    <div class="modal">
+      <h2>Fechar acordo: ${escapeHtml(dados.nome)}</h2>
+      <p class="tela-sub" style="margin-bottom:12px;">De <span data-valor>${formatarBRL(oferta.cobradoCentavos)}</span> por <b data-valor>${formatarBRL(oferta.valorCentavos)}</b>. A dívida passa a valer só isso e vira conta a pagar.</p>
+      <div class="field"><label for="ac-parcelas">Em quantas vezes?</label><input type="number" id="ac-parcelas" min="1" max="60" value="1" inputmode="numeric"></div>
+      <div class="field"><label for="ac-data">Dia da 1ª parcela (ou do pagamento à vista)</label><input type="date" id="ac-data" value="${hojeISO()}"></div>
+      <div class="erro-form" id="ac-erro" hidden></div>
+      <div class="modal-actions"><button class="btn btn-ghost" data-ac="cancelar">Cancelar</button><button class="btn btn-primary" data-ac="ok">Fechar acordo</button></div>
+    </div>`);
+  const raiz = document.getElementById("overlay-modal");
+  raiz.querySelector('[data-ac="cancelar"]').addEventListener("click", () => modal.fechar());
+  raiz.querySelector('[data-ac="ok"]').addEventListener("click", async () => {
+    const parcelas = Number(raiz.querySelector("#ac-parcelas").value);
+    const data = raiz.querySelector("#ac-data").value;
+    const erro = raiz.querySelector("#ac-erro");
+    if (!(parcelas >= 1) || !data) { erro.textContent = "Informe em quantas vezes e o dia da primeira parcela."; erro.hidden = false; return; }
+    try {
+      await dividas.atualizar(id, acordoDaOferta(dados, { parcelas, primeiraParcela: data }));
+      modal.fechar();
+    } catch (e) { erro.textContent = e.message || "Não consegui fechar o acordo."; erro.hidden = false; }
+  });
 }
 
 export default criarTelaCadastro({
@@ -92,10 +121,13 @@ export default criarTelaCadastro({
     const v = calcularVisaoConsolidada(dividasComId, hoje);
     const tudoEmDia = v.quantidadeProblemas === 0;
     const placar = placarNomeLimpo(dividasComId);
+    const ofertas = dividasComId.map((d) => ofertaDaDivida(d, hoje)).filter((o) => o && !o.vencida);
+    const economiaTotal = ofertas.reduce((t, o) => t + o.economiaCentavos, 0);
     return `
       <div class="divida-resumo">
-        ${placar.total > 0 ? `<div class="tela-sub" style="margin:0 0 10px;font-weight:600;">Nome limpo: <b>${placar.limpas} de ${placar.total}</b>${placar.faltam ? ` · faltam <span data-valor>${formatarBRL(placar.valorQueFaltaCentavos)}</span> cobrados` : ""}</div>
+        ${placar.total > 0 ? `<div class="tela-sub" style="margin:0 0 10px;font-weight:600;">Nome limpo: <b>${placar.limpas} de ${placar.total}</b>${placar.faltam ? ` · faltam <span data-valor>${formatarBRL(placar.valorQueFaltaCentavos)}</span> a pagar` : ""}</div>
         <div class="barra-limite"><span style="width:${Math.round((placar.limpas / placar.total) * 100)}%"></span></div>` : ""}
+        ${ofertas.length ? `<div class="tela-sub" style="margin:0 0 10px;">Com as ${ofertas.length} ofertas de desconto, o que você realmente paga é o valor já mostrado abaixo, e você deixa de pagar <b class="valor-pos" data-valor>${formatarBRL(economiaTotal)}</b>.</div>` : ""}
         <div class="titulo">${tudoEmDia ? "Nome limpo, tudo em dia" : "O que precisa de atenção"}</div>
         <div class="resumo-mes" style="margin:0;">
           <div class="resumo-item"><span>Dívidas pra resolver</span><b class="mono${v.saldoProblemasCentavos > 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(v.saldoProblemasCentavos)}</b></div>
@@ -120,17 +152,23 @@ export default criarTelaCadastro({
     const oferta = ofertaDaDivida(dados, hoje);
     if (financiamento) {
       const quit = dataEstimadaQuitacao(dados);
+      const prog = progressoDoFinanciamento(dados, null, hoje);
+      const prox = dataProximoVencimento(dados);
+      const numProx = prog.pagas + 1;
+      const venceLogo = prox && prox <= somarDias(hoje, 15);
       return {
         titulo: dados.nome,
-        sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}faltam ${restantes} de ${dados.quantidadeParcelas} parcelas${quit ? ` · quita em ${formatarData(quit)}` : ""}`,
+        sub: `${dados.credor ? dados.credor + " · " : ""}${prog.pagas} de ${prog.total} parcelas pagas${prox ? ` · próxima: parcela ${numProx}, dia ${formatarData(prox).slice(0, 5)}` : ""}${quit ? ` · quita em ${formatarData(quit)}` : ""}`,
         valorDireita: `${formatarBRL(dados.valorParcelaCentavos)}/mês`,
-        tag: "em dia",
-        tagClasse: "ok",
+        tag: prox && prox < hoje ? "atrasada" : "em dia",
+        tagClasse: prox && prox < hoje ? "critico" : "ok",
+        barra: { percentual: prog.percentual, esquerda: `Já pago ${formatarBRL(prog.jaPagoCentavos)} (${prog.percentual}%)`, direita: `Falta ${formatarBRL(prog.faltaPagarCentavos)}` },
+        acaoPrimaria: venceLogo || (prox && prox < hoje) ? `Paguei a parcela ${numProx}` : null,
       };
     }
     return {
       titulo: dados.nome,
-      sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}${dados.prioridadePagamento != null ? ` · prioridade ${dados.prioridadePagamento}` : ""}`,
+      sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${oferta && !oferta.vencida && semAcordo ? `de ${formatarBRL(oferta.cobradoCentavos)} por ${formatarBRL(oferta.valorCentavos)}, economiza ${formatarBRL(oferta.economiaCentavos)}` : semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}${dados.prioridadePagamento != null ? ` · prioridade ${dados.prioridadePagamento}` : ""}`,
       valorDireita: formatarBRL(calcularSaldoAtual(dados)),
       tag: oferta && !oferta.vencida && status !== "quitada" ? `oferta −${oferta.descontoPct}%` : negativadaAtiva ? "negativada" : (status !== "ativa" ? ROTULO_STATUS[status] : (dados.emRisco ? "em risco" : null)),
       tagInativa: status === "quitada",
@@ -149,6 +187,7 @@ export default criarTelaCadastro({
         <div class="fatura-linha"><span class="rotulo">Cobrado hoje, com juros</span><b data-valor>${formatarBRL(oferta.cobradoCentavos)}</b></div>
         <div class="fatura-linha"><span class="rotulo">Oferta${oferta.origem ? ` (${escapeHtml(oferta.origem)})` : ""}</span><b class="valor-pos" data-valor>${formatarBRL(oferta.valorCentavos)} · −${oferta.descontoPct}%</b></div>
         <div class="fatura-linha"><span class="rotulo">Você economiza</span><b class="valor-pos" data-valor>${formatarBRL(oferta.economiaCentavos)}</b></div>
+        ${!oferta.vencida ? `<button class="btn btn-primary btn-sm" type="button" data-acao="fechar-acordo" style="margin-top:8px;width:100%;">Fechei esse acordo: virar conta a pagar</button>` : ""}
         <div class="tela-sub" style="margin:6px 0 0;">${oferta.vencida ? "Oferta vencida em " + escapeHtml(formatarData(oferta.validade)) : oferta.validade ? "Vale até " + escapeHtml(formatarData(oferta.validade)) : "Sem prazo informado"}.</div>
       </div>` : "";
     const blocoProgresso = prog ? `
@@ -199,8 +238,24 @@ export default criarTelaCadastro({
     `;
   },
 
+  async aoAcaoPrimaria(item) {
+    const d = item.dados;
+    const prox = dataProximoVencimento(d);
+    if (!prox) return;
+    const hoje = hojeISO();
+    const numero = (Number(d.parcelasPagas) || 0) + 1;
+    await baixarComPergunta({
+      tipo: "evento",
+      evento: { tipo: "despesa", data: prox < hoje ? hoje : prox, vencimento: prox, atrasado: prox < hoje, valorCentavos: Number(d.valorParcelaCentavos) || 0, descricao: `Parcela ${numero}/${d.quantidadeParcelas} · ${d.nome}`, origem: { tipo: "divida", id: item.id }, virtual: true },
+      descricao: `Parcela ${numero}/${d.quantidadeParcelas} · ${d.nome}`, valorCentavos: Number(d.valorParcelaCentavos) || 0, origem: { tipo: "divida", id: item.id },
+    }, "despesa");
+  },
+
   aoRenderizarExtra(dados, id, contexto, elExtra) {
     const saldoAtualCentavos = calcularSaldoAtual(dados);
+
+    const btnAcordo = elExtra.querySelector('[data-acao="fechar-acordo"]');
+    if (btnAcordo) btnAcordo.addEventListener("click", () => abrirFechamentoDeAcordo(id, dados));
 
     const btnAporte = elExtra.querySelector('[data-acao="simular-aporte"]');
     const inputAporte = elExtra.querySelector('[data-campo="aporte"]');

@@ -305,7 +305,7 @@
 .lista-cartoes { display: flex; flex-direction: column; gap: 10px; }
 .item-cartao {
   background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--sheen), var(--shadow-sm);
-  padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
 }
 .item-avatar {
   width: 40px; height: 40px; border-radius: 11px; background: var(--accent-soft);
@@ -855,3 +855,8 @@
 .fp-opcao-valor { font-size: 13.5px; font-weight: 600; white-space: nowrap; }
 .fp-depois { margin: 4px 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
 .fp-depois:empty { display: none; }
+
+/* Barra de progresso dentro da linha de uma lista (dívida, financiamento). */
+.item-barra { flex: 1 1 100%; order: 5; margin-top: 2px; }
+.item-barra .barra-limite { height: 8px; }
+.item-barra-texto { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text-muted); margin-top: 5px; flex-wrap: wrap; }
