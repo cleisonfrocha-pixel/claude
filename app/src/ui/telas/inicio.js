@@ -17,6 +17,7 @@ import * as privacidade from "../privacidade.js";
 import { navegar } from "../navegacao.js";
 import { abrirAtualizarSaldo } from "../atualizarSaldo.js";
 import { barraEvolucao } from "../barraEvolucao.js";
+import { avatarMarcaHtml } from "../avatarMarca.js";
 import { agendaDaHome } from "../../domain/inicio.js";
 
 let pararInicio = null;
@@ -214,6 +215,7 @@ function blocoAgenda(lista) {
         ${lista.slice(0, 10).map((i) => `
           <div class="inicio-linha${i.pesa ? " pesa" : ""}">
             <span class="inicio-data">${i.atrasado ? `<span class="tag-atrasado">Atrasado</span><small class="inicio-venc">venceu ${escapeHtml(formatarData(i.vencimento || i.data).slice(0, 5))}</small>` : i.semDia ? "no mês" : escapeHtml(formatarData(i.data).slice(0, 5))}</span>
+            ${avatarMarcaHtml([i.descricao], { classe: "inicio-logo" })}
             <span class="inicio-desc">${i.pesa ? `<span class="pesa-ponto" title="Pesa">●</span> ` : ""}${escapeHtml(i.descricao || "")}${i.certeza && i.certeza !== "confirmado" && i.tipo === "entrada" ? " <small>(esperado)</small>" : ""}${i.pesa && i.razoes.length ? `<small style="display:block;opacity:.7;">${escapeHtml(i.razoes.slice(0, 2).join(" · "))}</small>` : ""}</span>
             <b class="mono ${i.tipo === "entrada" ? "valor-pos" : "valor-neg"}" data-valor>${i.tipo === "entrada" ? "+" : "−"}${formatarBRL(i.valorCentavos)}</b>
           </div>`).join("")}

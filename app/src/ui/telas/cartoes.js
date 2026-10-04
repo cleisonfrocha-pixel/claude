@@ -93,7 +93,7 @@ export default criarTelaCadastro({
         </div>`).join("")}
       ${barraEvolucao({ totalRotulo: "Limite total", totalCentavos: visao.limiteTotalCentavos, segmentos: [
         { tipo: visao.nivelAlerta !== "normal" ? "atrasado" : "previsto", rotulo: "Já usado", centavos: Math.min(visao.utilizadoCentavos, visao.limiteTotalCentavos) },
-        { tipo: "falta", rotulo: "Limite livre", centavos: Math.max(0, visao.limiteTotalCentavos - visao.utilizadoCentavos) },
+        { tipo: "livre", rotulo: "Limite livre", centavos: Math.max(0, visao.limiteTotalCentavos - visao.utilizadoCentavos) },
       ] })}
       ${linhaFatura("Fatura atual", visao.faturaAtual, visao.faturaAtual ? (visao.faturaAtual.fechada
         ? `Fechada · vence ${formatarData(visao.faturaAtual.vencimento)}`

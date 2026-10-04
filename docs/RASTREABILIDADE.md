@@ -1717,3 +1717,8 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - **Home**: "O que pesa agora" e "Próximos 7 dias" repetiam os mesmos itens. Virou uma lista só (`agendaDaHome`), com ● nas saídas que pesam e o motivo embaixo; item pesado fora dos 7 dias continua aparecendo. A linha "Pior dia" some quando é o mesmo dia já dito na decisão. Teste em `inicio.test.js`.
 - 508 testes nos dois fusos.
 - Dívidas (Jeep e Cota GEDI) mostram uma barra para cada pedaço (já pago, já previsto, falta além do previsto), cada uma com valor e % do total (`barraEvolucao({ separadas: true })`). A barra empilhada continua em A pagar, A receber, metas e cartões.
+
+## Rodada 12 (04/10/2026): logos e barra única de três pedaços
+- **Barra única de três pedaços** também nas dívidas (Jeep e Cota GEDI), no lugar das três barras separadas: verde = já pago, amarelo = já previsto, roxo listrado = falta além do previsto. As cores valem para todas as barras de evolução. Cartões ganharam o cinza "livre".
+- **Logos nas listas** (`domain/marcas.js`, `ui/avatarMarca.js`): Nubank, Mercado Pago, Shopee, Jeep, Google, iCloud, Claude, Vivo, Pagseguro, WhatsApp e Meta com o logo (pacote Simple Icons, CC0, embutido em SVG, sem baixar imagem). Sem logo livre (Bradesco, Next, Claro, EDP, Xbox, Lovable, Mercado Livre): sigla na cor da marca. O resto: sigla numa cor fixa por nome. Aparece nas listas de cadastro (contas, cartões, dívidas, recorrências, rendas, ativos), em A pagar e na agenda do Início. Testes em `marcas.test.js`.
+- 512 testes nos dois fusos.

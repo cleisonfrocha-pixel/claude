@@ -3,6 +3,7 @@
 // evolução precisam reagir a ativo, dívida e conta mudando, não só à
 // lista de ativos — a fábrica de cadastro sozinha não dá conta disso.
 
+import { avatarMarcaHtml } from "../avatarMarca.js";
 import { hojeISO } from "../../domain/tempo.js";
 import { ativos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelPatrimonio } from "../../dados/patrimonioRepo.js";
@@ -11,7 +12,7 @@ import { leituraDoBem, avisoPatrimonioIncompleto } from "../../domain/bens.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
-import { escapeHtml, iniciais, mostrarToast } from "../utilitarios.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
 
 const ROTULO_CLASSE = {
   liquido: "Líquido", investimento: "Investimento", veiculo: "Veículo",
@@ -62,7 +63,7 @@ function cartaoAtivo(a) {
   ].filter(Boolean);
   return `
     <div class="item-cartao" data-id="${escapeHtml(a.id)}">
-      <div class="item-avatar">${escapeHtml(iniciais(a.nome))}</div>
+      ${avatarMarcaHtml([a.nome])}
       <div class="item-corpo">
         <div class="item-titulo">${escapeHtml(a.nome)}</div>
         <div class="item-sub">${ROTULO_CLASSE[a.classe]} · avaliado em ${escapeHtml(formatarData(a.dataAvaliacao))}</div>

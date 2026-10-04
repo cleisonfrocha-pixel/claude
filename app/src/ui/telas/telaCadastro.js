@@ -4,8 +4,9 @@
 // apagar. Em vez de repetir isso quatro vezes, cada cadastro só descreve
 // os campos e como se exibe; esta fábrica cuida do resto.
 
+import { avatarMarcaHtml } from "../avatarMarca.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
-import { escapeHtml, iniciais, mostrarToast } from "../utilitarios.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
 import { ErroDeValidacao } from "../../dados/repositorios.js";
 
@@ -94,7 +95,7 @@ export function criarTelaCadastro(config) {
       const aberto = expansivel && expandidos.has(item.id);
       return `
         <div class="item-cartao" data-id="${escapeHtml(item.id)}">
-          <div class="item-avatar">${escapeHtml(iniciais(v.titulo))}</div>
+          ${avatarMarcaHtml([v.titulo, v.sub])}
           <div class="item-corpo">
             <div class="item-titulo">${escapeHtml(v.titulo)}</div>
             <div class="item-sub">${escapeHtml(v.sub || "")}</div>

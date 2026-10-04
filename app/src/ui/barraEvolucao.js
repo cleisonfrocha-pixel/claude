@@ -7,27 +7,12 @@ import { escapeHtml } from "./utilitarios.js";
 
 const pct = (parte, total) => (total > 0 ? Math.round((parte / total) * 100) : 0);
 
-/** segmentos = [{ tipo: "pago"|"previsto"|"atrasado"|"falta", rotulo, centavos, detalhe? }].
+/** segmentos = [{ tipo: "pago"|"previsto"|"atrasado"|"falta"|"livre", rotulo, centavos, detalhe? }]  (verde = feito, amarelo = previsto, roxo listrado = falta, cinza = livre).
  * `totalRotulo` e `totalCentavos` abrem a barra; `rodape` é uma frase opcional embaixo. */
-export function barraEvolucao({ totalRotulo = "Valor total", totalCentavos, segmentos, rodape = "", compacta = false, separadas = false }) {
+export function barraEvolucao({ totalRotulo = "Valor total", totalCentavos, segmentos, rodape = "", compacta = false }) {
   const soma = totalCentavos > 0 ? totalCentavos : segmentos.reduce((s, x) => s + x.centavos, 0);
   const visiveis = segmentos.filter((s) => s.centavos > 0);
   const descricao = segmentos.map((s) => `${s.rotulo} ${formatarBRL(s.centavos)} (${pct(s.centavos, soma)}%)`).join(", ");
-  if (separadas) {
-    return `
-    <div class="evo evo-separadas${compacta ? " evo-compacta" : ""}">
-      <div class="evo-topo"><span>${escapeHtml(totalRotulo)}</span><b data-valor>${formatarBRL(soma)}</b></div>
-      ${segmentos.map((s) => `
-        <div class="evo-sep" role="img" aria-label="${escapeHtml(`${s.rotulo} ${formatarBRL(s.centavos)} (${pct(s.centavos, soma)}%)`)}">
-          <div class="evo-sep-topo">
-            <span class="evo-rotulo"><span class="evo-ponto ${s.tipo}"></span>${escapeHtml(s.rotulo)}${s.detalhe ? `<small>${escapeHtml(s.detalhe)}</small>` : ""}</span>
-            <span class="evo-valor"><b data-valor>${formatarBRL(s.centavos)}</b><small>${pct(s.centavos, soma)}% do total</small></span>
-          </div>
-          <div class="evo-trilho"><span class="evo-seg ${s.tipo}" style="width:${s.centavos > 0 ? Math.max(2, (s.centavos / soma) * 100) : 0}%;"></span></div>
-        </div>`).join("")}
-      ${rodape ? `<div class="evo-rodape">${rodape}</div>` : ""}
-    </div>`;
-  }
   return `
     <div class="evo${compacta ? " evo-compacta" : ""}">
       <div class="evo-topo"><span>${escapeHtml(totalRotulo)}</span><b data-valor>${formatarBRL(soma)}</b></div>

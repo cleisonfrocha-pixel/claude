@@ -11,6 +11,7 @@ import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { navegar } from "../navegacao.js";
 import * as modal from "../modal.js";
 import { barraEvolucao } from "../barraEvolucao.js";
+import { avatarMarcaHtml } from "../avatarMarca.js";
 import { abrirLancamento, editarLancamento } from "./transacoes.js";
 import { ajustarEvento } from "../../dados/baixaRepo.js";
 import { carregarBase } from "../../dados/base.js";
@@ -96,6 +97,7 @@ function cartaoConta(i, hoje) {
   return `
     <div class="conta-card estado-${i.estado}${i.incerta ? " incerta" : ""}" data-chave="${escapeHtml(i.chave)}">
       <span class="conta-marca" aria-hidden="true">${paga ? "✓" : i.estado === "atrasada" ? "!" : ""}</span>
+      ${avatarMarcaHtml([i.descricao], { classe: "conta-logo" })}
       <div class="conta-corpo">
         <div class="conta-titulo">${escapeHtml(i.descricao)}</div>
         <div class="conta-sub">${escapeHtml(quando(i, hoje))}</div>

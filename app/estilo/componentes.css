@@ -689,7 +689,7 @@
 .inicio-atencao small { display: block; color: var(--text-muted); margin-top: 3px; font-size: 13px; }
 .inicio-atencao .icone-caixa { color: var(--warn); flex-shrink: 0; }
 .inicio-lista { display: flex; flex-direction: column; }
-.inicio-linha { display: grid; grid-template-columns: 74px 1fr auto; gap: 10px; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.inicio-linha { display: grid; grid-template-columns: 64px 28px 1fr auto; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
 .inicio-linha:last-child { border-bottom: 0; }
 .inicio-data { color: var(--text-muted); font-size: 13px; }
 .inicio-desc small { color: var(--text-faint); }
@@ -870,10 +870,11 @@
 .evo-barra { display: flex; gap: 2px; height: 14px; margin: 8px 0 10px; border-radius: 999px; overflow: hidden; background: var(--surface); }
 .evo-seg { display: block; min-width: 4px; height: 100%; }
 .evo-seg.pago, .evo-ponto.pago { background: var(--good); }
-.evo-seg.previsto, .evo-ponto.previsto { background: var(--accent); }
+.evo-seg.previsto, .evo-ponto.previsto { background: var(--warn); }
 .evo-seg.atrasado, .evo-ponto.atrasado { background: var(--danger); }
-.evo-seg.falta, .evo-ponto.falta { background: color-mix(in srgb, var(--text-muted) 38%, transparent); }
-.evo-seg.previsto { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.28) 0 4px, transparent 4px 8px); }
+.evo-seg.livre, .evo-ponto.livre { background: color-mix(in srgb, var(--text-muted) 38%, transparent); }
+.evo-seg.falta, .evo-ponto.falta { background: var(--accent); }
+.evo-seg.falta, .evo-ponto.falta { background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.32) 0 4px, transparent 4px 8px); }
 .evo-legenda { display: grid; gap: 8px; }
 .evo-linha { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: start; font-size: 14px; }
 .evo-ponto { width: 12px; height: 12px; border-radius: 4px; margin-top: 3px; }
@@ -886,11 +887,10 @@
 .pesa-ponto { color: var(--danger); font-size: 11px; vertical-align: middle; }
 .inicio-linha.pesa { background: color-mix(in srgb, var(--danger) 7%, transparent); border-radius: 10px; }
 
-/* Variante com uma barra para cada pedaço (dívidas: pago, previsto, falta). */
-.evo-separadas .evo-topo { margin-bottom: 4px; }
-.evo-sep { margin-top: 12px; }
-.evo-sep-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; font-size: 14px; }
-.evo-sep-topo .evo-rotulo { display: block; }
-.evo-sep-topo .evo-rotulo .evo-ponto { display: inline-block; margin: 0 8px 0 0; vertical-align: -1px; }
-.evo-trilho { height: 12px; margin-top: 6px; border-radius: 999px; background: var(--surface); overflow: hidden; }
-.evo-trilho .evo-seg { height: 100%; min-width: 0; border-radius: 999px; }
+/* Logo / sigla da instituição (ui/avatarMarca.js). A cor vem da marca, inline. */
+.marca { display: inline-flex; align-items: center; justify-content: center; font-weight: 800; letter-spacing: -.02em; overflow: hidden; }
+.marca svg { width: 60%; height: 60%; display: block; }
+.marca-pequena { font-size: 10px; letter-spacing: -.04em; }
+.conta-logo { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 10px; font-size: 13px; }
+.inicio-logo { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
+.inicio-logo.marca-pequena, .conta-logo.marca-pequena { font-size: 8px; }
