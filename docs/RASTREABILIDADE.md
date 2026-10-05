@@ -1750,3 +1750,4 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - Auditoria da carga em massa e Sprint 9: `docs/PLANO-HISTORICO-REAL.md`.
 - Sprint 4 (Revisar por favorecido, tipo repasse, regras): ver `docs/PLANO-HISTORICO-REAL.md`.
 - Sprint 2 (Carolina, extratos Banco do Brasil jan a set, 149 lançamentos, pessoa herdada da conta): ver `docs/PLANO-HISTORICO-REAL.md`.
+- Sprints 5 e 6 (historicoAno.js, tela Meu ano, card no Início): ver `docs/PLANO-HISTORICO-REAL.md`.

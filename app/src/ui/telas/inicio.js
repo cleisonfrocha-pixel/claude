@@ -224,6 +224,18 @@ function blocoAgenda(lista) {
     </section>`;
 }
 
+function blocoAno(ano) {
+  if (!ano || ano.mesesFechados < 2) return "";
+  const neg = ano.resultadoMedioCentavos < 0;
+  return `
+    <section class="inicio-bloco">
+      <h3>Seu ano até agora ${ajudaHtml("Média do que entrou menos o que saiu, nos meses já fechados e só do que foi pago. Repasse e transferência entre vocês não contam.")}</h3>
+      <div class="fatura-linha"><span class="rotulo">Resultado médio por mês <small>${ano.mesesFechados} meses fechados</small></span><b class="${neg ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(ano.resultadoMedioCentavos)}</b></div>
+      ${ano.piorMes ? `<div class="fatura-linha"><span class="rotulo">Pior mês <small>${escapeHtml(competenciaLabel(ano.piorMes.competencia))}</small></span><b class="${ano.piorMes.resultadoCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(ano.piorMes.resultadoCentavos)}</b></div>` : ""}
+      <button class="btn-link" data-ir-ano>Ver o ano mês a mês</button>
+    </section>`;
+}
+
 function blocoRetrato(retrato) {
   if (!retrato.length) return "";
   return `
@@ -277,6 +289,7 @@ function renderizar() {
         ${blocoPontoDeAtencao(pesa.length > 0)}
       </div>
       <div class="inicio-lateral">
+        ${blocoAno(estadoInicio.ano)}
         ${blocoPrazos(estadoInicio.prazos)}
         ${blocoRetrato(retrato)}
       </div>
@@ -286,6 +299,7 @@ function renderizar() {
   container.querySelectorAll("[data-atualizar-saldo]").forEach((b) => b.addEventListener("click", abrirAtualizarSaldo));
   container.querySelectorAll("[data-ir-contas]").forEach((b) => b.addEventListener("click", () => irPara({ modulo: "dinheiro", aba: "apagar" })));
   container.querySelectorAll("[data-ir-plano]").forEach((b) => b.addEventListener("click", () => irPara("plano")));
+  container.querySelectorAll("[data-ir-ano]").forEach((b) => b.addEventListener("click", () => irPara({ modulo: "plano", aba: "meuano" })));
   container.querySelectorAll("[data-ir-agenda]").forEach((b) => b.addEventListener("click", () => irPara("planejamento")));
   container.querySelectorAll("[data-retrato]").forEach((b) => b.addEventListener("click", () => irPara(retrato[Number(b.dataset.retrato)].destino)));
   ligarBotaoOcultar();

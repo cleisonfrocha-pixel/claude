@@ -87,23 +87,20 @@ vira regra para os próximos extratos.
 Portão cumprido no navegador: clicar "É repasse" em um favorecido atualiza todos os lançamentos
 dele, grava a regra e some da fila; escolher categoria faz o mesmo. 536 testes.
 
-## Sprint 5: motor `historicoAno.js` (domínio puro, com teste)
+## Sprint 5: motor `historicoAno.js` (feita)
 
-Calculado na leitura, nada gravado:
-- Renda por fonte e por mês (Sociable, Gábia, clientes, salário da Carolina).
-- Saídas por grupo e por mês, resultado do mês, **apoio entre os dois** separado
-  de renda.
-- Tendência (3 meses contra os 3 anteriores), pior e melhor mês, piso observado
-  de cada fonte, % do gasto ainda pendente de classificação.
-- Cada número devolve os lançamentos que o formam (exigência do §9 e do §17).
+`domain/historicoAno.js`, puro e com 11 testes. Por mês: renda por fonte, saída por grupo (fatura paga
+sem compras vira "cartão sem detalhe"), resultado, repasses e apoio entre pessoas à parte. Por fonte: piso,
+média e selo (fixa, irregular, caiu, eventual, avulsa) só dos meses fechados. Tendência (3 contra 3),
+melhor e pior mês e % do gasto sem classificar. Cada número devolve os ids dos lançamentos. Filtra por pessoa.
+Números reais (jan a set): resultado médio R$ 292 por mês, pior mês setembro (-R$ 6.283), Sociable e salário
+da Carolina fixos, Gábia irregular (piso R$ 0), 21% do gasto sem classificar.
 
-## Sprint 6: tela "Meu ano" e card no Início
+## Sprint 6: tela "Meu ano" e card no Início (feita)
 
-- Aba em Relatórios: linha por mês, composição das saídas, renda por fonte com o
-  selo "fixa", "irregular" ou "caiu".
-- Card no Início: "Seu ano até agora" com resultado médio e pior mês, apontando
-  para a tela.
-Portão: os totais da tela batem com o extrato conferido.
+Plano > Meu ano (Casa toda, Cleison, Carolina): resumo, mês a mês com detalhe de cada mês, de onde vem o dinheiro
+(com selo e piso), para onde foi (rosca) e quanto falta classificar. Card "Seu ano até agora" no Início
+leva para a tela. Conferido no navegador com o estado real.
 
 ## Sprint 7: plano e cenários passam a usar o histórico real
 

@@ -15,6 +15,7 @@ import { carregarBase } from "./base.js";
 import { registrarInstantaneo } from "./evolucaoRepo.js";
 import { lerPerfil } from "./perfilRepo.js";
 import { prazosQueVem } from "../domain/perfil.js";
+import { montarHistoricoAno } from "../domain/historicoAno.js";
 
 const HORIZONTE_DIAS = 30;
 
@@ -38,6 +39,10 @@ export function calcularInicio(base, hoje = hojeISO(), metas = null, perfil = nu
       return { competencia, resumo: c.resumo, atrasadas: c.grupos.atrasada.slice(0, 3) };
     })(),
     prazos: prazosQueVem(perfil, hoje, { dias: 90 }),
+    ano: (() => {
+      const h = montarHistoricoAno({ transacoes: base.transacoes, categorias: base.categorias, fontesRenda: base.fontesRenda, contas: base.contas, hoje });
+      return { mesesFechados: h.mesesFechados, resultadoMedioCentavos: h.resultadoMedioCentavos, piorMes: h.piorMes ? { competencia: h.piorMes.competencia, resultadoCentavos: h.piorMes.resultadoCentavos } : null, semClassificarPercentual: h.semClassificar.percentual };
+    })(),
     horizonteDias: HORIZONTE_DIAS,
   };
 }
