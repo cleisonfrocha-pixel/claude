@@ -195,6 +195,10 @@ export function padraoDivida(dados = {}) {
     bloqueio: "", // o que está travado por causa dela
     quitadaEm: null,
     centro: "", // casa | negocio | galpao
+    // Cotação de quitação antecipada que o banco deu (financiamento): vale na data, com tantas parcelas pagas.
+    quitacaoInformadaCentavos: 0,
+    quitacaoInformadaEm: "",
+    quitacaoParcelasPagas: 0,
     // Paga com trabalho, não com dinheiro (cota da GEDI): o saldo cai a cada abatimento.
     pagaComTrabalho: false,
     abatimentoDesde: "", // data em que o saldo (valorComJuros) vale

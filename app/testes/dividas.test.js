@@ -164,3 +164,17 @@ test("evolução da dívida: pago + previsto + depois somam o total (financiamen
   assert.equal(c.previstoAte, "2026-12-24");
   assert.equal(evolucaoDaDivida(cota, "2026-11-30").pagoCentavos, 1300000 + 150000 + 700000);
 });
+
+test("cotação de quitação: vale a do banco menos as parcelas pagas depois; sem cotação, o valor presente na taxa do contrato", async () => {
+  const { cotacaoDeQuitacao } = await import("../src/domain/dividas.js");
+  const jeep = divida({ nome: "Jeep", saldoOriginalCentavos: 9890000, valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 21, dataInicio: "2025-02-04", taxaJurosMensalPct: 2.4525, quitacaoInformadaCentavos: 8554186, quitacaoInformadaEm: "2026-10-05", quitacaoParcelasPagas: 20 });
+  const c = cotacaoDeQuitacao(jeep, "2026-10-06");
+  assert.equal(c.origem, "banco");
+  assert.equal(c.valorCentavos, 8554186 - 331637);          // a parcela de outubro foi paga depois da cotação
+  assert.equal(c.velha, false);
+  assert.equal(c.somaDasParcelasCentavos, 331637 * 39);
+  assert.equal(cotacaoDeQuitacao(jeep, "2026-12-01").velha, true);
+  const sem = cotacaoDeQuitacao({ ...jeep, quitacaoInformadaCentavos: 0 }, "2026-10-06");
+  assert.equal(sem.origem, "estimativa");
+  assert.ok(sem.valorCentavos > 8000000 && sem.valorCentavos < 8500000);   // PV de 39 parcelas a 2,4525% a.m. ≈ R$ 82,7 mil
+});

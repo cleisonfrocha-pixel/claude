@@ -13,7 +13,7 @@ import { dividas, pessoas, ativos } from "../../dados/repositorios.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO, somarDias } from "../../domain/tempo.js";
 import {
-  calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao, evolucaoDaDivida,
+  calcularSaldoAtual, parcelasRestantes, dataProximoVencimento, dataEstimadaQuitacao, evolucaoDaDivida, cotacaoDeQuitacao,
   statusDivida, calcularVisaoConsolidada, taxaMensalEfetiva, classificarDivida,
 } from "../../domain/dividas.js";
 import { separarDividas } from "../../domain/bens.js";
@@ -298,7 +298,8 @@ const tela = criarTelaCadastro({
     if (acao === "vender") {
       const bem = (contexto.ativos || []).find((a) => a.dividaId === item.id || a.id === dados.bemId);
       if (!bem) return;
-      abrirSimuladorDeVenda({ nome: bem.nome, valorMercadoCentavos: Number(bem.valorAtualCentavos) || 0, quitacaoCentavos: progressoDoFinanciamento(dados, bem, hoje).faltaPagarCentavos, avaliadoEm: bem.dataAvaliacao });
+      const prog = progressoDoFinanciamento(dados, bem, hoje);
+      abrirSimuladorDeVenda({ nome: bem.nome, valorMercadoCentavos: Number(bem.valorAtualCentavos) || 0, avaliadoEm: bem.dataAvaliacao, cotacao: cotacaoDeQuitacao(dados, hoje), pagoCentavos: prog.jaPagoCentavos, parcelasPagas: prog.pagas, parcelasTotal: prog.total, credor: dados.credor || "o banco" });
     }
   },
 

@@ -111,28 +111,46 @@ export async function abrirComoResolver({ divida, pessoaNome = "", aoFecharAcord
   } else raiz.querySelector("#dv-caixa").textContent = "Sem valor de oferta para conferir.";
 }
 
-/** "E se eu vender o carro?": quanto o bem vale, quanto falta quitar e o que sobra ou falta no bolso. */
-export function abrirSimuladorDeVenda({ nome, valorMercadoCentavos, quitacaoCentavos, avaliadoEm }) {
+/** "E se eu vender o carro?": já abre com tudo preenchido (valor de tabela do cadastro, cotação de quitação do banco,
+ * o que já foi pago) e mostra dois cenários: venda particular e venda para loja (a loja costuma pagar abaixo da tabela;
+ * o desconto de 10% é uma suposição e pode ser mudado em "ajustar os números"). Nada é gravado. */
+export function abrirSimuladorDeVenda({ nome, valorMercadoCentavos, avaliadoEm, cotacao, pagoCentavos = 0, parcelasPagas = 0, parcelasTotal = 0, credor = "o banco" }) {
   const campo = (c) => (c / 100).toFixed(2).replace(".", ",");
+  const quitacao = cotacao?.valorCentavos || 0;
+  const origemTxt = cotacao?.origem === "banco"
+    ? `cotação de ${escapeHtml(credor)} de ${escapeHtml(formatarData(cotacao.em))}${cotacao.ajustadaPorParcelas ? `, menos ${cotacao.ajustadaPorParcelas} ${cotacao.ajustadaPorParcelas === 1 ? "parcela paga" : "parcelas pagas"} depois` : ""}${cotacao.velha ? ". Já tem mais de 30 dias: peça outra ao banco" : ""}`
+    : "estimativa pelos juros do contrato: peça a cotação de quitação ao banco";
   modal.abrir(`
     <div class="modal">
       <h2>E se eu vender: ${escapeHtml(nome)}?</h2>
-      <p class="tela-sub" style="margin-bottom:12px;">Uma conta só, nada é gravado. O valor de mercado que o painel tem é de ${avaliadoEm ? escapeHtml(formatarData(avaliadoEm)) : "data não informada"}: atualize em Plano > Patrimônio se mudou.</p>
-      <div class="field"><label for="sv-preco">Por quanto consigo vender</label><input type="text" inputmode="decimal" id="sv-preco" value="${campo(valorMercadoCentavos)}"></div>
-      <div class="field"><label for="sv-quita">Quanto o banco pede para quitar hoje</label><input type="text" inputmode="decimal" id="sv-quita" value="${campo(quitacaoCentavos)}">
-        <small class="tela-sub">Começa na soma das parcelas que faltam (o teto). Peça o saldo de quitação no banco: costuma ser menor, porque tira os juros futuros.</small></div>
-      <div class="field"><label for="sv-custos">Custos da venda (transferência, comissão)</label><input type="text" inputmode="decimal" id="sv-custos" value="0,00"></div>
-      <div class="dv-card" id="sv-resultado" aria-live="polite"></div>
+      <p class="tela-sub" style="margin-bottom:12px;">Nada é gravado. Tudo já vem preenchido com o que o painel sabe.</p>
+      <div class="dv-card">
+        <div class="fatura-linha"><span class="rotulo">Valor de tabela<small>do cadastro do bem, avaliado em ${avaliadoEm ? escapeHtml(formatarData(avaliadoEm)) : "data não informada"}</small></span><b data-valor>${formatarBRL(valorMercadoCentavos)}</b></div>
+        <div class="fatura-linha"><span class="rotulo">Para quitar hoje<small>${origemTxt}</small></span><b data-valor>${formatarBRL(quitacao)}</b></div>
+        ${cotacao?.somaDasParcelasCentavos ? `<div class="fatura-linha"><span class="rotulo">Se pagasse todas as parcelas<small>o que o contrato soma até o fim</small></span><span data-valor>${formatarBRL(cotacao.somaDasParcelasCentavos)}</span></div>` : ""}
+        ${pagoCentavos > 0 ? `<div class="fatura-linha"><span class="rotulo">Você já pagou<small>${parcelasPagas} de ${parcelasTotal} parcelas: esse dinheiro não volta se vender</small></span><span data-valor>${formatarBRL(pagoCentavos)}</span></div>` : ""}
+      </div>
+      <div id="sv-cenarios" aria-live="polite"></div>
+      <details class="inicio-detalhe" style="margin-top:12px;"><summary>Ajustar os números</summary>
+        <div class="field"><label for="sv-preco">Valor de tabela</label><input type="text" inputmode="decimal" id="sv-preco" value="${campo(valorMercadoCentavos)}"></div>
+        <div class="field"><label for="sv-quita">Quanto o banco pede para quitar hoje</label><input type="text" inputmode="decimal" id="sv-quita" value="${campo(quitacao)}"></div>
+        <div class="field"><label for="sv-loja">Quanto abaixo da tabela a loja paga (%)</label><input type="text" inputmode="decimal" id="sv-loja" value="10"></div>
+        <div class="field"><label for="sv-custos">Custos da venda (transferência, comissão)</label><input type="text" inputmode="decimal" id="sv-custos" value="0,00"></div>
+      </details>
       <div class="modal-actions"><button class="btn btn-ghost" data-sv="fechar">Fechar</button></div>
     </div>`);
   const raiz = document.getElementById("overlay-modal");
+  const cartao = (rotulo, preco, r) => `<div class="dv-card" style="margin-top:10px;"><div class="dv-rotulo">${rotulo}: vende por <span data-valor>${formatarBRL(preco)}</span></div>
+    ${r.resultado === "sobra"
+      ? `<div class="dv-numero valor-pos" data-valor>${formatarBRL(r.sobraCentavos)}</div><div class="dv-sub">Sobra no seu bolso depois de quitar o financiamento.</div>`
+      : `<div class="dv-numero valor-neg" data-valor>−${formatarBRL(-r.sobraCentavos)}</div><div class="dv-sub">Você teria que pôr isso do bolso para quitar e entregar o carro. Vender agora vira prejuízo.</div>`}</div>`;
   const atualizar = () => {
-    const r = simularVenda({ precoVendaCentavos: paraCentavos(raiz.querySelector("#sv-preco").value), quitacaoCentavos: paraCentavos(raiz.querySelector("#sv-quita").value), custosCentavos: paraCentavos(raiz.querySelector("#sv-custos").value) });
-    raiz.querySelector("#sv-resultado").innerHTML = r.resultado === "sobra"
-      ? `<div class="dv-sub">Vendendo e quitando, sobra no seu bolso</div><div class="dv-numero valor-pos" data-valor>${formatarBRL(r.sobraCentavos)}</div>`
-      : `<div class="dv-sub">Para vender você precisaria pôr do bolso (a venda não cobre a dívida)</div><div class="dv-numero valor-neg" data-valor>${formatarBRL(-r.sobraCentavos)}</div><div class="dv-sub">Hoje o carro vale menos do que falta pagar. Vender agora vira prejuízo.</div>`;
+    const preco = paraCentavos(raiz.querySelector("#sv-preco").value), quita = paraCentavos(raiz.querySelector("#sv-quita").value), custos = paraCentavos(raiz.querySelector("#sv-custos").value);
+    const lojaPct = Math.min(60, Math.max(0, Number(String(raiz.querySelector("#sv-loja").value).replace(",", ".")) || 0));
+    const precoLoja = Math.round(preco * (1 - lojaPct / 100));
+    raiz.querySelector("#sv-cenarios").innerHTML = cartao("Venda particular", preco, simularVenda({ precoVendaCentavos: preco, quitacaoCentavos: quita, custosCentavos: custos })) + cartao(`Venda para loja (${lojaPct}% abaixo)`, precoLoja, simularVenda({ precoVendaCentavos: precoLoja, quitacaoCentavos: quita, custosCentavos: custos }));
   };
-  ["#sv-preco", "#sv-quita", "#sv-custos"].forEach((s) => raiz.querySelector(s).addEventListener("input", atualizar));
+  ["#sv-preco", "#sv-quita", "#sv-loja", "#sv-custos"].forEach((sel) => raiz.querySelector(sel).addEventListener("input", atualizar));
   raiz.querySelector('[data-sv="fechar"]').addEventListener("click", () => modal.fechar());
   atualizar();
 }

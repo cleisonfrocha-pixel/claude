@@ -10,6 +10,8 @@ import { ativos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelPatrimonio } from "../../dados/patrimonioRepo.js";
 import { CLASSES_ATIVO } from "../../domain/esquema.js";
 import { leituraDoBem, avisoPatrimonioIncompleto } from "../../domain/bens.js";
+import { cotacaoDeQuitacao } from "../../domain/dividas.js";
+import { progressoDoFinanciamento } from "../../domain/esteira.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
@@ -174,8 +176,10 @@ function renderizarListaAtivos() {
       if (!a) return;
       const l = leituraDoBem(a, painel.dividas, painel.recorrencias);
       const divida = a.dividaId ? painel.dividas.find((d) => d.id === a.dividaId) : null;
-      const falta = divida ? (Number(divida.valorParcelaCentavos) || 0) * l.parcelasRestantes : 0;
-      abrirSimuladorDeVenda({ nome: a.nome, valorMercadoCentavos: Number(a.valorAtualCentavos) || 0, quitacaoCentavos: falta || l.dividaCentavos, avaliadoEm: a.dataAvaliacao });
+      const hoje = hojeISO();
+      const cot = divida ? cotacaoDeQuitacao(divida, hoje) : { valorCentavos: 0, origem: "estimativa", em: null, ajustadaPorParcelas: 0, velha: false };
+      const prog = divida ? progressoDoFinanciamento(divida, a, hoje) : null;
+      abrirSimuladorDeVenda({ nome: a.nome, valorMercadoCentavos: Number(a.valorAtualCentavos) || 0, avaliadoEm: a.dataAvaliacao, cotacao: cot, pagoCentavos: prog?.jaPagoCentavos || 0, parcelasPagas: prog?.pagas || 0, parcelasTotal: prog?.total || 0, credor: divida?.credor || "o banco" });
     });
   });
   alvo.querySelectorAll('[data-acao="editar"]').forEach((btn) => {

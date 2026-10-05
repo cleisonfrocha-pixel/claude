@@ -169,6 +169,21 @@ export function evolucaoDaDivida(divida, hoje = hojeISO(), { meses = 12 } = {}) 
   };
 }
 
+/** Quanto custa quitar o financiamento hoje. Com a cotação do banco (valor, data e parcelas pagas na data), vale a
+ * cotação menos as parcelas pagas depois dela (a parcela mais próxima não tem desconto, então a subtração é exata
+ * para a primeira e uma aproximação para as seguintes). Sem cotação, o valor presente das parcelas na taxa do
+ * contrato (calcularSaldoAtual). `velha` avisa quando a cotação tem mais de 30 dias: peça outra ao banco. */
+export function cotacaoDeQuitacao(divida, hoje = hojeISO()) {
+  const cot = Number(divida.quitacaoInformadaCentavos) || 0;
+  const parcela = Number(divida.valorParcelaCentavos) || 0;
+  if (cot > 0 && divida.quitacaoInformadaEm) {
+    const pagasDesde = Math.max(0, (Number(divida.parcelasPagas) || 0) - (Number(divida.quitacaoParcelasPagas) || 0));
+    const dias = Math.round((new Date(`${hoje}T12:00:00Z`) - new Date(`${divida.quitacaoInformadaEm}T12:00:00Z`)) / 86400000);
+    return { valorCentavos: Math.max(0, cot - pagasDesde * parcela), origem: "banco", em: divida.quitacaoInformadaEm, ajustadaPorParcelas: pagasDesde, velha: dias > 30, somaDasParcelasCentavos: parcela * parcelasRestantes(divida) };
+  }
+  return { valorCentavos: calcularSaldoAtual(divida, hoje), origem: "estimativa", em: null, ajustadaPorParcelas: 0, velha: false, somaDasParcelasCentavos: parcela * parcelasRestantes(divida) };
+}
+
 /** A data da ÚLTIMA parcela — quando a dívida quita, sem nenhum aporte extra.
  * Dívida sem acordo (parcela zero) não tem data: não quita sozinha. */
 export function dataEstimadaQuitacao(divida) {
