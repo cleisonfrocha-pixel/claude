@@ -87,3 +87,41 @@ export function colunasEntraSai({ meses, titulo, rotulos }) {
     <div class="viz-legenda-h"><span><i class="viz-chip" style="background:var(--viz-1)"></i>Entra</span><span><i class="viz-chip" style="background:var(--viz-2)"></i>Sai</span><span><i class="viz-chip" style="background:var(--viz-3)"></i>Saldo ao fim do mês</span></div>
   </figure>${tabelaEscondida(titulo, meses.map((m, i) => [rotulos[i], formatarBRL(m.entradasCentavos), formatarBRL(m.saidasCentavos), formatarBRL(m.saldoFimCentavos)]), ["Mês", "Entra", "Sai", "Saldo ao fim"])}`;
 }
+
+let contadorLinha = 0;
+
+/** Saldo ao fim de cada mês: uma linha só, com a faixa abaixo de zero em vermelho (é onde o dinheiro acaba),
+ * o ponto mais baixo e o último marcados com valor, e opcionalmente um mês destacado (a virada). */
+export function linhaSaldo({ meses, rotulos, titulo, destaqueIndice = null, destaqueRotulo = "" }) {
+  const W = 340, H = 180, ML = 8, MR = 8, MT = 22, MB = 24;
+  const id = `ls${++contadorLinha}`;
+  const vals = [...meses.map((m) => m.saldoFimCentavos), 0];
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const y = (v) => MT + ((max - v) / Math.max(1, max - min)) * (H - MT - MB);
+  const passo = (W - ML - MR) / Math.max(1, meses.length - 1);
+  const x = (i) => ML + passo * i;
+  const base = y(0);
+  const pts = meses.map((m, i) => [x(i), y(m.saldoFimCentavos)]);
+  const linha = pts.map(([px, py]) => `${px.toFixed(1)},${py.toFixed(1)}`).join(" ");
+  const area = `M${pts[0][0].toFixed(1)},${base.toFixed(1)} ${pts.map(([px, py]) => `L${px.toFixed(1)},${py.toFixed(1)}`).join(" ")} L${pts[pts.length - 1][0].toFixed(1)},${base.toFixed(1)} Z`;
+  const piorI = meses.reduce((p, m, i) => (m.saldoFimCentavos < meses[p].saldoFimCentavos ? i : p), 0);
+  const ult = meses.length - 1;
+  const ancora = (i) => (i === 0 ? "start" : i === ult ? "end" : "middle");
+  const rotuloPonto = (i, dy) => `<text x="${pts[i][0].toFixed(1)}" y="${(pts[i][1] + dy).toFixed(1)}" text-anchor="${ancora(i)}" class="viz-rotulo-fim">${escapeHtml(reaisCurto(meses[i].saldoFimCentavos))}</text>`;
+  const destaque = destaqueIndice != null && meses[destaqueIndice]
+    ? `<line x1="${x(destaqueIndice).toFixed(1)}" x2="${x(destaqueIndice).toFixed(1)}" y1="${MT - 6}" y2="${H - MB}" class="viz-zero" stroke-dasharray="3 3"/><text x="${x(destaqueIndice).toFixed(1)}" y="${MT - 9}" text-anchor="middle" class="viz-eixo">${escapeHtml(destaqueRotulo)}</text>` : "";
+  const eixo = meses.map((m, i) => (i % 2 === 0 || meses.length < 8) ? `<text x="${x(i).toFixed(1)}" y="${H - 8}" text-anchor="${ancora(i)}" class="viz-eixo">${escapeHtml(rotulos[i])}</text>` : "").join("");
+  return `<figure class="viz-colunas" role="img" aria-label="${escapeHtml(titulo)}">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet">
+      <defs><clipPath id="${id}-pos"><rect x="0" y="0" width="${W}" height="${base.toFixed(1)}"/></clipPath><clipPath id="${id}-neg"><rect x="0" y="${base.toFixed(1)}" width="${W}" height="${H}"/></clipPath></defs>
+      <path d="${area}" fill="var(--good)" fill-opacity=".22" clip-path="url(#${id}-pos)"/>
+      <path d="${area}" fill="var(--danger)" fill-opacity=".30" clip-path="url(#${id}-neg)"/>
+      <line x1="${ML}" x2="${W - MR}" y1="${base.toFixed(1)}" y2="${base.toFixed(1)}" class="viz-zero"/>
+      ${destaque}
+      <polyline points="${linha}" fill="none" stroke="var(--viz-3)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      ${pts.map(([px, py], i) => `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3.2" fill="${meses[i].saldoFimCentavos < 0 ? "var(--danger)" : "var(--viz-3)"}" stroke="var(--viz-superficie)" stroke-width="1.5"><title>${escapeHtml(rotulos[i])}: ${formatarBRL(meses[i].saldoFimCentavos)}</title></circle>`).join("")}
+      ${rotuloPonto(piorI, piorI === ult ? -8 : 17)}${piorI !== ult ? rotuloPonto(ult, -8) : ""}${eixo}
+    </svg>
+    <div class="viz-legenda-h"><span><i class="viz-chip" style="background:var(--good)"></i>Saldo positivo</span><span><i class="viz-chip" style="background:var(--danger)"></i>Dinheiro acabou (abaixo de zero)</span></div>
+  </figure>${tabelaEscondida(titulo, meses.map((m, i) => [rotulos[i], formatarBRL(m.saldoFimCentavos)]), ["Mês", "Saldo ao fim"])}`;
+}

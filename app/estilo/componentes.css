@@ -911,3 +911,24 @@
 .dv-lista a { color: var(--accent); }
 .dv-modal-topo { display: flex; align-items: center; gap: 12px; }
 @media (max-width: 860px) { .dv-topo { grid-template-columns: 1fr; } .dv-numero { font-size: 26px; } }
+
+/* Plano: veredito, gráfico e passos (ui/telas/plano.js). */
+.pa-hero { border-left: 5px solid var(--good); }
+.pa-hero.tom-urgente { border-left-color: var(--danger); }
+.pa-hero.tom-atencao { border-left-color: var(--warn); }
+.pa-veredito { display: grid; gap: 4px; margin: 2px 0 10px; }
+.pa-veredito b { font-size: 18px; line-height: 1.25; }
+.pa-veredito span { color: var(--text-muted); font-size: 14px; }
+.pa-passos { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 12px; }
+.pa-passo { display: flex; gap: 12px; padding: 14px; border: 1px solid var(--border); border-left: 5px solid var(--text-faint); border-radius: 14px; background: var(--surface); }
+.pa-passo.tom-urgente { border-left-color: var(--danger); background: color-mix(in srgb, var(--danger) 6%, var(--surface)); }
+.pa-passo.tom-atencao { border-left-color: var(--warn); }
+.pa-num { flex: 0 0 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 14px; background: var(--surface-2, rgba(124,58,237,.14)); }
+.pa-corpo { flex: 1; min-width: 0; }
+.pa-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.pa-prazo { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--text-muted); }
+.pa-passo.tom-urgente .pa-prazo { color: var(--danger); }
+.pa-passo.tom-atencao .pa-prazo { color: var(--warn); }
+.pa-corpo h4 { margin: 4px 0; font-size: 16px; line-height: 1.3; }
+.pa-corpo p { margin: 0 0 6px; font-size: 14px; color: var(--text-muted); }
+.pa-corpo ul { margin: 0 0 8px; padding-left: 18px; font-size: 13.5px; color: var(--text-muted); display: grid; gap: 2px; }

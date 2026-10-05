@@ -13,6 +13,7 @@ import { navegar } from "../navegacao.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { escapeHtml, ajudaHtml } from "../utilitarios.js";
+import { linhaSaldo } from "../graficos.js";
 
 const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
 const CLASSE_URGENCIA = { alta: "critico", media: "atencao", baixa: "" };
@@ -172,6 +173,36 @@ function cartaoRevisao(c) {
       <div class="achado-titulo">${escapeHtml(c.titulo)}</div>
       ${aberto ? c.itens.map(cartaoAchado).join("") : ""}
     </div>`;
+}
+
+const ROTULO_DESTINO = { apagar: "Ver as contas", caminhos: "Ver os caminhos", patrimonio: "Ver patrimônio e metas" };
+const rotuloDestino = (d) => (d.modulo === "dividas" ? "Ver as dívidas" : ROTULO_DESTINO[d.aba] || "Abrir");
+
+/** O plano em passos: o veredito, o gráfico do saldo nos próximos 12 meses e o que fazer, em ordem. */
+function blocoPlanoDeAcao(g) {
+  const { veredito, passos } = g.acao;
+  const linhas = g.mapa.linhas;
+  const viradaI = g.mapa.buraco?.mesDaVirada ? linhas.findIndex((l) => l.competencia === g.mapa.buraco.mesDaVirada) : null;
+  return `
+    <section class="inicio-bloco pa-hero tom-${veredito.tom}">
+      <h3>Seu plano</h3>
+      <div class="pa-veredito"><b>${escapeHtml(veredito.titulo)}</b><span>${escapeHtml(veredito.texto)}</span></div>
+      ${linhaSaldo({ meses: linhas, rotulos: linhas.map((l) => mesCurto(l.competencia)), titulo: "Saldo em conta ao fim de cada mês, próximos 12 meses", destaqueIndice: viradaI >= 0 ? viradaI : null, destaqueRotulo: viradaI >= 0 && viradaI != null ? "vira" : "" })}
+    </section>
+    <section class="inicio-bloco">
+      <h3>O que fazer, em ordem ${ajudaHtml("Os passos saem dos seus números: caixa dos próximos dias, o que está atrasado, o mês em que a conta deixa de fechar, as ofertas de dívida e os prazos do seu perfil. O mais urgente vem primeiro.")}</h3>
+      ${passos.length ? `<ol class="pa-passos">${passos.map((p, i) => `
+        <li class="pa-passo tom-${p.tom}">
+          <span class="pa-num" aria-hidden="true">${i + 1}</span>
+          <div class="pa-corpo">
+            <div class="pa-topo"><span class="pa-prazo">${escapeHtml(p.prazo)}</span>${p.valorCentavos ? `<b class="mono" data-valor>${formatarBRL(p.valorCentavos)}</b>` : ""}</div>
+            <h4>${escapeHtml(p.titulo)}</h4>
+            ${p.texto ? `<p>${escapeHtml(p.texto)}</p>` : ""}
+            ${p.detalhes?.length ? `<ul>${p.detalhes.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul>` : ""}
+            <button class="btn btn-ghost btn-sm" data-pa-destino="${i}">${escapeHtml(rotuloDestino(p.destino))}</button>
+          </div>
+        </li>`).join("")}</ol>` : `<div class="alerta-tudo-coberto">Nada pedindo ação agora.</div>`}
+    </section>`;
 }
 
 function blocoOndeVoceEsta(g) {
@@ -396,9 +427,8 @@ function renderizar() {
   container.innerHTML = `
     <div class="inicio-grade">
       <div class="inicio-principal">
-        ${geral ? blocoOndeVoceEsta(geral) : ""}
-        ${geral ? blocoPraOndeVai(geral) : ""}
-        ${geral ? blocoAlavancas(geral) : ""}
+        ${geral ? blocoPlanoDeAcao(geral) : ""}
+        ${geral ? recolhivel("numeros", "Os números por trás do plano", "Onde você está, mês a mês e as alavancas", blocoOndeVoceEsta(geral) + blocoPraOndeVai(geral) + blocoAlavancas(geral)) : ""}
       </div>
       <div class="inicio-lateral">
         <section class="inicio-bloco">
@@ -443,6 +473,7 @@ function renderizar() {
 }
 
 function ligarEventos() {
+  container.querySelectorAll("[data-pa-destino]").forEach((b) => b.addEventListener("click", () => navegar(geral.acao.passos[Number(b.dataset.paDestino)].destino)));
   container.querySelector("[data-ir-dividas]")?.addEventListener("click", () => navegar({ modulo: "dividas" }));
   container.querySelector("[data-ir-fechamento]")?.addEventListener("click", () => navegar({ modulo: "plano", aba: "fechamento" }));
   container.querySelectorAll("[data-marco]").forEach((b) => {

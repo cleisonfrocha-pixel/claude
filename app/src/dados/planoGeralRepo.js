@@ -10,6 +10,11 @@ import { calcularVisaoConsolidada, calcularSaldoAtual, statusDivida } from "../d
 import { alavancas } from "../domain/planoGeral.js";
 import { mapaDeMeses } from "../domain/mapa12.js";
 import { hojeISO, competenciaDeData } from "../domain/tempo.js";
+import { lerSituacao } from "../domain/situacao.js";
+import { panoramaDeDividas } from "../domain/esteira.js";
+import { prazosQueVem } from "../domain/perfil.js";
+import { montarPlanoDeAcao } from "../domain/planoDeAcao.js";
+import { lerPerfil } from "./perfilRepo.js";
 
 const HORIZONTES = [
   { chave: "3m", rotulo: "Em 3 meses", dias: 90 },
@@ -17,7 +22,7 @@ const HORIZONTES = [
   { chave: "12m", rotulo: "Em 12 meses", dias: 365 },
 ];
 
-export function calcularPlanoGeral(base, hoje = hojeISO()) {
+export function calcularPlanoGeral(base, hoje = hojeISO(), perfil = null) {
   const competencia = competenciaDeData(hoje);
   const visao = visaoDoMes({ ...base, competencia, hoje });
   const consolidada = calcularVisaoConsolidada(base.dividas, hoje);
@@ -39,9 +44,18 @@ export function calcularPlanoGeral(base, hoje = hojeISO()) {
 
   const mapa = mapaDeMeses({ ...base, saldoInicialCentavos, gastoDiaADiaMensalCentavos, hoje });
 
+  const situacao = lerSituacao({ ...base, hoje, horizonteDias: 30 });
+  const panorama = panoramaDeDividas(base.dividas, hoje);
+  const listaAlavancas = alavancas({ transacoes: base.transacoes, categorias: base.categorias, dividas: base.dividas, competencia, hoje, sobraCentavos });
+  const acao = montarPlanoDeAcao({
+    situacao, mapa, panorama, alavancas: listaAlavancas, prazos: prazosQueVem(perfil, hoje, { dias: 120 }),
+    reservaCentavos: situacao.reservaCentavos, custoEssencialMesCentavos: situacao.obrigacoesMensaisCentavos, hoje,
+  });
+
   return {
     competencia,
     mapa,
+    acao,
     foraDoPlano: { quantidade: foraDoPlano.length, totalCentavos: foraDoPlano.reduce((t, d) => t + d.valorCentavos, 0), itens: foraDoPlano },
     agora: {
       saldoInicialCentavos,
@@ -53,10 +67,10 @@ export function calcularPlanoGeral(base, hoje = hojeISO()) {
       sobraCentavos,
     },
     futuro,
-    alavancas: alavancas({ transacoes: base.transacoes, categorias: base.categorias, dividas: base.dividas, competencia, hoje, sobraCentavos }),
+    alavancas: listaAlavancas,
   };
 }
 
 export function assinarPlanoGeral(cb) {
-  return assinarBase((base) => calcularPlanoGeral(base), cb);
+  return assinarBase(async (base) => calcularPlanoGeral(base, hojeISO(), await lerPerfil()), cb);
 }
