@@ -5,6 +5,7 @@ import { assinarBase } from "./base.js";
 import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularHorizonte } from "../domain/projecao.js";
 import { gastoDiaADiaMensal } from "../domain/previstos.js";
+import { baseRealDoPlano } from "../domain/historicoAno.js";
 import { visaoDoMes, sobraDoMes } from "../domain/mes.js";
 import { calcularVisaoConsolidada, calcularSaldoAtual, statusDivida } from "../domain/dividas.js";
 import { alavancas } from "../domain/planoGeral.js";
@@ -54,6 +55,7 @@ export function calcularPlanoGeral(base, hoje = hojeISO(), perfil = null) {
 
   return {
     competencia,
+    baseReal: baseRealDoPlano({ ...base, hoje }),
     mapa,
     acao,
     foraDoPlano: { quantidade: foraDoPlano.length, totalCentavos: foraDoPlano.reduce((t, d) => t + d.valorCentavos, 0), itens: foraDoPlano },

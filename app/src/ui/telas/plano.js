@@ -187,6 +187,7 @@ function blocoPlanoDeAcao(g) {
     <section class="inicio-bloco pa-hero tom-${veredito.tom}">
       <h3>Seu plano</h3>
       <div class="pa-veredito"><b>${escapeHtml(veredito.titulo)}</b><span>${escapeHtml(veredito.texto)}</span></div>
+      ${g.baseReal ? `<p class="tela-sub" style="margin:6px 0 0;">${escapeHtml(g.baseReal.frase)}</p>` : ""}
       ${linhaSaldo({ meses: linhas, rotulos: linhas.map((l) => mesCurto(l.competencia)), titulo: "Saldo em conta ao fim de cada mês, próximos 12 meses", destaqueIndice: viradaI >= 0 ? viradaI : null, destaqueRotulo: viradaI >= 0 && viradaI != null ? "vira" : "" })}
     </section>
     <section class="inicio-bloco">

@@ -46,6 +46,7 @@ function renderizar() {
       <div>
         <h2 class="tela-titulo">Fluxo de caixa</h2>
         <p class="tela-sub">Quanto vai sobrar na conta em cada prazo, contando o que está marcado pra entrar e sair, as parcelas das dívidas e o gasto do dia a dia no ritmo dos últimos meses${painel.gastoDiaADiaMensalCentavos ? ` (<span data-valor>${formatarBRL(painel.gastoDiaADiaMensalCentavos)}</span> por mês)` : ""}. Renda que não é certa fica de fora.</p>
+        ${painel.baseReal ? `<p class="tela-sub" style="margin-top:4px;">${escapeHtml(painel.baseReal.frase)}</p>` : ""}
       </div>
     </div>
 

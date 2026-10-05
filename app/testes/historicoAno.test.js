@@ -129,3 +129,14 @@ test("sem lançamentos: devolve vazio sem quebrar", () => {
   assert.equal(r.piorMes, null);
   assert.equal(r.semClassificar.percentual, 0);
 });
+
+test("baseRealDoPlano: diz em quantos meses reais o plano se apoia e o que não é garantido", async () => {
+  const { baseRealDoPlano } = await import("../src/domain/historicoAno.js");
+  const b = baseRealDoPlano({ transacoes: cenario(), categorias, fontesRenda, contas, hoje: "2026-09-10" });
+  assert.equal(b.mesesFechados, 6);
+  assert.ok(b.naoGarantidas.some((f) => f.nome === "Gábia"));
+  assert.match(b.frase, /Baseado em 6 meses reais fechados/);
+  assert.match(b.frase, /Gábia/);
+  const vazio = baseRealDoPlano({ transacoes: [], categorias, fontesRenda, contas, hoje: "2026-09-10" });
+  assert.match(vazio.frase, /Ainda não há mês fechado/);
+});

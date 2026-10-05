@@ -14,7 +14,12 @@ pra qualquer pessoa está errado.
    (https://claude.ai/artifact/LgXc37oyU6rwCZTguZf5j6). Se o banco estiver indisponível, use
    `app/ferramentas/perfil-semente.json` (cópia do que foi enviado em 03/10/2026) e diga que usou a cópia.
 2. Leia o estado atual com os números do painel (Início, Plano, Dívidas). Não invente valor.
-3. Confira os prazos do perfil (hoje: obra do galpão em 31/10 e decisão da GEDI até 30/11, dia exato a confirmar).
+3. Leia o histórico real (Fase 12): baixe o estado (como na skill `subir-painel`) e rode
+   `node app/ferramentas/auditoria/resumo-historico.mjs <pasta-do-estado> <hoje> [pessoaId]`. Ele diz em quantos meses
+   reais o plano se apoia, o resultado médio, o pior mês, e o **piso** de cada fonte de renda. Renda garantida no
+   plano é o piso real, não o valor combinado; fonte irregular ou que caiu entra como incerta. Escreva no plano
+   "baseado em N meses reais" e avise quanto do gasto ainda está sem classificar.
+4. Confira os prazos do perfil (hoje: obra do galpão em 31/10 e decisão da GEDI até 30/11, dia exato a confirmar).
 
 ## Regras que o plano nunca quebra
 

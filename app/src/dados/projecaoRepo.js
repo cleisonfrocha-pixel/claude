@@ -6,13 +6,15 @@ import { carregarBase, assinarBase } from "./base.js";
 import { calcularSaldoConta } from "../domain/caixa.js";
 import { calcularProjecao } from "../domain/projecao.js";
 import { gastoDiaADiaMensal } from "../domain/previstos.js";
+import { baseRealDoPlano } from "../domain/historicoAno.js";
 import { hojeISO, competenciaAtual } from "../domain/tempo.js";
 
 function calcular(base) {
   const contasOperacao = base.contas.filter((c) => c.status === "ativa" && !c.ehReserva);
   const saldoInicialCentavos = contasOperacao.reduce((s, c) => s + calcularSaldoConta(c, base.transacoes), 0);
   const gastoDiaADiaMensalCentavos = gastoDiaADiaMensal({ ...base, competencia: competenciaAtual() });
-  return calcularProjecao({ ...base, saldoInicialCentavos, gastoDiaADiaMensalCentavos, hoje: hojeISO() });
+  const hoje = hojeISO();
+  return { ...calcularProjecao({ ...base, saldoInicialCentavos, gastoDiaADiaMensalCentavos, hoje }), baseReal: baseRealDoPlano({ ...base, hoje }) };
 }
 
 export async function calcularProjecaoAgora() {

@@ -12,37 +12,18 @@
 import { competenciaDeData } from "./tempo.js";
 import { NOME_GRUPO } from "./relatorios.js";
 import { precisaRevisar } from "./favorecidos.js";
+import { seloDaFonte, media } from "./pisoDaRenda.js";
+
+export { seloDaFonte };
 
 export const GRUPO_CARTAO_SEM_DETALHE = "cartao_sem_detalhe";
 const NOME_SEM_FONTE = "Sem fonte cadastrada";
-const MIN_MESES_PARA_SELO = 3;
 
 const valor = (t) => Number(t.valorCentavos) || 0;
 const soma = (itens) => itens.reduce((s, i) => s + i.valorCentavos, 0);
-const media = (xs) => (xs.length ? Math.round(xs.reduce((s, x) => s + x, 0) / xs.length) : 0);
 
 function janela(competencias, n) {
   return competencias.slice(Math.max(0, competencias.length - n));
-}
-
-/**
- * Selo de uma fonte de renda a partir dos meses FECHADOS da janela.
- *   eventual   -> apareceu em um mês só (ou nunca nos meses fechados)
- *   caiu       -> nos últimos 3 meses recebeu menos da metade da média dos meses anteriores
- *   fixa       -> presente em todos os meses da janela, variação de até 15%
- *   irregular  -> o resto
- */
-export function seloDaFonte(valoresPorMes) {
-  const presentes = valoresPorMes.filter((v) => v > 0);
-  if (presentes.length <= 1) return "eventual";
-  if (valoresPorMes.length >= MIN_MESES_PARA_SELO + 1) {
-    const ultimos = valoresPorMes.slice(-3);
-    const antes = valoresPorMes.slice(0, -3);
-    if (antes.filter((v) => v > 0).length >= 2 && media(ultimos) < media(antes) / 2) return "caiu";
-  }
-  const maior = Math.max(...valoresPorMes), menor = Math.min(...valoresPorMes);
-  if (menor > 0 && (maior - menor) / maior <= 0.15) return "fixa";
-  return "irregular";
 }
 
 /** Meses de transferência entre pessoas: quanto uma mandou para a outra (não é renda). */
@@ -190,4 +171,18 @@ export function montarHistoricoAno({ transacoes, categorias, fontesRenda, contas
     de: linhas[0]?.competencia || null,
     ate: linhas[linhas.length - 1]?.competencia || null,
   };
+}
+
+/**
+ * Em que o plano se apoia: quantos meses fechados reais existem, quanto do gasto ainda não foi classificado
+ * e quais fontes de renda não são garantidas. Toda tela de plano mostra isso ("baseado em N meses reais").
+ */
+export function baseRealDoPlano({ transacoes, categorias, fontesRenda, contas, hoje }) {
+  const h = montarHistoricoAno({ transacoes, categorias, fontesRenda, contas, hoje });
+  const naoGarantidas = h.fontes.filter((f) => f.fonteId && (f.selo === "irregular" || f.selo === "caiu")).map((f) => ({ nome: f.nome, selo: f.selo }));
+  const pct = Math.round(h.semClassificar.percentual * 100);
+  const frase = h.mesesFechados
+    ? `Baseado em ${h.mesesFechados} ${h.mesesFechados === 1 ? "mês real fechado" : "meses reais fechados"}${pct >= 10 ? `; ${pct}% do gasto ainda está sem classificação` : ""}${naoGarantidas.length ? `; renda não garantida: ${naoGarantidas.map((f) => f.nome).join(", ")}` : ""}.`
+    : "Ainda não há mês fechado: o plano usa só o que foi cadastrado.";
+  return { mesesFechados: h.mesesFechados, de: h.de, semClassificarPercentual: h.semClassificar.percentual, naoGarantidas, frase };
 }

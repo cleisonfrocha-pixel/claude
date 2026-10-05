@@ -28,6 +28,7 @@ export function montarRetratoParaIA({ hoje, inicio, geral, fechamento, dividas, 
     for (const i of (inicio.proximos || []).slice(0, 10)) add("Próximos 7 dias", `${i.atrasado ? "ATRASADO " : ""}${i.data}: ${i.descricao} ${i.tipo === "entrada" ? "+" : "-"}${R(i.valorCentavos)}${i.certeza && i.certeza !== "confirmado" ? ` (${i.certeza})` : ""}`);
     for (const r of (inicio.retrato || []).slice(0, 6)) add("Cadastro incompleto", r.texto);
   }
+  if (geral?.baseReal?.frase) add("Plano · Base real", geral.baseReal.frase);
   const a = geral?.agora;
   if (a) {
     add("Plano · Onde você está", `Mês atual: recebido ${R(a.rendaConfirmadaCentavos)}, esperado ${R(a.rendaProvavelCentavos)}${a.rendaIncertaCentavos ? `, incerto (fora da conta) ${R(a.rendaIncertaCentavos)}` : ""}; gastos do mês ${R(a.gastoCentavos)}; parcelas de dívida ${R(a.parcelasCentavos)}; ${a.sobraCentavos < 0 ? "FALTA" : "sobra"} no mês ${R(Math.abs(a.sobraCentavos))}.`);

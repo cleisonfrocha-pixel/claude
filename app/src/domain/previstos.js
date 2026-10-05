@@ -11,8 +11,10 @@
 import { somarMeses, competenciaDeData, dataDeCompetencia } from "./tempo.js";
 import { competenciaFatura, dataVencimentoFatura, dataPagamentoPrevisto } from "./transacoes.js";
 import { dataDaParcela, parcelasRestantes } from "./dividas.js";
+import { leituraDaFonte } from "./pisoDaRenda.js";
 
 const MESES_PISO_VARIAVEL = 3;
+const MESES_MINIMOS_HISTORICO = 3;
 const DIAS_DO_GASTO_SEMANAL = [1, 8, 15, 22];
 
 /** Quanto a casa gasta por mês no dia a dia (mercado, gasolina, lazer…),
@@ -24,22 +26,50 @@ const DIAS_DO_GASTO_SEMANAL = [1, 8, 15, 22];
 export function gastoDiaADiaMensal({ transacoes, categorias, recorrencias, competencia, meses = 3 }) {
   const dividasIds = new Set((categorias || []).filter((c) => c.grupo === "dividas").map((c) => c.id));
   const comDados = new Set((transacoes || []).filter((t) => t.status === "pago" && t.competencia).map((t) => t.competencia));
-  const totais = [];
+  const porCategoria = new Map(); // categoria -> total de cada mês fechado com dados
+  let mesesLidos = 0;
   for (let i = 1; i <= meses; i++) {
     const c = somarMeses(competencia, -i);
     if (!comDados.has(c)) continue;
-    let total = 0;
+    mesesLidos += 1;
     for (const t of transacoes || []) {
       if (t.status !== "pago" || t.competencia !== c || t.tipo !== "despesa") continue;
       if (t.dividaId || dividasIds.has(t.categoriaId)) continue;
-      total += Number(t.valorCentavos) || 0;
+      const k = t.categoriaId || "sem-categoria";
+      porCategoria.set(k, (porCategoria.get(k) || 0) + (Number(t.valorCentavos) || 0));
     }
-    totais.push(total);
   }
-  if (!totais.length) return 0;
-  const media = Math.round(totais.reduce((s, v) => s + v, 0) / totais.length);
-  const recorrente = (recorrencias || []).filter((r) => r.ativa !== false && r.tipo === "despesa").reduce((s, r) => s + (Number(r.valorEstimadoCentavos) || 0), 0);
-  return Math.max(0, media - recorrente);
+  if (!mesesLidos) return 0;
+  // Categoria a categoria: o que a recorrência ativa já projeta não conta de novo, mas o que a categoria
+  // gastou ACIMA do que a recorrência prevê (mercado real maior que o "mercado do mês" cadastrado) é gasto
+  // do dia a dia de verdade. Uma categoria folgada não esconde o estouro de outra.
+  const recPorCategoria = new Map();
+  for (const r of recorrencias || []) {
+    if (r.ativa === false || r.tipo !== "despesa") continue;
+    const k = r.categoriaId || "sem-categoria";
+    recPorCategoria.set(k, (recPorCategoria.get(k) || 0) + (Number(r.valorEstimadoCentavos) || 0));
+  }
+  let total = 0;
+  for (const [k, soma] of porCategoria) total += Math.max(0, Math.round(soma / mesesLidos) - (recPorCategoria.get(k) || 0));
+  return total;
+}
+
+/** Quanto o cartão realmente gasta por mês: média das últimas 3 faturas já fechadas com valor (compras
+ * detalhadas, ou o que foi pago quando a fatura veio sem detalhe). Com menos de 2 faturas, vale o uso
+ * informado no cadastro. */
+export function usoMensalDoCartao(cartao, { transacoes, faturas, competenciaHoje }) {
+  const informado = Number(cartao.usoMensalCentavos) || 0;
+  const totais = [];
+  const doCartao = (faturas || []).filter((f) => f.cartaoId === cartao.id && f.competencia < competenciaHoje).sort((a, b) => b.competencia.localeCompare(a.competencia));
+  for (const f of doCartao) {
+    const compras = (transacoes || []).filter((t) => t.faturaId === f.id && t.tipo === "despesa" && t.status !== "cancelado").reduce((x, t) => x + (Number(t.valorCentavos) || 0), 0);
+    const pagos = (transacoes || []).filter((t) => t.faturaId === f.id && t.tipo === "pagamento_fatura" && t.status === "pago").reduce((x, t) => x + (Number(t.valorCentavos) || 0), 0);
+    const total = compras > 0 ? compras : pagos;
+    if (total > 0) totais.push(total);
+    if (totais.length === 3) break;
+  }
+  if (totais.length >= 2) return { valorCentavos: Math.round(totais.reduce((a, b) => a + b, 0) / totais.length), baseadoEmMeses: totais.length, origem: "faturas" };
+  return { valorCentavos: informado, baseadoEmMeses: 0, origem: "cadastro" };
 }
 
 function competenciasEntre(de, ate) {
@@ -67,13 +97,25 @@ export function diaDaFonte(fonte, receitasDaFonte) {
 }
 
 /** Quanto contar de uma fonte num mês futuro, e com que certeza.
- * Fixa/recorrente: o valor esperado, provável. Variável: o PIOR dos
- * últimos meses fechados em que ela pagou (piso real, provável); o que
- * passa disso não é garantido. Sem histórico, o esperado como incerto
- * (não entra no saldo seguro). Eventual: nunca projeta. */
+ * Com 3 ou mais meses fechados de história, vale o que ela PAGOU, não o que foi combinado:
+ *   fixa em dia      -> o menor mês real (nunca acima do cadastrado), provável;
+ *   irregular/caiu   -> a média real (dos 3 últimos meses se caiu), incerta: não entra no saldo seguro.
+ * Variável: o PIOR dos últimos meses fechados em que pagou (piso real, provável).
+ * Sem história suficiente: fixa/recorrente pelo valor esperado (provável), variável sem nada como
+ * incerta. Eventual: nunca projeta. `baseadoEmMeses` diz em quantos meses reais o número se apoia. */
 function valorDaFonte(fonte, receitasDaFonte, competenciaHoje) {
   const esperado = Number(fonte.valorEsperadoCentavos) || 0;
-  if (fonte.tipo === "fixa" || fonte.tipo === "recorrente") return esperado > 0 ? { valorCentavos: esperado, certeza: "provavel" } : null;
+  if (fonte.tipo === "fixa" || fonte.tipo === "recorrente") {
+    const leitura = leituraDaFonte(receitasDaFonte, competenciaHoje);
+    if (leitura && leitura.meses >= MESES_MINIMOS_HISTORICO) {
+      if (leitura.selo === "fixa") return { valorCentavos: esperado > 0 ? Math.min(esperado, leitura.pisoCentavos) : leitura.pisoCentavos, certeza: "provavel", baseadoEmMeses: leitura.meses, selo: "fixa" };
+      if (leitura.selo === "irregular" || leitura.selo === "caiu") {
+        const v = leitura.selo === "caiu" ? leitura.mediaUltimosTresCentavos : leitura.mediaCentavos;
+        return v > 0 ? { valorCentavos: v, certeza: "incerto", baseadoEmMeses: leitura.meses, selo: leitura.selo } : null;
+      }
+    }
+    return esperado > 0 ? { valorCentavos: esperado, certeza: "provavel" } : null;
+  }
   if (fonte.tipo !== "variavel") return null;
   const porMes = new Map();
   for (const t of receitasDaFonte) {
@@ -81,7 +123,7 @@ function valorDaFonte(fonte, receitasDaFonte, competenciaHoje) {
     porMes.set(t.competencia, (porMes.get(t.competencia) || 0) + (Number(t.valorCentavos) || 0));
   }
   const recentes = [...porMes.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, MESES_PISO_VARIAVEL).map(([, v]) => v).filter((v) => v > 0);
-  if (recentes.length) return { valorCentavos: Math.min(...recentes), certeza: "provavel", piso: true };
+  if (recentes.length) return { valorCentavos: Math.min(...recentes), certeza: "provavel", piso: true, baseadoEmMeses: recentes.length };
   return esperado > 0 ? { valorCentavos: esperado, certeza: "incerto" } : null;
 }
 
@@ -127,7 +169,8 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
       if (data < de || data > ate) continue;
       eventos.push({
         data, vencimento: dataOriginal, tipo: "receita", valorCentavos: valor.valorCentavos, certeza: valor.certeza, virtual: true, atrasado,
-        descricao: valor.piso ? `${f.nome} (pior mês recente)` : f.nome,
+        descricao: valor.piso ? `${f.nome} (pior mês recente)` : valor.selo === "fixa" && valor.valorCentavos < (Number(f.valorEsperadoCentavos) || 0) ? `${f.nome} (menor mês real)` : valor.certeza === "incerto" && valor.selo ? `${f.nome} (média real, não é garantido)` : f.nome,
+        baseadoEmMeses: valor.baseadoEmMeses || 0,
         origem: { tipo: "fonteRenda", id: f.id },
       });
     }
@@ -181,7 +224,7 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
   // saída estimada no dia em que a fatura costuma sair da conta. É estimativa
   // (certeza provável), nunca dinheiro garantido, e não duplica o que já foi lançado.
   for (const cartao of cartoes || []) {
-    const uso = Number(cartao.usoMensalCentavos) || 0;
+    const uso = usoMensalDoCartao(cartao, { transacoes: lista, faturas, competenciaHoje }).valorCentavos;
     if (!(uso > 0) || cartao.status === "encerrado") continue;
     for (const c of competenciasEntre(somarMeses(competenciaDeData(de), -1), somarMeses(competenciaDeData(ate), 1))) {
       if (dataDeCompetencia(c, cartao.diaFechamento || 1) < (hoje || de)) continue; // já fechou: vale o que está lançado

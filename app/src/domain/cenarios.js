@@ -34,7 +34,8 @@ import { calcularCustos } from "./orcamento.js";
 import { visaoDoMes } from "./mes.js";
 import { calcularSaldoAtual, statusDivida, taxaMensalEfetiva } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
-import { somarMeses } from "./tempo.js";
+import { somarMeses, competenciaDeData } from "./tempo.js";
+import { leituraDaFonte } from "./pisoDaRenda.js";
 import { formatarBRL } from "./dinheiro.js";
 
 export const HORIZONTE_MESES = 24;
@@ -121,7 +122,13 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
   if (ativas.length) {
     rendaGarantidaCentavos = 0;
     for (const f of ativas) {
-      if (f.tipo === "fixa" || f.tipo === "recorrente") rendaGarantidaCentavos += Number(f.valorEsperadoCentavos) || 0;
+      if (f.tipo === "fixa" || f.tipo === "recorrente") {
+        // Com 3 ou mais meses reais, garantido é o menor mês que ela pagou (nunca mais que o combinado);
+        // fonte irregular ou que caiu tem piso baixo, e o plano não finge que ela vem.
+        const esperado = Number(f.valorEsperadoCentavos) || 0;
+        const leitura = leituraDaFonte((transacoes || []).filter((t) => t.tipo === "receita" && t.fonteRendaId === f.id), competenciaDeData(hoje));
+        rendaGarantidaCentavos += leitura && leitura.meses >= 3 ? Math.min(esperado, leitura.pisoCentavos) : esperado;
+      }
       else if (f.tipo === "variavel") rendaGarantidaCentavos += piorMes(meses.map((c) => porFonteNoMes(f.id, c)));
     }
     rendaGarantidaCentavos += piorMes(meses.map((c) => porFonteNoMes(null, c)));

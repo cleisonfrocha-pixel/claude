@@ -102,16 +102,21 @@ Plano > Meu ano (Casa toda, Cleison, Carolina): resumo, mês a mês com detalhe 
 (com selo e piso), para onde foi (rosca) e quanto falta classificar. Card "Seu ano até agora" no Início
 leva para a tela. Conferido no navegador com o estado real.
 
-## Sprint 7: plano e cenários passam a usar o histórico real
+## Sprint 7: plano e cenários passam a usar o histórico real (feita)
 
-- Renda garantida de cada fonte = **piso observado** nos últimos meses, não o valor
-  cadastrado. Fonte que só apareceu uma vez entra como eventual.
-- Gasto variável = média real das categorias variáveis (mercado, delivery,
-  transporte), sem contar o que já está em recorrência (evita dupla contagem).
-- Cartão: uso mensal vem da média das faturas pagas, não de estimativa.
-- Todo plano mostra "baseado em N meses reais".
-- `perfil/casa` e a skill `gerar-plano` passam a ler o resumo do histórico.
-Portão: o plano de 12 meses muda quando se troca o piso de uma fonte; teste cobre.
+- `domain/pisoDaRenda.js`: piso, média e selo de cada fonte pelos meses fechados (mês sem receber conta como zero).
+- Projeção (`previstos.js`): fonte fixa em dia conta o menor mês real (nunca acima do combinado); irregular ou que caiu
+  entra pela média real **como incerta** (fora do saldo seguro); menos de 3 meses de história, vale o cadastro.
+- Gasto do dia a dia: categoria a categoria, o que passou da recorrência cadastrada (mercado real maior que "mercado do mês")
+  vira gasto habitual; antes uma categoria folgada escondia o estouro de outra. Com os dados reais passou de R$ 0 para
+  R$ 4,5 mil por mês, a maior parte ainda em "Outros" (sem classificar).
+- Cartão: uso mensal = média das últimas 3 faturas fechadas (compras ou pagamento); cadastro só quando há menos de 2.
+- Cenários: renda garantida de fonte fixa/recorrente também usa o piso real.
+- "Baseado em N meses reais" no Fluxo de caixa e na visão geral do Plano; a IA (Perguntar) lê a mesma frase;
+  `app/ferramentas/auditoria/resumo-historico.mjs` e a skill `gerar-plano` leem o resumo antes de escrever plano.
+- Efeito medido no estado real (12 meses, saldo seguro): de R$ -61 mil para R$ -140 mil. O número está mais feio porque
+  agora conta o que a vida real gasta; classificar o "Outros" mostra quanto disso é gasto de verdade.
+Testes: `testes/rendaPeloHistorico.test.js` (inclui "o plano muda quando o piso da fonte muda").
 
 ## Sprint 8: faturas dos cartões e extratos que faltam
 
