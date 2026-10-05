@@ -138,7 +138,7 @@ rodando no navegador. Ferramenta: `app/ferramentas/auditoria/auditar-estado.mjs`
 | 11 | Banco sem cópia de segurança: só o registro do lote | média | **aberto**: `exportar` do estado completo antes e depois de cada carga |
 | 12 | 637 lançamentos "não revisados" e 206 despesas em "Outros" (R$ 25,1 mil) | média | Sprint 4 |
 | 13 | 7 faturas Nubank pagas sem compra lançada: R$ 20,8 mil entram como "gasto sem detalhe" | média | Sprint 8 |
-| 14 | Dados de terceiros (nomes em Pix) em banco aberto a "qualquer pessoa com o link" | alta | **aberto**: o dono precisa restringir o compartilhamento do artefato |
+| 14 | Dados de terceiros (nomes em Pix) no banco do artefato | média | conferido: o artefato está **privado** (só o dono). Para a Carolina abrir, compartilhar pelo menu Share do artefato, sabendo que ela passa a ver tudo |
 | 15 | Lançamentos manuais do Next de 03 a 05/10 com data diferente do extrato (Jeep, TV, água) | baixa | aberto: conciliar quando o saldo do Next for conferido |
 
 ### Trabalho da sprint (o que falta)
