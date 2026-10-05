@@ -211,20 +211,23 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         exigir(!(estado.transacoes || []).some((t) => t.idExterno === id || String(t.idExterno || "").startsWith(`${id}:`)),
           `já importado: o ID do banco ${id} já está no painel`);
       }
-      const regraRepasse = (acao === "despesa" || acao === "receita") && !item.categoria && !item.divida
+      // `repasse: true` no item força o tipo repasse (dinheiro de passagem, nem renda nem gasto);
+      // sem ele, a regra guardada do favorecido decide quando o item vem sem categoria.
+      const ehDespesaOuReceita = acao === "despesa" || acao === "receita";
+      const regraRepasse = ehDespesaOuReceita && !item.categoria && !item.divida
         ? regraDoFavorecido(estado.regrasClassificacao, item.descricao) : null;
-      if (regraRepasse && regraRepasse.decisao.tipo === "repasse") {
+      if (ehDespesaOuReceita && (item.repasse === true || (regraRepasse && regraRepasse.decisao.tipo === "repasse"))) {
         const data = validarData(item.data, hoje);
         const valor = centavos(item.valor);
         exigir(!item.cartao, "repasse não passa por cartão");
         const conta = resolver(estado, "contas", item.conta);
         transacao({
           tipo: "repasse", direcao: acao === "receita" ? "entrada" : "saida", valorCentavos: valor, data,
-          contaId: conta.id, cartaoId: null, categoriaId: "", pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : pessoaPadrao(estado),
+          contaId: conta.id, cartaoId: null, categoriaId: "", pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : (conta.pessoaId || pessoaPadrao(estado)),
           descricao: item.descricao || "Repasse", status: item.status || "pago", certeza: item.certeza || "confirmado",
           idExterno: item.idExterno ? String(item.idExterno) : null,
         });
-        local.resumo.push(`Repasse · ${formatarBRL(valor)} · ${item.descricao || "Repasse"} · ${conta.nome} · ${formatarData(data)} (regra "${regraRepasse.nome || regraRepasse.chave}": não é renda nem gasto)`);
+        local.resumo.push(`Repasse · ${formatarBRL(valor)} · ${item.descricao || "Repasse"} · ${conta.nome} · ${formatarData(data)} (${regraRepasse ? `regra "${regraRepasse.nome || regraRepasse.chave}"` : "marcado como repasse"}: não é renda nem gasto)`);
       } else if (acao === "despesa" || acao === "receita") {
         const data = validarData(item.data, hoje);
         const valor = centavos(item.valor);
@@ -246,7 +249,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
           tipo: acao, valorCentavos: valor, data,
           contaId: cartao ? null : conta.id, cartaoId: cartao ? cartao.id : null,
           categoriaId: categoria.id,
-          pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : pessoaPadrao(estado),
+          pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : null, // vazio: `transacao` usa o dono do cartão ou da conta
           descricao: item.descricao || categoria.nome,
           status: item.status || "pago", certeza: item.certeza || "confirmado",
           fonteRendaId: acao === "receita" && item.fonteRenda ? resolver(estado, "fontesRenda", item.fonteRenda).id : null,
@@ -295,7 +298,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         const parcelaDeId = `pc_${gerarId()}`;
         const comuns = {
           tipo: "despesa", cartaoId: cartao ? cartao.id : null, contaId: cartao ? null : conta.id, categoriaId: categoria.id,
-          pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : pessoaPadrao(estado),
+          pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : null, // vazio: `transacao` usa o dono do cartão ou da conta
           descricao: item.descricao || categoria.nome, data, status: "previsto", certeza: "provavel",
         };
         const partes = gerarParcelas({ valorTotalCentavos: total, quantidade: quantidadeParcelas, competenciaInicial: competenciaDe(data), parcelaDeId, camposComuns: comuns });

@@ -44,16 +44,25 @@ Pela skill `subir-painel`, com "desfaz":
 - Datas do Jeep, água e luz de 03/10 que saíram em 05/10 (conferir contra o extrato).
 Portão: Início mostra as DAS em atraso e o saldo das contas bate com o app dos bancos.
 
-## Sprint 2: Carolina (Banco do Brasil) 2026
+## Sprint 2: Carolina (Banco do Brasil) 2026 (feita)
 
-- Parser do extrato BB em `app/ferramentas/extrato/` (já existe a versão de trabalho).
-- Salário da Secretaria da Educação como receita da fonte dela.
-- Pix para o Cleison **não** viram lançamento novo: já existem como transferência
-  no lado do Next (casar por valor e data ±1 dia).
-- Pix para a Shopee viram `pagamento_fatura` do Crédito Shoppe (histórico).
-- Principia Educação: mensalidade jan a mar, quitada. Depósito em dinheiro de
-  R$ 2.650 em 24/09: perguntar a origem.
-Portão: a conta dela fecha com o saldo do PDF mês a mês.
+- Parser `app/ferramentas/extrato/ler_bb.py` reescrito: lê cada página separada e junta o texto
+  de operações que quebram em 2 ou 3 linhas. Os 9 extratos (jan a set) fecham dia a dia e mês
+  a mês com o saldo impresso no PDF. A trava `conferencias` do `subir-painel` conferiu antes de gravar.
+- Lote `99672ess8f1v4gsfa92d`: 149 lançamentos + 9 faturas do Crédito Shoppe + categoria "Tarifas bancárias".
+  - 9 salários da Secretaria da Educação (R$ 4,6 mil a 5,2 mil) na conta dela, fonte "Salário - Carolina".
+  - Pix para a Shopee viram `pagamento_fatura` histórico do Crédito Shoppe (28 pagamentos, 9 faturas).
+  - Pix para o Cleison **não** viraram lançamento novo: 15 casaram com as transferências que já existiam
+    (valor e data até 4 dias). Os R$ 2.650 de 24/09 (depósito em dinheiro do Gedi) já estavam como receita.
+  - Pix entre contas dela e entre ela e o Cleison sem par viram `repasse` (não é renda nem gasto).
+  - Pix rejeitado/devolvido anula o envio (Ana Maria 03/08 x2, 99 de 06/07) ou abate do Pix anterior (Shopee 19/03).
+  - Principia (3 mensalidades), Claro, mercado, iFood, tarifas do banco classificados; o resto é "(a classificar)" e vai para a fila Revisar.
+- Corrigido junto: a ferramenta gravava despesa/receita no nome do titular mesmo na conta da Carolina.
+  Agora herda a pessoa do cartão ou da conta (teste novo). 207 lançamentos antigos acertados no banco
+  (141 da Carolina que estavam no nome do Cleison + 98 transferências/faturas que estavam sem dono).
+- Saldo dela: continua R$ 0,00 (a conta só conta lançamentos depois de 02/10). O extrato fecha 30/09 com R$ 12,33.
+Em aberto (perguntas ao Cleison): 17 transferências Next <-> Carolina antigas não existem no extrato do BB
+(ex.: R$ 2.300 de 29/05); parecem de outra conta dela. Pix da Carolina para a mãe dela (R$ 150, 50, 500) contam como gasto.
 
 ## Sprint 3: trava de reconciliação e ID do banco (código)
 

@@ -294,3 +294,28 @@ test("regra de favorecido: repasse vira repasse e categoria preenche a categoria
   assert.equal(ts[2].categoriaId, "cat-mor");
   assert.equal(ts[3].tipo, "despesa"); // categoria explícita no pedido vence a regra
 });
+
+test("repasse: true força o tipo repasse e herda a pessoa da conta", () => {
+  const e = estadoBase();
+  e.contas[1].pessoaId = "p2";
+  const r = montar([
+    { acao: "receita", valor: 21, conta: "Next", descricao: "Pix de outra conta dela", data: "2026-03-10", repasse: true },
+    { acao: "despesa", valor: 30, conta: "Next", descricao: "Pix para outra conta dela", data: "2026-03-11", repasse: true },
+  ], e);
+  assert.deepEqual(r.pendencias, []);
+  const ts = sets(r, "transacoes");
+  assert.deepEqual(ts.map((t) => [t.tipo, t.direcao, t.pessoaId]), [["repasse", "entrada", "p2"], ["repasse", "saida", "p2"]]);
+});
+
+test("despesa, receita e parcelamento herdam a pessoa da conta ou do cartão, não o titular", () => {
+  const e = estadoBase();
+  e.contas[1].pessoaId = "p2";
+  const r = montar([
+    { acao: "despesa", valor: 10, conta: "Next", categoria: "Moradia", descricao: "Luz", data: "2026-03-10" },
+    { acao: "despesa", valor: 20, conta: "Nubank", categoria: "Moradia", descricao: "Água", data: "2026-03-10" },
+    { acao: "despesa", valor: 30, conta: "Next", categoria: "Moradia", descricao: "Dela", data: "2026-03-10", pessoa: "p1" },
+  ], e);
+  assert.deepEqual(r.pendencias, []);
+  const ts = sets(r, "transacoes");
+  assert.deepEqual(ts.map((t) => t.pessoaId), ["p2", "p1", "p1"]);
+});
