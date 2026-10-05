@@ -9,6 +9,7 @@
 
 import { paraCentavos, formatarBRL } from "../src/domain/dinheiro.js";
 import { conferirExtrato } from "./extrato/reconciliar.js";
+import { regraDoFavorecido } from "../src/domain/favorecidos.js";
 import { somarMeses, dataDeCompetencia, formatarData } from "../src/domain/tempo.js";
 import { competenciaFatura, gerarParcelas, construirParTransferencia, competenciasFaltantes } from "../src/domain/transacoes.js";
 import * as E from "../src/domain/esquema.js";
@@ -31,7 +32,7 @@ export const COLECOES = {
   recorrencias: { padrao: E.padraoRecorrencia, validar: E.validarRecorrencia, nomes: ["descricao"] },
 };
 
-export const COLECOES_LIDAS = [...Object.keys(COLECOES), "faturas", "transacoes", COLECAO_LOTES];
+export const COLECOES_LIDAS = [...Object.keys(COLECOES), "faturas", "transacoes", "regrasClassificacao", COLECAO_LOTES];
 
 // Campo de id que cada referência por nome preenche, por coleção.
 const CAMPO_REF = {
@@ -210,7 +211,21 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         exigir(!(estado.transacoes || []).some((t) => t.idExterno === id || String(t.idExterno || "").startsWith(`${id}:`)),
           `já importado: o ID do banco ${id} já está no painel`);
       }
-      if (acao === "despesa" || acao === "receita") {
+      const regraRepasse = (acao === "despesa" || acao === "receita") && !item.categoria && !item.divida
+        ? regraDoFavorecido(estado.regrasClassificacao, item.descricao) : null;
+      if (regraRepasse && regraRepasse.decisao.tipo === "repasse") {
+        const data = validarData(item.data, hoje);
+        const valor = centavos(item.valor);
+        exigir(!item.cartao, "repasse não passa por cartão");
+        const conta = resolver(estado, "contas", item.conta);
+        transacao({
+          tipo: "repasse", direcao: acao === "receita" ? "entrada" : "saida", valorCentavos: valor, data,
+          contaId: conta.id, cartaoId: null, categoriaId: "", pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : pessoaPadrao(estado),
+          descricao: item.descricao || "Repasse", status: item.status || "pago", certeza: item.certeza || "confirmado",
+          idExterno: item.idExterno ? String(item.idExterno) : null,
+        });
+        local.resumo.push(`Repasse · ${formatarBRL(valor)} · ${item.descricao || "Repasse"} · ${conta.nome} · ${formatarData(data)} (regra "${regraRepasse.nome || regraRepasse.chave}": não é renda nem gasto)`);
+      } else if (acao === "despesa" || acao === "receita") {
         const data = validarData(item.data, hoje);
         const valor = centavos(item.valor);
         const conta = item.conta ? resolver(estado, "contas", item.conta) : null;
@@ -218,6 +233,9 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         exigir(conta || cartao, "faltou dizer a conta ou o cartão");
         exigir(!(acao === "receita" && cartao), "receita entra numa conta, não num cartão");
         const divida = acao === "despesa" && item.divida ? resolver(estado, "dividas", item.divida) : null;
+        // Regra de favorecido (Revisar): sem categoria no pedido, vale a resposta já dada uma vez.
+        const regra = !item.categoria && !divida ? regraDoFavorecido(estado.regrasClassificacao, item.descricao) : null;
+        if (regra) item = { ...item, categoria: (estado.categorias || []).find((c) => c.id === regra.decisao.categoriaId)?.nome || item.categoria };
         const categoria = item.categoria || !divida
           ? resolver(estado, "categorias", item.categoria)
           : (estado.categorias || []).find((c) => c.grupo === "dividas" && c.natureza === "despesa" && c.ativa !== false)

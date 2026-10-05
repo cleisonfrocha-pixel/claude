@@ -34,6 +34,7 @@ import telaRenda from "./telas/renda.js";
 import telaPatrimonio from "./telas/patrimonio.js";
 import telaObjetivos from "./telas/objetivos.js";
 import telaImportar from "./telas/importar.js";
+import telaRevisar from "./telas/revisar.js";
 import telaPerfil from "./telas/perfil.js";
 import telaDados from "./telas/dadosEAtividade.js";
 import { ligarBuscaGlobal } from "./buscaGlobal.js";
@@ -50,6 +51,7 @@ const telaDinheiro = criarTelaComAbas({
     { id: "contas", rotulo: "Contas", tela: telaContas },
     { id: "cartoes", rotulo: "Cartões", tela: telaCartoes },
     { id: "importar", rotulo: "Importar", tela: telaImportar },
+    { id: "revisar", rotulo: "Revisar", tela: telaRevisar },
   ],
 });
 

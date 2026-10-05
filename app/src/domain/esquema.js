@@ -18,7 +18,7 @@ export const NATUREZAS_CATEGORIA = ["receita", "despesa", "transferencia"];
 // tipo governa a regra que mais importa no produto inteiro (CLAUDE.md):
 // transferência e pagamento de fatura NUNCA contam como receita ou despesa
 // — ver domain/transacoes.js, que é onde essa regra é aplicada de fato.
-export const TIPOS_TRANSACAO = ["receita", "despesa", "transferencia", "pagamento_fatura"];
+export const TIPOS_TRANSACAO = ["receita", "despesa", "transferencia", "pagamento_fatura", "repasse"];
 export const STATUS_TRANSACAO = ["previsto", "agendado", "pago", "atrasado", "cancelado"];
 export const CERTEZAS_TRANSACAO = ["confirmado", "provavel", "incerto"];
 // Só mensal por enquanto: é o que cobre a esmagadora maioria das contas
@@ -295,6 +295,7 @@ export function validarTransacao(t) {
   if (t.tipo === "despesa" && !t.categoriaId) erros.push("Despesa precisa de categoria.");
   if (t.tipo === "receita" && !t.categoriaId) erros.push("Receita precisa de categoria.");
   if (!STATUS_TRANSACAO.includes(t.status)) erros.push("Status inválido.");
+  if (t.tipo === "repasse" && t.direcao !== "entrada" && t.direcao !== "saida") erros.push("Repasse precisa dizer se entrou ou saiu.");
   if (!CERTEZAS_TRANSACAO.includes(t.certeza)) erros.push("Certeza inválida.");
   if (t.idExterno != null && (typeof t.idExterno !== "string" || !t.idExterno.trim() || t.idExterno.length > 160)) erros.push("Identificador do banco inválido.");
   return erros;
@@ -376,4 +377,17 @@ export function categoriasSugeridas() {
     { nome: "Salário", grupo: "renda", natureza: "receita", essencial: false },
     { nome: "Renda extra", grupo: "renda", natureza: "receita", essencial: false },
   ];
+}
+
+/** Regra de classificação por favorecido: a resposta dada uma vez vale para os próximos extratos. */
+export function padraoRegraClassificacao(dados = {}) {
+  return { chave: "", nome: "", decisao: { tipo: "categoria", categoriaId: "" }, ativa: true, ...dados };
+}
+
+export function validarRegraClassificacao(r) {
+  const erros = [];
+  if (!r.chave || !String(r.chave).trim()) erros.push("A regra precisa do nome do favorecido.");
+  if (!r.decisao || !["categoria", "repasse"].includes(r.decisao.tipo)) erros.push("Decisão da regra inválida.");
+  else if (r.decisao.tipo === "categoria" && !r.decisao.categoriaId) erros.push("A regra de categoria precisa da categoria.");
+  return erros;
 }

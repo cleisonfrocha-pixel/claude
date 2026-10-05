@@ -4,8 +4,8 @@
 
 import * as db from "./db.js";
 import {
-  padraoPessoa, padraoConta, padraoCartao, padraoCategoria, padraoDivida, padraoFonteRenda, padraoAtivo, padraoObjetivo,
-  validarPessoa, validarConta, validarCartao, validarCategoria, validarDivida, validarFonteRenda, validarAtivo, validarObjetivo,
+  padraoPessoa, padraoConta, padraoCartao, padraoCategoria, padraoDivida, padraoFonteRenda, padraoAtivo, padraoObjetivo, padraoRegraClassificacao,
+  validarPessoa, validarConta, validarCartao, validarCategoria, validarDivida, validarFonteRenda, validarAtivo, validarObjetivo, validarRegraClassificacao,
 } from "../domain/esquema.js";
 
 function fabricarRepositorio(caminho, padrao, validar) {
@@ -46,3 +46,4 @@ export const dividas = fabricarRepositorio("dividas", padraoDivida, validarDivid
 export const fontesRenda = fabricarRepositorio("fontesRenda", padraoFonteRenda, validarFonteRenda);
 export const ativos = fabricarRepositorio("ativos", padraoAtivo, validarAtivo);
 export const objetivos = fabricarRepositorio("objetivos", padraoObjetivo, validarObjetivo);
+export const regras = fabricarRepositorio("regrasClassificacao", padraoRegraClassificacao, validarRegraClassificacao);

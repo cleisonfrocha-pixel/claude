@@ -187,3 +187,25 @@ test("statusEfetivo: atrasado gravado continua atrasado", () => {
 test("statusEfetivo: sem hoje pra comparar, mantém o status gravado", () => {
   assert.equal(statusEfetivo(t({ status: "previsto", data: "2026-01-01" }), null), "previsto");
 });
+
+// ---------- repasse ----------
+import { efeitoNaConta as efeitoRepasse, agregarPeriodo as agregarRepasse } from "../src/domain/transacoes.js";
+import { validarTransacao as validarRepasse, padraoTransacao as padraoRepasse } from "../src/domain/esquema.js";
+
+test("repasse: mexe no saldo pela direção, mas não é renda nem gasto", () => {
+  const e = padraoRepasse({ tipo: "repasse", direcao: "entrada", contaId: "c1", valorCentavos: 100000, competencia: "2026-04", status: "pago" });
+  const s = padraoRepasse({ tipo: "repasse", direcao: "saida", contaId: "c1", valorCentavos: 40000, competencia: "2026-04", status: "pago" });
+  assert.equal(efeitoRepasse(e), 100000);
+  assert.equal(efeitoRepasse(s), -40000);
+  const ag = agregarRepasse([e, s], { de: "2026-04", ate: "2026-04" });
+  assert.equal(ag.receitas, 0);
+  assert.equal(ag.despesas, 0);
+  assert.equal(ag.resultado, 0);
+  assert.equal(ag.repasses, 140000);
+});
+
+test("repasse: exige direção e dispensa categoria", () => {
+  const ok = padraoRepasse({ tipo: "repasse", direcao: "saida", contaId: "c1", valorCentavos: 100, data: "2026-04-01" });
+  assert.deepEqual(validarRepasse(ok), []);
+  assert.ok(validarRepasse({ ...ok, direcao: null }).some((m) => /entrou ou saiu/.test(m)));
+});

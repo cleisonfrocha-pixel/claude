@@ -271,3 +271,26 @@ test("transferência e pagamento de fatura herdam a pessoa da conta e do cartão
   assert.equal(entrada.pessoaId, "p2");
   assert.equal(pag.pessoaId, "p1");
 });
+
+test("regra de favorecido: repasse vira repasse e categoria preenche a categoria que faltou", () => {
+  const e = estadoBase();
+  e.regrasClassificacao = [
+    { id: "r1", chave: "ana maria", nome: "Sogra", decisao: { tipo: "repasse" }, ativa: true },
+    { id: "r2", chave: "guillermo", nome: "Sócio", decisao: { tipo: "categoria", categoriaId: "cat-mor" }, ativa: true },
+  ];
+  const r = montar([
+    { acao: "despesa", valor: 100, conta: "Nubank", descricao: "Ana Maria De Jesus", data: "2026-03-10" },
+    { acao: "receita", valor: 50, conta: "Nubank", descricao: "Serviço: Ana Maria De Jesus", data: "2026-03-11" },
+    { acao: "despesa", valor: 30, conta: "Nubank", descricao: "Guillermo Ismael Mart", data: "2026-03-12" },
+    { acao: "despesa", valor: 20, conta: "Nubank", categoria: "Moradia", descricao: "Ana Maria De Jesus", data: "2026-03-13", forcar: true },
+  ], e);
+  assert.deepEqual(r.pendencias, []);
+  const ts = sets(r, "transacoes");
+  assert.equal(ts[0].tipo, "repasse");
+  assert.equal(ts[0].direcao, "saida");
+  assert.equal(ts[1].tipo, "repasse");
+  assert.equal(ts[1].direcao, "entrada");
+  assert.equal(ts[2].tipo, "despesa");
+  assert.equal(ts[2].categoriaId, "cat-mor");
+  assert.equal(ts[3].tipo, "despesa"); // categoria explícita no pedido vence a regra
+});

@@ -6,6 +6,9 @@
 // entram nos totais de receita ou despesa. Uma compra no cartão já é
 // despesa no momento da compra; pagar a fatura depois é só a fatura sendo
 // quitada — contar as duas seria contar o mesmo dinheiro duas vezes.
+// "repasse" é o terceiro caso: dinheiro de OUTRA pessoa que passou pela conta (recebi
+// e repassei a venda de um familiar, o pai que deu o dinheiro de um imposto). Mexe no
+// saldo, mas não é renda nem gasto: contar seria inflar os dois lados.
 
 import { somar, dividirCentavos } from "./dinheiro.js";
 import { somarMeses, dataDeCompetencia } from "./tempo.js";
@@ -22,7 +25,7 @@ const CONTA_COMO_DESPESA = new Set(["despesa"]);
  * do que foi passado — quem chama decide o universo (mês, período, tudo).
  */
 export function agregarPeriodo(transacoes, { de, ate } = {}) {
-  let receitas = 0, despesas = 0, transferencias = 0, pagamentosFatura = 0;
+  let receitas = 0, despesas = 0, transferencias = 0, pagamentosFatura = 0, repasses = 0;
   for (const t of transacoes || []) {
     if (de && t.competencia < de) continue;
     if (ate && t.competencia > ate) continue;
@@ -31,9 +34,10 @@ export function agregarPeriodo(transacoes, { de, ate } = {}) {
     else if (CONTA_COMO_DESPESA.has(t.tipo)) despesas += v;
     else if (t.tipo === "transferencia") transferencias += v;
     else if (t.tipo === "pagamento_fatura") pagamentosFatura += v;
+    else if (t.tipo === "repasse") repasses += v;
   }
   return {
-    receitas, despesas, transferencias, pagamentosFatura,
+    receitas, despesas, transferencias, pagamentosFatura, repasses,
     resultado: receitas - despesas,
   };
 }
@@ -132,7 +136,7 @@ export function efeitoNaConta(transacao) {
   if (transacao.tipo === "receita") return v;
   if (transacao.tipo === "despesa") return -v;
   if (transacao.tipo === "pagamento_fatura") return -v;
-  if (transacao.tipo === "transferencia") return transacao.direcao === "entrada" ? v : -v;
+  if (transacao.tipo === "transferencia" || transacao.tipo === "repasse") return transacao.direcao === "entrada" ? v : -v;
   return 0;
 }
 

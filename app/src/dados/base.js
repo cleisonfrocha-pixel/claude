@@ -4,7 +4,7 @@
 // faturas. Aqui todas leem o mesmo retrato, com o `id` embutido em cada
 // cadastro (domain/ cruza por id) e as transações como dados puros.
 
-import { contas, cartoes, categorias, pessoas, dividas, fontesRenda, ativos, objetivos } from "./repositorios.js";
+import { contas, cartoes, categorias, pessoas, dividas, fontesRenda, ativos, objetivos, regras } from "./repositorios.js";
 import { transacoes } from "./transacoesRepo.js";
 import { faturas } from "./faturasRepo.js";
 import { recorrencias } from "./recorrenciasRepo.js";
@@ -13,7 +13,7 @@ function comId(lista) {
   return lista.map((item) => ({ id: item.id, ...item.dados }));
 }
 
-const REPOS = { contas, cartoes, faturas, categorias, pessoas, dividas, fontesRenda, recorrencias, ativos, objetivos };
+const REPOS = { contas, cartoes, faturas, categorias, pessoas, dividas, fontesRenda, recorrencias, ativos, objetivos, regrasClassificacao: regras };
 
 export async function carregarBase() {
   const nomes = Object.keys(REPOS);

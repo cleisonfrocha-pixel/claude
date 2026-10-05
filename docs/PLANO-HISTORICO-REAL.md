@@ -62,14 +62,21 @@ Portão: a conta dela fecha com o saldo do PDF mês a mês.
 - Parsers de Next, Nubank e BB saem do scratchpad para `app/ferramentas/extrato/`.
 Portão: reimportar o mesmo PDF devolve 0 novos; PDF adulterado é recusado. Testes.
 
-## Sprint 4: fila "Revisar" por favorecido (código + tela)
+## Sprint 4: fila "Revisar" por favorecido (feita)
 
-Hoje cerca de 190 despesas estão como "Outros (a classificar)". A tela agrupa por
-favorecido ("Gringo Pay, 1 lançamento, R$ 1.400") e uma resposta classifica todos
-os lançamentos do mesmo favorecido, e fica como **regra** para os próximos extratos.
-- Coleção `regrasClassificacao` {contem, categoria, pessoa}.
-- Importação futura aplica regra e só pergunta o favorecido desconhecido.
-Portão: classificar 1 favorecido atualiza todos; novo extrato só pergunta o novo.
+Hoje cerca de 190 despesas estavam como "Outros (a classificar)". Agora existe a aba
+**Dinheiro > Revisar**: os lançamentos pendentes aparecem agrupados por favorecido, os de
+mais dinheiro primeiro. Uma resposta resolve todos do mesmo nome e, se marcado "Lembrar",
+vira regra para os próximos extratos.
+- Novo tipo de lançamento **repasse**: dinheiro de outra pessoa que passou por você (a sogra que
+  vendeu a geladeira, o pai que deu o dinheiro do IPVA dele). Mexe no saldo, não é renda nem gasto.
+- Coleção `regrasClassificacao` {chave, decisao}. O `subir-painel` aplica a regra quando o
+  pedido vem sem categoria (repasse vira repasse, categoria preenche a que faltou).
+- Domínio puro em `domain/favorecidos.js`, dados em `dados/favorecidosRepo.js`, tela `ui/telas/revisar.js`.
+- Respostas do Cleison de 05/10 já aplicadas: sogra e pai = repasse; Guillermo (sócio) = Escritório;
+  Giuliana (editora de vídeo) = Equipe e freelancers; Francielen = compra; 4 regras guardadas.
+Portão cumprido no navegador: clicar "É repasse" em um favorecido atualiza todos os lançamentos
+dele, grava a regra e some da fila; escolher categoria faz o mesmo. 536 testes.
 
 ## Sprint 5: motor `historicoAno.js` (domínio puro, com teste)
 

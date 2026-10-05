@@ -28,7 +28,7 @@ import { darBaixaTransacao } from "../../dados/baixaRepo.js";
 
 const ROTULO_STATUS = { previsto: "Previsto", agendado: "Agendado", pago: "Pago", atrasado: "Atrasado", cancelado: "Cancelado" };
 const ROTULO_CERTEZA = { confirmado: "Confirmado", provavel: "Provável", incerto: "Incerto" };
-const ROTULO_TIPO_TAG = { receita: "Receita", despesa: "Despesa", transferencia: "Transferência", pagamento_fatura: "Pagamento de fatura" };
+const ROTULO_TIPO_TAG = { receita: "Receita", despesa: "Despesa", transferencia: "Transferência", pagamento_fatura: "Pagamento de fatura", repasse: "Repasse" };
 
 let mes = tempo.competenciaAtual();
 let lista = [];
