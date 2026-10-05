@@ -33,7 +33,11 @@ sobrescreva nada fora do "desfazer" pedido por ele.
 5. **Gravar:** para cada lote em `<pasta>/saida/escritas.json`, um
    `ArtifactData batch` com `url` do painel e `writes` = as entradas exatamente
    como estão (op, collection, doc_id, file_path).
-6. **Responder curto:** o que subiu (as linhas de "VAI SUBIR"), o que ficou de
+6. **Conferir depois de carga grande:** baixe o estado de novo (pasta nova) e rode
+   `node app/ferramentas/auditoria/auditar-estado.mjs <pasta>/estado`. Ele checa referências, duplicata, faturas
+   e volume (aviso a partir de 900 lançamentos). Conferir também o saldo de cada conta contra o extrato.
+   Pedido grande com `forcar` exige `idExterno` em cada lançamento; `desfazer` recusa se outro envio depende do lote.
+7. **Responder curto:** o que subiu (as linhas de "VAI SUBIR"), o que ficou de
    fora com a pergunta direta, e "se algo saiu errado, diga *desfaz o último envio*".
 
 ## Formato do pedido

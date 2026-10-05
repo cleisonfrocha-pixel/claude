@@ -8,7 +8,7 @@ import { pessoas, contas, categorias, dividas as dividasRepoBase, fontesRenda, a
 import { transacoes } from "./transacoesRepo.js";
 import {
   calcularCompletudeGeral, identificarItensAConfirmar, identificarSaldosNaoConciliados,
-  calcularUltimaAtualizacao, calcularConfiabilidade,
+  calcularUltimaAtualizacao, calcularConfiabilidade, avisoDeVolume,
 } from "../domain/qualidade.js";
 import { hojeISO, somarDias } from "../domain/tempo.js";
 
@@ -49,7 +49,7 @@ export async function calcularPainelQualidade() {
   ]);
   const confiabilidade = calcularConfiabilidade({ completude, itensAConfirmar, saldosNaoConciliados });
 
-  return { hoje, completude, itensAConfirmar, saldosNaoConciliados, ultimaAtualizacao, confiabilidade };
+  return { hoje, completude, itensAConfirmar, saldosNaoConciliados, ultimaAtualizacao, confiabilidade, volume: avisoDeVolume(dados.transacoes.length) };
 }
 
 /** Assina o painel ao vivo — recalcula sempre que qualquer cadastro base

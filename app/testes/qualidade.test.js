@@ -126,3 +126,10 @@ test("calcularConfiabilidade: poucos motivos mas completude alta dá nível méd
   });
   assert.equal(r.nivel, "media");
 });
+
+test("aviso de volume: some abaixo de 900, médio a partir de 900, alto a partir de 1000", async () => {
+  const { avisoDeVolume } = await import("../src/domain/qualidade.js");
+  assert.equal(avisoDeVolume(867), null);
+  assert.equal(avisoDeVolume(900).nivel, "medio");
+  assert.equal(avisoDeVolume(1000).nivel, "alto");
+});

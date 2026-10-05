@@ -319,3 +319,19 @@ test("despesa, receita e parcelamento herdam a pessoa da conta ou do cartão, n�
   const ts = sets(r, "transacoes");
   assert.deepEqual(ts.map((t) => t.pessoaId), ["p2", "p1", "p1"]);
 });
+
+test("desfazer recusa quando outro envio depende do que este criou", () => {
+  const e = estadoBase();
+  const r1 = montar([{ acao: "criar", colecao: "categorias", dados: { nome: "Delivery", grupo: "alimentacao", natureza: "despesa" } }]);
+  for (const w of r1.escritas.filter((x) => x.op === "set")) e[w.collection].push({ id: w.doc_id, ...w.data });
+  const catId = r1.escritas.find((x) => x.collection === "categorias").doc_id;
+  e.transacoes.push({ id: "t-outro", categoriaId: catId, origem: "chat", origemId: "outro-lote", descricao: "iFood" });
+  assert.throws(() => montarDesfazer({ estado: e, loteId: r1.loteId }), /dependem do que ele criou.*iFood/);
+});
+
+test("carga grande com forcar e sem idExterno é recusada; com idExterno passa", () => {
+  const muitos = (extra) => Array.from({ length: 25 }, (_, i) => ({ acao: "despesa", valor: 10 + i, conta: "Nubank", categoria: "Moradia", descricao: `Item ${i}`, data: "2026-03-10", forcar: true, ...extra(i) }));
+  assert.throws(() => montar(muitos(() => ({}))), /reenviar dobraria/);
+  const ok = montar(muitos((i) => ({ idExterno: `bb:${i}` })));
+  assert.deepEqual(ok.pendencias, []);
+});

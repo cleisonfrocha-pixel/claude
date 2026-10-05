@@ -53,6 +53,7 @@ const outros=T.filter(t=>t.categoriaId&&E.categorias.find(c=>c.id===t.categoriaI
 // 8 datas futuras pagas
 const hoje=new Date().toISOString().slice(0,10); const futPago=T.filter(t=>t.status==='pago'&&t.data>hoje&&!t.pagoEm); if(futPago.length) A('MÉDIA','data',`${futPago.length} lançamento(s) pago(s) com data futura`,futPago.length,futPago.map(t=>t.descricao+' '+t.data));
 // 9 contagem/tamanho
+if(T.length>=1000)A('ALTA','volume',`${T.length} lançamentos: acima do teto de 1.000 da consulta com limite; dividir por ano`);else if(T.length>=900)A('MÉDIA','volume',`${T.length} lançamentos: perto do teto de 1.000; dividir por ano antes de nova carga`);
 A('INFO','volume',`transacoes=${T.length}, bytes médios ${Math.round(JSON.stringify(T).length/T.length)}, total ${(JSON.stringify(T).length/1024).toFixed(0)} KB`);
 for(const a of achados) console.log(a.sev.padEnd(6),a.area.padEnd(14),a.msg, a.ex.length?JSON.stringify(a.ex):'');
 

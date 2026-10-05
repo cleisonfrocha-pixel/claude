@@ -32,7 +32,8 @@ export const COLECOES = {
   recorrencias: { padrao: E.padraoRecorrencia, validar: E.validarRecorrencia, nomes: ["descricao"] },
 };
 
-export const COLECOES_LIDAS = [...Object.keys(COLECOES), "faturas", "transacoes", "regrasClassificacao", COLECAO_LOTES];
+export const LIMITE_FORCAR_SEM_ID = 20;
+const COLECOES_LIDAS = [...Object.keys(COLECOES), "faturas", "transacoes", "regrasClassificacao", COLECAO_LOTES];
 
 // Campo de id que cada referência por nome preenche, por coleção.
 const CAMPO_REF = {
@@ -143,6 +144,10 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
     });
     if (!r.ok) throw new Error(`extrato "${c.conta || "?"}" não fecha: faltam ${formatarBRL(Math.abs(r.diferencaCentavos))} ${r.diferencaCentavos > 0 ? "de entrada" : "de saída"} para chegar ao saldo final. Nada foi montado.`);
   }
+  // Carga em lote com "forcar" e sem ID do banco desliga a checagem de duplicata: reenviar o mesmo pedido dobraria tudo.
+  const semId = pedido.itens.filter((i) => i.forcar && !i.idExterno && ["despesa", "receita", "pagamento_fatura"].includes(i.acao));
+  exigir(pedido.itens.length <= LIMITE_FORCAR_SEM_ID || semId.length === 0,
+    `pedido grande (${pedido.itens.length} itens) com "forcar" em ${semId.length} item(ns) sem idExterno: reenviar dobraria os lançamentos. Dê um idExterno a cada lançamento do extrato ou tire o "forcar".`);
   const loteId = gerarId();
   const escritas = [];
   const resumo = [];
@@ -425,6 +430,8 @@ function descreverValores(dados) {
   return partes.length ? ` · ${partes.join(" · ")}` : "";
 }
 
+const CAMPOS_DE_REFERENCIA = ["contaId", "cartaoId", "categoriaId", "pessoaId", "faturaId", "fonteRendaId", "dividaId", "recorrenciaId", "contaPagamentoId"];
+
 /** Desfaz um envio do chat: apaga tudo que nasceu dele e devolve os campos
  * que ele alterou ao valor de antes. Só lotes do chat. */
 export function montarDesfazer({ estado, loteId }) {
@@ -439,6 +446,21 @@ export function montarDesfazer({ estado, loteId }) {
     }
   }
   const apagados = new Set(escritas.map((e) => `${e.collection}/${e.doc_id}`));
+  // Outro envio pode depender do que este criou (categoria, cartão, fatura...): apagar deixaria referência quebrada.
+  const idsApagados = new Set(escritas.map((e) => e.doc_id));
+  const dependentes = [];
+  for (const colecao of COLECOES_LIDAS) {
+    if (colecao === COLECAO_LOTES) continue;
+    for (const doc of estado[colecao] || []) {
+      if (apagados.has(`${colecao}/${doc.id}`)) continue;
+      const campo = CAMPOS_DE_REFERENCIA.find((k) => doc[k] && idsApagados.has(doc[k]));
+      if (campo) dependentes.push({ colecao, id: doc.id, campo, descricao: doc.descricao || doc.nome || doc.apelido || doc.id });
+    }
+  }
+  if (dependentes.length) {
+    const exemplos = dependentes.slice(0, 3).map((d) => `"${d.descricao}" (${d.colecao})`).join(", ");
+    throw new Error(`não dá para desfazer este envio: ${dependentes.length} documento(s) de outros envios dependem do que ele criou, por exemplo ${exemplos}. Desfaça primeiro os envios mais novos.`);
+  }
   for (const { colecao, id, antes } of [...(lote.alteracoes || [])].reverse()) {
     if (apagados.has(`${colecao}/${id}`)) continue;
     const data = Object.fromEntries(Object.entries(antes).map(([k, v]) => [k, v === null ? { __delete__: true } : v]));

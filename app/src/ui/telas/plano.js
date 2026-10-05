@@ -347,6 +347,7 @@ function blocoQualidade(q) {
       <p class="tela-sub">O quanto dá pra confiar no que está sendo mostrado</p></div>
       <span class="item-tag${classeNivel}">confiabilidade ${escapeHtml(confiabilidade.nivel)}</span>
     </div>
+    ${q.volume ? `<div class="reserva-nota"><span>${escapeHtml(q.volume.texto)}</span></div>` : ""}
     <div class="divida-resumo">
       <div class="diagnostico-linha">
         <div class="rotulo">Completude da vida financeira mapeada</div>

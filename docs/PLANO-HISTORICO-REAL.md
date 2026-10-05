@@ -147,24 +147,23 @@ rodando no navegador. Ferramenta: `app/ferramentas/auditoria/auditar-estado.mjs`
 | 2 | Conta de luz de R$ 156,79 lançada no Next; saiu do Nubank | média | **corrigido** |
 | 3 | Gedi de setembro (R$ 2.650 em espécie, depositado na conta da Carolina) sem receita | média | **corrigido** (receita na fonte Gedi / Tony) |
 | 4 | Alerta falso "receita subiu 241%": comparava o previsto do mês com o recebido do anterior | média | **corrigido** (só compara recebido com recebido, a partir do dia 20) e teste |
-| 5 | Transferência e pagamento de fatura sem pessoa (98 lançamentos) | baixa | **corrigido** na ferramenta (herda do cartão ou da conta) e teste; o motor já usava a conta como reserva |
+| 5 | Transferência e pagamento de fatura sem pessoa (98 lançamentos) | baixa | **corrigido** na ferramenta e nos dados. Na Sprint 2 apareceu o mesmo defeito em despesa e receita (caíam no titular): corrigido também, com teste, e 207 lançamentos acertados no banco |
 | 6 | Mudança de cadastro move o plano em dezenas de milhares sem avisar (CryptoPag eventual: R$ 30 mil nos 12 meses; Sociable 5.200 para 4.500: R$ 8,4 mil) | alta | **aberto**: mostrar "o que mudou no plano" antes de gravar mudança de renda |
-| 7 | A importação sozinha não muda nenhum número do plano (gasto do dia a dia continua R$ 0,00) | alta | **aberto**: depende das Sprints 5 a 7 |
-| 8 | `forcar` no lote histórico desliga a checagem de duplicata: reenviar o mesmo pedido dobraria tudo | alta | **aberto**: proibir `forcar` em lote sem `idExterno`; fazer backfill de `idExterno` nos 605 já gravados |
-| 9 | Desfazer o lote 1 deixaria o lote 2 com categoria apagada (a categoria Delivery nasceu no lote 1) | média | **aberto**: desfazer deve listar dependentes e recusar fora de ordem |
-| 10 | Leitura da coleção inteira sem teto documentado; a consulta com limite aceita no máximo 1.000. Hoje 718 | alta, em semanas | **aberto**: aviso a partir de 900 e partição por ano (`transacoesAAAA`) |
-| 11 | Banco sem cópia de segurança: só o registro do lote | média | **aberto**: `exportar` do estado completo antes e depois de cada carga |
-| 12 | 637 lançamentos "não revisados" e 206 despesas em "Outros" (R$ 25,1 mil) | média | Sprint 4 |
+| 7 | A importação sozinha não muda nenhum número do plano (gasto do dia a dia continua R$ 0,00) | alta | **corrigido** pela Sprint 7: gasto do dia a dia agora R$ 4,5 mil por mês, renda e cartão pelo real |
+| 8 | `forcar` no lote histórico desliga a checagem de duplicata: reenviar o mesmo pedido dobraria tudo | alta | **corrigido**: pedido com mais de 20 itens e `forcar` sem `idExterno` é recusado, com teste. Backfill dos 605 antigos não é necessário: o que já entrou fica protegido pela checagem de valor e data, e todo extrato novo traz `idExterno` |
+| 9 | Desfazer o lote 1 deixaria o lote 2 com categoria apagada (a categoria Delivery nasceu no lote 1) | média | **corrigido**: desfazer recusa e lista o que depende do lote, com teste |
+| 10 | Leitura da coleção inteira sem teto documentado; a consulta com limite aceita no máximo 1.000. Hoje 718 | alta, em semanas | aviso **feito** (900 médio, 1.000 alto, no Plano > Qualidade dos dados e na auditoria). Hoje 867. Partição por ano é a próxima tarefa antes de carregar 2025 ou novas faturas |
+| 11 | Banco sem cópia de segurança: só o registro do lote | média | **feito como rotina**: a skill `subir-painel` baixa o estado antes de cada carga e roda `auditar-estado.mjs` depois; essa pasta é a cópia |
+| 12 | 637 lançamentos "não revisados" e 206 despesas em "Outros" (R$ 25,1 mil) | média | Sprint 4 feita, ficaram 21% do gasto sem classificar (R$ 21 mil, 229 lançamentos): resolver na aba Revisar |
 | 13 | 7 faturas Nubank pagas sem compra lançada: R$ 20,8 mil entram como "gasto sem detalhe" | média | Sprint 8 |
 | 14 | Dados de terceiros (nomes em Pix) no banco do artefato | média | conferido: o artefato está **privado** (só o dono). Para a Carolina abrir, compartilhar pelo menu Share do artefato, sabendo que ela passa a ver tudo |
 | 15 | Lançamentos manuais do Next de 03 a 05/10 com data diferente do extrato (Jeep, TV, água) | baixa | aberto: conciliar quando o saldo do Next for conferido |
 
 ### Trabalho da sprint (o que falta)
-1. Mostrar "o que muda no plano" ao gravar mudança de renda ou recorrência (#6).
-2. `idExterno` em tudo: backfill, `forcar` bloqueado em lote, desfazer com dependências (#8, #9).
-3. Partição e aviso de volume da coleção `transacoes` (#10).
-4. `exportar` do estado e rodar `auditar-estado.mjs` ao fim de cada lote (#11).
-5. Reauditar depois das Sprints 4, 5 e 7 com o mesmo roteiro.
+1. Mostrar "o que muda no plano" ao gravar mudança de renda ou recorrência (#6). Aberto.
+2. Partição por ano da coleção `transacoes` (#10), antes de passar de 1.000.
+3. Conciliar as datas dos lançamentos manuais do Next (#15).
+4. Reauditar depois de cada carga com `auditar-estado.mjs` (feito após as Sprints 2, 4 e 7).
 
 ## Pendências de dados (precisam do Cleison)
 

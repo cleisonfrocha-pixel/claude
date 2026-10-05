@@ -99,3 +99,15 @@ export function calcularConfiabilidade({ completude, itensAConfirmar, saldosNaoC
   const nivel = motivos.length === 0 ? "alta" : completude.percentual >= 70 ? "media" : "baixa";
   return { nivel, confiavel: motivos.length === 0, motivos };
 }
+
+export const AVISO_VOLUME_TRANSACOES = 900;
+export const LIMITE_VOLUME_TRANSACOES = 1000;
+
+/** O banco do painel lê a coleção inteira de uma vez e é pensado para "centenas a poucos milhares" de
+ * documentos; a consulta com limite aceita no máximo 1.000. Avisa antes de virar problema. */
+export function avisoDeVolume(quantidadeTransacoes) {
+  const n = Number(quantidadeTransacoes) || 0;
+  if (n >= LIMITE_VOLUME_TRANSACOES) return { nivel: "alto", quantidade: n, texto: `O painel já guarda ${n} lançamentos, acima de ${LIMITE_VOLUME_TRANSACOES}. É hora de dividir por ano antes que a leitura fique lenta ou incompleta.` };
+  if (n >= AVISO_VOLUME_TRANSACOES) return { nivel: "medio", quantidade: n, texto: `O painel guarda ${n} lançamentos e o aviso é a partir de ${AVISO_VOLUME_TRANSACOES}. Antes de carregar mais um ano de extrato, é preciso dividir por ano.` };
+  return null;
+}
