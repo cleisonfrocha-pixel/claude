@@ -126,6 +126,7 @@ export function padraoTransacao(dados = {}) {
     centro: "", // casa | negocio | galpao ("" = casa)
     origem: "manual",
     origemId: null,
+    idExterno: null, // identificador do lançamento no banco (UUID do Nubank, documento do extrato): reimportar o mesmo extrato nunca duplica
     revisado: true,
     ...dados,
   };
@@ -295,6 +296,7 @@ export function validarTransacao(t) {
   if (t.tipo === "receita" && !t.categoriaId) erros.push("Receita precisa de categoria.");
   if (!STATUS_TRANSACAO.includes(t.status)) erros.push("Status inválido.");
   if (!CERTEZAS_TRANSACAO.includes(t.certeza)) erros.push("Certeza inválida.");
+  if (t.idExterno != null && (typeof t.idExterno !== "string" || !t.idExterno.trim() || t.idExterno.length > 160)) erros.push("Identificador do banco inválido.");
   return erros;
 }
 

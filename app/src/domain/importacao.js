@@ -144,7 +144,7 @@ export function detectarDuplicatas(candidatos, transacoesExistentes, contaId) {
   const existentesDaConta = (transacoesExistentes || []).filter((t) => t.contaId === contaId && !STATUS_ABERTO.has(t.status));
   return candidatos.map((c) => {
     if (c.externoId) {
-      const porId = existentesDaConta.find((t) => t.origemId === c.externoId);
+      const porId = existentesDaConta.find((t) => t.idExterno === c.externoId || t.origemId === c.externoId);
       if (porId) return { ...c, possivelDuplicata: true, duplicataDe: porId.id, motivoDuplicata: "mesmo identificador do banco" };
     }
     const porSemelhanca = existentesDaConta.find((t) =>

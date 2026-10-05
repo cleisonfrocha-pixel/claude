@@ -8,6 +8,7 @@
 // Uso pelo chat: ver .claude/skills/subir-painel/SKILL.md.
 
 import { paraCentavos, formatarBRL } from "../src/domain/dinheiro.js";
+import { conferirExtrato } from "./extrato/reconciliar.js";
 import { somarMeses, dataDeCompetencia, formatarData } from "../src/domain/tempo.js";
 import { competenciaFatura, gerarParcelas, construirParTransferencia, competenciasFaltantes } from "../src/domain/transacoes.js";
 import * as E from "../src/domain/esquema.js";
@@ -62,6 +63,13 @@ function exigir(condicao, motivo) {
 function centavos(valor, rotulo = "valor") {
   const c = Math.abs(paraCentavos(valor));
   exigir(Number.isInteger(c) && c > 0, `${rotulo} ausente ou inválido`);
+  return c;
+}
+
+// Valor com sinal (saldo e movimentos de extrato): aceita zero e negativo.
+function centavosComSinal(valor, rotulo) {
+  const c = paraCentavos(valor);
+  exigir(Number.isInteger(c), `${rotulo} inválido`);
   return c;
 }
 
@@ -124,6 +132,16 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
   exigir(pedido && Array.isArray(pedido.itens), "pedido sem itens");
   const hoje = pedido.hoje || agora.slice(0, 10);
   const estado = Object.fromEntries(COLECOES_LIDAS.map((c) => [c, [...(estadoOriginal[c] || [])]]));
+  // Trava de reconciliação: extrato que não fecha com o saldo impresso não sobe
+  // (nem uma linha). Cada conferência vem do parser, em reais, antes de classificar.
+  for (const c of pedido.conferencias || []) {
+    const r = conferirExtrato({
+      saldoAnteriorCentavos: centavosComSinal(c.saldoAnterior, "saldo anterior"),
+      movimentosCentavos: (c.movimentos || []).map((v) => centavosComSinal(v, "movimento")),
+      saldoFinalCentavos: centavosComSinal(c.saldoFinal, "saldo final"),
+    });
+    if (!r.ok) throw new Error(`extrato "${c.conta || "?"}" não fecha: faltam ${formatarBRL(Math.abs(r.diferencaCentavos))} ${r.diferencaCentavos > 0 ? "de entrada" : "de saída"} para chegar ao saldo final. Nada foi montado.`);
+  }
   const loteId = gerarId();
   const escritas = [];
   const resumo = [];
@@ -178,6 +196,12 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
 
     try {
       const acao = item.acao;
+      // ID do banco já importado: nunca duplica, nem com "forcar".
+      if (item.idExterno) {
+        const id = String(item.idExterno);
+        exigir(!(estado.transacoes || []).some((t) => t.idExterno === id || String(t.idExterno || "").startsWith(`${id}:`)),
+          `já importado: o ID do banco ${id} já está no painel`);
+      }
       if (acao === "despesa" || acao === "receita") {
         const data = validarData(item.data, hoje);
         const valor = centavos(item.valor);
@@ -200,6 +224,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
           descricao: item.descricao || categoria.nome,
           status: item.status || "pago", certeza: item.certeza || "confirmado",
           fonteRendaId: acao === "receita" && item.fonteRenda ? resolver(estado, "fontesRenda", item.fonteRenda).id : null,
+          idExterno: item.idExterno ? String(item.idExterno) : null,
         };
         if (cartao) dados.faturaId = faturaDe(cartao, competenciaFatura(cartao, data));
         if (divida) dados.dividaId = divida.id;
@@ -228,7 +253,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         avisarDuplicata(duplicataDe((t) => t.tipo === "transferencia" && t.direcao === "saida" && t.contaId === de.id, valor, data));
         const transferenciaId = `tr_${gerarId()}`;
         for (const perna of construirParTransferencia({ contaOrigemId: de.id, contaDestinoId: para.id, valorCentavos: valor, data, competencia: competenciaDe(data), descricao: item.descricao, transferenciaId })) {
-          transacao(perna);
+          transacao(item.idExterno ? { ...perna, idExterno: `${item.idExterno}:${perna.direcao}` } : perna);
         }
         local.quantidade -= 1; // as duas pernas são um lançamento só para o usuário
         local.resumo.push(`Transferência · ${formatarBRL(valor)} · ${de.nome} → ${para.nome} · ${formatarData(data)} (não conta como receita nem despesa)`);
@@ -279,7 +304,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         }
         exigir(fatura, `não achei fatura em aberto do ${cartao.apelido}${item.competencia ? ` em ${item.competencia}` : ""}`);
         avisarDuplicata(duplicataDe((t) => t.tipo === "pagamento_fatura" && t.faturaId === fatura.id, valor, data));
-        transacao({ tipo: "pagamento_fatura", contaId: conta.id, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null });
+        transacao({ tipo: "pagamento_fatura", contaId: conta.id, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null, idExterno: item.idExterno ? String(item.idExterno) : null });
         if (fatura.status !== "paga") atualizar("faturas", fatura, { status: "paga" });
         local.resumo.push(`Pagamento de fatura · ${formatarBRL(valor)} · ${cartao.apelido} (${fatura.competencia}) · saiu da ${conta.nome} · ${formatarData(data)} (não é despesa nova: as compras já contaram)`);
       } else if (acao === "criar") {

@@ -224,3 +224,35 @@ test("pagamento_fatura histórico cria a fatura do mês e aceita dois pagamentos
   assert.equal(pags.filter((t) => t.faturaId === pags[0].faturaId).length, 2);
   assert.notEqual(pags[2].faturaId, pags[0].faturaId);
 });
+
+test("idExterno: o mesmo ID do banco nunca entra duas vezes, nem com forcar", () => {
+  const e = estadoBase();
+  const item = { acao: "despesa", valor: 50, conta: "Nubank", categoria: "Moradia", descricao: "Água", data: "2026-03-10", idExterno: "nu-111", forcar: true };
+  const r1 = montar([item], e);
+  assert.deepEqual(r1.pendencias, []);
+  const t = sets(r1, "transacoes")[0];
+  assert.equal(t.idExterno, "nu-111");
+  const e2 = { ...e, transacoes: [{ id: "x1", ...t }] };
+  const r2 = montar([item], e2);
+  assert.equal(r2.pendencias.length, 1);
+  assert.match(r2.pendencias[0].motivo, /já importado/);
+  assert.equal(sets(r2, "transacoes").length, 0);
+});
+
+test("idExterno em transferência marca as duas pernas e bloqueia repetição", () => {
+  const e = estadoBase();
+  const item = { acao: "transferencia", valor: 100, de: "Next", para: "Nubank", data: "2026-03-10", idExterno: "nu-222" };
+  const r1 = montar([item], e);
+  const ids = sets(r1, "transacoes").map((t) => t.idExterno).sort();
+  assert.deepEqual(ids, ["nu-222:entrada", "nu-222:saida"]);
+  const e2 = { ...e, transacoes: sets(r1, "transacoes").map((t, i) => ({ id: `p${i}`, ...t })) };
+  assert.equal(montar([item], e2).pendencias.length, 1);
+});
+
+test("conferencias: extrato que não fecha com o saldo impresso recusa o pedido inteiro", () => {
+  const itens = [{ acao: "despesa", valor: 10, conta: "Nubank", categoria: "Moradia", data: "2026-03-10" }];
+  const ok = { conta: "Nubank", saldoAnterior: 100, movimentos: [-10, 50.5], saldoFinal: 140.5 };
+  assert.deepEqual(montarEscritas({ estado: estadoBase(), pedido: { hoje: "2026-09-26", itens, conferencias: [ok] }, agora: AGORA, gerarId: ids() }).pendencias, []);
+  const ruim = { ...ok, saldoFinal: 140.51 };
+  assert.throws(() => montarEscritas({ estado: estadoBase(), pedido: { hoje: "2026-09-26", itens, conferencias: [ruim] }, agora: AGORA, gerarId: ids() }), /não fecha: faltam R\$\s?0,01/);
+});
