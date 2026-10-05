@@ -1740,3 +1740,4 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - A tabela FIPE não é consultada de dentro do painel (a página não acessa a internet). Em 05/10 conferi na busca: Compass Longitude T270 (cód. 017071-2) R$ 126.453 (2023), R$ 133.436 (2024), R$ 141.162 (2025). O cadastro do bem tem R$ 116.540: falta confirmar o ano do carro.
 - **Início no desktop:** os blocos correm em duas colunas equilibradas (antes a esquerda ficava enorme e a direita vazia); os tiles de saldo ocupam a largura toda. Varredura de 11 telas em 420 px e 1366 px: nenhuma rolagem lateral.
 - 517 testes nos dois fusos.
+- Jeep é Compass Longitude T270 1.3 Turbo Flex **2022**: valor de tabela atualizado para a FIPE de R$ 119.510,00 (cód. 017071-2, referência de agosto/2026 na busca). Venda particular: sobram R$ 37.284,51; loja (10% abaixo): R$ 25.333,51.
