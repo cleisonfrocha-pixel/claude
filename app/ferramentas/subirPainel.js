@@ -178,7 +178,15 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
       return criar("faturas", E.padraoFatura({ cartaoId: cartao.id, competencia }));
     };
 
+    // Quem é o dono do lançamento quando o pedido não diz: o do cartão, ou o da conta.
+    const donoPadrao = (dados) => {
+      const cartao = dados.cartaoId ? estado.cartoes.find((c) => c.id === dados.cartaoId) : null;
+      const conta = dados.contaId ? estado.contas.find((c) => c.id === dados.contaId) : null;
+      return cartao?.pessoaId || conta?.pessoaId || pessoaPadrao(estado);
+    };
+
     const transacao = (dados, opcoes) => {
+      if (!dados.pessoaId) dados = { ...dados, pessoaId: donoPadrao(dados) };
       const t = E.padraoTransacao({ ...dados, competencia: dados.competencia || competenciaDe(dados.data), origem: "chat", origemId: loteId });
       const erros = E.validarTransacao(t);
       exigir(!erros.length, erros.join(" "));
@@ -304,7 +312,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         }
         exigir(fatura, `não achei fatura em aberto do ${cartao.apelido}${item.competencia ? ` em ${item.competencia}` : ""}`);
         avisarDuplicata(duplicataDe((t) => t.tipo === "pagamento_fatura" && t.faturaId === fatura.id, valor, data));
-        transacao({ tipo: "pagamento_fatura", contaId: conta.id, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null, idExterno: item.idExterno ? String(item.idExterno) : null });
+        transacao({ tipo: "pagamento_fatura", contaId: conta.id, pessoaId: cartao.pessoaId, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null, idExterno: item.idExterno ? String(item.idExterno) : null });
         if (fatura.status !== "paga") atualizar("faturas", fatura, { status: "paga" });
         local.resumo.push(`Pagamento de fatura · ${formatarBRL(valor)} · ${cartao.apelido} (${fatura.competencia}) · saiu da ${conta.nome} · ${formatarData(data)} (não é despesa nova: as compras já contaram)`);
       } else if (acao === "criar") {

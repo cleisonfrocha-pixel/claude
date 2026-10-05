@@ -19,6 +19,8 @@ que o originaram.
 
 ## Estado em 05/10/2026 (feito)
 
+_Atualizado após a Sprint 1, a Sprint 3 e a auditoria da Sprint 9 (abaixo)._
+
 - Next jan a set e Nubank PJ (CNPJ 46.040.348/0001-03) jan a set: **560 lançamentos**,
   9 faturas históricas, 3 categorias novas, lote único (dá para desfazer).
 - Conferido no motor do app: saldo das contas idêntico antes e depois.
@@ -105,10 +107,52 @@ Portão: o plano de 12 meses muda quando se troca o piso de uma fonte; teste cob
 - Mercado Pago (loja).
 Portão: gasto sem detalhe de fatura cai para zero nos meses cobertos.
 
+## Sprint 9 (extra): endurecimento depois da carga em massa
+
+Auditoria feita em 05/10/2026, com o painel real (718 lançamentos, 480 KB) e o app
+rodando no navegador. Ferramenta: `app/ferramentas/auditoria/auditar-estado.mjs`.
+
+### O que a auditoria confirmou (sem problema)
+- Referências: nenhuma quebrada (conta, cartão, categoria, pessoa, fatura, fonte, dívida).
+- Validade: todos os lançamentos passam no validador do app; datas e centavos inteiros.
+- Transferências: as 40 têm duas pernas, mesmo valor, mesma data, contas diferentes.
+- **Conservação:** documentos gravados mais o que ficou de fora igual ao extrato, centavo a
+  centavo, no Next e no Nubank. Saldos de hoje pelo motor: Next R$ 2.287,96, Nubank R$ 2.430,33.
+- App abre em cerca de 0,6 s com o volume novo, plano calculado em menos de 80 ms, sem erro de página.
+- Desfazer o lote grande apaga 573 documentos (560 lançamentos, 9 faturas, 3 categorias, 1 registro).
+- As 3 "duplicatas" idênticas têm documento bancário diferente: são reais.
+
+### Achados e situação
+| # | Achado | Gravidade | Situação |
+|---|---|---|---|
+| 1 | Saldo do Nubank no painel R$ 514 acima do extrato (compras no débito de 02 a 05/10 sem lançar) | alta | **corrigido** (saldo pelo extrato, lote da janela 20/09 a 05/10) |
+| 2 | Conta de luz de R$ 156,79 lançada no Next; saiu do Nubank | média | **corrigido** |
+| 3 | Gedi de setembro (R$ 2.650 em espécie, depositado na conta da Carolina) sem receita | média | **corrigido** (receita na fonte Gedi / Tony) |
+| 4 | Alerta falso "receita subiu 241%": comparava o previsto do mês com o recebido do anterior | média | **corrigido** (só compara recebido com recebido, a partir do dia 20) e teste |
+| 5 | Transferência e pagamento de fatura sem pessoa (98 lançamentos) | baixa | **corrigido** na ferramenta (herda do cartão ou da conta) e teste; o motor já usava a conta como reserva |
+| 6 | Mudança de cadastro move o plano em dezenas de milhares sem avisar (CryptoPag eventual: R$ 30 mil nos 12 meses; Sociable 5.200 para 4.500: R$ 8,4 mil) | alta | **aberto**: mostrar "o que mudou no plano" antes de gravar mudança de renda |
+| 7 | A importação sozinha não muda nenhum número do plano (gasto do dia a dia continua R$ 0,00) | alta | **aberto**: depende das Sprints 5 a 7 |
+| 8 | `forcar` no lote histórico desliga a checagem de duplicata: reenviar o mesmo pedido dobraria tudo | alta | **aberto**: proibir `forcar` em lote sem `idExterno`; fazer backfill de `idExterno` nos 605 já gravados |
+| 9 | Desfazer o lote 1 deixaria o lote 2 com categoria apagada (a categoria Delivery nasceu no lote 1) | média | **aberto**: desfazer deve listar dependentes e recusar fora de ordem |
+| 10 | Leitura da coleção inteira sem teto documentado; a consulta com limite aceita no máximo 1.000. Hoje 718 | alta, em semanas | **aberto**: aviso a partir de 900 e partição por ano (`transacoesAAAA`) |
+| 11 | Banco sem cópia de segurança: só o registro do lote | média | **aberto**: `exportar` do estado completo antes e depois de cada carga |
+| 12 | 637 lançamentos "não revisados" e 206 despesas em "Outros" (R$ 25,1 mil) | média | Sprint 4 |
+| 13 | 7 faturas Nubank pagas sem compra lançada: R$ 20,8 mil entram como "gasto sem detalhe" | média | Sprint 8 |
+| 14 | Dados de terceiros (nomes em Pix) em banco aberto a "qualquer pessoa com o link" | alta | **aberto**: o dono precisa restringir o compartilhamento do artefato |
+| 15 | Lançamentos manuais do Next de 03 a 05/10 com data diferente do extrato (Jeep, TV, água) | baixa | aberto: conciliar quando o saldo do Next for conferido |
+
+### Trabalho da sprint (o que falta)
+1. Mostrar "o que muda no plano" ao gravar mudança de renda ou recorrência (#6).
+2. `idExterno` em tudo: backfill, `forcar` bloqueado em lote, desfazer com dependências (#8, #9).
+3. Partição e aviso de volume da coleção `transacoes` (#10).
+4. `exportar` do estado e rodar `auditar-estado.mjs` ao fim de cada lote (#11).
+5. Reauditar depois das Sprints 4, 5 e 7 com o mesmo roteiro.
+
 ## Pendências de dados (precisam do Cleison)
 
-1. Dia de fechamento do cartão Next.
-2. Origem do depósito em dinheiro de R$ 2.650 na conta da Carolina (24/09).
+1. CryptoPag é recorrente? Só aparece uma vez em 2026 (R$ 2.500 em 01/10); mudar para eventual
+   tirou R$ 30 mil da projeção de 12 meses. Se começou em outubro, volta a recorrente com início 2026-10.
+2. Saldo atual do Next no app (corrente mais Invest Fácil), para fechar a conciliação.
 3. Favorecidos de saída sem nome (Gringo Pay R$ 1.400, José Roberto R$ 1.200,
    Ana Maria R$ 1.000, Francielen R$ 1.000, Guillermo R$ 955, Giuliana R$ 700).
 4. Outra conta da Carolina que também manda dinheiro (R$ 2.414 em jan a mai que

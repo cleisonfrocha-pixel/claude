@@ -130,3 +130,17 @@ test("compararComPeriodoAnterior: variação pequena (dentro do limiar) retorna 
 test("compararComPeriodoAnterior: sem período anterior, retorna null", () => {
   assert.equal(compararComPeriodoAnterior(50000, 0), null);
 });
+
+// ---------- compararReceitaDoMes ----------
+import { compararReceitaDoMes } from "../src/domain/anomalias.js";
+
+test("compararReceitaDoMes: antes do dia 20 não alerta, mesmo com queda grande", () => {
+  assert.equal(compararReceitaDoMes({ rendaPagaAtualCentavos: 100000, rendaPagaAnteriorCentavos: 900000, hoje: "2026-10-05" }), null);
+});
+
+test("compararReceitaDoMes: dia 20 em diante compara recebido com recebido", () => {
+  const r = compararReceitaDoMes({ rendaPagaAtualCentavos: 400000, rendaPagaAnteriorCentavos: 900000, hoje: "2026-10-22" });
+  assert.equal(r.subiu, false);
+  assert.equal(r.variacaoPercentual, -56);
+  assert.equal(compararReceitaDoMes({ rendaPagaAtualCentavos: 880000, rendaPagaAnteriorCentavos: 900000, hoje: "2026-10-22" }), null);
+});

@@ -1741,3 +1741,10 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - **Início no desktop:** os blocos correm em duas colunas equilibradas (antes a esquerda ficava enorme e a direita vazia); os tiles de saldo ocupam a largura toda. Varredura de 11 telas em 420 px e 1366 px: nenhuma rolagem lateral.
 - 517 testes nos dois fusos.
 - Jeep é Compass Longitude T270 1.3 Turbo Flex **2022**: valor de tabela atualizado para a FIPE de R$ 119.510,00 (cód. 017071-2, referência de agosto/2026 na busca). Venda particular: sobram R$ 37.284,51; loja (10% abaixo): R$ 25.333,51.
+
+
+## Fase 12 (em andamento): histórico real do ano
+
+- Extratos de 2026 (Next, Nubank PJ) importados: 605 lançamentos e 9 faturas históricas, saldo conferido com o extrato.
+- Ferramenta de subir: `pagamento_fatura` histórico, `idExterno`, trava de reconciliação (`conferencias`), pessoa herdada.
+- Auditoria da carga em massa e Sprint 9: `docs/PLANO-HISTORICO-REAL.md`.

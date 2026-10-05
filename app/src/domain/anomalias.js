@@ -121,3 +121,15 @@ export function compararComPeriodoAnterior(atualCentavos, anteriorCentavos, { li
   if (Math.abs(variacaoPercentual) < limiarPercentual) return null;
   return { atualCentavos, anteriorCentavos, variacaoCentavos, variacaoPercentual, subiu: variacaoCentavos > 0 };
 }
+
+/**
+ * "A receita do mês mudou muito?" só faz sentido comparando recebido com recebido
+ * e com o mês já adiantado: no começo do mês a renda paga ainda é pequena e
+ * qualquer mês parece ter "caído"; contar o previsto do mês atual contra o
+ * recebido do anterior faz parecer que subiu. Antes do dia mínimo, sem alerta.
+ */
+export function compararReceitaDoMes({ rendaPagaAtualCentavos, rendaPagaAnteriorCentavos, hoje, diaMinimo = 20, limiarPercentual = 30 }) {
+  const dia = Number((hoje || "").slice(8, 10)) || 0;
+  if (dia < diaMinimo) return null;
+  return compararComPeriodoAnterior(rendaPagaAtualCentavos, rendaPagaAnteriorCentavos, { limiarPercentual });
+}

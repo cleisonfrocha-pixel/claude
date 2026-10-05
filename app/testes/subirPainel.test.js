@@ -256,3 +256,18 @@ test("conferencias: extrato que não fecha com o saldo impresso recusa o pedido 
   const ruim = { ...ok, saldoFinal: 140.51 };
   assert.throws(() => montarEscritas({ estado: estadoBase(), pedido: { hoje: "2026-09-26", itens, conferencias: [ruim] }, agora: AGORA, gerarId: ids() }), /não fecha: faltam R\$\s?0,01/);
 });
+
+test("transferência e pagamento de fatura herdam a pessoa da conta e do cartão", () => {
+  const e = estadoBase();
+  e.contas[1].pessoaId = "p2";
+  const r = montar([
+    { acao: "transferencia", valor: 10, de: "Nubank", para: "Next", data: "2026-03-10" },
+    { acao: "pagamento_fatura", valor: 20, cartao: "Roxinho", conta: "Next", data: "2026-03-21", historico: true },
+  ], e);
+  assert.deepEqual(r.pendencias, []);
+  const ts = sets(r, "transacoes");
+  const saida = ts.find((t) => t.direcao === "saida"), entrada = ts.find((t) => t.direcao === "entrada"), pag = ts.find((t) => t.tipo === "pagamento_fatura");
+  assert.equal(saida.pessoaId, "p1");
+  assert.equal(entrada.pessoaId, "p2");
+  assert.equal(pag.pessoaId, "p1");
+});

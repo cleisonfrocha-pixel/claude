@@ -25,7 +25,7 @@ import { visaoDoMes, numerosDoMes } from "../domain/mes.js";
 import { calcularCustos, calcularMargem, identificarCategoriasCrescentes } from "../domain/orcamento.js";
 import {
   detectarNovaRecorrencia, detectarRecorrenciaValorDiferente, detectarAumentoCartao,
-  detectarReceitaEsperadaNaoRecebida, compararComPeriodoAnterior,
+  detectarReceitaEsperadaNaoRecebida, compararComPeriodoAnterior, compararReceitaDoMes,
 } from "../domain/anomalias.js";
 import { detectarAchados, montarPlanoVivo, priorizarAchados } from "../domain/decisoes.js";
 import { hojeISO, competenciaAtual, somarMeses } from "../domain/tempo.js";
@@ -144,8 +144,11 @@ export async function calcularPainelDecisoes() {
     rendaAtualCentavos: rendaAnteriorCentavos, custoEssencialCentavos: custosAnterior.essencialCentavos,
     comprometimentoMensalDividasCentavos: visaoDividasAtual.comprometimentoMensalCentavos,
   });
-  const mudancaReceita = compararComPeriodoAnterior(rendaAtualCentavos, rendaAnteriorCentavos, { limiarPercentual: 30 });
-  const mudancaMargem = compararComPeriodoAnterior(margemAtualCentavos, margemAnteriorCentavos, { limiarPercentual: 20 });
+  const mudancaReceita = compararReceitaDoMes({
+    rendaPagaAtualCentavos: calcularRendaAtual(dados.transacoes, competencia), rendaPagaAnteriorCentavos: rendaAnteriorCentavos, hoje,
+  });
+  // Margem do mês corrente usa o projetado e a do anterior o realizado: só compara com o mês adiantado (dia 20+).
+  const mudancaMargem = Number(hoje.slice(8, 10)) >= 20 ? compararComPeriodoAnterior(margemAtualCentavos, margemAnteriorCentavos, { limiarPercentual: 20 }) : null;
 
   const painelPatrimonio = await calcularPainelPatrimonio();
 
