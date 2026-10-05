@@ -1,7 +1,7 @@
 // Dívidas com esteira: oferta de desconto, placar "nome limpo", acordo em
 // parcelas e a barra do financiamento (Jeep). Puro (CLAUDE.md): sem tela, sem banco.
 
-import { calcularSaldoAtual, parcelasRestantes, valorCobradoSemOfertaCentavos } from "./dividas.js";
+import { calcularSaldoAtual, parcelasRestantes, valorCobradoSemOfertaCentavos, statusDivida, classificarDivida } from "./dividas.js";
 import { competenciaDeData } from "./tempo.js";
 
 function diasEntre(a, b) {
@@ -112,4 +112,34 @@ export function gastoPorCentro(transacoes, competencia) {
     soma[c] += Number(t.valorCentavos) || 0;
   }
   return soma;
+}
+
+/** O retrato das dívidas num golpe de vista: quanto se deve de verdade (já com as ofertas), de que é feito,
+ * quanto as ofertas economizam e quais são as melhores para fechar primeiro (maior desconto por real pago). */
+export function panoramaDeDividas(dividas, hoje) {
+  const ativas = (dividas || []).filter((d) => statusDivida(d, hoje) !== "quitada" && !d.mesmaDividaDe);
+  const grupos = { negativadas: { rotulo: "Nome sujo", centavos: 0, qtd: 0 }, atrasadas: { rotulo: "Atrasadas ou sem acordo", centavos: 0, qtd: 0 }, financiamento: { rotulo: "Financiamento em dia", centavos: 0, qtd: 0 }, trabalho: { rotulo: "Paga com trabalho", centavos: 0, qtd: 0 } };
+  const ofertas = [];
+  let cobrado = 0;
+  for (const d of ativas) {
+    const saldo = calcularSaldoAtual(d, hoje);
+    if (!(saldo > 0)) continue;
+    const classe = classificarDivida(d, hoje);
+    const chave = classe === "financiamento" ? "financiamento" : classe === "trabalho" ? "trabalho" : (d.negativada || d.protestada) ? "negativadas" : "atrasadas";
+    grupos[chave].centavos += saldo; grupos[chave].qtd += 1;
+    const of = ofertaDaDivida(d, hoje);
+    cobrado += of && !of.vencida ? of.cobradoCentavos : saldo;
+    if (of && !of.vencida && classe === "divida") ofertas.push({ id: d.id, nome: d.nome, credor: d.credor || "", pessoaId: d.pessoaId, valorCentavos: of.valorCentavos, cobradoCentavos: of.cobradoCentavos, economiaCentavos: of.economiaCentavos, descontoPct: of.descontoPct, validade: of.validade, diasParaVencer: of.diasParaVencer, origem: of.origem, negativada: !!(d.negativada || d.protestada) });
+  }
+  ofertas.sort((a, b) => b.descontoPct - a.descontoPct || b.economiaCentavos - a.economiaCentavos);
+  const lista = Object.entries(grupos).map(([chave, g]) => ({ chave, ...g })).filter((g) => g.centavos > 0);
+  return {
+    totalRealCentavos: lista.reduce((s, g) => s + g.centavos, 0),
+    cobradoCentavos: cobrado,
+    economiaCentavos: ofertas.reduce((s, o) => s + o.economiaCentavos, 0),
+    grupos: lista,
+    ofertas,
+    totalOfertasCentavos: ofertas.reduce((s, o) => s + o.valorCentavos, 0),
+    placar: placarNomeLimpo(dividas),
+  };
 }

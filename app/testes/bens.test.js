@@ -61,3 +61,13 @@ test("patrimônio incompleto: dívida sem nenhum bem avisa; bem sem valor també
   assert.match(b.motivos[0], /Galpão está sem valor/);
   assert.equal(avisoPatrimonioIncompleto({ ativos: [{ nome: "X", valorAtualCentavos: 10, dataAvaliacao: "2026-09-01" }], dividas: [], hoje: "2026-10-03" }), null);
 });
+
+test("simular venda: vende, quita e vê o que sobra ou falta no bolso", async () => {
+  const { simularVenda } = await import("../src/domain/bens.js");
+  const a = simularVenda({ precoVendaCentavos: 11654000, quitacaoCentavos: 13265480 });
+  assert.equal(a.sobraCentavos, -1611480);
+  assert.equal(a.resultado, "falta");
+  const b = simularVenda({ precoVendaCentavos: 11654000, quitacaoCentavos: 9000000, custosCentavos: 200000 });
+  assert.equal(b.sobraCentavos, 2454000);
+  assert.equal(b.resultado, "sobra");
+});

@@ -894,3 +894,20 @@
 .conta-logo { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 10px; font-size: 13px; }
 .inicio-logo { flex: 0 0 28px; width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
 .inicio-logo.marca-pequena, .conta-logo.marca-pequena { font-size: 8px; }
+
+/* Dívidas: retrato do topo, ofertas e passo a passo (ui/dividasVisual.js). */
+.dv-topo { display: grid; grid-template-columns: 1.6fr 1fr; gap: 12px; margin-bottom: 12px; }
+.dv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; box-shadow: var(--sheen), var(--shadow-sm); }
+.dv-rotulo { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+.dv-numero { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 28px; line-height: 1.15; margin: 2px 0; }
+.dv-numero small { font-size: 16px; font-weight: 500; color: var(--text-muted); }
+.dv-sub { font-size: 13.5px; color: var(--text-muted); }
+.dv-ofertas { margin-bottom: 14px; }
+.dv-oferta { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.dv-oferta-corpo { flex: 1; min-width: 0; font-size: 14.5px; }
+.dv-oferta-sub { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+.dv-passo-titulo { font-size: 15px; margin: 16px 0 6px; }
+.dv-lista { margin: 0; padding-left: 20px; font-size: 14px; color: var(--text-muted); display: grid; gap: 6px; }
+.dv-lista a { color: var(--accent); }
+.dv-modal-topo { display: flex; align-items: center; gap: 12px; }
+@media (max-width: 860px) { .dv-topo { grid-template-columns: 1fr; } .dv-numero { font-size: 26px; } }

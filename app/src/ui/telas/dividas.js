@@ -6,6 +6,8 @@
 // no painel expandido (Fase 6).
 
 import { barraEvolucao } from "../barraEvolucao.js";
+import { resumoVisualHtml, abrirComoResolver, abrirSimuladorDeVenda } from "../dividasVisual.js";
+import { panoramaDeDividas } from "../../domain/esteira.js";
 import { criarTelaCadastro } from "./telaCadastro.js";
 import { dividas, pessoas, ativos } from "../../dados/repositorios.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
@@ -92,14 +94,13 @@ function evolucaoHtml(dados, hoje) {
     totalRotulo: `Valor total (${e.unidadesTotal} parcelas)`, totalCentavos: e.totalCentavos,
     segmentos: [
       { tipo: "pago", rotulo: "Já pago", centavos: e.pagoCentavos, detalhe: `${e.unidadesPagas} de ${e.unidadesTotal} parcelas` },
-      { tipo: "previsto", rotulo: "Já previsto (garantido pelo contrato)", centavos: e.previstoCentavos, detalhe: e.unidadesPrevistas ? `${plural(e.unidadesPrevistas, "parcela", "parcelas")}, até ${ddmm(e.previstoAte)}/${e.previstoAte.slice(2, 4)}` : "" },
-      { tipo: "falta", rotulo: "Falta depois disso", centavos: e.depoisCentavos, detalhe: e.unidadesDepois ? `${plural(e.unidadesDepois, "parcela", "parcelas")}${e.quitaEm ? `, quita em ${formatarData(e.quitaEm)}` : ""}` : "" },
+      { tipo: "falta", rotulo: "Falta pagar", centavos: e.faltaCentavos, detalhe: `${plural(e.unidadesRestantes, "parcela", "parcelas")}${e.quitaEm ? `, quita em ${formatarData(e.quitaEm)}` : ""}` },
     ],
-    rodape: `Faltam <b>${plural(e.unidadesRestantes, "parcela", "parcelas")}</b> (<b data-valor>${formatarBRL(e.faltaCentavos)}</b>)${prox ? ` · próxima: parcela ${e.unidadesPagas + 1}, dia ${formatarData(prox).slice(0, 5)}` : ""}.`,
+    rodape: `${prox ? `Próxima: parcela ${e.unidadesPagas + 1}, dia ${formatarData(prox).slice(0, 5)}. ` : ""}As próximas ${e.unidadesPrevistas} parcelas (<span data-valor>${formatarBRL(e.previstoCentavos)}</span>) já estão no seu plano de caixa.`,
   });
 }
 
-export default criarTelaCadastro({
+const tela = criarTelaCadastro({
   repo: dividas,
   titulo: "Dívidas",
   subtitulo: "Cada dívida, a pressão que ela exerce no mês, e o que aconteceria se você pagasse mais.",
@@ -149,30 +150,11 @@ export default criarTelaCadastro({
     ];
   },
 
-  resumo(itens) {
+  resumo(itens, contexto) {
     const hoje = hojeISO();
-    const dividasComId = itens.map((i) => ({ id: i.id, ...i.dados }));
-    const v = calcularVisaoConsolidada(dividasComId, hoje);
-    const tudoEmDia = v.quantidadeProblemas === 0;
-    const placar = placarNomeLimpo(dividasComId);
-    const ofertas = dividasComId.map((d) => ofertaDaDivida(d, hoje)).filter((o) => o && !o.vencida);
-    const economiaTotal = ofertas.reduce((t, o) => t + o.economiaCentavos, 0);
-    return `
-      <div class="divida-resumo">
-        ${placar.total > 0 ? `<div class="tela-sub" style="margin:0 0 10px;font-weight:600;">Nome limpo: <b>${placar.limpas} de ${placar.total}</b>${placar.faltam ? ` · faltam <span data-valor>${formatarBRL(placar.valorQueFaltaCentavos)}</span> a pagar` : ""}</div>
-        <div class="barra-limite"><span style="width:${Math.round((placar.limpas / placar.total) * 100)}%"></span></div>` : ""}
-        ${ofertas.length ? `<div class="tela-sub" style="margin:0 0 10px;">Com as ${ofertas.length} ofertas de desconto, o que você realmente paga é o valor já mostrado abaixo, e você deixa de pagar <b class="valor-pos" data-valor>${formatarBRL(economiaTotal)}</b>.</div>` : ""}
-        <div class="titulo">${tudoEmDia ? "Nome limpo, tudo em dia" : "O que precisa de atenção"}</div>
-        <div class="resumo-mes" style="margin:0;">
-          <div class="resumo-item"><span>Dívidas pra resolver</span><b class="mono${v.saldoProblemasCentavos > 0 ? " valor-neg" : ""}" data-valor>${formatarBRL(v.saldoProblemasCentavos)}</b></div>
-          <div class="resumo-item"><span>Financiamentos por mês</span><b class="mono" data-valor>${formatarBRL(v.parcelasFinanciamentosCentavos)}</b></div>
-          <div class="resumo-item"><span>Quitação estimada</span><b class="mono" data-valor>${v.dataQuitacaoTotal ? escapeHtml(formatarData(v.dataQuitacaoTotal)) : (v.quantidadeSemAcordo ? "sem previsão" : "-")}</b></div>
-        </div>
-        ${v.quantidadeNegativadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);font-weight:600;">${v.quantidadeNegativadas} ${v.quantidadeNegativadas === 1 ? "dívida negativada" : "dívidas negativadas"}, somando <span data-valor>${formatarBRL(v.saldoNegativadoCentavos)}</span>.${v.quantidadeSemAcordo ? ` ${v.quantidadeSemAcordo} sem acordo: não quitam sozinhas.` : ""}</div>` : ""}
-        ${v.quantidadeSoAtrasadas > 0 ? `<div class="tela-sub" style="margin-top:10px;color:var(--danger);">${v.quantidadeSoAtrasadas} ${v.quantidadeSoAtrasadas === 1 ? "dívida atrasada" : "dívidas atrasadas"}${v.quantidadeNegativadas ? " (fora as negativadas)" : ""}.</div>` : ""}
-        ${v.quantidadeEmRisco > 0 ? `<div class="tela-sub" style="margin-top:4px;">${v.quantidadeEmRisco} ${v.quantidadeEmRisco === 1 ? "dívida marcada" : "dívidas marcadas"} como em risco.</div>` : ""}
-        ${v.quantidadeFinanciamentos > 0 ? `<div class="tela-sub" style="margin-top:10px;">${v.quantidadeFinanciamentos} ${v.quantidadeFinanciamentos === 1 ? "financiamento em dia" : "financiamentos em dia"}: faltam <span data-valor>${formatarBRL(v.saldoFinanciamentosCentavos)}</span> em parcelas, o que é compromisso mensal e não dívida atrasada.</div>` : ""}
-      </div>`;
+    const todas = itens.map((i) => ({ id: i.id, ...i.dados }));
+    const pessoaNome = (id) => (contexto?.pessoas || []).find((p) => p.valor === id)?.rotulo || "";
+    return resumoVisualHtml(panoramaDeDividas(todas, hoje), pessoaNome);
   },
 
   exibir(dados, contexto) {
@@ -209,6 +191,7 @@ export default criarTelaCadastro({
         tag: prox && prox < hoje ? "atrasada" : "em dia",
         tagClasse: prox && prox < hoje ? "critico" : "ok",
         evolucaoHtml: evolucaoHtml(dados, hoje),
+        acoesExtras: [{ id: "vender", rotulo: "E se eu vender?" }],
         acaoPrimaria: venceLogo || (prox && prox < hoje) ? `Paguei a parcela ${numProx}` : null,
       };
     }
@@ -216,6 +199,7 @@ export default criarTelaCadastro({
       titulo: dados.nome,
       sub: `${dados.credor ? dados.credor + " · " : ""}${pessoa ? pessoa.rotulo + " · " : ""}${oferta && !oferta.vencida && semAcordo ? `de ${formatarBRL(oferta.cobradoCentavos)} por ${formatarBRL(oferta.valorCentavos)}, economiza ${formatarBRL(oferta.economiaCentavos)}` : semAcordo ? "sem acordo" : `${restantes} de ${dados.quantidadeParcelas} parcelas restantes`}${dados.prioridadePagamento != null ? ` · prioridade ${dados.prioridadePagamento}` : ""}`,
       valorDireita: formatarBRL(calcularSaldoAtual(dados)),
+      acoesExtras: status !== "quitada" ? [{ id: "resolver", rotulo: oferta && !oferta.vencida ? "Como resolver" : "Como negociar" }] : [],
       tag: oferta && !oferta.vencida && status !== "quitada" ? `oferta −${oferta.descontoPct}%` : negativadaAtiva ? "negativada" : (status !== "ativa" ? ROTULO_STATUS[status] : (dados.emRisco ? "em risco" : null)),
       tagInativa: status === "quitada",
       tagClasse: oferta && !oferta.vencida && status !== "quitada" ? "ok" : negativadaAtiva || status === "atrasada" ? "critico" : (dados.emRisco && status === "ativa" ? "atencao" : null),
@@ -304,6 +288,20 @@ export default criarTelaCadastro({
     }, "despesa");
   },
 
+  async aoAcaoExtra(acao, item, contexto) {
+    const dados = { id: item.id, ...item.dados };
+    const hoje = hojeISO();
+    if (acao === "resolver") {
+      const lista = await dividas.listar();
+      return abrirResolver(dados, lista.map((i) => ({ id: i.id, ...i.dados })), contexto.pessoas || []);
+    }
+    if (acao === "vender") {
+      const bem = (contexto.ativos || []).find((a) => a.dividaId === item.id || a.id === dados.bemId);
+      if (!bem) return;
+      abrirSimuladorDeVenda({ nome: bem.nome, valorMercadoCentavos: Number(bem.valorAtualCentavos) || 0, quitacaoCentavos: progressoDoFinanciamento(dados, bem, hoje).faltaPagarCentavos, avaliadoEm: bem.dataAvaliacao });
+    }
+  },
+
   aoRenderizarExtra(dados, id, contexto, elExtra) {
     const saldoAtualCentavos = calcularSaldoAtual(dados);
 
@@ -347,3 +345,34 @@ export default criarTelaCadastro({
     }
   },
 });
+
+/** Clique em "Resolver" nas ofertas do topo: abre o passo a passo da dívida. */
+async function resolverPeloTopo(id) {
+  const [lista, listaPessoas] = await Promise.all([dividas.listar(), pessoas.listar()]);
+  const todas = lista.map((i) => ({ id: i.id, ...i.dados }));
+  const dados = todas.find((d) => d.id === id);
+  if (dados) abrirResolver(dados, todas, listaPessoas.map((p) => ({ valor: p.id, rotulo: p.dados.nome })));
+}
+
+function abrirResolver(dados, todas, listaPessoas) {
+  const hoje = hojeISO();
+  const of = ofertaDaDivida(dados, hoje);
+  abrirComoResolver({
+    divida: { ...dados, ofertaVigente: of && !of.vencida ? of : null, saldoCentavos: calcularSaldoAtual(dados, hoje), placar: placarNomeLimpo(todas) },
+    pessoaNome: listaPessoas.find((p) => p.valor === dados.pessoaId)?.rotulo || "",
+    aoFecharAcordo: () => abrirFechamentoDeAcordo(dados.id, dados),
+  });
+}
+
+export default {
+  ...tela,
+  async montar(alvo) {
+    await tela.montar(alvo);
+    if (alvo.dataset.dvLigado) return;
+    alvo.dataset.dvLigado = "1";
+    alvo.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-resolver]");
+      if (b) resolverPeloTopo(b.dataset.resolver);
+    });
+  },
+};

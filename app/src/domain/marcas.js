@@ -76,6 +76,7 @@ const REGRAS = [
   [/pagseguro|pagbank/, "pagseguro"],
   [/whatsapp/, "whatsapp"],
   [/\bmeta ads\b|facebook|instagram/, "meta"],
+  [/banco do brasil/, null, { sigla: "BB", fundo: "#FFEF38", texto: "#0038A8" }],
   [/bradesco/, null, { sigla: "B", fundo: "#CC092F", texto: "#FFFFFF" }],
   [/\bnext\b/, null, { sigla: "next", fundo: "#0B0B0B", texto: "#00FF5F", pequena: true }],
   [/\bclaro\b/, null, { sigla: "claro", fundo: "#E30613", texto: "#FFFFFF", pequena: true }],

@@ -81,3 +81,24 @@ test("fechar o acordo zera os campos da oferta e vira parcela", () => {
   assert.equal(depois.valorParcelaCentavos, 352246);
   assert.equal(calcularSaldoAtual(depois, "2026-10-03"), 352246);
 });
+
+test("panorama das dívidas: o que se deve de verdade, de que é feito e as ofertas por desconto", async () => {
+  const { panoramaDeDividas } = await import("../src/domain/esteira.js");
+  const mk = (o) => ({ pessoaId: "p", saldoOriginalCentavos: 0, valorParcelaCentavos: 0, quantidadeParcelas: 1, parcelasPagas: 0, dataInicio: "2026-10-05", tipo: "divida", ...o });
+  const lista = [
+    mk({ id: "a", nome: "BB 1", negativada: true, saldoOriginalCentavos: 3374940, valorComJurosCentavos: 3374940, ofertaValorCentavos: 381793 }),
+    mk({ id: "b", nome: "BB 2", negativada: true, saldoOriginalCentavos: 1711873, valorComJurosCentavos: 1711873, ofertaValorCentavos: 375118 }),
+    mk({ id: "c", nome: "Sem oferta", saldoOriginalCentavos: 100000 }),
+    { id: "j", nome: "Jeep", pessoaId: "p", saldoOriginalCentavos: 1989822, valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 20, dataInicio: "2025-03-04" },
+  ];
+  const p = panoramaDeDividas(lista, "2026-10-05");
+  assert.equal(p.ofertas.length, 2);
+  assert.equal(p.ofertas[0].id, "a");                       // 88% antes de 78%
+  assert.equal(p.ofertas[0].descontoPct, 88);
+  assert.equal(p.economiaCentavos, (3374940 - 381793) + (1711873 - 375118));
+  assert.equal(p.totalOfertasCentavos, 381793 + 375118);
+  assert.equal(p.grupos.find((g) => g.chave === "negativadas").centavos, 381793 + 375118);
+  assert.equal(p.grupos.find((g) => g.chave === "atrasadas").centavos, 100000);
+  assert.equal(p.grupos.find((g) => g.chave === "financiamento").qtd, 1);
+  assert.equal(p.totalRealCentavos, p.grupos.reduce((s, g) => s + g.centavos, 0));
+});

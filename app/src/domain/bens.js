@@ -69,3 +69,12 @@ export function avisoPatrimonioIncompleto({ ativos, dividas, hoje }) {
   }
   return motivos.length ? { incompleto: true, motivos } : null;
 }
+
+/** "E se eu vender?": o que sobra (ou falta) no bolso depois de vender o bem e quitar o que se deve por ele.
+ * Só uma conta, não grava nada. `quitacaoCentavos` é o que o banco pede para quitar hoje (a soma das parcelas
+ * que faltam é o teto: o banco costuma abater juros futuros). */
+export function simularVenda({ precoVendaCentavos, quitacaoCentavos, custosCentavos = 0 }) {
+  const preco = Number(precoVendaCentavos) || 0;
+  const sobra = preco - (Number(custosCentavos) || 0) - (Number(quitacaoCentavos) || 0);
+  return { sobraCentavos: sobra, resultado: sobra >= 0 ? "sobra" : "falta", descontoNaVendaCentavos: 0 };
+}

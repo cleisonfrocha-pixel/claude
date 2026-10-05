@@ -3,6 +3,7 @@
 // evolução precisam reagir a ativo, dívida e conta mudando, não só à
 // lista de ativos — a fábrica de cadastro sozinha não dá conta disso.
 
+import { abrirSimuladorDeVenda } from "../dividasVisual.js";
 import { avatarMarcaHtml } from "../avatarMarca.js";
 import { hojeISO } from "../../domain/tempo.js";
 import { ativos, ErroDeValidacao } from "../../dados/repositorios.js";
@@ -71,6 +72,7 @@ function cartaoAtivo(a) {
       </div>
       <div class="item-valor mono" data-valor>${formatarBRL(a.valorAtualCentavos)}</div>
       <div class="item-acoes">
+        ${["veiculo", "imovel"].includes(a.classe) ? `<button class="btn-mini btn-extra" data-acao="vender" data-id="${escapeHtml(a.id)}">E se eu vender?</button>` : ""}
         <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(a.id)}" >Editar</button>
         <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(a.id)}" >Apagar</button>
       </div>
@@ -166,6 +168,16 @@ function renderizarListaAtivos() {
     return;
   }
   alvo.innerHTML = painel.ativos.map(cartaoAtivo).join("");
+  alvo.querySelectorAll('[data-acao="vender"]').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const a = painel.ativos.find((x) => x.id === btn.dataset.id);
+      if (!a) return;
+      const l = leituraDoBem(a, painel.dividas, painel.recorrencias);
+      const divida = a.dividaId ? painel.dividas.find((d) => d.id === a.dividaId) : null;
+      const falta = divida ? (Number(divida.valorParcelaCentavos) || 0) * l.parcelasRestantes : 0;
+      abrirSimuladorDeVenda({ nome: a.nome, valorMercadoCentavos: Number(a.valorAtualCentavos) || 0, quitacaoCentavos: falta || l.dividaCentavos, avaliadoEm: a.dataAvaliacao });
+    });
+  });
   alvo.querySelectorAll('[data-acao="editar"]').forEach((btn) => {
     btn.addEventListener("click", () => {
       const a = painel.ativos.find((x) => x.id === btn.dataset.id);
