@@ -165,9 +165,30 @@ rodando no navegador. Ferramenta: `app/ferramentas/auditoria/auditar-estado.mjs`
 3. Conciliar as datas dos lançamentos manuais do Next (#15).
 4. Reauditar depois de cada carga com `auditar-estado.mjs` (feito após as Sprints 2, 4 e 7).
 
+## Auditoria dos R$ 21 mil sem classificação (05/10/2026, depois da Sprint 7)
+
+237 lançamentos em 159 favorecidos. Classificados 162 (R$ 14,6 mil) por nome e por padrão, e 68 regras guardadas para
+os próximos extratos (`rgaud001` a `rgaud068`). Sobraram 75 lançamentos, R$ 6,3 mil (6% do gasto), todos Pix para
+pessoas físicas sem como identificar pelo extrato.
+- Equipe e freelancers: Brena (R$ 1.000, bate com a recorrência dela) e Felipe (R$ 650, bate com o designer).
+- Transporte: IPVA via Zapay (3 x R$ 999,55), Centerbat, corridas 99, estacionamentos.
+- Assinaturas: Ebanx R$ 103,40 todo dia 15, de abril a agosto.
+- Família (categoria nova): Pix da Carolina para a mãe (confirmado) e as de Vanda (inferido).
+- Categorias novas: Compras e vestuário, Pets, Doações, Apostas (bet), Família, Beleza e cuidados e
+  "Pix a pessoas (sem identificação)" (os de uma vez só e abaixo de R$ 100, para sair de "Outros" sem fingir que se sabe o que são).
+- Inferidos só pelo nome do estabelecimento (podem estar errados): Marina Bagunca, Morikawa, Centerbat, Camarada
+  Administração, Havelinos, Pagueveloz. Conferir na aba Revisar.
+- CryptoPag virou fonte variável até 12/2026 (conta como incerta, fora do saldo seguro, pode cair a qualquer hora).
+- A conta do Next da Carolina não é mais usada: ela centraliza tudo no Banco do Brasil. As 17 transferências antigas
+  sem par no BB (ex.: R$ 2.300 em 29/05) vieram dessa conta e ficam como estão.
+- O que continua em "Outros" de propósito: placeholders de fatura de cartão ("Compras até o fechamento",
+  R$ 3,2 mil) até chegarem as faturas da Sprint 8.
+- Efeito: gasto do dia a dia R$ 3,6 mil por mês (antes R$ 4,5 mil, com R$ 3,6 mil só em "Outros"); saldo seguro de
+  12 meses R$ -130,6 mil.
+
 ## Pendências de dados (precisam do Cleison)
 
-1. CryptoPag é recorrente? Só aparece uma vez em 2026 (R$ 2.500 em 01/10); mudar para eventual
+1. (respondido em 05/10: fonte variável até o fim do ano) CryptoPag é recorrente? Só aparece uma vez em 2026 (R$ 2.500 em 01/10); mudar para eventual
    tirou R$ 30 mil da projeção de 12 meses. Se começou em outubro, volta a recorrente com início 2026-10.
 2. Saldo atual do Next no app (corrente mais Invest Fácil), para fechar a conciliação.
 3. Favorecidos de saída sem nome (Gringo Pay R$ 1.400, José Roberto R$ 1.200,
