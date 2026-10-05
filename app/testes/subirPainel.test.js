@@ -208,3 +208,19 @@ test("criar dívida negativada sem acordo pelo chat (parcela zero)", () => {
   const semNegativar = montar([{ acao: "criar", colecao: "dividas", dados: { nome: "Outra", saldoOriginal: 100, valorParcela: 0, quantidadeParcelas: 1, dataInicio: "2026-01-01" } }]);
   assert.match(semNegativar.pendencias[0].motivo, /parcela/);
 });
+
+test("pagamento_fatura histórico cria a fatura do mês e aceita dois pagamentos na mesma", () => {
+  const e = estadoBase();
+  const r = montar([
+    { acao: "pagamento_fatura", valor: 800, cartao: "Roxinho", conta: "Next", data: "2026-03-21", historico: true },
+    { acao: "pagamento_fatura", valor: 50, cartao: "Roxinho", conta: "Next", data: "2026-03-25", historico: true },
+    { acao: "pagamento_fatura", valor: 300, cartao: "Roxinho", conta: "Next", data: "2026-03-10", historico: true },
+  ], e);
+  assert.deepEqual(r.pendencias, []);
+  const faturas = sets(r, "faturas");
+  assert.deepEqual(faturas.map((f) => f.competencia).sort(), ["2026-02", "2026-03"]);
+  const pags = sets(r, "transacoes").filter((t) => t.tipo === "pagamento_fatura");
+  assert.equal(pags.length, 3);
+  assert.equal(pags.filter((t) => t.faturaId === pags[0].faturaId).length, 2);
+  assert.notEqual(pags[2].faturaId, pags[0].faturaId);
+});

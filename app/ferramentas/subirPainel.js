@@ -11,7 +11,7 @@ import { paraCentavos, formatarBRL } from "../src/domain/dinheiro.js";
 import { somarMeses, dataDeCompetencia, formatarData } from "../src/domain/tempo.js";
 import { competenciaFatura, gerarParcelas, construirParTransferencia, competenciasFaltantes } from "../src/domain/transacoes.js";
 import * as E from "../src/domain/esquema.js";
-import { faturaParaPagamento } from "../src/domain/cartoes.js";
+import { faturaParaPagamento, dataFechamentoFatura } from "../src/domain/cartoes.js";
 import { dataProximoVencimento, statusDivida } from "../src/domain/dividas.js";
 
 const HORIZONTE_RECORRENCIA_MESES = 3; // mesmo de dados/recorrenciasRepo.js
@@ -264,13 +264,23 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         const cartao = resolver(estado, "cartoes", item.cartao);
         const conta = resolver(estado, "contas", item.conta || cartao.contaPagamentoId);
         const abertas = estado.faturas.filter((f) => f.cartaoId === cartao.id && f.status !== "paga");
-        const fatura = item.competencia
-          ? abertas.find((f) => f.competencia === item.competencia)
-          : faturaParaPagamento(cartao, abertas, data);
+        // `historico`: extrato antigo, sem compras da fatura. Cria a fatura do mês
+        // se ela não existe e aceita mais de um pagamento na mesma fatura.
+        let fatura;
+        if (item.historico) {
+          let competencia = item.competencia || competenciaDe(data);
+          while (!item.competencia && dataFechamentoFatura(cartao, competencia) > data) competencia = somarMeses(competencia, -1);
+          const faturaId = faturaDe(cartao, competencia);
+          fatura = estado.faturas.find((f) => f.id === faturaId);
+        } else {
+          fatura = item.competencia
+            ? abertas.find((f) => f.competencia === item.competencia)
+            : faturaParaPagamento(cartao, abertas, data);
+        }
         exigir(fatura, `não achei fatura em aberto do ${cartao.apelido}${item.competencia ? ` em ${item.competencia}` : ""}`);
         avisarDuplicata(duplicataDe((t) => t.tipo === "pagamento_fatura" && t.faturaId === fatura.id, valor, data));
         transacao({ tipo: "pagamento_fatura", contaId: conta.id, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null });
-        atualizar("faturas", fatura, { status: "paga" });
+        if (fatura.status !== "paga") atualizar("faturas", fatura, { status: "paga" });
         local.resumo.push(`Pagamento de fatura · ${formatarBRL(valor)} · ${cartao.apelido} (${fatura.competencia}) · saiu da ${conta.nome} · ${formatarData(data)} (não é despesa nova: as compras já contaram)`);
       } else if (acao === "criar") {
         const colecao = item.colecao;
