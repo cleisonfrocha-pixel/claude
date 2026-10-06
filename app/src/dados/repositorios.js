@@ -8,7 +8,7 @@ import {
   validarPessoa, validarConta, validarCartao, validarCategoria, validarDivida, validarFonteRenda, validarAtivo, validarObjetivo, validarRegraClassificacao,
 } from "../domain/esquema.js";
 
-function fabricarRepositorio(caminho, padrao, validar) {
+function fabricarRepositorio(caminho, padrao, validar, ajustar = (campos) => campos) {
   return {
     caminho,
     listar: () => db.listar(caminho),
@@ -18,14 +18,15 @@ function fabricarRepositorio(caminho, padrao, validar) {
       const erros = validar(dados);
       if (erros.length) throw new ErroDeValidacao(erros);
       const agora = new Date().toISOString();
-      return db.criar(caminho, { ...dados, criadoEm: agora, atualizadoEm: agora });
+      return db.criar(caminho, { ...ajustar(dados, null, agora), criadoEm: agora, atualizadoEm: agora });
     },
     async atualizar(id, campos) {
       const atual = (await db.listar(caminho)).find((d) => d.id === id);
       const dados = padrao({ ...(atual ? atual.dados : {}), ...campos });
       const erros = validar(dados);
       if (erros.length) throw new ErroDeValidacao(erros);
-      return db.atualizar(caminho, id, { ...campos, atualizadoEm: new Date().toISOString() });
+      const agora = new Date().toISOString();
+      return db.atualizar(caminho, id, { ...ajustar(campos, atual ? atual.dados : null, agora), atualizadoEm: agora });
     },
     apagar: (id) => db.apagar(caminho, id),
   };
@@ -39,7 +40,14 @@ export class ErroDeValidacao extends Error {
 }
 
 export const pessoas = fabricarRepositorio("pessoas", padraoPessoa, validarPessoa);
-export const contas = fabricarRepositorio("contas", padraoConta, validarConta);
+// Saldo novo digitado no cadastro vale a partir de agora: grava a hora, senão o
+// que for pago ou recebido no mesmo dia, depois disso, não entraria no saldo.
+function marcarConferencia(campos, atual, agora) {
+  if ("saldoConferidoEm" in campos) return campos;
+  const mudou = (k) => k in campos && (!atual || campos[k] !== atual[k]);
+  return mudou("saldoInicialCentavos") || mudou("dataSaldoInicial") ? { ...campos, saldoConferidoEm: agora } : campos;
+}
+export const contas = fabricarRepositorio("contas", padraoConta, validarConta, marcarConferencia);
 export const cartoes = fabricarRepositorio("cartoes", padraoCartao, validarCartao);
 export const categorias = fabricarRepositorio("categorias", padraoCategoria, validarCategoria);
 export const dividas = fabricarRepositorio("dividas", padraoDivida, validarDivida);

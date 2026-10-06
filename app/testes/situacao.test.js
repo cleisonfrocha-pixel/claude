@@ -61,3 +61,37 @@ test("invariante: comprometido nunca passa do que sai no horizonte da própria t
   const s = lerSituacao({ ...base, transacoes: [d({ id: "a", data: "2026-10-03", valorCentavos: 1000 }), d({ id: "b", data: "2026-10-25", valorCentavos: 2000 })] });
   assert.equal(s.comprometido.totalCentavos, 3000);
 });
+
+test("13.1 item 4: receber uma entrada confirmada nunca piora o livre garantido", () => {
+  const conta2 = { ...conta, dataSaldoInicial: "2026-10-02", saldoConferidoEm: "2026-10-02T10:00:00.000Z" };
+  const lista = [
+    r({ id: "ana", descricao: "Dona Ana", data: "2026-10-02", valorCentavos: 30000 }),
+    d({ id: "a", descricao: "Aluguel", data: "2026-10-10", valorCentavos: 900000, categoriaId: "ess" }),
+    r({ id: "sal", descricao: "Salário", data: "2026-10-20", valorCentavos: 500000 }),
+    d({ id: "b", descricao: "Cartão", data: "2026-10-25", valorCentavos: 900000 }),
+  ];
+  const antes = lerSituacao({ ...base, contas: [conta2], transacoes: lista });
+  const recebido = lista.map((t) => (t.id === "ana" ? { ...t, status: "pago", pagoEm: "2026-10-02", movimentadoEm: "2026-10-02T12:00:00.000Z" } : t));
+  const depois = lerSituacao({ ...base, contas: [conta2], transacoes: recebido });
+  assert.equal(depois.naContaCentavos, antes.naContaCentavos + 30000);
+  assert.ok(depois.livreGarantidoCentavos >= antes.livreGarantidoCentavos, `${depois.livreGarantidoCentavos} < ${antes.livreGarantidoCentavos}`);
+});
+
+test("13.1 item 3: pagar hoje uma conta tira da conta e não melhora o pode gastar", () => {
+  const conta2 = { ...conta, dataSaldoInicial: "2026-10-02", saldoConferidoEm: "2026-10-02T10:00:00.000Z" };
+  const lista = [d({ id: "lov", descricao: "Lovable", data: "2026-10-04", valorCentavos: 56795 }), r({ id: "e", descricao: "Cliente", data: "2026-10-15", valorCentavos: 100000 })];
+  const antes = lerSituacao({ ...base, contas: [conta2], transacoes: lista });
+  const pago = lista.map((t) => (t.id === "lov" ? { ...t, status: "pago", pagoEm: "2026-10-02", movimentadoEm: "2026-10-02T12:00:00.000Z" } : t));
+  const depois = lerSituacao({ ...base, contas: [conta2], transacoes: pago });
+  assert.equal(depois.naContaCentavos, antes.naContaCentavos - 56795);
+  assert.equal(depois.livreProvavelCentavos, antes.livreProvavelCentavos);
+});
+
+test("13.1 item 8: receita atrasada aparece mas não conta como dinheiro em caixa", () => {
+  const s = lerSituacao({ ...base, transacoes: [
+    r({ id: "atr", descricao: "Cliente que não pagou", data: "2026-09-20", valorCentavos: 300000 }),
+    d({ id: "a", descricao: "Aluguel", data: "2026-10-05", valorCentavos: 900000, categoriaId: "ess" }),
+  ] });
+  assert.equal(s.menorPontoCentavos, 800000 - 900000);
+  assert.equal(s.livreProvavelCentavos, 800000 - 900000);
+});

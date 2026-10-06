@@ -37,7 +37,14 @@ export const transacoes = {
     const dados = padraoTransacao({ ...(atual ? atual.dados : {}), ...campos });
     const erros = validarTransacao(dados);
     if (erros.length) throw new ErroDeValidacao(erros);
-    return db.atualizar(CAMINHO, id, { ...campos, atualizadoEm: agora() });
+    const extra = {};
+    // A hora em que o dinheiro mexeu: virou pago agora, ou deixou de ser pago.
+    // Editar um lançamento já pago não mexe nela (senão o saldo conferido contaria de novo).
+    if ("status" in campos && !("movimentadoEm" in campos) && atual) {
+      if (campos.status === "pago" && atual.dados.status !== "pago") extra.movimentadoEm = agora();
+      else if (campos.status !== "pago" && atual.dados.status === "pago") extra.movimentadoEm = null;
+    }
+    return db.atualizar(CAMINHO, id, { ...campos, ...extra, atualizadoEm: agora() });
   },
   /** Apaga a transação; se for perna de uma transferência, apaga o par
    * inteiro — uma perna órfã não quebra os totais, mas deixa a

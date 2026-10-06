@@ -380,6 +380,10 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         const doc = resolver(estado, colecao, item.ref);
         const campos = traduzirCampos(estado, colecao, item.campos, def.padrao({}));
         exigir(Object.keys(campos).length, "nada para mudar");
+        // Saldo novo de conta vale a partir da hora em que ele foi visto no banco (ou agora): o que for
+        // pago ou recebido depois, no mesmo dia, entra no saldo. Lançamento que vira pago grava a hora.
+        if (colecao === "contas" && ("saldoInicialCentavos" in campos || "dataSaldoInicial" in campos) && !campos.saldoConferidoEm) campos.saldoConferidoEm = item.conferidoEm || agora;
+        if (colecao === "transacoes" && campos.status === "pago" && doc.status !== "pago") campos.movimentadoEm = agora;
         const { id: _id, ...atual } = doc;
         const erros = def.validar(def.padrao({ ...atual, ...campos }));
         exigir(!erros.length, erros.join(" "));

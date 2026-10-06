@@ -81,3 +81,9 @@ test("regra de ouro: nunca ponto flutuante perdendo centavo", () => {
   assert.equal(a + b, 30);
   assert.equal(formatarBRL(a + b), "R$ 0,30");
 });
+
+import { valorDigitadoValido } from "../src/domain/dinheiro.js";
+test("13.1 item 18: valor digitado inválido é recusado em vez de virar R$ 0,00", () => {
+  for (const ok of ["1.234,56", "1234,5", "1234.56", "R$ 90", "-15,00", "2252,98", "1,234.56", "0,99", "300"]) assert.equal(valorDigitadoValido(ok), true, ok);
+  for (const ruim of ["1.2.3", "12,345,6", "abc", "", "  ", "1,2,3", "R$", "12a"]) assert.equal(valorDigitadoValido(ruim), false, JSON.stringify(ruim));
+});

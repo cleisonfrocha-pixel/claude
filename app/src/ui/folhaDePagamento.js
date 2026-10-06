@@ -3,7 +3,7 @@
 // confirmar ("Next: R$ 5.829 → R$ 5.672"). Quem chama recebe a resposta ou null.
 
 import { opcoesDePagamento } from "../dados/pagamentoRepo.js";
-import { formatarBRL, paraCentavos } from "../domain/dinheiro.js";
+import { formatarBRL, paraCentavos, valorDigitadoValido } from "../domain/dinheiro.js";
 import { hojeISO, somarDias, formatarData } from "../domain/tempo.js";
 import { escapeHtml } from "./utilitarios.js";
 import * as modal from "./modal.js";
@@ -28,7 +28,7 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
   return new Promise((resolver) => {
     let confirmado = false;
     const opcoes = [
-      ...contas.map((c) => ({ chave: `conta:${c.id}`, titulo: c.nome, sub: [c.pessoa, c.ehReserva ? "reserva" : ""].filter(Boolean).join(" · "), direita: formatarBRL(c.saldoCentavos), saldo: c.saldoCentavos, saldoDesde: c.saldoDesde })),
+      ...contas.map((c) => ({ chave: `conta:${c.id}`, titulo: c.nome, sub: [c.pessoa, c.ehReserva ? "reserva" : ""].filter(Boolean).join(" · "), direita: formatarBRL(c.saldoCentavos), saldo: c.saldoCentavos, saldoDesde: c.saldoDesde, conferidoEm: c.conferidoEm })),
       ...cartoes.map((c) => ({ chave: `cartao:${c.id}`, titulo: `Cartão ${c.apelido}`, sub: "o dinheiro só sai quando a fatura for paga", direita: `${formatarBRL(c.disponivelCentavos)} livres`, limite: c.disponivelCentavos, pagadora: c.contaPagadoraNome, saldoPagadora: c.saldoPagadoraCentavos, pagaEm: c.pagaEm })),
     ];
     modal.abrir(`
@@ -57,7 +57,7 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
 
     const raiz = document.getElementById("overlay-modal").querySelector(".folha-pagamento");
     const q = (s) => raiz.querySelector(s);
-    const valorAtual = () => (valorFixo ? valorCentavos : paraCentavos(q("#fp-valor").value));
+    const valorAtual = () => (valorFixo ? valorCentavos : valorDigitadoValido(q("#fp-valor").value) ? paraCentavos(q("#fp-valor").value) : NaN);
     const origemAtual = () => raiz.querySelector('input[name="fp-origem"]:checked')?.value || "";
     const opcaoAtual = () => opcoes.find((o) => o.chave === origemAtual());
     const dataAtual = () => { const m = q("#fp-quando").value; return m === "hoje" ? hoje : m === "ontem" ? somarDias(hoje, -1) : q("#fp-data").value; };
@@ -71,9 +71,9 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
       const o = opcaoAtual();
       const alvo = q("#fp-depois");
       if (!o || !(v > 0)) { alvo.innerHTML = ""; return; }
-      if (o.chave.startsWith("conta:") && o.saldoDesde && dataAtual() <= o.saldoDesde) {
-        // O saldo desta conta foi conferido num dia igual ou posterior: ele já inclui este pagamento.
-        alvo.innerHTML = `${escapeHtml(o.titulo)} foi conferida em ${escapeHtml(formatarData(o.saldoDesde))}. Como o pagamento é dessa data ou anterior, o saldo <b>já considera</b> e fica em <span class="mono" data-valor>${formatarBRL(o.saldo)}</span>. A conta sai da lista de a pagar.`;
+      if (o.chave.startsWith("conta:") && o.saldoDesde && (dataAtual() < o.saldoDesde || (dataAtual() === o.saldoDesde && !o.conferidoEm))) {
+        // O saldo desta conta foi atualizado depois deste dia: ele já inclui este pagamento.
+        alvo.innerHTML = `O saldo da ${escapeHtml(o.titulo)} foi atualizado em ${escapeHtml(formatarData(o.saldoDesde))}. Como o pagamento é de antes, o saldo <b>já considera</b> e fica em <span class="mono" data-valor>${formatarBRL(o.saldo)}</span>. A conta sai da lista de a pagar.`;
       } else if (o.chave.startsWith("conta:")) {
         const depois = o.saldo + (entrada ? v : -v);
         alvo.innerHTML = `${escapeHtml(o.titulo)}: <span class="mono" data-valor>${formatarBRL(o.saldo)}</span> → <b class="mono ${depois < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(depois)}</b>${depois < 0 ? " <span class='valor-neg'>(fica negativa)</span>" : ""}`;
@@ -92,7 +92,7 @@ export async function pedirOrigemDoDinheiro({ descricao, valorCentavos, sentido,
       const v = valorAtual();
       const erro = q("#fp-erro");
       const o = opcaoAtual();
-      if (!(v > 0) || v > valorCentavos * 1.0001 + 1) { erro.textContent = v > valorCentavos ? "O valor é maior que o combinado. Ajuste o valor da conta primeiro." : "Informe um valor maior que zero."; erro.hidden = false; return; }
+      if (!(v > 0) || v > valorCentavos * 1.0001 + 1) { erro.textContent = Number.isNaN(v) ? "Valor não reconhecido. Use o formato 1.234,56." : v > valorCentavos ? "O valor é maior que o combinado. Ajuste o valor da conta primeiro." : "Informe um valor maior que zero."; erro.hidden = false; return; }
       if (!o) { erro.textContent = entrada ? "Escolha em qual conta o dinheiro caiu." : "Escolha de onde o dinheiro saiu."; erro.hidden = false; return; }
       if (!dataAtual()) { erro.textContent = "Escolha o dia."; erro.hidden = false; return; }
       confirmado = true;

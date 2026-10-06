@@ -98,7 +98,9 @@ valores em reais sem o sufixo `Centavos` (ex.: `saldoOriginal`, `valorParcela`,
 - **Incerto não é garantido:** "acho que", "talvez", "se o cliente pagar" =
   `status: previsto` + `certeza: incerto`; "vai cair dia 10" = previsto + provavel.
 - **"Tenho X na conta Y agora"** = `atualizar` a conta com `saldoInicial: X` e
-  `dataSaldoInicial: hoje`. Lançamentos até hoje já estão dentro desse saldo.
+  `dataSaldoInicial: hoje`, e passe `conferidoEm` (hora ISO da mensagem dele) no item. A ferramenta grava
+  `saldoConferidoEm`: o que foi lançado ou pago ANTES dessa hora já está no saldo; o que for pago ou
+  recebido DEPOIS, no mesmo dia, entra por cima (Fase 13.1). Sem a hora, vale a hora do envio.
   Não use isso para "recebi X": isso é receita.
 - Categoria: use uma existente; crie (`criar categorias`) só se nenhuma servir.
   Conta, cartão ou fonte de renda que ele citar e não existir: crie antes de usar,

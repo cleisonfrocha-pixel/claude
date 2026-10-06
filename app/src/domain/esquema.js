@@ -122,6 +122,7 @@ export function padraoTransacao(dados = {}) {
     fonteRendaId: null, // só usado quando tipo é receita (§12) — opcional
     dividaId: null, // despesa que paga uma parcela de dívida (§11) — opcional
     pagoEm: null, // dia em que a baixa foi dada (a data do lançamento continua sendo o vencimento)
+    movimentadoEm: null, // hora (ISO) em que virou pago: decide se entra num saldo conferido no mesmo dia
     foiPrevisto: false, // era uma conta marcada pra pagar e foi baixada: segue contando em "A pagar" como paga
     centro: "", // casa | negocio | galpao ("" = casa)
     origem: "manual",

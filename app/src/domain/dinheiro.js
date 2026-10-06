@@ -44,6 +44,19 @@ export function paraCentavos(texto) {
   return negativo ? -centavos : centavos;
 }
 
+/**
+ * O texto digitado é um valor de dinheiro legível? "1.234,56", "1234.5", "R$ 90",
+ * "-15,00" sim; "1.2.3", "12,345,6", "abc" não. Vazio também não: quem chama decide
+ * se o campo é opcional. Existe porque `paraCentavos` sempre devolve um número
+ * (é usado na leitura de extrato) e um valor errado viraria R$ 0,00 sem aviso.
+ */
+export function valorDigitadoValido(texto) {
+  if (typeof texto === "number") return Number.isFinite(texto);
+  const s = String(texto ?? "").trim().replace(/^-/, "").replace(/^R\$\s*/i, "").trim();
+  if (!s) return false;
+  return /^\d+([.,]\d{1,2})?$/.test(s) || /^\d{1,3}(\.\d{3})+(,\d{1,2})?$/.test(s) || /^\d{1,3}(,\d{3})+(\.\d{1,2})?$/.test(s);
+}
+
 /** Centavos inteiros -> número em reais (só para cálculo, nunca para exibir). */
 export function paraReais(centavos) {
   return (Number(centavos) || 0) / 100;

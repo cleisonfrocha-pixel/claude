@@ -15,7 +15,7 @@ export async function opcoesDePagamento(hoje = hojeISO()) {
   const pessoaNome = (id) => base.pessoas.find((p) => p.id === id)?.nome || "";
   return {
     contas: base.contas.filter((c) => c.status === "ativa").map((c) => ({
-      id: c.id, nome: c.nome, saldoDesde: c.dataSaldoInicial || null, pessoaId: c.pessoaId, pessoa: pessoaNome(c.pessoaId), ehReserva: !!c.ehReserva,
+      id: c.id, nome: c.nome, saldoDesde: c.dataSaldoInicial || null, conferidoEm: c.saldoConferidoEm || null, pessoaId: c.pessoaId, pessoa: pessoaNome(c.pessoaId), ehReserva: !!c.ehReserva,
       saldoCentavos: calcularSaldoConta(c, base.transacoes),
     })),
     cartoes: base.cartoes.filter((c) => c.status === "ativo").map((c) => {

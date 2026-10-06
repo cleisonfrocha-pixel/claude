@@ -1752,3 +1752,7 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - Sprint 2 (Carolina, extratos Banco do Brasil jan a set, 149 lançamentos, pessoa herdada da conta): ver `docs/PLANO-HISTORICO-REAL.md`.
 - Sprints 5 e 6 (historicoAno.js, tela Meu ano, card no Início): ver `docs/PLANO-HISTORICO-REAL.md`.
 - Sprint 7 (plano e cenários pelo histórico real: piso das fontes, gasto do dia a dia por categoria, uso real do cartão): ver `docs/PLANO-HISTORICO-REAL.md`.
+
+## Fase 13 (correções da lista de 05/10): `docs/PLANO-CORRECOES-0510.md`
+
+- 13.1 Saldo e caixa certos (itens 1, 2, 3, 4, 8, 15, 18): hora do movimento (`movimentadoEm`) contra a hora da conferência (`saldoConferidoEm`), livre garantido estável, receita atrasada fora do caixa, valor inválido recusado.

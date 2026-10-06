@@ -13,6 +13,19 @@ import { compromissosPorDia } from "./calendario.js";
 import { eventosFuturos } from "./previstos.js";
 
 /**
+ * Saldo conferido no meio do dia: o que foi pago, recebido ou lançado como pago
+ * DEPOIS da hora da conferência, no mesmo dia, ainda não está no saldo informado.
+ * A hora do movimento é `movimentadoEm` (gravada quando o lançamento vira pago);
+ * lançamento antigo sem ela usa `criadoEm`. Nunca `atualizadoEm`: editar a
+ * descrição de algo que já estava no saldo contaria o dinheiro duas vezes.
+ */
+export function movimentouDepoisDaConferencia(conta, t) {
+  if (!conta.saldoConferidoEm) return false;
+  const quando = t.movimentadoEm || t.criadoEm || "";
+  return quando > conta.saldoConferidoEm;
+}
+
+/**
  * Saldo de UMA conta: saldo inicial cadastrado + o efeito de toda transação
  * paga dela, ocorrida ESTRITAMENTE depois da data do saldo inicial (esse
  * saldo já reflete tudo até aquele dia — somar o mesmo dia de novo
@@ -28,11 +41,7 @@ export function calcularSaldoConta(conta, transacoes) {
     // dinheiro de hoje. Sem `pagoEm` (lançamento antigo) vale a data do lançamento.
     const dia = t.pagoEm || t.data;
     if (conta.dataSaldoInicial && dia <= conta.dataSaldoInicial) {
-      // Saldo conferido no meio do dia: o que foi lançado DEPOIS da conferência,
-      // mesmo no mesmo dia, ainda não está no saldo informado.
-      const depois = conta.saldoConferidoEm && dia === conta.dataSaldoInicial
-        && (t.atualizadoEm || t.criadoEm || "") > conta.saldoConferidoEm;
-      if (!depois) continue;
+      if (!(dia === conta.dataSaldoInicial && movimentouDepoisDaConferencia(conta, t))) continue;
     }
     efeito += efeitoNaConta(t);
   }

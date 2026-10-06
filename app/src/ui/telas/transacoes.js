@@ -7,7 +7,7 @@
 
 import { hojeISO } from "../../domain/tempo.js";
 import * as tempo from "../../domain/tempo.js";
-import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
+import { formatarBRL, paraCentavos, valorDigitadoValido } from "../../domain/dinheiro.js";
 import { totalizarMes, statusEfetivo } from "../../domain/transacoes.js";
 import { STATUS_TRANSACAO, CERTEZAS_TRANSACAO } from "../../domain/esquema.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
@@ -25,6 +25,13 @@ import { filtrarTransacoes, haFiltroAtivo } from "../../domain/busca.js";
 import { baixarComPergunta } from "../baixaUI.js";
 import { perguntarSeQuita } from "../conciliarAoLancar.js";
 import { darBaixaTransacao } from "../../dados/baixaRepo.js";
+
+/** Valor digitado num campo: recusa texto que não é dinheiro em vez de gravar R$ 0,00. */
+function valorDoCampo(id) {
+  const texto = document.getElementById(id)?.value ?? "";
+  if (!valorDigitadoValido(texto)) throw new ErroDeValidacao(["Valor não reconhecido. Use o formato 1.234,56."]);
+  return paraCentavos(texto);
+}
 
 const ROTULO_STATUS = { previsto: "Previsto", agendado: "Agendado", pago: "Pago", atrasado: "Atrasado", cancelado: "Cancelado" };
 const ROTULO_CERTEZA = { confirmado: "Confirmado", provavel: "Provável", incerto: "Incerto" };
@@ -350,11 +357,11 @@ function abrirModalEditarTransacaoSimples(item) {
       // onde saiu e descontar do saldo. Só mudar o rótulo deixava a conta sumir da lista sem o saldo mexer.
       const statusEscolhido = document.getElementById("e-status").value;
       // Lê o formulário ANTES de fechar o modal: depois de fechado, os campos não existem mais.
-      const lido = { valorCentavos: paraCentavos(document.getElementById("e-valor").value), contaId: document.getElementById("e-conta")?.value || null, descricao: document.getElementById("e-descricao").value.trim() };
+      const lido = { valorCentavos: valorDoCampo("e-valor"), contaId: document.getElementById("e-conta")?.value || null, descricao: document.getElementById("e-descricao").value.trim() };
       const virarPago = statusEscolhido === "pago" && ["previsto", "agendado", "atrasado"].includes(item.dados.status) && onde === "conta" && ["despesa", "receita"].includes(tipo);
       await transacoes.atualizar(item.id, {
         tipo,
-        valorCentavos: paraCentavos(document.getElementById("e-valor").value),
+        valorCentavos: valorDoCampo("e-valor"),
         data: document.getElementById("e-data").value,
         competencia: tempo.competenciaDeData(document.getElementById("e-data").value),
         contaId: onde === "conta" ? document.getElementById("e-conta").value : null,
@@ -411,7 +418,7 @@ function abrirModalEditarTransferencia(item) {
     erroEl.innerHTML = "";
     try {
       const campos = {
-        valorCentavos: paraCentavos(document.getElementById("e-valor").value),
+        valorCentavos: valorDoCampo("e-valor"),
         data: document.getElementById("e-data").value,
         competencia: tempo.competenciaDeData(document.getElementById("e-data").value),
         descricao: document.getElementById("e-descricao").value.trim(),
@@ -456,7 +463,7 @@ function abrirModalEditarPagamentoFatura(item) {
     erroEl.innerHTML = "";
     try {
       await transacoes.atualizar(item.id, {
-        valorCentavos: paraCentavos(document.getElementById("e-valor").value),
+        valorCentavos: valorDoCampo("e-valor"),
         data: document.getElementById("e-data").value,
         competencia: tempo.competenciaDeData(document.getElementById("e-data").value),
         descricao: document.getElementById("e-descricao").value.trim(),
@@ -732,7 +739,7 @@ async function onSubmitTransacao(ev) {
       const onde = document.getElementById("s-onde") ? document.getElementById("s-onde").value : "conta";
       const lancamento = {
         tipo,
-        valorCentavos: paraCentavos(document.getElementById("s-valor").value),
+        valorCentavos: valorDoCampo("s-valor"),
         data: document.getElementById("s-data").value,
         contaId: onde === "conta" ? document.getElementById("s-conta").value : null,
         cartaoId: onde === "cartao" ? document.getElementById("s-cartao").value : null,
@@ -743,12 +750,13 @@ async function onSubmitTransacao(ev) {
         status: document.getElementById("s-status").value,
         certeza: document.getElementById("s-certeza").value,
       };
-      // Gasto pago com data até o dia do saldo conferido da conta: o saldo já inclui, então não mexe. Avisa.
+      // Gasto pago com data anterior ao saldo conferido da conta: o saldo já inclui, então não mexe. Avisa.
       let avisoSaldo = "";
       if (lancamento.status === "pago" && lancamento.contaId && lancamento.tipo !== "transferencia") {
         const conta = contexto.contas.find((c) => c.id === lancamento.contaId)?.dados;
-        if (conta?.dataSaldoInicial && lancamento.data <= conta.dataSaldoInicial) {
-          avisoSaldo = ` Atenção: ${conta.nome} foi conferida em ${tempo.formatarData(conta.dataSaldoInicial)}. Como a data é igual ou anterior, o saldo já considera este lançamento e não muda.`;
+        const jaNoSaldo = conta?.dataSaldoInicial && (lancamento.data < conta.dataSaldoInicial || (lancamento.data === conta.dataSaldoInicial && !conta.saldoConferidoEm));
+        if (jaNoSaldo) {
+          avisoSaldo = ` Atenção: o saldo da ${conta.nome} foi atualizado em ${tempo.formatarData(conta.dataSaldoInicial)}. Como a data é anterior, ele já inclui este lançamento e não muda.`;
         }
       }
       // Se isso paga uma conta que já está na lista, dá baixa nela em vez de duplicar.
@@ -766,7 +774,7 @@ async function onSubmitTransacao(ev) {
       await criarTransferencia({
         contaOrigemId: document.getElementById("tr-origem").value,
         contaDestinoId: document.getElementById("tr-destino").value,
-        valorCentavos: paraCentavos(document.getElementById("tr-valor").value),
+        valorCentavos: valorDoCampo("tr-valor"),
         data: document.getElementById("tr-data").value,
         descricao: document.getElementById("tr-descricao").value.trim(),
       });
@@ -776,7 +784,7 @@ async function onSubmitTransacao(ev) {
       const onde = document.getElementById("p-onde") ? document.getElementById("p-onde").value : "conta";
       await criarParcelamento({
         tipo,
-        valorTotalCentavos: paraCentavos(document.getElementById("p-valor").value),
+        valorTotalCentavos: valorDoCampo("p-valor"),
         quantidade: parseInt(document.getElementById("p-qtd").value, 10),
         data: document.getElementById("p-data").value,
         contaId: onde === "conta" ? document.getElementById("p-conta").value : null,
@@ -792,7 +800,7 @@ async function onSubmitTransacao(ev) {
       await recorrencias.criar({
         tipo,
         descricao: document.getElementById("r-descricao").value.trim(),
-        valorEstimadoCentavos: paraCentavos(document.getElementById("r-valor").value),
+        valorEstimadoCentavos: valorDoCampo("r-valor"),
         diaBase: parseInt(document.getElementById("r-dia").value, 10),
         semDia: document.getElementById("r-semdia").checked,
         contaId: onde === "conta" ? document.getElementById("r-conta").value : null,
@@ -806,7 +814,7 @@ async function onSubmitTransacao(ev) {
       await registrarPagamentoFatura({
         faturaId: document.getElementById("f-fatura").value,
         contaId: document.getElementById("f-conta").value,
-        valorCentavos: paraCentavos(document.getElementById("f-valor").value),
+        valorCentavos: valorDoCampo("f-valor"),
         data: document.getElementById("f-data").value,
       });
       mostrarToast("Pagamento de fatura registrado.");

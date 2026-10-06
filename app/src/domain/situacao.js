@@ -42,7 +42,7 @@ function grupoDe(c, categoriaPorId) {
  *  naContaCentavos, reservaCentavos,
  *  ate: {data, descricao, valorCentavos, certeza}|null,   // próxima entrada confirmada ou provável
  *  comprometido: {totalCentavos, grupos: Record<string,{totalCentavos, itens}>},
- *  livreGarantidoCentavos, livreProvavelCentavos,         // até a próxima entrada
+ *  livreGarantidoCentavos (horizonte todo, só confirmado), livreProvavelCentavos (até a próxima entrada),
  *  menorPontoCentavos, diaMaisApertado,                    // no horizonte todo
  *  obrigacoesMensaisCentavos, zona, buraco, decisao
  * }}
@@ -79,7 +79,10 @@ export function lerSituacao({ contas, transacoes, faturas, cartoes, dividas, rec
     ate: provavel.proximaEntrada,
     comprometido: { totalCentavos, grupos },
     livreProvavelCentavos: provavel.seguroAteAProximaEntradaCentavos,
-    livreGarantidoCentavos: garantido.seguroAteAProximaEntradaCentavos,
+    // Garantido olha o horizonte inteiro (o ponto mais baixo contando só o confirmado), não
+    // "até a próxima entrada confirmada": com a janela andando, receber uma entrada empurrava
+    // a janela para a próxima e o número piorava R$ 10 mil por ter recebido R$ 300.
+    livreGarantidoCentavos: garantido.seguroParaGastarCentavos,
     garantidoAteEntradaConfirmada: garantido.proximaEntrada,
     menorPontoCentavos, menorPontoGarantidoCentavos: garantido.seguroParaGastarCentavos,
     diaMaisApertado: provavel.diaMaisApertado,

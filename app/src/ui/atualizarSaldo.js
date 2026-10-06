@@ -6,7 +6,7 @@
 import { carregarBase } from "../dados/base.js";
 import { conferirSaldo } from "../dados/pagamentoRepo.js";
 import { calcularSaldoConta } from "../domain/caixa.js";
-import { formatarBRL, paraCentavos } from "../domain/dinheiro.js";
+import { formatarBRL, paraCentavos, valorDigitadoValido } from "../domain/dinheiro.js";
 import { abrir as abrirModal, fechar as fecharModal } from "./modal.js";
 import { escapeHtml, mostrarToast } from "./utilitarios.js";
 
@@ -42,8 +42,8 @@ export async function abrirAtualizarSaldo() {
       ativas.forEach(({ conta, calculado }, i) => {
         const txt = raiz.querySelector(`#as-${i}`).value.trim();
         if (!txt) return;
-        const informado = paraCentavos(txt);
-        if (!Number.isFinite(informado)) throw new Error(`Valor inválido em ${conta.nome}.`);
+        const informado = valorDigitadoValido(txt) ? paraCentavos(txt) : NaN;
+        if (!Number.isFinite(informado)) throw new Error(`Valor não reconhecido em ${conta.nome}. Use o formato 1.234,56.`);
         if (informado !== calculado) mudancas.push({ conta, informado });
       });
       if (!mudancas.length) { fecharModal(); mostrarToast("Os saldos já estavam certos."); return; }

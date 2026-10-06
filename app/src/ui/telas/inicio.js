@@ -119,7 +119,7 @@ function blocoSituacao(sit) {
       </div>
       <button class="btn btn-ghost btn-atualizar-saldo" data-atualizar-saldo>Saldo diferente do banco? Atualizar saldo</button>
       <div class="home-saldo-metricas" style="margin:0 0 8px;">
-        <div class="home-metrica"><span>Livre garantido ${ajudaHtml("Conta só entrada confirmada. É o número mais seguro.")}</span><b class="${sit.livreGarantidoCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreGarantidoCentavos)}</b></div>
+        <div class="home-metrica"><span>Livre garantido ${ajudaHtml("O ponto mais baixo do caixa nos próximos 30 dias contando só entrada confirmada. É o número mais seguro.")}</span><b class="${sit.livreGarantidoCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreGarantidoCentavos)}</b></div>
         <div class="home-metrica"><span>Livre com o provável ${ajudaHtml("Conta também a entrada provável (renda fixa que ainda não caiu). Entrada incerta nunca entra.")}</span><b class="${sit.livreProvavelCentavos < 0 ? "valor-neg" : ""}" data-valor>${formatarBRL(sit.livreProvavelCentavos)}</b></div>
       </div>
       ${grupos.length ? `<details class="inicio-detalhe"><summary>O que já tem dono</summary>

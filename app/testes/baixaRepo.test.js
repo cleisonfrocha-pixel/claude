@@ -113,3 +113,35 @@ test("editar só este mês: a recorrência ganha um previsto no mês, o automát
   const nov = eventosFuturos({ ...est, dividas: [], fontesRenda: [], cartoes: [], de: HOJE, ate: "2026-11-30", hoje: HOJE }).find((e) => e.descricao === "Internet" && e.data.startsWith("2026-11"));
   assert.equal(nov.valorCentavos, 15790);                          // outros meses seguem o cadastro
 });
+
+test("13.1: conferi o saldo hoje e depois paguei e recebi hoje: o saldo mexe na hora", async () => {
+  const { next, luz } = await semear();
+  await conferirSaldo(next, 225298, { hoje: HOJE, agora: "2026-10-02T12:00:00.000Z" });
+  assert.equal(await saldo(next), 225298);
+  await darBaixaTransacao(luz, { hoje: HOJE, contaId: next });
+  assert.equal(await saldo(next), 225298 - 15679);
+  const { criarSimples } = await import("../src/dados/transacoesRepo.js");
+  await criarSimples({ tipo: "receita", status: "pago", certeza: "confirmado", data: HOJE, pagoEm: HOJE, valorCentavos: 25000, contaId: next, descricao: "Dona Ana", categoriaId: "c", pessoaId: "p" });
+  assert.equal(await saldo(next), 225298 - 15679 + 25000);
+});
+
+test("13.1: editar um lançamento pago que já estava no saldo conferido não conta de novo", async () => {
+  const { next } = await semear();
+  const { criarSimples, transacoes } = await import("../src/dados/transacoesRepo.js");
+  const id = await criarSimples({ tipo: "despesa", status: "pago", certeza: "confirmado", data: HOJE, pagoEm: HOJE, valorCentavos: 19000, contaId: next, descricao: "Barbeiro", categoriaId: "c", pessoaId: "p" });
+  const futuro = new Date(Date.now() + 60000).toISOString();
+  await conferirSaldo(next, 100000, { hoje: HOJE, agora: futuro });
+  assert.equal(await saldo(next), 100000);
+  await transacoes.atualizar(id, { descricao: "Gabriel (barbeiro)" });
+  assert.equal(await saldo(next), 100000, "editar não pode mexer no saldo");
+});
+
+test("13.1: desfazer a baixa tira a hora do movimento e o saldo volta", async () => {
+  const { next, luz } = await semear();
+  await conferirSaldo(next, 225298, { hoje: HOJE, agora: "2026-10-02T12:00:00.000Z" });
+  const d = await darBaixaTransacao(luz, { hoje: HOJE, contaId: next });
+  const t = (await db.listar("transacoes")).find((x) => x.id === luz).dados;
+  assert.ok(t.movimentadoEm, "baixa grava a hora do movimento");
+  await desfazerBaixa(d);
+  assert.equal(await saldo(next), 225298);
+});

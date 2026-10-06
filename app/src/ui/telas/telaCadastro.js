@@ -5,7 +5,7 @@
 // os campos e como se exibe; esta fábrica cuida do resto.
 
 import { avatarMarcaHtml } from "../avatarMarca.js";
-import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
+import { paraCentavos, formatarBRL, valorDigitadoValido } from "../../domain/dinheiro.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
 import { ErroDeValidacao } from "../../dados/repositorios.js";
@@ -241,7 +241,10 @@ export function criarTelaCadastro(config) {
       }
       return el.checked;
     }
-    if (campo.tipo === "moeda") return paraCentavos(el.value);
+    if (campo.tipo === "moeda") {
+      if (el.value.trim() && !valorDigitadoValido(el.value)) throw new ErroDeValidacao([`${campo.rotulo}: valor não reconhecido. Use o formato 1.234,56.`]);
+      return paraCentavos(el.value);
+    }
     if (campo.tipo === "numero") return el.value === "" ? null : Number(el.value);
     return el.value;
   }
@@ -267,8 +270,8 @@ export function criarTelaCadastro(config) {
     document.getElementById("form-cadastro").addEventListener("submit", async (ev) => {
       ev.preventDefault();
       const campos = {};
-      config.campos.forEach((c) => { campos[c.id] = lerCampo(c); });
       try {
+        config.campos.forEach((c) => { campos[c.id] = lerCampo(c); });
         if (editando) {
           await config.repo.atualizar(item.id, campos);
           mostrarToast(`${config.singular} atualizad${config.generoFeminino ? "a" : "o"}.`);

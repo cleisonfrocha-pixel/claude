@@ -71,9 +71,21 @@ test("data do calendário não anda um dia no horário de Brasília", () => {
 import { candidatosDePagamento } from "../src/domain/conciliacao.js";
 test("conta conferida no meio do dia: o que entra depois da conferência conta, o de antes não", () => {
   const c = { ...conta, dataSaldoInicial: "2026-10-02", saldoConferidoEm: "2026-10-02T15:00:00.000Z" };
-  const antes = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 1000, atualizadoEm: "2026-10-02T14:00:00.000Z" });
-  const depois = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 2500, atualizadoEm: "2026-10-02T16:00:00.000Z" });
+  const antes = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 1000, criadoEm: "2026-10-02T14:00:00.000Z" });
+  const depois = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 2500, criadoEm: "2026-10-01T10:00:00.000Z", movimentadoEm: "2026-10-02T16:00:00.000Z" });
   assert.equal(calcularSaldoConta(c, [antes, depois]), 1000000 - 2500);
+});
+
+test("13.1 item 15: lançamento criado antes da conferência e editado depois não entra de novo", () => {
+  const c = { ...conta, dataSaldoInicial: "2026-10-02", saldoConferidoEm: "2026-10-02T15:00:00.000Z" };
+  const editado = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 1000, criadoEm: "2026-10-02T14:00:00.000Z", atualizadoEm: "2026-10-02T18:00:00.000Z" });
+  assert.equal(calcularSaldoConta(c, [editado]), 1000000);
+});
+
+test("13.1: conta sem hora de conferência não soma o mesmo dia (o saldo informado já inclui o dia)", () => {
+  const c = { ...conta, dataSaldoInicial: "2026-10-02" };
+  const t = desp({ status: "pago", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 1000, criadoEm: "2026-10-02T18:00:00.000Z" });
+  assert.equal(calcularSaldoConta(c, [t]), 1000000);
 });
 
 test("conciliar: o Vivo pago aponta a conta Vivo aberta, e uma conta sem parentesco não aparece", () => {

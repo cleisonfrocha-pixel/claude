@@ -21,3 +21,20 @@ Regra de cada sprint: teste no motor para cada regra nova, conferência no naveg
 artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 
 ## Andamento
+
+### 13.1 Saldo e caixa certos (feita, 06/10)
+
+- **Itens 1, 2 e 15.** Cada lançamento guarda `movimentadoEm`, a hora em que virou pago (Paguei, Recebi, edição
+  para "pago" ou criação já paga; lançamento antigo usa `criadoEm`). No dia do saldo conferido, entra no saldo só
+  o que se mexeu depois de `saldoConferidoEm`. `atualizadoEm` não conta mais: editar um lançamento que já estava
+  no saldo não soma de novo. Saldo novo digitado no cadastro da conta, pelo "Conferir" ou pelo chat grava a hora.
+  Dado real: Next conferido 05/10 14:16 (R$ 2.252,98), Nubank 05/10 14:07 (R$ 2.430,33). Del Poente
+  (+R$ 5.000) e a equipe (Giu, Brena, Felipe, -R$ 3.000) foram marcados depois: o Next passou a R$ 4.252,98.
+- **Item 3.** Pagar pelo Paguei tira da conta na hora; o "pode gastar" fica igual (conferido no navegador com o
+  estado real: DAS de R$ 108,92 pelo Next, conta R$ 4.252,98 para R$ 4.144,06, pode gastar sem mudar).
+- **Item 4.** "Livre garantido" passou a ser o ponto mais baixo dos próximos 30 dias contando só o confirmado.
+  Antes era "até a próxima entrada confirmada": receber uma entrada empurrava a janela e o número piorava.
+  Teste: receber nunca piora o garantido.
+- **Item 8.** Receita atrasada aparece hoje (para cobrar ou dar Recebi) mas não cobre nada no caixa.
+- **Item 18.** `valorDigitadoValido` recusa "1.2.3", "12,345,6", texto e vazio. Os formulários (Lançar, editar,
+  Paguei/Recebi, conferir saldo, cadastros) mostram "Valor não reconhecido" em vez de gravar R$ 0,00.

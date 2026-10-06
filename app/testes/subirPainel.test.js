@@ -335,3 +335,12 @@ test("carga grande com forcar e sem idExterno é recusada; com idExterno passa",
   const ok = montar(muitos((i) => ({ idExterno: `bb:${i}` })));
   assert.deepEqual(ok.pendencias, []);
 });
+
+test("13.1: saldo novo de conta pelo chat grava a hora da conferência", () => {
+  const e = estadoBase();
+  const conta = e.contas[0];
+  const r = montar([{ acao: "atualizar", colecao: "contas", ref: conta.nome, campos: { saldoInicial: "2.252,98", dataSaldoInicial: "2026-09-26" }, conferidoEm: "2026-09-26T17:16:00.000Z" }], e);
+  const u = r.escritas.find((w) => w.op === "update" && w.collection === "contas");
+  assert.equal(u.data.saldoInicialCentavos, 225298);
+  assert.equal(u.data.saldoConferidoEm, "2026-09-26T17:16:00.000Z");
+});

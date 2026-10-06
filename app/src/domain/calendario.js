@@ -45,6 +45,9 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     const data = (dados.atrasado || dados.pagamentoPassado) && dataOriginal && dataOriginal < de ? de : dataOriginal;
     if (!data || data < de || data > ate) return;
     dados = { vencimento: dataOriginal, ...dados };
+    // Receita que já devia ter entrado e não entrou não é dinheiro em caixa: aparece
+    // hoje (para cobrar ou dar Recebi), mas não cobre nada até entrar de verdade.
+    if (dados.tipo === "receita" && dados.atrasado && dados.certeza !== "incerto") dados = { ...dados, certezaOriginal: dados.certeza || "confirmado", certeza: "incerto" };
     if (!porDia.has(data)) porDia.set(data, { data, entradasCentavos: 0, saidasCentavos: 0, itens: [] });
     const dia = porDia.get(data);
     // Entrada incerta aparece no dia mas não cobre nada (CLAUDE.md:

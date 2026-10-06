@@ -1,7 +1,7 @@
 import { criarTelaCadastro } from "./telaCadastro.js";
 import { contas, pessoas } from "../../dados/repositorios.js";
 import { TIPOS_CONTA } from "../../domain/esquema.js";
-import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
+import { formatarBRL, paraCentavos, valorDigitadoValido } from "../../domain/dinheiro.js";
 import { calcularSaldoConta } from "../../domain/caixa.js";
 import { transacoes } from "../../dados/transacoesRepo.js";
 import { conferirSaldo } from "../../dados/pagamentoRepo.js";
@@ -80,6 +80,7 @@ export default criarTelaCadastro({
       raiz.querySelector('[data-cf="ok"]').addEventListener("click", async () => {
         const txt = raiz.querySelector("#cf-valor").value.trim();
         if (!txt) { const e = raiz.querySelector("#cf-erro"); e.textContent = "Digite o saldo que aparece no app do banco."; e.hidden = false; return; }
+        if (!valorDigitadoValido(txt)) { const e = raiz.querySelector("#cf-erro"); e.textContent = "Valor não reconhecido. Use o formato 1.234,56."; e.hidden = false; return; }
         try {
           const r = await conferirSaldo(id, paraCentavos(txt));
           modal.fechar();
