@@ -9,6 +9,7 @@ import { barraEvolucao } from "../barraEvolucao.js";
 import { resumoVisualHtml, abrirComoResolver, abrirSimuladorDeVenda } from "../dividasVisual.js";
 import { panoramaDeDividas } from "../../domain/esteira.js";
 import { criarTelaCadastro } from "./telaCadastro.js";
+import { transacoes } from "../../dados/transacoesRepo.js";
 import { dividas, pessoas, ativos } from "../../dados/repositorios.js";
 import { paraCentavos, formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, hojeISO, somarDias } from "../../domain/tempo.js";
@@ -135,8 +136,8 @@ const tela = criarTelaCadastro({
     { id: "negativada", rotulo: "Nome negativado (Serasa/SPC). Sem acordo ainda? Deixe a parcela em 0,00", tipo: "check" },
   ],
   async carregarContexto() {
-    const [listaPessoas, listaAtivos] = await Promise.all([pessoas.listar(), ativos.listar()]);
-    return { pessoas: listaPessoas.map((p) => ({ valor: p.id, rotulo: p.dados.nome })), ativos: listaAtivos.map((a) => ({ id: a.id, ...a.dados })) };
+    const [listaPessoas, listaAtivos, listaTransacoes] = await Promise.all([pessoas.listar(), ativos.listar(), transacoes.listar()]);
+    return { pessoas: listaPessoas.map((p) => ({ valor: p.id, rotulo: p.dados.nome })), ativos: listaAtivos.map((a) => ({ id: a.id, ...a.dados })), transacoes: listaTransacoes.map((t) => ({ id: t.id, ...t.dados })) };
   },
 
   secoes(itens) {
@@ -299,7 +300,7 @@ const tela = criarTelaCadastro({
       const bem = (contexto.ativos || []).find((a) => a.dividaId === item.id || a.id === dados.bemId);
       if (!bem) return;
       const prog = progressoDoFinanciamento(dados, bem, hoje);
-      abrirSimuladorDeVenda({ nome: bem.nome, valorMercadoCentavos: Number(bem.valorAtualCentavos) || 0, avaliadoEm: bem.dataAvaliacao, cotacao: cotacaoDeQuitacao(dados, hoje), pagoCentavos: prog.jaPagoCentavos, parcelasPagas: prog.pagas, parcelasTotal: prog.total, credor: dados.credor || "o banco" });
+      abrirSimuladorDeVenda({ nome: bem.nome, valorMercadoCentavos: Number(bem.valorAtualCentavos) || 0, avaliadoEm: bem.dataAvaliacao, cotacao: cotacaoDeQuitacao(dados, hoje, contexto.transacoes), pagoCentavos: prog.jaPagoCentavos, parcelasPagas: prog.pagas, parcelasTotal: prog.total, credor: dados.credor || "o banco" });
     }
   },
 

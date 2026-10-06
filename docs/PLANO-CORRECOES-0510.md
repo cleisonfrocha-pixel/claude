@@ -103,3 +103,22 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - **Item 25.** `sujaONome` (negativada ou protestada, sem repetir a mesma dívida) é a regra única: Dívidas, Plano,
   Por pessoa, Caminhos e alertas contam 10 (8 do Cleison, 2 da Carolina). O "100% do gasto no Cleison" é o dado:
   o extrato da Carolina vai até setembro e o gasto da casa fica no nome de quem pagou; a tela agora diz isso.
+
+### 13.5 Dívidas claras (feita, 06/10)
+
+- **Itens 31 e 38.** O topo da tela Dívidas responde três perguntas: quanto você deve (com as ofertas R$ 113.103,30
+  e sem as ofertas R$ 172.587,30, lado a lado, com o aviso de que 4 ofertas não têm validade cadastrada), quanto
+  custa por mês (R$ 3.316,37, só o Jeep tem parcela) e o que fechar primeiro (ofertas pela ordem de desconto). A barra
+  "de que é feito" e o placar de nome limpo saíram do topo (o placar vai para o progresso do Plano, 13.8).
+- **Item 32.** "10 estão sem acordo: não têm parcela e não pesam no mês até você fechar." É o dado: sem acordo não
+  existe parcela para cadastrar.
+- **Item 33.** Dívida paga com trabalho: a barra parte do saldo em que o abatimento começou (R$ 12.000 em 03/10),
+  não do valor original da cota (R$ 25.000). Antes mostrava R$ 14.500 "abatidos"; agora R$ 1.500.
+- **Item 34.** A cotação de quitação do banco só desconta parcela paga **depois** do dia da cotação (pelos
+  lançamentos, não pelo contador). Jeep: a parcela 21 foi paga em 03/10 e o print é de 05/10, então vale
+  R$ 85.541,86 como veio do banco. Os pagamentos atrasados com R$ 427,10 a mais (juros de atraso) seguem como dado.
+- **Item 37.** Dívida sem acordo não fica "atrasada" nem "em dia" pela data em que foi cadastrada.
+- **Itens 35 e 36 (dado, ficam para a 13.10 com resposta sua):** os 3 protestos sem credor (R$ 4.927,09) podem
+  ser a mesma dívida de Bradesco, Mercado Pago ou EDP (o cadastro tem "é a mesma dívida de"); as 2 faturas do
+  cartão Next cancelado (R$ 328,66 em 12/08 e R$ 2.832,80 em 14/09) estão como "Dívidas e parcelas" sem dívida
+  cadastrada: falta saber se ainda resta saldo desse cartão.

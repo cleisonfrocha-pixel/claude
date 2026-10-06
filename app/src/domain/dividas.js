@@ -144,7 +144,10 @@ export function dataProximoVencimento(divida) {
  * parcela; dívida paga com trabalho conta por abatimento. Calculado na leitura, nada gravado. */
 export function evolucaoDaDivida(divida, hoje = hojeISO(), { meses = 12 } = {}) {
   if (divida.pagaComTrabalho) {
-    const total = Number(divida.saldoOriginalCentavos) || 0;
+    // A barra parte do saldo na data em que o abatimento começou (valor com juros), não do valor
+    // original da cota: a diferença entre os dois não foi paga com trabalho (item 33 da lista de 05/10,
+    // a Cota GEDI mostrava R$ 14.500 abatidos quando só R$ 1.500 tinham sido).
+    const total = Number(divida.valorComJurosCentavos) || Number(divida.saldoOriginalCentavos) || 0;
     const saldo = calcularSaldoAtual(divida, hoje);
     const fim = divida.abatimentoAte ? dataDeCompetencia(divida.abatimentoAte, 28) : dataDeCompetencia(somarMeses(competenciaDeData(hoje), meses), 28);
     const limite = [fim, ...(divida.abatimentosUnicos || []).map((u) => u.data)].filter(Boolean).sort().pop();
@@ -173,11 +176,15 @@ export function evolucaoDaDivida(divida, hoje = hojeISO(), { meses = 12 } = {}) 
  * cotação menos as parcelas pagas depois dela (a parcela mais próxima não tem desconto, então a subtração é exata
  * para a primeira e uma aproximação para as seguintes). Sem cotação, o valor presente das parcelas na taxa do
  * contrato (calcularSaldoAtual). `velha` avisa quando a cotação tem mais de 30 dias: peça outra ao banco. */
-export function cotacaoDeQuitacao(divida, hoje = hojeISO()) {
+export function cotacaoDeQuitacao(divida, hoje = hojeISO(), transacoes = null) {
   const cot = Number(divida.quitacaoInformadaCentavos) || 0;
   const parcela = Number(divida.valorParcelaCentavos) || 0;
   if (cot > 0 && divida.quitacaoInformadaEm) {
-    const pagasDesde = Math.max(0, (Number(divida.parcelasPagas) || 0) - (Number(divida.quitacaoParcelasPagas) || 0));
+    // Com os lançamentos à mão, só desconta parcela paga DEPOIS do dia da cotação (a paga antes já
+    // está, ou deveria estar, no número do banco). Sem eles, a diferença do contador.
+    const pagasDesde = transacoes
+      ? transacoes.filter((t) => t.dividaId === divida.id && t.status === "pago" && t.tipo === "despesa" && (t.pagoEm || t.data) > divida.quitacaoInformadaEm).length
+      : Math.max(0, (Number(divida.parcelasPagas) || 0) - (Number(divida.quitacaoParcelasPagas) || 0));
     const dias = Math.round((new Date(`${hoje}T12:00:00Z`) - new Date(`${divida.quitacaoInformadaEm}T12:00:00Z`)) / 86400000);
     return { valorCentavos: Math.max(0, cot - pagasDesde * parcela), origem: "banco", em: divida.quitacaoInformadaEm, ajustadaPorParcelas: pagasDesde, velha: dias > 30, somaDasParcelasCentavos: parcela * parcelasRestantes(divida) };
   }
@@ -198,7 +205,10 @@ export function dataEstimadaQuitacao(divida) {
  * (a próxima parcela já devia ter vencido), ou ativa. */
 export function statusDivida(divida, hoje) {
   if (divida.pagaComTrabalho) return saldoPorTrabalho(divida, hoje || hojeISO()) <= 0 ? "quitada" : "ativa"; // trabalho não atrasa parcela
-  if (parcelasRestantes(divida) <= 0) return "quitada";
+  if (parcelasRestantes(divida) <= 0 || divida.quitadaEm) return "quitada";
+  // Sem acordo não tem parcela pra atrasar: a data de início é só quando foi cadastrada (as do BB
+  // apareciam "em dia" ou "atrasadas" conforme o dia da importação, item 37). É dívida sem acordo.
+  if (!(Number(divida.valorParcelaCentavos) > 0)) return "ativa";
   const proximo = dataProximoVencimento(divida);
   if (proximo && hoje && proximo < hoje) return "atrasada";
   return "ativa";

@@ -11,40 +11,42 @@ import { escapeHtml } from "./utilitarios.js";
 import { simularPeloPainel } from "../dados/inicioRepo.js";
 import * as modal from "./modal.js";
 
-const COR_GRUPO = { negativadas: "var(--danger)", atrasadas: "var(--warn)", financiamento: "var(--text-muted)", trabalho: "var(--good)" };
 const LINK_SERASA = "https://www.serasa.com.br/limpa-nome-online/";
 
-/** O topo da tela: quanto se deve de verdade, de que é feito, o nome limpo e as ofertas na mesa. */
+/** O topo da tela, em três perguntas (item 38 da lista de 05/10): quanto eu devo (com e sem as ofertas,
+ * lado a lado: oferta é desconto que ainda não está garantido), quanto isso custa por mês, e o que fechar
+ * primeiro. O placar de nome limpo vai para o Plano, junto com o progresso. */
 export function resumoVisualHtml(pan, pessoaNome = () => "") {
-  const p = pan.placar;
-  const pctLimpo = p.total > 0 ? Math.round((p.limpas / p.total) * 100) : 0;
   const ofertas = pan.ofertas;
+  const temOferta = pan.economiaCentavos > 0;
   return `
     <div class="dv-topo">
       <section class="dv-card dv-total">
-        <div class="dv-rotulo">Você deve de verdade</div>
-        <div class="dv-numero" data-valor>${formatarBRL(pan.totalRealCentavos)}</div>
-        <div class="dv-sub">${pan.economiaCentavos > 0 ? `Já contando os descontos das ofertas. Sem elas seriam <span data-valor>${formatarBRL(pan.cobradoCentavos)}</span>: <b class="valor-pos">você deixa de pagar <span data-valor>${formatarBRL(pan.economiaCentavos)}</span></b>.` : "Soma do que falta pagar em todas as dívidas."}</div>
-        ${barraEvolucao({ compacta: true, totalRotulo: "De que é feito", totalCentavos: pan.totalRealCentavos, segmentos: pan.grupos.map((g) => ({ tipo: "livre", cor: COR_GRUPO[g.chave], rotulo: g.rotulo, centavos: g.centavos, detalhe: `${g.qtd} ${g.qtd === 1 ? "dívida" : "dívidas"}` })) })}
+        <div class="dv-rotulo">Quanto você deve</div>
+        ${temOferta ? `
+        <div class="dv-duas">
+          <div><small>Se fechar as ofertas</small><div class="dv-numero" data-valor>${formatarBRL(pan.totalRealCentavos)}</div></div>
+          <div><small>Sem as ofertas</small><div class="dv-numero dv-numero-2" data-valor>${formatarBRL(pan.cobradoCentavos)}</div></div>
+        </div>
+        <div class="dv-sub">A diferença, <b data-valor>${formatarBRL(pan.economiaCentavos)}</b>, só vale enquanto as ofertas valerem.${pan.ofertasSemValidade ? ` ${pan.ofertasSemValidade === 1 ? "Uma oferta não tem" : `${pan.ofertasSemValidade} ofertas não têm`} data de validade cadastrada: se vencerem, vale o número da direita.` : ""}</div>`
+        : `<div class="dv-numero" data-valor>${formatarBRL(pan.totalRealCentavos)}</div><div class="dv-sub">Soma do que falta pagar em todas as dívidas.</div>`}
       </section>
-      ${p.total > 0 ? `
       <section class="dv-card">
-        <div class="dv-rotulo">Nome limpo</div>
-        <div class="dv-numero"><span>${p.limpas}</span> <small>de ${p.total}</small></div>
-        <div class="evo-barra" role="img" aria-label="${p.limpas} de ${p.total} dívidas que sujam o nome já resolvidas"><span class="evo-seg pago" style="flex:${Math.max(p.limpas, 0)} 1 0;"></span><span class="evo-seg falta" style="flex:${Math.max(p.faltam, 0)} 1 0;"></span></div>
-        <div class="dv-sub">${p.faltam ? `Faltam ${p.faltam}. Para limpar o nome inteiro: <b data-valor>${formatarBRL(p.valorQueFaltaCentavos)}</b>${pan.totalOfertasCentavos && pan.totalOfertasCentavos < p.valorQueFaltaCentavos ? "" : ""}.` : "Nome limpo."}</div>
-      </section>` : ""}
+        <div class="dv-rotulo">Quanto custa por mês</div>
+        <div class="dv-numero" data-valor>${formatarBRL(pan.parcelasMensaisCentavos)}</div>
+        <div class="dv-sub">${pan.quantidadeComAcordo === 1 ? "Uma dívida tem parcela" : `${pan.quantidadeComAcordo} dívidas têm parcela`}.${pan.quantidadeSemAcordo ? ` ${pan.quantidadeSemAcordo === 1 ? "Uma está" : `${pan.quantidadeSemAcordo} estão`} sem acordo: não ${pan.quantidadeSemAcordo === 1 ? "tem" : "têm"} parcela e não pesa${pan.quantidadeSemAcordo === 1 ? "" : "m"} no mês até você fechar.` : ""}</div>
+      </section>
     </div>
     ${ofertas.length ? `
     <section class="dv-card dv-ofertas">
-      <div class="dv-rotulo">Ofertas na mesa, da que mais compensa para a que menos</div>
-      <p class="dv-sub" style="margin:2px 0 8px;">Fechar todas custa <b data-valor>${formatarBRL(pan.totalOfertasCentavos)}</b> e economiza <b class="valor-pos" data-valor>${formatarBRL(pan.economiaCentavos)}</b>. Toque em Resolver para ver o passo a passo.</p>
+      <div class="dv-rotulo">O que fechar primeiro</div>
+      <p class="dv-sub" style="margin:2px 0 8px;">Da oferta que mais desconta para a que menos. Fechar todas custa <b data-valor>${formatarBRL(pan.totalOfertasCentavos)}</b>.</p>
       ${ofertas.map((o) => `
         <div class="dv-oferta">
           ${avatarMarcaHtml([o.nome, o.credor], { classe: "conta-logo" })}
           <div class="dv-oferta-corpo">
             <b>${escapeHtml(o.credor || o.nome)}</b>${pessoaNome(o.pessoaId) ? ` <small>· ${escapeHtml(pessoaNome(o.pessoaId))}</small>` : ""}
-            <small class="dv-oferta-sub">de <span data-valor>${formatarBRL(o.cobradoCentavos)}</span> por <b data-valor>${formatarBRL(o.valorCentavos)}</b> · <span class="valor-pos">−${o.descontoPct}%, economiza <span data-valor>${formatarBRL(o.economiaCentavos)}</span></span>${o.validade ? ` · vale até ${escapeHtml(formatarData(o.validade).slice(0, 5))}` : ""}</small>
+            <small class="dv-oferta-sub">de <span data-valor>${formatarBRL(o.cobradoCentavos)}</span> por <b data-valor>${formatarBRL(o.valorCentavos)}</b> · <span class="valor-pos">−${o.descontoPct}%</span>${o.validade ? ` · vale até ${escapeHtml(formatarData(o.validade).slice(0, 5))}` : " · sem validade cadastrada"}</small>
           </div>
           <button class="btn btn-primary btn-sm" data-resolver="${escapeHtml(o.id)}">Resolver</button>
         </div>`).join("")}

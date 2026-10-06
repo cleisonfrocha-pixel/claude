@@ -96,6 +96,7 @@ export async function calcularPainelPatrimonio() {
     dividas: dados.dividas,
     recorrencias: dados.recorrencias,
     pessoas: dados.pessoas,
+    pagamentosDeDividas: dados.transacoes.filter((t) => t.dividaId),
     ativosCentavos, passivosCentavos, liquidoCentavos, composicao,
     passivosProblemasCentavos: visaoDividas.saldoProblemasCentavos,
     passivosFinanciamentosCentavos: visaoDividas.saldoFinanciamentosCentavos,

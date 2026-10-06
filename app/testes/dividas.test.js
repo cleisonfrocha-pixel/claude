@@ -157,12 +157,14 @@ test("evolução da dívida: pago + previsto + depois somam o total (financiamen
     abatimentoDesde: "2026-10-03", abatimentoMensalCentavos: 350000, abatimentoDia: 24, abatimentoAte: "2026-12", abatimentosUnicos: [{ data: "2026-10-05", valorCentavos: 150000 }],
   });
   const c = evolucaoDaDivida(cota, "2026-10-03");
-  assert.equal(c.pagoCentavos, 1300000);
+  // A barra parte dos R$ 12.000 de 03/10, não dos R$ 25.000 originais (13.5 item 33).
+  assert.equal(c.totalCentavos, 1200000);
+  assert.equal(c.pagoCentavos, 0);
   assert.equal(c.previstoCentavos, 1200000);
   assert.equal(c.depoisCentavos, 0);
   assert.equal(c.pagoCentavos + c.previstoCentavos + c.depoisCentavos, c.totalCentavos);
   assert.equal(c.previstoAte, "2026-12-24");
-  assert.equal(evolucaoDaDivida(cota, "2026-11-30").pagoCentavos, 1300000 + 150000 + 700000);
+  assert.equal(evolucaoDaDivida(cota, "2026-11-30").pagoCentavos, 150000 + 700000);
 });
 
 test("cotação de quitação: vale a do banco menos as parcelas pagas depois; sem cotação, o valor presente na taxa do contrato", async () => {
@@ -189,4 +191,27 @@ test("13.4 item 25: nome sujo é uma regra só (negativada ou protestada, sem co
   ];
   assert.deepEqual(ds.map(sujaONome), [true, true, false]);
   assert.equal(visaoDiv(ds, "2026-10-06").quantidadeNegativadas, placarNomeLimpo(ds).total);
+});
+
+import { evolucaoDaDivida, cotacaoDeQuitacao, statusDivida as statusDiv } from "../src/domain/dividas.js";
+test("13.5 item 33: dívida paga com trabalho mostra só o que o trabalho abateu", () => {
+  const gedi = { id: "g", nome: "Cota GEDI", pagaComTrabalho: true, saldoOriginalCentavos: 2500000, valorComJurosCentavos: 1200000, abatimentoDesde: "2026-10-03", abatimentoDia: 24, abatimentoMensalCentavos: 350000, abatimentoAte: "2026-12", abatimentosUnicos: [{ data: "2026-10-05", valorCentavos: 150000 }] };
+  const e = evolucaoDaDivida(gedi, "2026-10-06");
+  assert.equal(e.totalCentavos, 1200000);
+  assert.equal(e.pagoCentavos, 150000);
+  assert.equal(e.faltaCentavos, 1050000);
+});
+
+test("13.5 item 34: cotação de quitação só desconta parcela paga depois do dia da cotação", () => {
+  const jeep = { id: "j", valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 21, quitacaoInformadaCentavos: 8554186, quitacaoInformadaEm: "2026-10-05", quitacaoParcelasPagas: 20, dataInicio: "2025-02-04" };
+  const pagas = [{ dividaId: "j", tipo: "despesa", status: "pago", data: "2026-10-03", pagoEm: "2026-10-03" }];
+  assert.equal(cotacaoDeQuitacao(jeep, "2026-10-06", pagas).valorCentavos, 8554186);
+  const depois = [...pagas, { dividaId: "j", tipo: "despesa", status: "pago", data: "2026-11-04", pagoEm: "2026-11-04" }];
+  assert.equal(cotacaoDeQuitacao({ ...jeep, parcelasPagas: 22 }, "2026-11-05", depois).valorCentavos, 8554186 - 331637);
+});
+
+test("13.5 item 37: dívida sem acordo não fica atrasada nem em dia pela data em que foi cadastrada", () => {
+  const bb = { id: "b", negativada: true, saldoOriginalCentavos: 1711873, quantidadeParcelas: 1, parcelasPagas: 0, valorParcelaCentavos: 0, dataInicio: "2026-10-05" };
+  assert.equal(statusDiv(bb, "2026-10-04"), "ativa");
+  assert.equal(statusDiv(bb, "2026-10-06"), "ativa");
 });

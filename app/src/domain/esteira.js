@@ -133,7 +133,14 @@ export function panoramaDeDividas(dividas, hoje) {
   }
   ofertas.sort((a, b) => b.descontoPct - a.descontoPct || b.economiaCentavos - a.economiaCentavos);
   const lista = Object.entries(grupos).map(([chave, g]) => ({ chave, ...g })).filter((g) => g.centavos > 0);
+  // O que pesa todo mês: parcela de quem tem acordo. Sem acordo não tem parcela (não pesa no mês até fechar).
+  const comAcordo = ativas.filter((d) => !d.pagaComTrabalho && Number(d.valorParcelaCentavos) > 0);
+  const semAcordo = ativas.filter((d) => !d.pagaComTrabalho && !(Number(d.valorParcelaCentavos) > 0) && calcularSaldoAtual(d, hoje) > 0);
   return {
+    parcelasMensaisCentavos: comAcordo.reduce((s, d) => s + (Number(d.valorParcelaCentavos) || 0), 0),
+    quantidadeComAcordo: comAcordo.length,
+    quantidadeSemAcordo: semAcordo.length,
+    ofertasSemValidade: ofertas.filter((o) => !o.validade).length,
     totalRealCentavos: lista.reduce((s, g) => s + g.centavos, 0),
     cobradoCentavos: cobrado,
     economiaCentavos: ofertas.reduce((s, o) => s + o.economiaCentavos, 0),

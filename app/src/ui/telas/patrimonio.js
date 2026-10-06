@@ -177,7 +177,7 @@ function renderizarListaAtivos() {
       const l = leituraDoBem(a, painel.dividas, painel.recorrencias);
       const divida = a.dividaId ? painel.dividas.find((d) => d.id === a.dividaId) : null;
       const hoje = hojeISO();
-      const cot = divida ? cotacaoDeQuitacao(divida, hoje) : { valorCentavos: 0, origem: "estimativa", em: null, ajustadaPorParcelas: 0, velha: false };
+      const cot = divida ? cotacaoDeQuitacao(divida, hoje, painel.pagamentosDeDividas) : { valorCentavos: 0, origem: "estimativa", em: null, ajustadaPorParcelas: 0, velha: false };
       const prog = divida ? progressoDoFinanciamento(divida, a, hoje) : null;
       abrirSimuladorDeVenda({ nome: a.nome, valorMercadoCentavos: Number(a.valorAtualCentavos) || 0, avaliadoEm: a.dataAvaliacao, cotacao: cot, pagoCentavos: prog?.jaPagoCentavos || 0, parcelasPagas: prog?.pagas || 0, parcelasTotal: prog?.total || 0, credor: divida?.credor || "o banco" });
     });
