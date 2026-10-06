@@ -91,3 +91,18 @@ test("renda com 'fim': não projeta depois do último mês (Gedi/Tony até dezem
   const meses = ev.filter((e) => e.origem?.tipo === "fonteRenda").map((e) => e.data.slice(0, 7));
   assert.deepEqual(meses, ["2026-10", "2026-11", "2026-12"]);
 });
+
+test("13.2 item 16: compra no cartão com uso habitual não entra também no gasto do dia a dia", async () => {
+  const { gastoDiaADiaMensal } = await import("../src/domain/previstos.js");
+  const cartoes = [{ id: "c", apelido: "Nubank", status: "ativo", diaFechamento: 5, diaVencimento: 12, usoMensalCentavos: 0 }];
+  const faturas = [{ id: "f7", cartaoId: "c", competencia: "2026-07" }, { id: "f8", cartaoId: "c", competencia: "2026-08" }, { id: "f9", cartaoId: "c", competencia: "2026-09" }];
+  const transacoes = [];
+  for (const [i, c] of [["f7", "2026-07"], ["f8", "2026-08"], ["f9", "2026-09"]]) {
+    transacoes.push({ tipo: "despesa", status: "pago", competencia: c, categoriaId: "mer", cartaoId: "c", faturaId: i, valorCentavos: 50000 });
+    transacoes.push({ tipo: "despesa", status: "pago", competencia: c, categoriaId: "mer", contaId: "k", valorCentavos: 20000 });
+  }
+  const semCartoes = gastoDiaADiaMensal({ transacoes, categorias: [], recorrencias: [], competencia: "2026-10" });
+  const comCartoes = gastoDiaADiaMensal({ transacoes, categorias: [], recorrencias: [], cartoes, faturas, competencia: "2026-10" });
+  assert.equal(semCartoes, 70000);
+  assert.equal(comCartoes, 20000);
+});

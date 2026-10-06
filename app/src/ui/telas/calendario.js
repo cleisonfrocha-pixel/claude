@@ -65,22 +65,7 @@ function renderizar() {
       </div>
     </div>
 
-    ${painel.semCobertura.length
-      ? `<div class="alerta-cobertura">
-          <div class="titulo">${painel.semCobertura.length === 1 ? "1 dia sem cobertura suficiente" : `${painel.semCobertura.length} dias sem cobertura suficiente`} nos próximos 90 dias</div>
-          <div class="texto">Em ${escapeHtml(tempo.formatarData(painel.semCobertura[0].data))}, o saldo projetado fica negativo
-            (<span class="valor-neg" data-valor>${formatarBRL(painel.semCobertura[0].saldoDepoisCentavos)}</span>) por causa de ${escapeHtml(painel.semCobertura[0].itens.map((i) => i.descricao).join(", "))}.</div>
-        </div>`
-      : `<div class="alerta-tudo-coberto">Nos próximos 90 dias, o dinheiro cobre tudo que está marcado pra sair, contando o que vai entrar.</div>`}
-
-    ${painel.piorDia ? `
-      <div class="pressao-card">
-        <div>
-          <div class="rotulo">Maior saída num dia só <small>(não é o dia em que o saldo fica mais baixo)</small></div>
-          <div class="data">${escapeHtml(tempo.formatarData(painel.piorDia.data))}</div>
-        </div>
-        <b data-valor>-${formatarBRL(painel.piorDia.saidasCentavos - painel.piorDia.entradasCentavos)}</b>
-      </div>` : ""}
+    ${painel.semCobertura.length ? alertaCobertura(painel.semCobertura[0]) : `<div class="alerta-tudo-coberto">Nos próximos 90 dias, o dinheiro cobre tudo que está marcado pra sair, contando o que vai entrar.</div>`}
 
     <div class="mes-nav">
       <button class="icon-btn" id="mes-prev" aria-label="Mês anterior" ${noMesAtual ? "disabled" : ""}>‹</button>
@@ -93,8 +78,7 @@ function renderizar() {
 
     <div class="legenda-calendario">
       <span><span class="legenda-ponto" style="background:var(--text-faint);"></span>Tem compromisso</span>
-      <span><span class="legenda-ponto" style="background:var(--warn);"></span>Maior saída num dia só</span>
-      <span><span class="legenda-ponto" style="background:var(--danger);"></span>Sem cobertura</span>
+      <span><span class="legenda-ponto" style="background:var(--danger);"></span>Dia em que o saldo fica negativo</span>
     </div>
 
     <div id="dia-detalhe"></div>
@@ -108,12 +92,25 @@ function renderizar() {
   container.querySelector("#mes-next").addEventListener("click", () => trocarMes(tempo.somarMeses(mesVisivel, 1)));
 }
 
+/** Uma linha: o dia em que o saldo fica negativo e as três saídas que mais pesam nele. */
+function alertaCobertura(dia) {
+  const saidas = [...dia.itens].filter((i) => i.tipo !== "receita").sort((a, b) => b.valorCentavos - a.valorCentavos);
+  const top = saidas.slice(0, 3).map((i) => `${escapeHtml(i.descricao)} (<span data-valor>${formatarBRL(i.valorCentavos)}</span>)`).join(", ");
+  const resto = saidas.length > 3 ? ` e mais ${saidas.length - 3}` : "";
+  return `<div class="alerta-cobertura">
+      <div class="titulo">Em ${escapeHtml(tempo.formatarData(dia.data).slice(0, 5))} o saldo fica negativo: <span class="valor-neg" data-valor>${formatarBRL(dia.saldoDepoisCentavos)}</span></div>
+      <div class="texto">${saidas.length ? `Pesa ${top}${resto}. Toque no dia para ver tudo.` : "Toque no dia para ver o que acontece nele."}</div>
+    </div>`;
+}
+
 function renderizarGrade(hoje) {
   const alvo = container.querySelector("#grade-calendario");
   if (!alvo) return;
 
   const porData = new Map(painel.diasDoMesVisivel.map((d) => [d.data, d]));
-  const piorData = painel.piorDia ? painel.piorDia.data : null;
+  // Só o dia em que o saldo cruza o zero ganha cor: pintar todo dia negativo deixava o mês inteiro
+  // vermelho e a cor parava de dizer alguma coisa.
+  const diaQueCruza = painel.semCobertura[0]?.data || null;
   const [ano, mes] = mesVisivel.split("-").map(Number);
   const primeiroDiaSemana = new Date(ano, mes - 1, 1).getDay();
   const totalDias = tempo.diasNoMes(mesVisivel);
@@ -128,8 +125,7 @@ function renderizarGrade(hoje) {
     if (data === diaSelecionado) classes.push("dia-selecionado");
     if (info) {
       classes.push("tem-compromisso");
-      if (!info.coberto) classes.push("dia-sem-cobertura");
-      else if (data === piorData) classes.push("dia-pressao");
+      if (data === diaQueCruza) classes.push("dia-sem-cobertura");
     }
     html += `<button class="${classes.join(" ")}" data-dia="${data}">${dia}<span class="dia-indicador"></span></button>`;
   }

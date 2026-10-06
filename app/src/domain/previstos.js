@@ -12,6 +12,7 @@ import { somarMeses, competenciaDeData, dataDeCompetencia } from "./tempo.js";
 import { competenciaFatura, dataVencimentoFatura, dataPagamentoPrevisto } from "./transacoes.js";
 import { dataDaParcela, parcelasRestantes } from "./dividas.js";
 import { leituraDaFonte } from "./pisoDaRenda.js";
+import { repartirVerba } from "./calendario.js";
 
 const MESES_PISO_VARIAVEL = 3;
 const MESES_MINIMOS_HISTORICO = 3;
@@ -23,7 +24,12 @@ const DIAS_DO_GASTO_SEMANAL = [1, 8, 15, 22];
  * recorrências ativas já projetam (aluguel, internet…). É o que a
  * projeção longa precisa pra não virar fantasia — só com o que está
  * agendado, 12 meses pareceriam só entrada. */
-export function gastoDiaADiaMensal({ transacoes, categorias, recorrencias, competencia, meses = 3 }) {
+export function gastoDiaADiaMensal({ transacoes, categorias, recorrencias, cartoes, faturas, competencia, meses = 3 }) {
+  // Compra no cartão que a projeção já conta pelo "uso habitual do cartão" não entra aqui de novo
+  // (era o mesmo gasto duas vezes: uma na média do dia a dia, outra na fatura estimada).
+  const cartoesComUso = new Set((cartoes || []).filter((c) => c.status !== "encerrado" && usoMensalDoCartao(c, { transacoes, faturas, competenciaHoje: competencia }).valorCentavos > 0).map((c) => c.id));
+  const cartaoDaFatura = new Map((faturas || []).map((f) => [f.id, f.cartaoId]));
+  const jaNoCartao = (t) => cartoesComUso.has(t.cartaoId || cartaoDaFatura.get(t.faturaId));
   const dividasIds = new Set((categorias || []).filter((c) => c.grupo === "dividas").map((c) => c.id));
   const comDados = new Set((transacoes || []).filter((t) => t.status === "pago" && t.competencia).map((t) => t.competencia));
   const porCategoria = new Map(); // categoria -> total de cada mês fechado com dados
@@ -34,7 +40,7 @@ export function gastoDiaADiaMensal({ transacoes, categorias, recorrencias, compe
     mesesLidos += 1;
     for (const t of transacoes || []) {
       if (t.status !== "pago" || t.competencia !== c || t.tipo !== "despesa") continue;
-      if (t.dividaId || dividasIds.has(t.categoriaId)) continue;
+      if (t.dividaId || dividasIds.has(t.categoriaId) || jaNoCartao(t)) continue;
       const k = t.categoriaId || "sem-categoria";
       porCategoria.set(k, (porCategoria.get(k) || 0) + (Number(t.valorCentavos) || 0));
     }
@@ -208,6 +214,14 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
       // Mês que já passou sem o lançamento gerado não vira cobrança
       // retroativa: só projeta daqui pra frente.
       if (dataLancamento < (hoje || de)) continue;
+      if (r.semDia && r.tipo === "despesa" && !cartao) {
+        // Verba de um mês futuro ainda não gerada: repartida nas semanas do mês, como a verba lançada.
+        for (const parte of repartirVerba({ competencia: c }, de, valor)) {
+          if (parte.data > ate) continue;
+          eventos.push({ data: parte.data, tipo: "despesa", valorCentavos: parte.valorCentavos, certeza: "provavel", virtual: true, semDia: true, descricao: r.descricao, origem: { tipo: "recorrencia", id: r.id } });
+        }
+        continue;
+      }
       const data = cartao && r.tipo === "despesa" ? dataVencimentoFatura(cartao, competenciaFatura(cartao, dataLancamento)) : dataLancamento;
       if (data < de || data > ate) continue;
       eventos.push({
@@ -249,13 +263,15 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
   // quem pede (projeção longa) passa o valor: o "posso gastar" de 30 dias
   // é justamente o orçamento desse gasto, não pode descontá-lo de novo.
   if (gastoDiaADiaMensalCentavos > 0) {
-    const porSemana = Math.round(gastoDiaADiaMensalCentavos / DIAS_DO_GASTO_SEMANAL.length);
+    // Partes inteiras que somam exatamente o mês (o resto de centavos vai na primeira semana).
+    const porSemana = Math.floor(gastoDiaADiaMensalCentavos / DIAS_DO_GASTO_SEMANAL.length);
+    const sobra = gastoDiaADiaMensalCentavos - porSemana * DIAS_DO_GASTO_SEMANAL.length;
     for (const c of comps) {
       for (const dia of DIAS_DO_GASTO_SEMANAL) {
         const data = dataDeCompetencia(c, dia);
         if (data < de || data > ate) continue;
         eventos.push({
-          data, tipo: "despesa", valorCentavos: porSemana, certeza: "provavel", virtual: true,
+          data, tipo: "despesa", valorCentavos: porSemana + (dia === DIAS_DO_GASTO_SEMANAL[0] ? sobra : 0), certeza: "provavel", virtual: true,
           descricao: "Gasto do dia a dia (média dos últimos meses)",
           origem: { tipo: "gastoMedio", id: c },
         });

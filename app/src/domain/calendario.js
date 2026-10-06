@@ -7,24 +7,23 @@
 
 import { dataVencimentoFatura, dataPagamentoPrevisto, statusEfetivo } from "./transacoes.js";
 import { diasNoMes, dataDeCompetencia, somarDias } from "./tempo.js";
+import { lerVerbas } from "./verbas.js";
 
-/** Quando a verba pesa no caixa. Mês corrente: o que falta gastar já tem
- * destino, então pesa HOJE por inteiro (é o mais seguro pro "pode gastar":
- * dinheiro de mercado e almoço não é dinheiro livre). Mês futuro: repartida
- * em semanas desde o dia 1, que é como o gasto de fato acontece. Resto de
- * centavos vai na primeira parcela. */
-export function repartirVerba(t, de) {
+/** Quando a verba pesa no caixa: o que falta gastar dela é repartido em partes iguais, uma por
+ * semana, do primeiro dia que ainda conta (hoje, no mês corrente; dia 1, num mês futuro) até o fim
+ * do mês. Antes, no mês corrente, a verba inteira caía hoje e inventava um "maior dia de saída".
+ * Resto de centavos vai na primeira parte. `valorCentavos` é o que ainda falta (ver verbas.js). */
+export function repartirVerba(t, de, valorCentavos = Number(t.valorCentavos) || 0) {
   const competencia = t.competencia || (t.data || "").slice(0, 7);
   const primeiro = `${competencia}-01`;
   const ultimo = dataDeCompetencia(competencia, diasNoMes(competencia));
   const inicio = de > primeiro ? de : primeiro;
-  if (inicio > ultimo) return [{ data: ultimo, valorCentavos: Number(t.valorCentavos) || 0 }];
-  if (de >= primeiro) return [{ data: inicio, valorCentavos: Number(t.valorCentavos) || 0 }];
+  if (inicio > ultimo) return [];
   const datas = [];
-  for (let d = inicio; d <= ultimo && datas.length < 4; d = somarDias(d, 7)) datas.push(d);
-  const total = Number(t.valorCentavos) || 0;
+  for (let d = inicio; d <= ultimo && datas.length < 5; d = somarDias(d, 7)) datas.push(d);
+  const total = valorCentavos;
   const base = Math.floor(total / datas.length);
-  return datas.map((data, i) => ({ data, valorCentavos: base + (i === 0 ? total - base * datas.length : 0) }));
+  return datas.map((data, i) => ({ data, valorCentavos: base + (i === 0 ? total - base * datas.length : 0) })).filter((p) => p.valorCentavos > 0);
 }
 
 /**
@@ -57,15 +56,19 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     dia.itens.push(dados);
   }
 
+  const verbas = lerVerbas(transacoes, hoje || de);
   for (const t of transacoes || []) {
     if (t.status === "pago" || t.status === "cancelado") continue;
-    if (t.tipo === "despesa" && t.contaId && t.semDia && statusEfetivo(t, hoje) !== "atrasado") {
-      // Verba do mês (mercado, almoço, anúncios…): não tem dia. O que ainda
-      // não foi gasto pesa nas semanas que faltam do mês, não num dia que já
-      // passou (e some do caixa) nem tudo no dia 1.
-      for (const parte of repartirVerba(t, de)) {
+    if (t.tipo === "despesa" && t.contaId && t.semDia) {
+      // Verba do mês (mercado, almoço, anúncios…): não tem dia e nunca fica atrasada. Pesa só o que
+      // ainda falta gastar dela (verba menos o gasto real da categoria no mês), espalhado nas semanas
+      // que faltam. Verba de mês que já passou expirou.
+      const v = verbas.get(t.id ?? t);
+      if (!v || v.expirada || v.restanteCentavos <= 0) continue;
+      for (const parte of repartirVerba(t, de, v.restanteCentavos)) {
         item(parte.data, -parte.valorCentavos, {
-          tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: parte.valorCentavos, valorTotalCentavos: Number(t.valorCentavos) || 0,
+          tipo: "despesa", descricao: t.descricao || "Despesa", valorCentavos: parte.valorCentavos, valorTotalCentavos: v.restanteCentavos,
+          verbaTotalCentavos: v.totalCentavos, verbaGastoCentavos: v.gastoCentavos,
           atrasado: false, certeza: t.certeza, semDia: true, transacaoId: t.id, contaId: t.contaId, categoriaId: t.categoriaId, competencia: t.competencia,
         });
       }

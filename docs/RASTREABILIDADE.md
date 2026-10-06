@@ -1756,3 +1756,4 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 ## Fase 13 (correções da lista de 05/10): `docs/PLANO-CORRECOES-0510.md`
 
 - 13.1 Saldo e caixa certos (itens 1, 2, 3, 4, 8, 15, 18): hora do movimento (`movimentadoEm`) contra a hora da conferência (`saldoConferidoEm`), livre garantido estável, receita atrasada fora do caixa, valor inválido recusado.
+- 13.2 Verbas e projeção honesta (itens 5, 6, 7, 13, 16, 70, 71, 73, 74): `domain/verbas.js` (o que falta da verba é derivado do gasto real), parcelas fora do cartão mês a mês, gasto médio sem o cartão, Agenda e Fluxo enxutos.

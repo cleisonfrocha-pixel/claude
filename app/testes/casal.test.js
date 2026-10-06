@@ -115,11 +115,13 @@ test("casal: caminhos partem da média dos meses fechados, descontam a parcela u
 
 test("casal: projeção de 30 dias com o gasto do dia a dia na média dos últimos meses", () => {
   const gasto = gastoDiaADiaMensal({ ...E, competencia: COMPETENCIA });
-  assert.equal(gasto, 235840); // média de 4.375,90 e 4.180,90 sem parcelas, menos aluguel e internet já projetados
+  // média sem parcelas, menos aluguel e internet já projetados e menos as compras dos cartões, que a
+  // projeção já conta pelo uso habitual de cada cartão (13.2 item 16: antes eram contadas duas vezes)
+  assert.equal(gasto, 25250);
   const h = calcularHorizonte({ ...E, gastoDiaADiaMensalCentavos: gasto, saldoInicialCentavos: clareza.saldoAtualCentavos, hoje: HOJE, dias: 30 });
   assert.equal(h.entradasSeguroCentavos, 880000);
-  assert.equal(h.saidasSeguroCentavos, 539000 + 235840);
-  assert.equal(h.saldoFinalSeguroCentavos, 162000 + 880000 - 539000 - 235840);
+  assert.equal(h.saidasSeguroCentavos, 539000 + 25250);
+  assert.equal(h.saldoFinalSeguroCentavos, 162000 + 880000 - 539000 - 25250);
 });
 
 test("casal: só alerta o que é de verdade", () => {

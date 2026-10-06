@@ -11,6 +11,7 @@
 
 import { eventosFuturos } from "./previstos.js";
 import { compromissosPorDia } from "./calendario.js";
+import { lerVerbas } from "./verbas.js";
 import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
 import { competenciaDeData, diasNoMes, dataDeCompetencia } from "./tempo.js";
 
@@ -92,12 +93,14 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
   }
 
   // Verba do mês: quanto já foi gasto dela (pago na mesma categoria e mês) e o total.
+  const verbas = lerVerbas(transacoes, hoje);
   for (const i of itens) {
-    if (!i.semDia || i.paga || !i.categoriaId) continue;
-    const gasto = (transacoes || []).filter((t) => t.tipo === "despesa" && t.status === "pago" && t.categoriaId === i.categoriaId && t.competencia === competencia)
-      .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
-    i.gastoDaVerbaCentavos = gasto;
-    i.totalDaVerbaCentavos = gasto + i.valorCentavos;
+    if (!i.semDia || i.paga || !i.transacaoId) continue;
+    const v = verbas.get(i.transacaoId);
+    if (!v) continue;
+    i.gastoDaVerbaCentavos = v.gastoCentavos;
+    i.totalDaVerbaCentavos = v.totalCentavos;
+    i.valorCentavos = v.restanteCentavos;
   }
 
   // Pagas: o que já saiu (conta que nasceu de uma conta, ou essencial).

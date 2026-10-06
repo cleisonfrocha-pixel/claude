@@ -75,6 +75,22 @@ export function calcularHorizonte({ transacoes, faturas, cartoes, dividas, recor
   const saldoFinalSeguroCentavos = saldoInicialCentavos + entradasSeguroCentavos - saidasSeguroCentavos;
   const saldoFinalComIncertoCentavos = saldoFinalSeguroCentavos + entradasIncertoCentavos - saidasIncertoCentavos;
 
+  // De onde vem cada número (item 74 da lista de 05/10): "vai entrar" separado em confirmado e
+  // provável; "vai sair" separado em atrasado, contas com data, verbas do mês, cartões, parcelas e o
+  // gasto do dia a dia estimado. Soma exatamente o seguro (incerto fica de fora, como no saldo).
+  const composicao = { entradas: { confirmado: 0, provavel: 0 }, saidas: { atrasado: 0, contas: 0, verbas: 0, cartoes: 0, parcelas: 0, diaADia: 0 } };
+  for (const dia of todosOsDias) {
+    for (const i of dia.itens) {
+      if (i.certeza === "incerto") continue;
+      const v = Number(i.valorCentavos) || 0;
+      if (i.tipo === "receita") { composicao.entradas[(i.certeza || "confirmado") === "confirmado" ? "confirmado" : "provavel"] += v; continue; }
+      const o = i.origem?.tipo;
+      const balde = i.atrasado ? "atrasado" : o === "gastoMedio" ? "diaADia" : i.semDia ? "verbas"
+        : i.tipo === "fatura" || o === "cartaoUso" || o === "fatura" ? "cartoes" : o === "divida" ? "parcelas" : "contas";
+      composicao.saidas[balde] += v;
+    }
+  }
+
   const diaCritico = cobertura.find((d) => !d.coberto);
   const saidaCritica = diaCritico ? {
     data: diaCritico.data,
@@ -93,6 +109,7 @@ export function calcularHorizonte({ transacoes, faturas, cartoes, dividas, recor
     entradasIncertoCentavos,
     saidasIncertoCentavos,
     saidaCritica,
+    composicao,
     dias: cobertura,
   };
 }

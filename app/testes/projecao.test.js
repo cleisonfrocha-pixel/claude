@@ -106,3 +106,22 @@ test("PORTÃO DA FASE 5: quando o saldo projetado fica negativo, o sistema diz q
   assert.equal(h30.saidaCritica.itens[0].descricao, "Fatura do cartão", "QUAL EVENTO: a obrigação causadora, nomeada");
   assert.equal(h30.saidaCritica.gapCentavos, 250000, "TAMANHO DO GAP: 100000 - 350000 = -250000 -> gap 250000");
 });
+
+test("13.2 item 74: vai entrar e vai sair vêm separados por origem e fecham com o total", async () => {
+  const { calcularHorizonte } = await import("../src/domain/projecao.js");
+  const conta = { id: "k", status: "ativa", saldoInicialCentavos: 100000, dataSaldoInicial: "2026-10-01" };
+  const d = (o) => ({ tipo: "despesa", status: "previsto", certeza: "confirmado", contaId: "k", competencia: "2026-10", ...o });
+  const h = calcularHorizonte({ contas: [conta], transacoes: [
+    d({ id: "a", data: "2026-09-20", status: "atrasado", valorCentavos: 1000 }),
+    d({ id: "b", data: "2026-10-10", valorCentavos: 2000 }),
+    d({ id: "v", data: "2026-10-01", semDia: true, valorCentavos: 4000 }),
+    { id: "r", tipo: "receita", status: "previsto", certeza: "provavel", contaId: "k", data: "2026-10-15", valorCentavos: 9000 },
+    { id: "r2", tipo: "receita", status: "previsto", certeza: "confirmado", contaId: "k", data: "2026-10-16", valorCentavos: 5000 },
+  ], faturas: [], cartoes: [], dividas: [], recorrencias: [], fontesRenda: [], gastoDiaADiaMensalCentavos: 0, saldoInicialCentavos: 100000, hoje: "2026-10-02", dias: 30 });
+  assert.deepEqual(h.composicao.entradas, { confirmado: 5000, provavel: 9000 });
+  assert.equal(h.composicao.saidas.atrasado, 1000);
+  assert.equal(h.composicao.saidas.contas, 2000);
+  assert.equal(h.composicao.saidas.verbas, 4000);
+  const somaSaidas = Object.values(h.composicao.saidas).reduce((a, b) => a + b, 0);
+  assert.equal(somaSaidas, h.saidasSeguroCentavos);
+});

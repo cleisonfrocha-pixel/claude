@@ -174,9 +174,21 @@ test("invariante: parcela de dívida em atraso pesa uma vez, com o vencimento or
 test("verba do mês mostra quanto já foi gasto e o total", () => {
   const r = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes: [
     t({ id: "v", descricao: "Mercado", data: "2026-10-01", semDia: true, contaId: "k", categoriaId: "mer", valorCentavos: 92000 }),
-    t({ id: "g", descricao: "Mercado Assaí", data: "2026-10-03", status: "pago", categoriaId: "mer", valorCentavos: 8000 }),
+    t({ id: "g", descricao: "Mercado Assaí", data: "2026-10-03", status: "pago", semDia: true, contaId: "k", categoriaId: "mer", valorCentavos: 8000 }),
   ] });
   const v = r.itens.find((i) => i.transacaoId === "v");
   assert.equal(v.gastoDaVerbaCentavos, 8000);
   assert.equal(v.totalDaVerbaCentavos, 100000);
+  assert.equal(v.valorCentavos, 92000);
+});
+
+test("13.2 item 6: gasto real da categoria abate a verba mesmo sem ligar um ao outro", () => {
+  const r = contasDoMes({ competencia: "2026-10", hoje: HOJE, categorias: cats, transacoes: [
+    t({ id: "v", descricao: "Mercado do mês", data: "2026-10-01", semDia: true, contaId: "k", categoriaId: "mer", valorCentavos: 100000 }),
+    t({ id: "g", descricao: "Assaí", data: "2026-10-03", status: "pago", contaId: "k", categoriaId: "mer", valorCentavos: 36670 }),
+  ] });
+  const v = r.itens.find((i) => i.transacaoId === "v");
+  assert.equal(v.gastoDaVerbaCentavos, 36670);
+  assert.equal(v.totalDaVerbaCentavos, 100000);
+  assert.equal(v.valorCentavos, 100000 - 36670);
 });

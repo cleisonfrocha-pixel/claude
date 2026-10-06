@@ -124,7 +124,7 @@ export async function criarParcelamento({ valorTotalCentavos, quantidade, data, 
 
   const parcelaDeId = uid("pc");
   const camposComuns = { tipo, cartaoId: cartaoId || null, contaId: cartaoId ? null : contaId, categoriaId, pessoaId, descricao, data, status: "previsto", certeza: "provavel" };
-  const partes = gerarParcelas({ valorTotalCentavos, quantidade, competenciaInicial, parcelaDeId, camposComuns });
+  const partes = gerarParcelas({ valorTotalCentavos, quantidade, competenciaInicial, parcelaDeId, camposComuns, dataPorParcela: !cartaoId });
 
   const t = agora();
   const ids = [];

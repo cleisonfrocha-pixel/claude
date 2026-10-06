@@ -38,7 +38,11 @@ function renderizar() {
     return;
   }
 
-  const h = painel.horizontes.find((x) => x.chave === horizonteSelecionado) || painel.horizontes[0];
+  // Só 7 e 30 dias: 90 dias e 12 meses projetavam "se nada mudar" (sem corte de gasto, sem fim de
+  // parcela, sem renda nova) e davam números assustadores que não ajudam a decidir nada hoje. O ano
+  // fica na aba Plano, com o histórico real.
+  const visiveis = painel.horizontes.filter((x) => x.chave === "7d" || x.chave === "30d");
+  const h = visiveis.find((x) => x.chave === horizonteSelecionado) || visiveis[0];
   const temIncerto = h.entradasIncertoCentavos !== 0 || h.saidasIncertoCentavos !== 0;
 
   container.innerHTML = `
@@ -51,7 +55,7 @@ function renderizar() {
     </div>
 
     <div class="horizontes-grid">
-      ${painel.horizontes.map((x) => cartaoHorizonte(x)).join("")}
+      ${visiveis.map((x) => cartaoHorizonte(x)).join("")}
     </div>
 
     <div class="tela-head" style="margin-top:0;">
@@ -63,19 +67,21 @@ function renderizar() {
 
     ${h.saidaCritica
       ? `<div class="alerta-cobertura">
-          <div class="titulo">Falta dinheiro em até ${escapeHtml(h.rotulo)}</div>
-          <div class="texto">Em ${escapeHtml(formatarData(h.saidaCritica.data))} a conta fica em
-            <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}</span>, no dia de
-            ${escapeHtml([...new Set(h.saidaCritica.itens.map((i) => i.descricao))].join(", "))}.
-            Faltam <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.gapCentavos)}</span> nesse dia.</div>
+          <div class="titulo">Em ${escapeHtml(formatarData(h.saidaCritica.data).slice(0, 5))} a conta fica em <span class="valor-neg" data-valor>${formatarBRL(h.saidaCritica.saldoDepoisCentavos)}</span></div>
+          <div class="texto">${maioresSaidas(h.saidaCritica.itens)}</div>
         </div>`
       : `<div class="alerta-tudo-coberto">Nos próximos ${escapeHtml(h.rotulo.toLowerCase())}, a conta não fica negativa em nenhum dia.</div>`}
 
     <div class="resumo-mes">
-      <div class="resumo-item"><span>Vai entrar</span><b class="mono valor-pos" data-valor>${formatarBRL(h.entradasSeguroCentavos)}</b></div>
-      <div class="resumo-item"><span>Vai sair</span><b class="mono valor-neg" data-valor>${formatarBRL(h.saidasSeguroCentavos)}</b></div>
-      <div class="resumo-item"><span>Fica em conta</span><b class="mono ${h.saldoFinalSeguroCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(h.saldoFinalSeguroCentavos)}</b></div>
+      <div class="resumo-item"><span>Tem hoje</span><b class="mono" data-valor>${formatarBRL(h.saldoInicialCentavos)}</b></div>
+      <div class="resumo-item"><span>Entra</span><b class="mono valor-pos" data-valor>${formatarBRL(h.entradasSeguroCentavos)}</b></div>
+      <div class="resumo-item"><span>Sai</span><b class="mono valor-neg" data-valor>${formatarBRL(h.saidasSeguroCentavos)}</b></div>
+      <div class="resumo-item"><span>Fica</span><b class="mono ${h.saldoFinalSeguroCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(h.saldoFinalSeguroCentavos)}</b></div>
     </div>
+    ${h.composicao ? `<div class="card" style="margin-top:12px;">
+      ${linhasComposicao([["Entra confirmado", h.composicao.entradas.confirmado], ["Entra provável (ainda não é certo)", h.composicao.entradas.provavel]], "valor-pos")}
+      ${linhasComposicao([["Contas atrasadas", h.composicao.saidas.atrasado], ["Contas com data", h.composicao.saidas.contas], ["Parcelas de dívida", h.composicao.saidas.parcelas], ["Cartões", h.composicao.saidas.cartoes], ["O que falta das verbas do mês", h.composicao.saidas.verbas], ["Gasto do dia a dia (média)", h.composicao.saidas.diaADia]], "valor-neg")}
+    </div>` : ""}
 
     ${temIncerto ? `
       <div class="nota-incerto">
@@ -90,6 +96,17 @@ function renderizar() {
       renderizar();
     });
   });
+}
+
+function maioresSaidas(itens) {
+  const lista = [...itens].sort((a, b) => b.valorCentavos - a.valorCentavos);
+  if (!lista.length) return "";
+  const top = lista.slice(0, 3).map((i) => `${escapeHtml(i.descricao)} (<span data-valor>${formatarBRL(i.valorCentavos)}</span>)`).join(", ");
+  return `Pesa ${top}${lista.length > 3 ? ` e mais ${lista.length - 3}` : ""}.`;
+}
+
+function linhasComposicao(linhas, classe) {
+  return linhas.filter(([, v]) => v > 0).map(([rotulo, v]) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(rotulo)}</span><b class="mono ${classe}" data-valor>${formatarBRL(v)}</b></div>`).join("");
 }
 
 function cartaoHorizonte(h) {

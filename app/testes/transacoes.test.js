@@ -209,3 +209,10 @@ test("repasse: exige direção e dispensa categoria", () => {
   assert.deepEqual(validarRepasse(ok), []);
   assert.ok(validarRepasse({ ...ok, direcao: null }).some((m) => /entrou ou saiu/.test(m)));
 });
+
+test("13.2 item 13: parcelado fora do cartão vence um mês por parcela, no mesmo dia (fim de mês ajustado)", () => {
+  const p = gerarParcelas({ valorTotalCentavos: 180000, quantidade: 3, competenciaInicial: "2026-01", parcelaDeId: "pc", camposComuns: { data: "2026-01-31", contaId: "k" }, dataPorParcela: true });
+  assert.deepEqual(p.map((x) => x.data), ["2026-01-31", "2026-02-28", "2026-03-31"]);
+  const noCartao = gerarParcelas({ valorTotalCentavos: 180000, quantidade: 3, competenciaInicial: "2026-01", parcelaDeId: "pc", camposComuns: { data: "2026-01-31", cartaoId: "c" } });
+  assert.deepEqual(noCartao.map((x) => x.data), ["2026-01-31", "2026-01-31", "2026-01-31"]);
+});

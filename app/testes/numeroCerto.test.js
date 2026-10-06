@@ -22,13 +22,14 @@ test("lançamento antigo sem pagoEm vale pela data (compatível)", () => {
   assert.equal(calcularSaldoConta(conta, [desp({ status: "pago", data: "2026-10-03", valorCentavos: 1000 })]), 1000000 - 1000);
 });
 
-test("verba do mês corrente pesa hoje por inteiro; a de mês futuro é repartida em semanas sem perder centavo", () => {
+test("13.2 item 5: verba do mês corrente é repartida nas semanas que faltam; a de mês futuro desde o dia 1, sem perder centavo", () => {
   const corrente = repartirVerba({ competencia: "2026-10", valorCentavos: 100001 }, HOJE);
-  assert.deepEqual(corrente, [{ data: "2026-10-02", valorCentavos: 100001 }]);
+  assert.deepEqual(corrente.map((p) => p.data), ["2026-10-02", "2026-10-09", "2026-10-16", "2026-10-23", "2026-10-30"]);
+  assert.equal(corrente.reduce((s, p) => s + p.valorCentavos, 0), 100001);
   const futuro = repartirVerba({ competencia: "2026-11", valorCentavos: 100001 }, HOJE);
-  assert.equal(futuro.length, 4);
+  assert.equal(futuro.length, 5);
   assert.equal(futuro.reduce((s, p) => s + p.valorCentavos, 0), 100001);
-  assert.deepEqual(futuro.map((p) => p.data), ["2026-11-01", "2026-11-08", "2026-11-15", "2026-11-22"]);
+  assert.deepEqual(futuro.map((p) => p.data), ["2026-11-01", "2026-11-08", "2026-11-15", "2026-11-22", "2026-11-29"]);
 });
 
 test("verba de 01/10 ainda não paga pesa no pode gastar (antes sumia da trilha)", () => {
@@ -97,4 +98,33 @@ test("conciliar: o Vivo pago aponta a conta Vivo aberta, e uma conta sem parente
   const r = candidatosDePagamento({ tipo: "despesa", valorCentavos: 9200, descricao: "Vivo internet móvel SET", data: "2026-10-02" }, abertas, { hoje: "2026-10-02" });
   assert.deepEqual(r.map((x) => x.transacao.id), ["vivo"]);
   assert.equal(candidatosDePagamento({ tipo: "despesa", valorCentavos: 12345, descricao: "Pizza", data: "2026-10-02" }, abertas, { hoje: "2026-10-02" }).length, 0);
+});
+
+import { lerVerbas } from "../src/domain/verbas.js";
+test("13.2 item 7: verba de mês passado expira e não pesa hoje", () => {
+  const transacoes = [desp({ id: "set", data: "2026-09-01", competencia: "2026-09", semDia: true, valorCentavos: 50000 })];
+  const r = calcularClarezaDeCaixa({ contas: [conta], transacoes, faturas: [], cartoes: [], dividas: [], recorrencias: [], fontesRenda: [], hoje: HOJE, horizonteDias: 30 });
+  assert.equal(r.comprometidoCentavos, 0);
+  assert.equal(lerVerbas(transacoes, HOJE).get("set").expirada, true);
+});
+
+test("13.2 item 6: duas verbas na mesma categoria dividem o gasto real; compra no cartão também consome", () => {
+  const v = lerVerbas([
+    desp({ id: "cafe", data: "2026-10-01", semDia: true, categoriaId: "esc", valorCentavos: 10000 }),
+    desp({ id: "almoco", data: "2026-10-01", semDia: true, categoriaId: "esc", valorCentavos: 45000 }),
+    desp({ id: "x", data: "2026-10-02", status: "pago", categoriaId: "esc", valorCentavos: 11000 }),
+    desp({ id: "y", data: "2026-10-02", status: "previsto", contaId: null, cartaoId: "c", faturaId: "f", categoriaId: "esc", valorCentavos: 11000 }),
+  ], HOJE);
+  assert.equal(v.get("cafe").restanteCentavos + v.get("almoco").restanteCentavos, 55000 - 22000);
+  assert.equal(v.get("almoco").restanteCentavos, 27000);
+});
+
+test("13.2 item 6: gasto acima da verba zera o que falta, nunca negativo", () => {
+  const transacoes = [
+    desp({ id: "lazer", data: "2026-10-01", semDia: true, categoriaId: "laz", valorCentavos: 50000 }),
+    desp({ id: "g", data: "2026-10-02", status: "pago", categoriaId: "laz", valorCentavos: 80000 }),
+  ];
+  assert.equal(lerVerbas(transacoes, HOJE).get("lazer").restanteCentavos, 0);
+  const r = calcularClarezaDeCaixa({ contas: [conta], transacoes, faturas: [], cartoes: [], dividas: [], recorrencias: [], fontesRenda: [], hoje: HOJE, horizonteDias: 30 });
+  assert.equal(r.comprometidoCentavos, 0);
 });

@@ -306,7 +306,7 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
           pessoaId: item.pessoa ? resolver(estado, "pessoas", item.pessoa).id : null, // vazio: `transacao` usa o dono do cartão ou da conta
           descricao: item.descricao || categoria.nome, data, status: "previsto", certeza: "provavel",
         };
-        const partes = gerarParcelas({ valorTotalCentavos: total, quantidade: quantidadeParcelas, competenciaInicial: competenciaDe(data), parcelaDeId, camposComuns: comuns });
+        const partes = gerarParcelas({ valorTotalCentavos: total, quantidade: quantidadeParcelas, competenciaInicial: competenciaDe(data), parcelaDeId, camposComuns: comuns, dataPorParcela: !cartao });
         avisarDuplicata(duplicataDe((t) => t.parcelaNum === 1 && (cartao ? t.cartaoId === cartao.id : t.contaId === conta.id), partes[0].valorCentavos, data));
         const competenciaFaturaInicial = cartao ? competenciaFatura(cartao, data) : null;
         for (const parte of partes) {

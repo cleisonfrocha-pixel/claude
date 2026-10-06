@@ -74,10 +74,14 @@ export function competenciaFatura(cartao, dataCompraISO) {
  * A soma das parcelas geradas é sempre exatamente valorTotalCentavos —
  * nunca sobra nem falta centavo (ver dividirCentavos).
  */
-export function gerarParcelas({ valorTotalCentavos, quantidade, competenciaInicial, parcelaDeId, camposComuns = {} }) {
+export function gerarParcelas({ valorTotalCentavos, quantidade, competenciaInicial, parcelaDeId, camposComuns = {}, dataPorParcela = false }) {
   const valores = dividirCentavos(valorTotalCentavos, quantidade);
+  // Parcelado direto na conta (boleto, carnê, Pix parcelado): cada parcela vence um mês depois da
+  // anterior, no mesmo dia. Sem isso todas nasciam na data da compra e viravam "atrasadas" juntas.
+  const dia = Number((camposComuns.data || "").slice(8, 10)) || 1;
   return valores.map((valorCentavos, i) => ({
     ...camposComuns,
+    ...(dataPorParcela && camposComuns.data ? { data: dataDeCompetencia(somarMeses(competenciaInicial, i), dia) } : {}),
     valorCentavos,
     competencia: somarMeses(competenciaInicial, i),
     parcelaDe: parcelaDeId,

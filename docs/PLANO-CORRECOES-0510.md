@@ -38,3 +38,22 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - **Item 8.** Receita atrasada aparece hoje (para cobrar ou dar Recebi) mas não cobre nada no caixa.
 - **Item 18.** `valorDigitadoValido` recusa "1.2.3", "12,345,6", texto e vazio. Os formulários (Lançar, editar,
   Paguei/Recebi, conferir saldo, cadastros) mostram "Valor não reconhecido" em vez de gravar R$ 0,00.
+
+### 13.2 Verbas e projeção honesta (feita, 06/10)
+
+- **Itens 5, 6 e 7.** Novo `domain/verbas.js`: o que falta de cada verba do mês é derivado na leitura, verba menos
+  o gasto real da categoria no mês (despesa paga ou compra no cartão; pedaço já baixado da verba não conta duas
+  vezes). Duas verbas na mesma categoria (café e almoço no escritório) dividem o gasto na proporção. O que falta é
+  repartido em partes iguais, uma por semana, de hoje até o fim do mês (antes caía tudo hoje). Verba de mês que
+  passou expira: não pesa mais nem vira atrasada. Verba de mês futuro vinda da recorrência também é repartida.
+- **Item 13.** Parcelado fora do cartão (no app e pela ferramenta do chat) vence um mês por parcela, no mesmo dia.
+  Não havia nenhum no dado real.
+- **Item 16.** O gasto do dia a dia (média) não conta mais as compras de cartão que a projeção já conta pelo uso
+  habitual do cartão. No casal de teste a média caiu de R$ 2.358,40 para R$ 252,50: era o mesmo gasto duas vezes.
+  O rateio semanal da média não perde mais centavo.
+- **Itens 70, 71, 72 (parte), 73, 74.** Calendário: uma linha "Em DD/MM o saldo fica negativo" com as 3 saídas
+  que mais pesam (antes, 18 nomes numa frase); sumiu o "maior saída num dia só"; só o dia em que o saldo cruza o
+  zero fica vermelho. Fluxo: só 7 e 30 dias (90 dias e 12 meses saíram), e "entra / sai" aberto por origem:
+  confirmado, provável, atrasadas, contas com data, parcelas, cartões, o que falta das verbas, dia a dia.
+- **Dado real (06/10):** "pode gastar até 07/10" foi de -R$ 1.410,77 para R$ 1.657,82. O primeiro dia negativo
+  passou de hoje para 15/10 (-R$ 1.060,79, pesam as camisetas de R$ 1.400 e as compras do ML).
