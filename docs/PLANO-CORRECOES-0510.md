@@ -122,3 +122,24 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
   ser a mesma dívida de Bradesco, Mercado Pago ou EDP (o cadastro tem "é a mesma dívida de"); as 2 faturas do
   cartão Next cancelado (R$ 328,66 em 12/08 e R$ 2.832,80 em 14/09) estão como "Dívidas e parcelas" sem dívida
   cadastrada: falta saber se ainda resta saldo desse cartão.
+
+### 13.6 Início enxuto (feita, 06/10)
+
+- **Item 50.** O topo é o saldo de cada conta com "atualizado em dd/mm às hh:mm" (hora da conferência) e o botão
+  "Atualizar saldo". Saiu o "Boa noite" e o "Pode gastar".
+- **Item 51.** "A receber" mostra só o que é confirmado, com a data; o provável fica num "Esperado, ainda não é
+  certo" fechado. Incerto não aparece (não conta em nada).
+- **Item 52.** A zona de risco virou uma linha: "Você chega em 07/10 (quando entra Salário - Carolina, esperado)
+  com R$ 1.657,82", e "Em 15/10 falta dinheiro" quando falta. "Ver a conta" abre: na conta agora, entra até lá,
+  sai até lá, você chega com (a conta fecha; `chegadaAteAProximaEntrada`, com teste).
+- **Item 53.** O selo "Confiança baixa" saiu do topo.
+- **Item 54.** Saíram da Início: Cartões, "Posso gastar?", "Seu ano até agora", "Completar seu retrato" e o atalho
+  dos alertas (tudo continua nas abas de origem).
+- **Item 55.** Atrasado numa faixa vermelha própria; "Próximos 7 dias" à parte. Cada linha tem nome, data
+  ("venceu 20/04" ou "10/10"), valor e o botão "Paguei" (lançamento, fatura ou conta que ainda só existe no
+  cadastro). Estimativa (uso do cartão) e verba não têm "Paguei". Os primeiros 4 atrasados e 6 da semana à vista,
+  o resto em "Ver mais".
+- **Item 56.** A fatura da Shopee aparece uma vez só (o bloco Cartões saiu).
+- **Item 57.** O botão grande "Lançar" saiu; fica o "+" do menu.
+- **Item 58.** Uma coluna só, centralizada, no celular e no desktop.
+- Conferido no navegador com o estado real (390 px e 1366 px, sem rolagem lateral, sem erro; Paguei abre a folha).

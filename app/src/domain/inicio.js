@@ -76,3 +76,40 @@ export function completarRetrato({ pessoas, contas, cartoes, fontesRenda, divida
   if (semParcelas.length) faltas.push({ id: "parcelas", texto: `${semParcelas.length} dívida(s) sem valor de parcela`, destino: { modulo: "dividas" } });
   return faltas;
 }
+
+/**
+ * "Você chega em DD/MM com R$ X" (item 52 da lista de 05/10): a conta aberta até a próxima entrada
+ * (ou até o fim do horizonte, sem entrada à vista). `caixa` vem de calcularClarezaDeCaixa.
+ * - `ate`: a data da chegada (o dia da próxima entrada; sem entrada, o fim do horizonte);
+ * - `chegaComCentavos`: o saldo na véspera da entrada (hoje, se ela é amanhã);
+ * - `menorCentavos`/`diaDoMenor`: se no meio do caminho desce mais que isso;
+ * - `saidas`/`entradas`: o que acontece até lá, para a conta fechar na tela:
+ *   na conta hoje + entradas − saídas = chegaComCentavos.
+ */
+export function chegadaAteAProximaEntrada(caixa) {
+  const e = caixa.proximaEntrada;
+  const ate = e ? e.data : caixa.horizonteAte;
+  const antes = (d) => (e ? d < ate : d <= ate);
+  const pontos = (caixa.pontos || []).filter((p) => antes(p.data));
+  const chegaComCentavos = pontos.length ? pontos[pontos.length - 1].saldoCentavos : caixa.saldoAtualCentavos;
+  let menorCentavos = caixa.saldoAtualCentavos, diaDoMenor = null;
+  for (const p of pontos) if (p.saldoCentavos < menorCentavos) { menorCentavos = p.saldoCentavos; diaDoMenor = p.data; }
+  const saidas = (caixa.detalhes?.compromissos || []).filter((c) => antes(c.data));
+  const entradas = (caixa.detalhes?.entradas || []).filter((x) => antes(x.data));
+  return {
+    ate, entrada: e || null, chegaComCentavos, menorCentavos, diaDoMenor,
+    saidas, entradas,
+    saiCentavos: saidas.reduce((s, c) => s + c.valorCentavos, 0),
+    entraCentavos: entradas.reduce((s, x) => s + x.valorCentavos, 0),
+  };
+}
+
+/** O que entra nos próximos dias, separado pelo que dá pra contar (item 51): `certo` é o confirmado;
+ * `esperado` é o provável (renda que costuma cair, mas ainda não caiu). Incerto nunca chega aqui. */
+export function aReceber(entradas) {
+  const lista = [...(entradas || [])].sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+  const certo = lista.filter((e) => (e.certeza || "confirmado") === "confirmado");
+  const esperado = lista.filter((e) => (e.certeza || "confirmado") !== "confirmado");
+  const soma = (l) => l.reduce((s, e) => s + (Number(e.valorCentavos) || 0), 0);
+  return { certo, esperado, certoCentavos: soma(certo), esperadoCentavos: soma(esperado) };
+}

@@ -63,3 +63,23 @@ test("agenda da Home: uma lista só, com as saídas que pesam marcadas e sem rep
   assert.equal(lista.find((i) => i.descricao === "Jeep").pesa, true); // pesado fora dos 7 dias não some
   assert.equal(lista.find((i) => i.descricao === "Salário").pesa, undefined);
 });
+
+import { chegadaAteAProximaEntrada, aReceber } from "../src/domain/inicio.js";
+import { calcularClarezaDeCaixa as clarezaInicio } from "../src/domain/caixa.js";
+test("13.6 item 52: você chega no dia da próxima entrada com o saldo da véspera, e a conta fecha", () => {
+  const conta = { id: "k", status: "ativa", saldoInicialCentavos: 500000, dataSaldoInicial: "2026-10-01" };
+  const d = (o) => ({ tipo: "despesa", status: "previsto", certeza: "confirmado", contaId: "k", competencia: "2026-10", ...o });
+  const caixa = clarezaInicio({ contas: [conta], transacoes: [
+    d({ id: "a", data: "2026-10-03", valorCentavos: 100000 }),
+    d({ id: "b", data: "2026-10-05", valorCentavos: 300000 }),
+    { id: "r", tipo: "receita", status: "previsto", certeza: "provavel", contaId: "k", competencia: "2026-10", data: "2026-10-07", valorCentavos: 475000 },
+    d({ id: "c", data: "2026-10-09", valorCentavos: 50000 }),
+  ], faturas: [], cartoes: [], dividas: [], recorrencias: [], fontesRenda: [], hoje: "2026-10-02" });
+  const c = chegadaAteAProximaEntrada(caixa);
+  assert.equal(c.ate, "2026-10-07");
+  assert.equal(c.chegaComCentavos, 100000);
+  assert.equal(caixa.saldoAtualCentavos + c.entraCentavos - c.saiCentavos, c.chegaComCentavos);
+  const r = aReceber(caixa.detalhes.entradas);
+  assert.equal(r.certoCentavos, 0);
+  assert.equal(r.esperadoCentavos, 475000);
+});

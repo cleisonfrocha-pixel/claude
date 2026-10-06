@@ -152,6 +152,8 @@ export function calcularClarezaDeCaixa({ contas, transacoes, faturas, cartoes, d
           tipo: i.origem?.tipo === "divida" ? "parcela" : i.tipo, descricao: i.descricao, valorCentavos: i.valorCentavos,
           data: dia.data, vencimento: i.vencimento || dia.data, atrasado: !!i.atrasado, semDia: !!i.semDia, origem: i.origem,
           categoriaId: i.categoriaId || null, transacaoId: i.transacaoId || null, faturaId: i.faturaId || null,
+          cartaoId: i.cartaoId || null, contaId: i.contaId || i.contaPagamentoId || null, evento: i.evento || null, estimativa: !!i.evento?.estimativa,
+          certeza: i.certeza || null,
         });
       }
     }

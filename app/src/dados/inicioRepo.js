@@ -44,6 +44,7 @@ export function calcularInicio(base, hoje = hojeISO(), metas = null, perfil = nu
       return { mesesFechados: h.mesesFechados, resultadoMedioCentavos: h.resultadoMedioCentavos, piorMes: h.piorMes ? { competencia: h.piorMes.competencia, resultadoCentavos: h.piorMes.resultadoCentavos } : null, semClassificarPercentual: h.semClassificar.percentual };
     })(),
     horizonteDias: HORIZONTE_DIAS,
+    hoje,
   };
 }
 
