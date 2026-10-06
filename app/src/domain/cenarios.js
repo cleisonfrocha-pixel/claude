@@ -32,7 +32,7 @@
 import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos } from "./orcamento.js";
 import { visaoDoMes } from "./mes.js";
-import { calcularSaldoAtual, statusDivida, taxaMensalEfetiva } from "./dividas.js";
+import { calcularSaldoAtual, statusDivida, taxaMensalEfetiva, sujaONome } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
 import { somarMeses, competenciaDeData } from "./tempo.js";
 import { leituraDaFonte } from "./pisoDaRenda.js";
@@ -151,7 +151,7 @@ export function montarBaseCenarios({ transacoes, categorias, dividas, fontesRend
         // parcela abate — pagar a mais economiza juros de verdade.
         taxaMensalPct: parcela > 0 ? Math.round(taxaMensalEfetiva(d) * 1e6) / 1e4 : (informada ? Number(d.taxaJurosMensalPct) : null),
         taxaInformada: informada,
-        negativada: !!d.negativada,
+        negativada: sujaONome(d),
         prioridadePagamento: Number.isInteger(d.prioridadePagamento) ? d.prioridadePagamento : null,
       };
     })

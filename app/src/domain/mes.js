@@ -15,7 +15,7 @@
 
 import { eventosFuturos } from "./previstos.js";
 import { diasNoMes, dataDeCompetencia } from "./tempo.js";
-import { statusEfetivo } from "./transacoes.js";
+import { statusEfetivo, parteSemDetalhePorPagamento } from "./transacoes.js";
 
 const ABERTO = new Set(["previsto", "agendado", "atrasado"]);
 
@@ -115,4 +115,39 @@ export function numerosDoMes({ rendaPagaCentavos, custos, visao }) {
  * sobras diferentes. */
 export function sobraDoMes(visao, parcelasMesCentavos = 0) {
   return visao.rendaContavelCentavos - visao.gastoCentavos - (Number(parcelasMesCentavos) || 0);
+}
+
+/**
+ * A conta do mês que toda tela mostra (item 19 a 22 da lista de 05/10: a despesa de outubro tinha cinco
+ * valores e o resultado tinha três sinais, porque cada tela somava de um jeito). Uma regra só:
+ * - mês de referência (`competencia`): compra no cartão conta no mês em que foi feita;
+ * - sem cancelados, sem transferência entre contas, sem repasse, sem pagamento de fatura (a não ser o
+ *   pedaço da fatura que não tem compra lançada, que é gasto de verdade);
+ * - "já" = pago; "ainda" = aberto (previsto, agendado, atrasado). Receita incerta fica à parte.
+ * `resultadoAteAgoraCentavos` só com o que já aconteceu; `resultadoSeTudoAcontecerCentavos` soma o aberto.
+ */
+export function resumoDoMes({ transacoes, competencia, hoje, pessoaId = null }) {
+  const semDetalhe = parteSemDetalhePorPagamento(transacoes);
+  const r = { entrouCentavos: 0, vaiEntrarCentavos: 0, incertoCentavos: 0, saiuCentavos: 0, vaiSairCentavos: 0, ids: { entrou: [], vaiEntrar: [], saiu: [], vaiSair: [] } };
+  for (const t of transacoes || []) {
+    if ((t.competencia || (t.data || "").slice(0, 7)) !== competencia || t.status === "cancelado") continue;
+    if (pessoaId && t.pessoaId !== pessoaId) continue;
+    const v = Number(t.valorCentavos) || 0;
+    const pago = t.status === "pago";
+    const aberto = !pago && ABERTO.has(statusEfetivo(t, hoje));
+    if (t.tipo === "receita") {
+      if (pago) { r.entrouCentavos += v; r.ids.entrou.push(t.id); }
+      else if (aberto && t.certeza === "incerto") r.incertoCentavos += v;
+      else if (aberto) { r.vaiEntrarCentavos += v; r.ids.vaiEntrar.push(t.id); }
+    } else if (t.tipo === "despesa") {
+      if (pago) { r.saiuCentavos += v; r.ids.saiu.push(t.id); }
+      else if (aberto) { r.vaiSairCentavos += v; r.ids.vaiSair.push(t.id); }
+    } else if (t.tipo === "pagamento_fatura" && pago) {
+      const parte = semDetalhe.get(t.id ?? t) || 0;
+      if (parte > 0) { r.saiuCentavos += parte; r.ids.saiu.push(t.id); }
+    }
+  }
+  r.resultadoAteAgoraCentavos = r.entrouCentavos - r.saiuCentavos;
+  r.resultadoSeTudoAcontecerCentavos = r.entrouCentavos + r.vaiEntrarCentavos - r.saiuCentavos - r.vaiSairCentavos;
+  return r;
 }

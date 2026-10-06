@@ -94,3 +94,27 @@ test("sobra do mês: renda contável - gasto - parcelas, igual para todas as tel
   assert.equal(sobraDoMes({ rendaContavelCentavos: 1000000, gastoCentavos: 700000 }, 200000), 100000);
   assert.equal(sobraDoMes({ rendaContavelCentavos: 100000, gastoCentavos: 700000 }, 0), -600000);
 });
+
+import { resumoDoMes } from "../src/domain/mes.js";
+test("13.4 itens 19 a 21: a conta do mês tira cancelado, transferência e fatura paga, e separa o que já foi do que ainda vai", () => {
+  const t = [
+    { id: "a", tipo: "receita", status: "pago", competencia: "2026-10", valorCentavos: 1200000 },
+    { id: "b", tipo: "receita", status: "previsto", certeza: "provavel", competencia: "2026-10", data: "2026-10-20", valorCentavos: 300000 },
+    { id: "c", tipo: "receita", status: "previsto", certeza: "incerto", competencia: "2026-10", data: "2026-10-20", valorCentavos: 900000 },
+    { id: "d", tipo: "despesa", status: "pago", competencia: "2026-10", valorCentavos: 400000 },
+    { id: "e", tipo: "despesa", status: "cancelado", competencia: "2026-10", valorCentavos: 165000 },
+    { id: "f", tipo: "despesa", status: "previsto", competencia: "2026-10", data: "2026-10-25", valorCentavos: 100000 },
+    { id: "g", tipo: "transferencia", status: "pago", competencia: "2026-10", valorCentavos: 50000 },
+    { id: "h", tipo: "despesa", status: "pago", cartaoId: "k", faturaId: "fx", competencia: "2026-10", valorCentavos: 30000 },
+    { id: "j", tipo: "despesa", status: "previsto", cartaoId: "k", faturaId: "fy", competencia: "2026-10", data: "2026-10-20", valorCentavos: 119670 },
+    { id: "i", tipo: "pagamento_fatura", status: "pago", faturaId: "fx", competencia: "2026-10", valorCentavos: 30000 },
+  ];
+  const r = resumoDoMes({ transacoes: t, competencia: "2026-10", hoje: "2026-10-06" });
+  assert.equal(r.entrouCentavos, 1200000);
+  assert.equal(r.vaiEntrarCentavos, 300000);
+  assert.equal(r.incertoCentavos, 900000);
+  assert.equal(r.saiuCentavos, 430000, "despesa paga + compra no cartão; o pagamento da fatura não conta de novo");
+  assert.equal(r.vaiSairCentavos, 100000 + 119670, "compra prevista no cartão é plano: ainda vai sair");
+  assert.equal(r.resultadoAteAgoraCentavos, 770000);
+  assert.equal(r.resultadoSeTudoAcontecerCentavos, 970000 - 119670);
+});

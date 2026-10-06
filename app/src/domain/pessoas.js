@@ -12,7 +12,7 @@ import { calcularRendaAtual } from "./renda.js";
 import { calcularCustos, calcularMargem } from "./orcamento.js";
 import { visaoDoMes, numerosDoMes, sobraDoMes } from "./mes.js";
 import { calcularSaldoConta } from "./caixa.js";
-import { calcularVisaoConsolidada, calcularSaldoAtual } from "./dividas.js";
+import { calcularVisaoConsolidada, calcularSaldoAtual, sujaONome } from "./dividas.js";
 import { calcularComposicaoAtivos } from "./patrimonio.js";
 
 export const SEM_DONO = "__sem_dono__";
@@ -55,8 +55,8 @@ function numerosDoRecorte({ contas, transacoes, transacoesDasContas, dividas, at
     parcelasCentavos,
     // Mesma fórmula da margem da Fase 8: renda menos essencial menos parcelas.
     coberturaCentavos: calcularMargem({ rendaAtualCentavos: rendaCentavos, custoEssencialCentavos: custos.essencialCentavos, comprometimentoMensalDividasCentavos: parcelasCentavos }),
-    resultadoMesCentavos: rendaCentavos - custos.atualCentavos,
-    // A mesma "sobra do mês" do Início, do Plano e da Renda (um número por pergunta).
+    // A mesma "sobra do mês" do Início, do Plano e da Renda: um número só (antes havia também um
+    // "resultado do mês" com outra regra no mesmo arquivo, item 24 da lista de 05/10).
     sobraMesCentavos: visao ? sobraDoMes(visao, parcelasCentavos) : rendaCentavos - custos.atualCentavos - parcelasCentavos,
     saldoOperacaoCentavos,
     saldoReservaCentavos,
@@ -158,7 +158,7 @@ export function calcularVisaoPorPessoa({ pessoas, contas, cartoes, faturas, cate
       pessoaId, nome,
       numeros,
       quantidadeLancamentos: r.transacoes.length,
-      dividas: r.dividas.map((d) => ({ id: d.id, nome: d.nome, credor: d.credor, negativada: !!d.negativada, saldoCentavos: calcularSaldoAtual(d) })),
+      dividas: r.dividas.map((d) => ({ id: d.id, nome: d.nome, credor: d.credor, negativada: sujaONome(d), saldoCentavos: calcularSaldoAtual(d) })),
     };
   };
 

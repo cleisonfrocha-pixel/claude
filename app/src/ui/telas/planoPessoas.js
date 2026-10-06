@@ -57,7 +57,7 @@ function leituraPrincipal() {
 
 function cartaoPessoa(p) {
   const n = p.numeros;
-  const negativadas = p.dividas.filter((d) => d.negativada);
+  const negativadas = p.dividas.filter((d) => d.negativada || d.protestada);
   return `
     <div class="divida-resumo pessoa-card">
       <div class="pessoa-cabeca">
@@ -72,9 +72,9 @@ function cartaoPessoa(p) {
         <b data-valor>${brl(Math.abs(n.coberturaCentavos))}</b>
       </div>
       ${linha("Renda do mês", `<span class="valor-pos">${brl(n.rendaCentavos)}</span>`, n.rendaProvavelCentavos ? `${formatarBRL(n.rendaConfirmadaCentavos)} recebidos + ${formatarBRL(n.rendaProvavelCentavos)} esperados` : "")}
-      ${linha("Gasto do mês", brl(n.despesasCentavos), `essencial ${formatarBRL(n.essencialCentavos)}`)}
+      ${linha("Gasto do mês", brl(n.despesasCentavos), n.despesasCentavos ? `essencial ${formatarBRL(n.essencialCentavos)}` : "nenhum gasto lançado no nome desta pessoa neste mês: o gasto da casa fica no nome de quem pagou")}
       ${linha("Parcelas de dívida", brl(n.parcelasCentavos))}
-      ${linha("Sobra do mês", `<span class="${classeValor(n.sobraMesCentavos ?? n.resultadoMesCentavos)}">${brl(n.sobraMesCentavos ?? n.resultadoMesCentavos, { sinal: true })}</span>`, "renda menos todos os gastos e as parcelas")}
+      ${linha("Sobra do mês", `<span class="${classeValor(n.sobraMesCentavos)}">${brl(n.sobraMesCentavos, { sinal: true })}</span>`, "renda menos todos os gastos e as parcelas")}
       ${linha("Saldo em conta", brl(n.saldoOperacaoCentavos), n.saldoReservaCentavos ? `mais ${formatarBRL(n.saldoReservaCentavos)} em reserva` : "")}
       ${linha("Dívidas pra resolver", `<span class="${n.dividasSaldoCentavos > 0 ? "valor-neg" : ""}">${brl(n.dividasSaldoCentavos)}</span>`,
         [n.dividasAtivas ? `${n.dividasAtivas} ativa${n.dividasAtivas > 1 ? "s" : ""}` : "nenhuma",

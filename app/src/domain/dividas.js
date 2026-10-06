@@ -222,6 +222,13 @@ export function classificarDivida(divida, hoje) {
   return "financiamento";
 }
 
+/** A dívida suja o nome? Negativada (Serasa, SPC) ou protestada em cartório; marcada como a mesma
+ * dívida de outra (o protesto da luz de novembro é a dívida da EDP), não conta de novo. Uma regra só
+ * para todas as telas: antes a tela Dívidas contava 10 e o Plano contava 7 (só negativada). */
+export function sujaONome(d) {
+  return !!(d.negativada || d.protestada) && !d.mesmaDividaDe;
+}
+
 /** Visão consolidada de todas as dívidas — cada número somado na leitura a
  * partir das dívidas individuais, nenhum total gravado. */
 export function calcularVisaoConsolidada(dividas, hoje) {
@@ -229,7 +236,7 @@ export function calcularVisaoConsolidada(dividas, hoje) {
   const ativas = todas.filter((d) => statusDivida(d, hoje) !== "quitada");
   const atrasadas = ativas.filter((d) => statusDivida(d, hoje) === "atrasada");
   const emRisco = ativas.filter((d) => d.emRisco);
-  const negativadas = ativas.filter((d) => d.negativada);
+  const negativadas = ativas.filter(sujaONome);
   const semAcordo = ativas.filter((d) => !d.pagaComTrabalho && !(Number(d.valorParcelaCentavos) > 0));
 
   const saldoTotalAtualCentavos = ativas.reduce((s, d) => s + calcularSaldoAtual(d), 0);
@@ -261,7 +268,7 @@ export function calcularVisaoConsolidada(dividas, hoje) {
     quantidadeNegativadas: negativadas.length,
     // Atrasadas que NÃO estão negativadas — pra não contar a mesma dívida
     // duas vezes quando a tela mostra as duas coisas lado a lado.
-    quantidadeSoAtrasadas: atrasadas.filter((d) => !d.negativada).length,
+    quantidadeSoAtrasadas: atrasadas.filter((d) => !sujaONome(d)).length,
     saldoNegativadoCentavos: negativadas.reduce((s, d) => s + calcularSaldoAtual(d), 0),
     quantidadeSemAcordo: semAcordo.length,
     saldoTotalAtualCentavos,

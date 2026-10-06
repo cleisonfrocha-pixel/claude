@@ -31,7 +31,7 @@ let lado = "pagar";
 const TEXTOS = {
   pagar: {
     titulo: "A pagar", sub: "Cada conta do mês com o seu estado. Toque em Paguei quando pagar.", botao: "Paguei", selo: "Paga",
-    unidade: "contas pagas", feito: "pagos", falta: "faltam", totalRotulo: "Total de contas do mês", jaFeito: "Já pago", atrasadoRotulo: "Atrasado", previstoRotulo: "Ainda a pagar (previsto)", umAtrasado: "conta atrasada", variosAtrasados: "contas atrasadas", umFalta: "conta a vencer", variosFalta: "contas a vencer", vazio: "Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.",
+    unidade: "contas pagas", feito: "pagos", falta: "faltam", totalRotulo: "Contas do mês, pelo dia de vencimento", jaFeito: "Contas pagas", atrasadoRotulo: "Atrasado", previstoRotulo: "Ainda a pagar (previsto)", umAtrasado: "conta atrasada", variosAtrasados: "contas atrasadas", umFalta: "conta a vencer", variosFalta: "contas a vencer", vazio: "Nenhuma conta neste mês. Cadastre em Recorrências ou lance uma conta a pagar.",
     grupos: { atrasada: ["Atrasadas", "Pagando estas primeiro, o mês sai do vermelho."], hoje: ["Vencem hoje", ""], a_pagar: ["A pagar", ""], paga: ["Pagas", ""] },
     pronto: (d) => `${d} paga.`,
     adicionar: "+ Adicionar conta a pagar",
@@ -180,6 +180,7 @@ function renderizar() {
         ],
       })}
       <div class="mes-progresso-msg ${s.quantidadeAtrasadas && lado === "pagar" ? "alerta" : s.faltaCentavos === 0 && s.quantidade ? "ok" : ""}">${escapeHtml(mensagemDoMes(dados))}</div>
+      ${lado === "pagar" && painel.mes ? `<div class="mes-progresso-msg">Gasto do mês, contando também o avulso (farmácia, mercado, cartão): já saiu <span data-valor>${formatarBRL(painel.mes.saiuCentavos)}</span>. É o mesmo número de Transações.</div>` : ""}
       ${lado === "receber" && s.incertasCentavos > 0 ? `<div class="mes-progresso-msg">Mais <span data-valor>${formatarBRL(s.incertasCentavos)}</span> são incertos e ficam fora da conta.</div>` : ""}
     </div>
 

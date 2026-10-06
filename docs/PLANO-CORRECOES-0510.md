@@ -85,3 +85,21 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
   R$ 400 todo mês). Com 2 ou mais faturas fechadas vale a média real (Nubank PJ R$ 3.174,85, Shopee R$ 1.403,51).
 - **Para a 13.10 (dado):** DAS "(setembro)" previsto em outubro sem vínculo com a recorrência do DAS: aparece duas
   vezes na projeção (R$ 86,05).
+
+### 13.4 Uma conta só para o mês (feita, 06/10)
+
+- **Itens 19, 20 e 21.** `resumoDoMes` (`domain/mes.js`) é a conta do mês: mês de referência, sem cancelados, sem
+  transferência, sem repasse, sem pagamento de fatura (só o pedaço sem compra lançada), "já entrou / já saiu"
+  separado de "ainda marcado". Transações usa ela no topo ("Já entrou, Já saiu, Resultado até agora" e uma linha com
+  o que ainda está marcado). Dado real de outubro, igual em Transações, Fechamento e Meu ano: entrou R$ 12.000,
+  saiu R$ 7.308,02, resultado R$ 4.691,98. Setembro também bate nas três (R$ 14.056,32, R$ 20.338,91, -R$ 6.282,59).
+  Compra no cartão ainda "prevista" (as "Compras previstas" de novembro, o corte do dia 08) é plano: vai em
+  "ainda vai sair", não em "já saiu".
+- **Item 22.** Cada tela diz o critério: Transações "compra no cartão conta no mês em que foi feita"; Contas do mês
+  "pelo dia de vencimento".
+- **Item 23.** Contas do mês mostra "Contas pagas" e, numa linha, o gasto do mês com os avulsos (o mesmo número
+  de Transações).
+- **Item 24.** Saiu o `resultadoMes` de Pessoas; fica só a "sobra do mês", a mesma do Início, do Plano e da Renda.
+- **Item 25.** `sujaONome` (negativada ou protestada, sem repetir a mesma dívida) é a regra única: Dívidas, Plano,
+  Por pessoa, Caminhos e alertas contam 10 (8 do Cleison, 2 da Carolina). O "100% do gasto no Cleison" é o dado:
+  o extrato da Carolina vai até setembro e o gasto da casa fica no nome de quem pagou; a tela agora diz isso.

@@ -8,7 +8,8 @@
 import { hojeISO } from "../../domain/tempo.js";
 import * as tempo from "../../domain/tempo.js";
 import { formatarBRL, paraCentavos, valorDigitadoValido } from "../../domain/dinheiro.js";
-import { totalizarMes, statusEfetivo } from "../../domain/transacoes.js";
+import { statusEfetivo } from "../../domain/transacoes.js";
+import { resumoDoMes } from "../../domain/mes.js";
 import { STATUS_TRANSACAO, CERTEZAS_TRANSACAO } from "../../domain/esquema.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
@@ -101,9 +102,12 @@ function renderizar() {
   const doMes = filtrando
     ? lista.filter((t) => filtrarTransacoes([t.dados], filtros).length)
     : lista.filter((t) => t.dados.competencia === mes);
-  const totais = filtrando
-    ? totalizarMes(doMes.map((t) => ({ ...t.dados, competencia: "x" })), "x")
-    : totalizarMes(lista.map((t) => t.dados), mes);
+  // A mesma conta do mês de todas as telas (domain/mes.js): sem cancelados, sem transferência, sem
+  // pagamento de fatura; o que já aconteceu separado do que ainda está marcado.
+  const comId = (l) => l.map((t) => ({ id: t.id, ...t.dados }));
+  const r = filtrando
+    ? resumoDoMes({ transacoes: comId(doMes).map((t) => ({ ...t, competencia: "x" })), competencia: "x", hoje: hojeISO() })
+    : resumoDoMes({ transacoes: comId(lista), competencia: mes, hoje: hojeISO() });
 
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
@@ -124,10 +128,11 @@ function renderizar() {
     </div>
 
     <div class="resumo-mes">
-      <div class="resumo-item"><span>Receitas</span><b class="mono valor-pos" data-valor>${formatarBRL(totais.receitas)}</b></div>
-      <div class="resumo-item"><span>Despesas</span><b class="mono valor-neg" data-valor>${formatarBRL(totais.despesas)}</b></div>
-      <div class="resumo-item"><span>Resultado</span><b class="mono ${totais.resultado < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(totais.resultado)}</b></div>
+      <div class="resumo-item"><span>Já entrou</span><b class="mono valor-pos" data-valor>${formatarBRL(r.entrouCentavos)}</b></div>
+      <div class="resumo-item"><span>Já saiu</span><b class="mono valor-neg" data-valor>${formatarBRL(r.saiuCentavos)}</b></div>
+      <div class="resumo-item"><span>Resultado até agora</span><b class="mono ${r.resultadoAteAgoraCentavos < 0 ? "valor-neg" : "valor-pos"}" data-valor>${formatarBRL(r.resultadoAteAgoraCentavos)}</b></div>
     </div>
+    ${r.vaiEntrarCentavos || r.vaiSairCentavos ? `<p class="tela-sub" style="margin:6px 0 10px;">Ainda marcado no mês: entra <span data-valor>${formatarBRL(r.vaiEntrarCentavos)}</span>, sai <span data-valor>${formatarBRL(r.vaiSairCentavos)}</span>${r.incertoCentavos ? ` (fora <span data-valor>${formatarBRL(r.incertoCentavos)}</span> que não é certo)` : ""}. Compra no cartão conta no mês em que foi feita.</p>` : ""}
 
     <div class="lista-cartoes" id="lista-transacoes"></div>
   `;

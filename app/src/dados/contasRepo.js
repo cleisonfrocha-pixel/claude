@@ -3,11 +3,12 @@
 
 import { carregarBase, assinarBase } from "./base.js";
 import { contasDoMes, entradasDoMes } from "../domain/contasDoMes.js";
+import { resumoDoMes } from "../domain/mes.js";
 import { hojeISO } from "../domain/tempo.js";
 
 function montar(base, competencia) {
   const hoje = hojeISO();
-  return { ...contasDoMes({ ...base, competencia, hoje }), entradas: entradasDoMes({ ...base, competencia, hoje }), hoje, contas: base.contas };
+  return { ...contasDoMes({ ...base, competencia, hoje }), entradas: entradasDoMes({ ...base, competencia, hoje }), mes: resumoDoMes({ transacoes: base.transacoes, competencia, hoje }), hoje, contas: base.contas };
 }
 
 export async function calcularContasDoMes(competencia) {

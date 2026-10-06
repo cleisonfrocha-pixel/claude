@@ -178,3 +178,15 @@ test("cotação de quitação: vale a do banco menos as parcelas pagas depois; s
   assert.equal(sem.origem, "estimativa");
   assert.ok(sem.valorCentavos > 8000000 && sem.valorCentavos < 8500000);   // PV de 39 parcelas a 2,4525% a.m. ≈ R$ 82,7 mil
 });
+
+import { sujaONome, calcularVisaoConsolidada as visaoDiv } from "../src/domain/dividas.js";
+import { placarNomeLimpo } from "../src/domain/esteira.js";
+test("13.4 item 25: nome sujo é uma regra só (negativada ou protestada, sem contar a mesma dívida duas vezes)", () => {
+  const ds = [
+    { id: "a", nome: "Serasa", negativada: true, saldoOriginalCentavos: 1000, quantidadeParcelas: 1, parcelasPagas: 0, dataInicio: "2026-01-01" },
+    { id: "b", nome: "Protesto", protestada: true, saldoOriginalCentavos: 1000, quantidadeParcelas: 1, parcelasPagas: 0, dataInicio: "2026-01-01" },
+    { id: "c", nome: "Protesto da mesma", protestada: true, mesmaDividaDe: "a", saldoOriginalCentavos: 1000, quantidadeParcelas: 1, parcelasPagas: 0, dataInicio: "2026-01-01" },
+  ];
+  assert.deepEqual(ds.map(sujaONome), [true, true, false]);
+  assert.equal(visaoDiv(ds, "2026-10-06").quantidadeNegativadas, placarNomeLimpo(ds).total);
+});

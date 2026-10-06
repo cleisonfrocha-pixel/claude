@@ -1,7 +1,7 @@
 // Dívidas com esteira: oferta de desconto, placar "nome limpo", acordo em
 // parcelas e a barra do financiamento (Jeep). Puro (CLAUDE.md): sem tela, sem banco.
 
-import { calcularSaldoAtual, parcelasRestantes, valorCobradoSemOfertaCentavos, statusDivida, classificarDivida } from "./dividas.js";
+import { calcularSaldoAtual, parcelasRestantes, valorCobradoSemOfertaCentavos, statusDivida, classificarDivida, sujaONome } from "./dividas.js";
 import { competenciaDeData } from "./tempo.js";
 
 function diasEntre(a, b) {
@@ -41,7 +41,7 @@ const quitada = (d) => parcelasRestantes(d) <= 0 || !!d.quitadaEm;
  * conta uma vez. Marcada como `mesmaDividaDe` outra, não conta de novo (o protesto
  * da conta de luz de novembro é a mesma dívida do Serasa). */
 export function placarNomeLimpo(dividas) {
-  const sujas = (dividas || []).filter((d) => (d.negativada || d.protestada) && !d.mesmaDividaDe);
+  const sujas = (dividas || []).filter(sujaONome);
   const limpas = sujas.filter(quitada);
   return {
     total: sujas.length,
@@ -125,11 +125,11 @@ export function panoramaDeDividas(dividas, hoje) {
     const saldo = calcularSaldoAtual(d, hoje);
     if (!(saldo > 0)) continue;
     const classe = classificarDivida(d, hoje);
-    const chave = classe === "financiamento" ? "financiamento" : classe === "trabalho" ? "trabalho" : (d.negativada || d.protestada) ? "negativadas" : "atrasadas";
+    const chave = classe === "financiamento" ? "financiamento" : classe === "trabalho" ? "trabalho" : sujaONome(d) ? "negativadas" : "atrasadas";
     grupos[chave].centavos += saldo; grupos[chave].qtd += 1;
     const of = ofertaDaDivida(d, hoje);
     cobrado += of && !of.vencida ? of.cobradoCentavos : saldo;
-    if (of && !of.vencida && classe === "divida") ofertas.push({ id: d.id, nome: d.nome, credor: d.credor || "", pessoaId: d.pessoaId, valorCentavos: of.valorCentavos, cobradoCentavos: of.cobradoCentavos, economiaCentavos: of.economiaCentavos, descontoPct: of.descontoPct, validade: of.validade, diasParaVencer: of.diasParaVencer, origem: of.origem, negativada: !!(d.negativada || d.protestada) });
+    if (of && !of.vencida && classe === "divida") ofertas.push({ id: d.id, nome: d.nome, credor: d.credor || "", pessoaId: d.pessoaId, valorCentavos: of.valorCentavos, cobradoCentavos: of.cobradoCentavos, economiaCentavos: of.economiaCentavos, descontoPct: of.descontoPct, validade: of.validade, diasParaVencer: of.diasParaVencer, origem: of.origem, negativada: sujaONome(d) });
   }
   ofertas.sort((a, b) => b.descontoPct - a.descontoPct || b.economiaCentavos - a.economiaCentavos);
   const lista = Object.entries(grupos).map(([chave, g]) => ({ chave, ...g })).filter((g) => g.centavos > 0);
