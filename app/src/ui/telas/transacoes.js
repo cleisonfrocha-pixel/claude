@@ -201,8 +201,8 @@ function renderizarLista(doMes) {
   const aConferir = ordenada.filter((t) => t.dados.origem && t.dados.origem !== "manual" && t.dados.revisado === false);
   alvo.innerHTML = (aConferir.length > 1 ? `
     <div class="nota-incerto" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span>${aConferir.length} lançamentos deste mês vieram do chat ou de extrato e ainda não foram conferidos por você.</span>
-      <button class="btn-mini" id="conferir-todos">✓ Dados certos em todos</button>
+      <span>${aConferir.length} lançamentos a conferir.</span>
+      <button class="btn-mini" id="conferir-todos">Estão todos certos</button>
     </div>` : "") + visiveis.map((t) => linhaTransacao(t)).join("");
   const btnTodos = alvo.querySelector("#conferir-todos");
   if (btnTodos) btnTodos.addEventListener("click", async () => {
@@ -277,9 +277,13 @@ function linhaTransacao(item) {
       <div class="item-acoes">
         ${["previsto", "agendado", "atrasado"].includes(statusMostrado) && (d.tipo === "receita" || d.tipo === "despesa")
           ? `<button class="btn-mini btn-baixa" data-baixa="${escapeHtml(item.id)}">${d.tipo === "receita" ? "Recebi" : d.cartaoId ? "Comprei" : "Paguei"}</button>` : ""}
-        ${naoRevisado ? `<button class="btn-mini" title="Os dados deste lançamento estão certos. Não muda nenhum número; para dar baixa use Paguei ou Recebi." data-revisar="${escapeHtml(item.id)}">✓ Dados certos</button>` : ""}
-        <button class="btn-mini" title="Editar" data-editar="${escapeHtml(item.id)}">Editar</button>
-        <button class="btn-mini perigo" title="Apagar" data-apagar="${escapeHtml(item.id)}">Apagar</button>
+        <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+          <div class="menu-mais-lista">
+            ${naoRevisado ? `<button class="btn-mini" title="Os dados deste lançamento estão certos. Não muda nenhum número; para dar baixa use Paguei ou Recebi." data-revisar="${escapeHtml(item.id)}">Os dados estão certos</button>` : ""}
+            <button class="btn-mini" data-editar="${escapeHtml(item.id)}">Editar</button>
+            <button class="btn-mini perigo" data-apagar="${escapeHtml(item.id)}">Apagar</button>
+          </div>
+        </details>
       </div>
     </div>`;
 }
@@ -492,10 +496,10 @@ function abrirModalEditarTransacao(item) {
 // ---------- modal: nova transação (5 modos) ----------
 
 const MODOS = [
-  { id: "simples", rotulo: "Receita / Despesa" },
+  { id: "simples", rotulo: "Gasto ou recebimento" },
   { id: "transferencia", rotulo: "Transferência" },
   { id: "parcelamento", rotulo: "Parcelada" },
-  { id: "recorrencia", rotulo: "Recorrente" },
+  { id: "recorrencia", rotulo: "Conta fixa" },
   { id: "pagamento_fatura", rotulo: "Pagar fatura" },
 ];
 
@@ -543,6 +547,9 @@ function aplicarPreset(preset) {
   if (preset.rotuloData) {
     const rot = document.querySelector('label[for="s-data"]');
     if (rot) rot.textContent = preset.rotuloData;
+    // Conta a pagar: a data de vencimento é o que importa, então as opções já vêm abertas.
+    const mais = document.getElementById("s-mais");
+    if (mais) mais.open = true;
   }
 }
 
@@ -624,21 +631,21 @@ function renderCamposModo(modo) {
           <label class="radio-opt"><input type="radio" name="s-tipo" value="receita"> Receita</label>
         </div>
       </div>
+      <div class="field"><label for="s-valor">Valor</label><input type="text" inputmode="decimal" id="s-valor" placeholder="0,00" required></div>
       ${campoOndeConta("s", true)}
-      <div class="row2">
-        <div class="field"><label for="s-valor">Valor</label><input type="text" inputmode="decimal" id="s-valor" placeholder="0,00" required></div>
-        <div class="field"><label for="s-data">Data</label><input type="date" id="s-data" value="${hoje}" required></div>
-      </div>
-      <div id="s-categoria-wrap">${campoCategoria("s", "despesa")}</div>
-      ${campoPessoa("s")}
-      <div id="s-fonteRenda-wrap"></div>
       <div class="field"><label for="s-descricao">Descrição</label><input type="text" id="s-descricao" placeholder="Ex.: Supermercado"></div>
-      <div class="row2">
-        <div class="field"><label for="s-status">Status</label>
-          <select id="s-status">${STATUS_TRANSACAO.map((s) => `<option value="${s}"${s === "pago" ? " selected" : ""}>${ROTULO_STATUS[s]}</option>`).join("")}</select></div>
-        <div class="field"><label for="s-certeza">Certeza</label>
-          <select id="s-certeza">${CERTEZAS_TRANSACAO.map((c) => `<option value="${c}"${c === "confirmado" ? " selected" : ""}>${ROTULO_CERTEZA[c]}</option>`).join("")}</select></div>
-      </div>`;
+      <div id="s-categoria-wrap">${campoCategoria("s", "despesa")}</div>
+      <details class="inicio-detalhe" id="s-mais"><summary>Mais opções (data, pessoa, se já foi pago)</summary>
+        <div class="field"><label for="s-data">Data</label><input type="date" id="s-data" value="${hoje}" required></div>
+        ${campoPessoa("s")}
+        <div id="s-fonteRenda-wrap"></div>
+        <div class="row2">
+          <div class="field"><label for="s-status">Já foi pago?</label>
+            <select id="s-status">${STATUS_TRANSACAO.map((s) => `<option value="${s}"${s === "pago" ? " selected" : ""}>${ROTULO_STATUS[s]}</option>`).join("")}</select></div>
+          <div class="field"><label for="s-certeza">É certo?</label>
+            <select id="s-certeza">${CERTEZAS_TRANSACAO.map((c) => `<option value="${c}"${c === "confirmado" ? " selected" : ""}>${ROTULO_CERTEZA[c]}</option>`).join("")}</select></div>
+        </div>
+      </details>`;
     ligarAlternanciaOnde("s");
     document.querySelectorAll('input[name="s-tipo"]').forEach((r) => {
       r.addEventListener("change", () => {

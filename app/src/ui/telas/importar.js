@@ -130,13 +130,14 @@ function renderizar() {
     </div>
 
     <div id="imp-colunas-csv" ${ultimoFormato !== "csv" ? "hidden" : ""}>
+      <p class="tela-sub" style="margin:0 0 8px;">Em que coluna da planilha está cada coisa? Contando da esquerda: a primeira é 1. Exemplo: numa linha "15/03/2026;Mercado;-150,00" a data é a 1, a descrição a 2 e o valor a 3.</p>
       <div class="row2">
-        <div class="field"><label for="imp-col-data">Coluna da data (nº, começa em 0)</label><input type="number" id="imp-col-data" value="0" min="0"></div>
-        <div class="field"><label for="imp-col-descricao">Coluna da descrição</label><input type="number" id="imp-col-descricao" value="1" min="0"></div>
+        <div class="field"><label for="imp-col-data">Data na coluna</label><input type="number" id="imp-col-data" value="1" min="1"></div>
+        <div class="field"><label for="imp-col-descricao">Descrição na coluna</label><input type="number" id="imp-col-descricao" value="2" min="1"></div>
       </div>
       <div class="row2">
-        <div class="field"><label for="imp-col-valor">Coluna do valor</label><input type="number" id="imp-col-valor" value="2" min="0"></div>
-        <label class="field-check" style="margin-top:26px;"><input type="checkbox" id="imp-cabecalho"> A primeira linha é cabeçalho</label>
+        <div class="field"><label for="imp-col-valor">Valor na coluna</label><input type="number" id="imp-col-valor" value="3" min="1"></div>
+        <label class="field-check" style="margin-top:26px;"><input type="checkbox" id="imp-cabecalho"> A primeira linha tem os nomes das colunas</label>
       </div>
     </div>
 
@@ -181,9 +182,9 @@ function ligarEventos() {
       if (!contaId) { mostrarToast("Escolha a conta de destino."); return; }
       if (!texto.trim()) { mostrarToast("Cole o conteúdo antes de analisar."); return; }
       const colunas = ultimoFormato === "csv" ? {
-        colunaData: parseInt(document.getElementById("imp-col-data").value, 10) || 0,
-        colunaDescricao: parseInt(document.getElementById("imp-col-descricao").value, 10) || 0,
-        colunaValor: parseInt(document.getElementById("imp-col-valor").value, 10) || 0,
+        colunaData: Math.max(0, (parseInt(document.getElementById("imp-col-data").value, 10) || 1) - 1), // na tela começa em 1
+        colunaDescricao: Math.max(0, (parseInt(document.getElementById("imp-col-descricao").value, 10) || 1) - 1), // na tela começa em 1
+        colunaValor: Math.max(0, (parseInt(document.getElementById("imp-col-valor").value, 10) || 1) - 1), // na tela começa em 1
         temCabecalho: document.getElementById("imp-cabecalho").checked,
       } : undefined;
       candidatos = await analisarTexto(texto, { formato: ultimoFormato, contaId, colunas });

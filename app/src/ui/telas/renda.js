@@ -151,6 +151,7 @@ function renderizar() {
   }
 
   const { gaps, custos, concentracao, metas, recorrenteVsExtraordinario, evolucaoCategorias, categoriasCrescentes } = painel;
+  // Item 65 da lista de 05/10: as fontes de renda à vista; os resumos e métricas fechados, um por vez.
 
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
@@ -170,7 +171,8 @@ function renderizar() {
     </div>
     <div class="lista-cartoes" id="lista-fontes" style="margin-bottom:20px;"></div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Dá pra pagar o mês? ${ajudaHtml("É a renda do mês menos cada nível de gasto. Verde é o que sobra, vermelho é o que falta.")}</h3></div></div>
+    <details class="inicio-detalhe renda-secao"><summary>Dá pra pagar o mês?</summary>
+
     <div class="resumo-mes">
       ${linhaGap("Pra pagar só o essencial", gaps.gapEssencialCentavos)}
       ${linhaGap("Pra manter o padrão que você quer", gaps.gapDesejadoCentavos)}
@@ -181,8 +183,9 @@ function renderizar() {
         <span>${metas.custoDesejadoCentavos == null ? "Você ainda não definiu quanto quer gastar por mês" : ""}${metas.custoDesejadoCentavos == null && metas.metaRecuperacaoCentavos == null ? " · " : ""}${metas.metaRecuperacaoCentavos == null ? `Pra se recuperar, usando o mínimo (essencial + parcelas de dívida): <span data-valor>${formatarBRL(metas.metaRecuperacaoEfetivaCentavos)}</span>` : ""}</span>
       </div>` : ""}
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Metas</h3>
-      <p class="tela-sub">Quanto você quer gastar, quanto precisa pra se recuperar e quanto investir. Só você define, o painel nunca inventa.</p></div></div>
+    </details>
+    <details class="inicio-detalhe renda-secao"><summary>Metas (quanto quer gastar, quanto precisa, quanto investir)</summary>
+<p class="tela-sub">Quanto você quer gastar, quanto precisa pra se recuperar e quanto investir. Só você define, o painel nunca inventa.</p>
     <div class="simulador-linha" style="margin-bottom:10px;">
       <div class="field"><label for="input-custo-desejado">Quanto quero gastar por mês</label>
         <input type="text" inputmode="decimal" id="input-custo-desejado" placeholder="0,00" value="${metas.custoDesejadoCentavos != null ? formatarBRL(metas.custoDesejadoCentavos).replace("R$ ", "") : ""}"></div>
@@ -200,8 +203,9 @@ function renderizar() {
     </div>
     <div class="tela-sub" style="margin:6px 0 0;">Continua saindo todo mês em Plano › Caminhos, mesmo com dívida em aberto — protegido como o essencial, nunca vira dinheiro pra pagar dívida.</div>
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Pra onde vai o dinheiro</h3>
-      <p class="tela-sub">Pra enxergar com clareza, não pra se prender.</p></div></div>
+    </details>
+    <details class="inicio-detalhe renda-secao"><summary>Pra onde vai o dinheiro</summary>
+
     <div class="resumo-mes">
       <div class="resumo-item"><span>Gastos essenciais</span><b class="mono" data-valor>${formatarBRL(custos.essencialCentavos)}</b></div>
       <div class="resumo-item"><span>Gasto total do mês</span><b class="mono" data-valor>${formatarBRL(custos.atualCentavos)}</b></div>
@@ -218,8 +222,9 @@ function renderizar() {
         <span><b data-valor>${formatarBRL(custos.faturaSemDetalheCentavos)}</b> de fatura de cartão paga sem nenhuma compra lançada por trás — entra no custo atual, mas sem categoria (não sabemos se é essencial ou não). Lance as compras da fatura pra esse número ficar honesto.</span>
       </div>` : ""}
 
-    <div class="tela-head"><div><h3 class="tela-titulo" style="font-size:17px;">Evolução por categoria</h3>
-      <p class="tela-sub">As maiores despesas do mês, comparadas com a média dos meses anteriores</p></div></div>
+    </details>
+    <details class="inicio-detalhe renda-secao"><summary>Gasto por categoria, mês a mês</summary>
+
     ${evolucaoCategorias.length ? evolucaoCategorias.map((i) => linhaEvolucao(i, painel)).join("") : `<div class="vazio">Nenhuma despesa paga neste mês ainda.</div>`}
 
     ${categoriasCrescentes.length ? `
@@ -230,6 +235,7 @@ function renderizar() {
         return `<div class="fatura-linha"><span class="rotulo">${escapeHtml(cat ? cat.nome : c.categoriaId)}</span><b class="valor-neg">+${c.crescimentoTotalPercentual}%</b></div>`;
       }).join("")}
     ` : ""}
+    </details>
   `;
 
   renderizarListaFontes();

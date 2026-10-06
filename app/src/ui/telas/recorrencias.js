@@ -8,14 +8,16 @@
 import { recorrencias } from "../../dados/recorrenciasRepo.js";
 import { pessoas, contas, cartoes, categorias, ativos, ErroDeValidacao } from "../../dados/repositorios.js";
 import { formatarBRL, paraCentavos } from "../../domain/dinheiro.js";
-import { competenciaLabel } from "../../domain/tempo.js";
+import { competenciaLabel, competenciaAtual, hojeISO } from "../../domain/tempo.js";
+import { transacoes } from "../../dados/transacoesRepo.js";
+import { lerVerbas } from "../../domain/verbas.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 
 const ROTULO_TIPO = { despesa: "Despesa", receita: "Receita" };
 
 let lista = [];
-let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [], ativos: [] };
+let contexto = { pessoas: [], contas: [], cartoes: [], categorias: [], ativos: [], transacoes: [] };
 let pararAssinatura = null;
 let container = null;
 
@@ -34,8 +36,8 @@ export default {
 };
 
 async function carregarContexto() {
-  const [p, c, ca, cat, at] = await Promise.all([pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), ativos.listar()]);
-  contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat, ativos: at };
+  const [p, c, ca, cat, at, tr] = await Promise.all([pessoas.listar(), contas.listar(), cartoes.listar(), categorias.listar(), ativos.listar(), transacoes.listar()]);
+  contexto = { pessoas: p, contas: c, cartoes: ca, categorias: cat, ativos: at, transacoes: tr.map((t) => ({ id: t.id, ...t.dados })) };
 }
 
 function nomeConta(id) { return (contexto.contas.find((c) => c.id === id) || {}).dados?.nome || "-"; }
@@ -51,8 +53,8 @@ function renderizar() {
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
       <div>
-        <h2 class="tela-titulo">Recorrências</h2>
-        <p class="tela-sub">Compromissos mensais que geram lançamentos sozinhos. Pausar interrompe os próximos meses. O que já foi lançado continua.</p>
+        <h2 class="tela-titulo">Contas fixas e verbas do mês</h2>
+        <p class="tela-sub">O que se repete todo mês. Pausar para os próximos meses; o que já foi lançado continua.</p>
       </div>
     </div>
     <div class="lista-cartoes" id="lista-recorrencias"></div>
@@ -68,7 +70,12 @@ function renderizarLista() {
     return;
   }
   const ordenada = lista.slice().sort((a, b) => (a.dados.descricao || "").localeCompare(b.dados.descricao || ""));
-  alvo.innerHTML = ordenada.map(linhaRecorrencia).join("");
+  // Duas listas (item 66 da lista de 05/10): conta fixa tem dia; verba é o quanto pode ir no mês.
+  const fixas = ordenada.filter((r) => !r.dados.semDia);
+  const verbas = ordenada.filter((r) => r.dados.semDia);
+  const titulo = (t, sub) => `<div class="tela-head" style="margin:16px 0 6px;"><div><h3 class="tela-titulo" style="font-size:15px;">${t}</h3>${sub ? `<p class="tela-sub">${sub}</p>` : ""}</div></div>`;
+  alvo.innerHTML = (fixas.length ? titulo(`Contas fixas (${fixas.length})`, "") + fixas.map(linhaRecorrencia).join("") : "")
+    + (verbas.length ? titulo(`Verbas do mês (${verbas.length})`, "Quanto pode ir em cada coisa no mês. O que você gasta na categoria abate da verba sozinho.") + verbas.map(linhaRecorrencia).join("") : "");
 
   alvo.querySelectorAll("[data-editar]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -89,8 +96,23 @@ function renderizarLista() {
   });
 }
 
+/** Neste mês: conta fixa já paga (lançamento pago ligado a ela) ou, para verba, quanto já foi e quanto falta. */
+function situacaoNoMes(item) {
+  const comp = competenciaAtual();
+  const d = item.dados;
+  if (d.semDia) {
+    const verba = contexto.transacoes.find((t) => t.recorrenciaId === item.id && t.competencia === comp && t.semDia && t.status !== "pago" && t.status !== "cancelado");
+    if (!verba) return "";
+    const v = lerVerbas(contexto.transacoes, hojeISO()).get(verba.id);
+    return v ? `já foi ${formatarBRL(v.gastoCentavos)} · falta ${formatarBRL(v.restanteCentavos)}` : "";
+  }
+  const pago = contexto.transacoes.find((t) => t.recorrenciaId === item.id && t.competencia === comp && t.status === "pago");
+  return pago ? "já pago neste mês" : "";
+}
+
 function linhaRecorrencia(item) {
   const d = item.dados;
+  const noMes = d.ativa ? situacaoNoMes(item) : "";
   const destino = d.cartaoId ? nomeCartao(d.cartaoId) : (d.contaId ? nomeConta(d.contaId) : "");
   const categoria = d.categoriaId ? nomeCategoria(d.categoriaId) : null;
   const sub = [d.semDia ? "verba do mês, sem dia fixo" : `todo dia ${d.diaBase}`, destino, categoria].filter(Boolean).join(" · ");
@@ -101,13 +123,18 @@ function linhaRecorrencia(item) {
       <div class="item-corpo">
         <div class="item-titulo">${escapeHtml(d.descricao || ROTULO_TIPO[d.tipo])}</div>
         <div class="item-sub">${escapeHtml(sub)}${d.fim ? ` · até ${escapeHtml(competenciaLabel(d.fim))}` : ""}</div>
+        ${noMes ? `<div class="item-sub" style="color:var(--text);">${escapeHtml(noMes)}</div>` : ""}
       </div>
       <div class="item-valor mono ${classeValor}" data-valor>${sinal}${formatarBRL(d.valorEstimadoCentavos)}</div>
       ${d.ativa ? "" : `<span class="item-tag inativa">pausada</span>`}
       <div class="item-acoes">
-        <button class="btn-mini" data-pausar="${escapeHtml(item.id)}">${d.ativa ? "Pausar" : "Retomar"}</button>
-        <button class="btn-mini"  data-editar="${escapeHtml(item.id)}">Editar</button>
-        <button class="btn-mini perigo"  data-apagar="${escapeHtml(item.id)}">Apagar</button>
+        <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+          <div class="menu-mais-lista">
+            <button class="btn-mini" data-editar="${escapeHtml(item.id)}">Editar</button>
+            <button class="btn-mini" data-pausar="${escapeHtml(item.id)}">${d.ativa ? "Pausar" : "Retomar"}</button>
+            <button class="btn-mini perigo" data-apagar="${escapeHtml(item.id)}">Apagar</button>
+          </div>
+        </details>
       </div>
     </div>`;
 }

@@ -147,9 +147,9 @@ function dadosDoLado() {
 function renderizar() {
   if (!container) return;
   const T = TEXTOS[lado];
-  const cabeca = `<div class="tela-head" style="margin-top:0;"><div><h2 class="tela-titulo">${T.titulo}</h2>
-    <p class="tela-sub">${T.sub}</p></div>
-    <button class="btn btn-primary btn-adicionar-conta" id="btn-adicionar-conta">${T.adicionar}</button></div>`;
+  // Sem título repetido (item 61): o seletor "A pagar / A receber" já diz onde se está.
+  const cabeca = `<div class="tela-head" style="margin-top:0;justify-content:flex-end;">
+    <button class="btn btn-ghost btn-adicionar-conta" id="btn-adicionar-conta">${T.adicionar}</button></div>`;
   if (!painel) { container.innerHTML = `${cabeca}<p class="tela-sub">Carregando…</p>`; return; }
 
   const dados = dadosDoLado();
@@ -190,7 +190,14 @@ function renderizar() {
       const [rotulo, dica] = T.grupos[g];
       const soma = lista.filter((i) => !i.incerta).reduce((t, i) => t + i.valorCentavos, 0);
       const cabecaGrupo = `<div class="conta-grupo-topo estado-${g}"><span class="conta-grupo-titulo">${rotulo} <span class="conta-grupo-qtd">${lista.length}</span></span><span class="conta-grupo-soma mono" data-valor>${formatarBRL(soma)}</span></div>`;
-      const corpo = `${dica ? `<div class="conta-grupo-dica">${dica}</div>` : ""}${g === "a_pagar" ? porSemana(lista, hoje) : lista.map((i) => cartaoConta(i, hoje)).join("")}`;
+      // Atrasada há mais de 30 dias não pesa igual à que venceu ontem: fica numa faixa fechada, com o
+      // aviso de conferir se já não foi paga (os DAS de março a agosto, por exemplo).
+      const antigas = g === "atrasada" ? lista.filter((i) => i.diasAtraso > 30) : [];
+      const recentes = g === "atrasada" ? lista.filter((i) => !(i.diasAtraso > 30)) : lista;
+      const faixaAntigas = antigas.length ? `<details class="inicio-detalhe"><summary>Atrasadas há mais de 30 dias (${antigas.length}) · <span data-valor>${formatarBRL(antigas.reduce((t, i) => t + i.valorCentavos, 0))}</span></summary>
+        <div class="conta-grupo-dica">Confira no extrato se já não foram pagas. Se foram, dê Paguei com a data certa; se não existem, apague.</div>
+        ${antigas.map((i) => cartaoConta(i, hoje)).join("")}</details>` : "";
+      const corpo = `${dica ? `<div class="conta-grupo-dica">${dica}</div>` : ""}${g === "a_pagar" ? porSemana(recentes, hoje) : recentes.map((i) => cartaoConta(i, hoje)).join("")}${faixaAntigas}`;
       return g === "paga"
         ? `<details class="conta-grupo estado-paga"><summary>${cabecaGrupo}</summary>${corpo}</details>`
         : `<section class="conta-grupo">${cabecaGrupo}${corpo}</section>`;

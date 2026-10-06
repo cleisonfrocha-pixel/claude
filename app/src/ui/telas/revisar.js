@@ -62,6 +62,10 @@ function cartaoDoGrupo(g, i) {
     </div>`;
 }
 
+// Dez por vez (item 68 da lista de 05/10): a página com 59 favorecidos, cada um com a lista inteira
+// de categorias, ficava enorme. Resolveu um, sobe o próximo.
+const POR_VEZ = 10;
+
 function renderizar() {
   if (!container) return;
   const total = fila.grupos.length;
@@ -69,15 +73,15 @@ function renderizar() {
   container.innerHTML = `
     <div class="tela-head" style="margin-top:0;">
       <div>
-        <h2 class="tela-titulo">Revisar</h2>
+        <h2 class="tela-titulo">Revisar lançamentos</h2>
         <p class="tela-sub">Lançamentos sem classificação, agrupados por quem recebeu ou pagou. Uma resposta vale para todos do mesmo nome.</p>
       </div>
     </div>
     ${total ? `
       <p class="item-sub" style="margin:0 0 10px;"><strong>${pendentes}</strong> lançamento${pendentes === 1 ? "" : "s"} em <strong>${total}</strong> favorecido${total === 1 ? "" : "s"}. Os de mais dinheiro vêm primeiro.</p>
       <div style="margin-bottom:12px;"><button class="btn-mini" data-acao="regras">Aplicar regras que já tenho</button></div>
-      <div class="lista-cartoes">${fila.grupos.slice(0, 40).map(cartaoDoGrupo).join("")}</div>
-      ${total > 40 ? `<p class="item-sub">Mostrando os 40 maiores de ${total}.</p>` : ""}`
+      <div class="lista-cartoes">${fila.grupos.slice(0, POR_VEZ).map(cartaoDoGrupo).join("")}</div>
+      ${total > POR_VEZ ? `<p class="item-sub">Mostrando os ${POR_VEZ} de mais dinheiro. Quando você resolver estes, aparecem os próximos (faltam ${total - POR_VEZ}).</p>` : ""}`
     : `<div class="vazio">Nada para revisar. Tudo que entrou e saiu já tem categoria.</div>`}
   `;
   container.querySelectorAll("[data-acao]").forEach((b) => b.addEventListener("click", aoClicar));

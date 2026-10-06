@@ -108,8 +108,12 @@ export function criarTelaCadastro(config) {
             ${v.acaoPrimaria ? `<button class="btn-mini btn-baixa" data-acao="primaria">${escapeHtml(v.acaoPrimaria)}</button>` : ""}
             ${(v.acoesExtras || []).map((x) => `<button class="btn-mini btn-extra" data-acao="extra" data-extra="${escapeHtml(x.id)}">${escapeHtml(x.rotulo)}</button>`).join("")}
             ${expansivel ? `<button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" aria-expanded="${aberto}">${aberto ? "Fechar" : (config.rotuloDetalhes || "Detalhes")}</button>` : ""}
-            <button class="btn-mini" data-acao="editar">Editar</button>
-            <button class="btn-mini perigo" data-acao="apagar">Apagar</button>
+            <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+              <div class="menu-mais-lista">
+                <button class="btn-mini" data-acao="editar">Editar</button>
+                <button class="btn-mini perigo" data-acao="apagar">Apagar</button>
+              </div>
+            </details>
           </div>
         </div>
         ${aberto ? `<div class="item-extra" data-extra-id="${escapeHtml(item.id)}">${config.renderExtra(item.dados, item.id, contexto)}</div>` : ""}`;

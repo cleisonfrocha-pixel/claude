@@ -143,3 +143,31 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - **Item 57.** O botão grande "Lançar" saiu; fica o "+" do menu.
 - **Item 58.** Uma coluna só, centralizada, no celular e no desktop.
 - Conferido no navegador com o estado real (390 px e 1366 px, sem rolagem lateral, sem erro; Paguei abre a folha).
+
+### 13.7 Dinheiro e Agenda simplificados (feita, 06/10)
+
+- **Itens 60 e 86.** Dinheiro tem 6 abas, sem o título "Dinheiro" repetido em cima: A pagar, Transações, Agenda
+  (calendário e fluxo na mesma tela, um embaixo do outro), Renda, Contas fixas, Contas e cartões. Importar extrato e
+  Revisar lançamentos foram para Configurações. Atalhos antigos (dinheiro/importar, dinheiro/cartoes) caem no lugar novo.
+- **Item 61.** A pagar sem o título repetido; atrasadas há mais de 30 dias numa faixa fechada, com o aviso de
+  conferir no extrato se já não foram pagas (os DAS de março a agosto).
+- **Itens 62 e 87.** Cada lançamento mostra só a ação principal (Paguei, Recebi); "Os dados estão certos", Editar e
+  Apagar foram para o "⋯", com Apagar em vermelho. O mesmo "⋯" em contas, cartões, dívidas, fontes e contas fixas.
+- **Item 64.** Nova transação: valor, conta, descrição e categoria à vista; data, pessoa, "já foi pago?" e "é certo?"
+  em "Mais opções" (abre sozinho quando é conta a pagar, que precisa do vencimento). Abas renomeadas: "Gasto ou
+  recebimento", "Conta fixa".
+- **Item 65.** Renda mostra as fontes; "Dá pra pagar o mês?", Metas, "Pra onde vai o dinheiro" e o gasto por
+  categoria ficam fechados, um por vez.
+- **Item 66.** Contas fixas separadas das verbas do mês; conta fixa diz "já pago neste mês"; verba diz quanto já foi
+  e quanto falta (a mesma conta de `domain/verbas.js`).
+- **Item 67.** Contas: "atualizado em 05/10 às 14:16" na linha; o botão é "Atualizar saldo" e mostra o saldo
+  informado, o que mudou desde então e o saldo de agora.
+- **Item 68.** Revisar mostra 10 favorecidos por vez (os de mais dinheiro); resolveu um, sobe o próximo.
+- **Item 69.** Importar pergunta "Data na coluna 1, Descrição na 2, Valor na 3", contando da esquerda, com exemplo.
+- **Item 29.** Cartão sem bandeira não mostra "Outra"; o "disponível" virou "limite livre". O "cabe agora" saiu com
+  o bloco de cartões do Início.
+- **Item 72.** Tocar num dia do calendário mostra o que tem nele (conferido); só o dia que cruza o zero é vermelho (13.2).
+- **Item 75.** O parágrafo gigante sumiu da Agenda, do Fluxo e do Início (13.2 e 13.6); o do Plano sai na 13.8.
+- **Item 30 (dado):** a fatura que veio só como "Compras até o fechamento" continua num lançamento só porque não há
+  extrato com as compras; quando vier, a tela de Cartões já avisa e cancela o resumo.
+- Conferido no navegador (390 px): as 6 abas, Configurações > Importar e Revisar, sem erro.

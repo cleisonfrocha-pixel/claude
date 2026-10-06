@@ -9,6 +9,16 @@ import { formatarData } from "../../domain/tempo.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
 import * as modal from "../modal.js";
 
+/** "05/10 às 14:16" (hora em que o saldo foi informado); sem hora, só o dia. */
+function quandoAtualizado(dados) {
+  const d = dados.saldoConferidoEm ? new Date(dados.saldoConferidoEm) : null;
+  if (d && !Number.isNaN(d.getTime())) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)} às ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  return dados.dataSaldoInicial ? formatarData(dados.dataSaldoInicial).slice(0, 5) : "data não informada";
+}
+
 const ROTULO_TIPO = {
   corrente: "Conta corrente", poupanca: "Poupança", investimento: "Investimento",
   dinheiro: "Dinheiro em espécie", outra: "Outra",
@@ -40,21 +50,23 @@ export default criarTelaCadastro({
     const saldo = calcularSaldoConta({ id, ...dados }, contexto.transacoes || []);
     return {
       titulo: dados.nome,
-      sub: `${dados.instituicao ? dados.instituicao + " · " : ""}${ROTULO_TIPO[dados.tipo] || dados.tipo}${pessoa ? " · " + pessoa.rotulo : ""} · ${dados.saldoConferidoEm ? "conferido" : "saldo de"} ${formatarData(dados.dataSaldoInicial).slice(0, 5)}`,
+      sub: `${pessoa ? pessoa.rotulo + " · " : ""}atualizado em ${quandoAtualizado(dados)}`,
       valorDireita: formatarBRL(saldo),
       tag: dados.status === "ativa" ? null : "encerrada",
       tagInativa: dados.status !== "ativa",
     };
   },
 
-  rotuloDetalhes: "Conferir",
+  rotuloDetalhes: "Atualizar saldo",
   renderExtra(dados, id, contexto) {
     const saldo = calcularSaldoConta({ id, ...dados }, contexto.transacoes || []);
     const hist = (dados.conferencias || []).slice(-5).reverse();
+    const mudou = saldo - (Number(dados.saldoInicialCentavos) || 0);
     return `
-      <div class="tela-sub" style="margin:0 0 10px;">O saldo é calculado a partir da última conferência e de tudo que você pagou ou recebeu por esta conta depois dela. Confira de vez em quando com o app do banco.</div>
-      <div class="fatura-linha"><span class="rotulo">Saldo agora no painel</span><b data-valor>${formatarBRL(saldo)}</b></div>
-      <button class="btn btn-primary" data-conferir style="margin:10px 0;">Conferir saldo</button>
+      <div class="fatura-linha"><span class="rotulo">Saldo que você informou<small>em ${escapeHtml(quandoAtualizado(dados))}</small></span><b data-valor>${formatarBRL(Number(dados.saldoInicialCentavos) || 0)}</b></div>
+      <div class="fatura-linha"><span class="rotulo">Mudou desde então<small>o que foi pago ou recebido por esta conta depois</small></span><b class="${mudou < 0 ? "valor-neg" : mudou > 0 ? "valor-pos" : ""}" data-valor>${mudou > 0 ? "+" : ""}${formatarBRL(mudou)}</b></div>
+      <div class="fatura-linha"><span class="rotulo"><b>Saldo agora no painel</b></span><b data-valor>${formatarBRL(saldo)}</b></div>
+      <button class="btn btn-primary" data-conferir style="margin:10px 0;">Atualizar com o saldo do banco</button>
       ${hist.length ? `<div class="tela-sub" style="margin:8px 0 4px;">Últimas conferências</div>${hist.map((h) => `
         <div class="fatura-linha"><span class="rotulo">${escapeHtml(formatarData(h.data))}<small>painel calculava ${formatarBRL(h.calculadoCentavos)}</small></span><b data-valor>${formatarBRL(h.informadoCentavos)}${h.diferencaCentavos ? ` <span style="font-weight:400;font-size:13px;">(${h.diferencaCentavos > 0 ? "+" : ""}${formatarBRL(h.diferencaCentavos)})</span>` : ""}</b></div>`).join("")}` : ""}`;
   },

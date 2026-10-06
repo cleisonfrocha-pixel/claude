@@ -60,7 +60,8 @@ export default criarTelaCadastro({
     const nivel = semUso ? null : ROTULO_NIVEL[visao.nivelAlerta];
     return {
       titulo: dados.apelido,
-      sub: `${ROTULO_BANDEIRA[dados.bandeira] || dados.bandeira}${pessoa ? " · " + pessoa.rotulo : ""} · ${semUso ? "sem dado de uso ainda" : `disponível ${formatarBRL(visao.disponivelCentavos)}`}`,
+      // Bandeira "Outra" não diz nada: só aparece quando é uma bandeira de verdade (item 29).
+      sub: [dados.bandeira && dados.bandeira !== "outra" ? ROTULO_BANDEIRA[dados.bandeira] || dados.bandeira : "", pessoa ? pessoa.rotulo : "", semUso ? "sem dado de uso ainda" : `limite livre ${formatarBRL(visao.disponivelCentavos)}`].filter(Boolean).join(" · "),
       valorDireita: formatarBRL(dados.limiteTotalCentavos),
       tag: dados.status !== "ativo" ? dados.status : nivel,
       tagInativa: dados.status !== "ativo",

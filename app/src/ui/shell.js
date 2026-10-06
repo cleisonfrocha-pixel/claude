@@ -27,7 +27,9 @@ import telaRecorrencias from "./telas/recorrencias.js";
 import telaPessoas from "./telas/pessoas.js";
 import telaCategorias from "./telas/categorias.js";
 import telaPreferencias from "./telas/preferencias.js";
-import telaPlanejamento from "./telas/planejamento.js";
+import telaCalendario from "./telas/calendario.js";
+import telaFluxoCaixa from "./telas/fluxoCaixa.js";
+import { criarTelaEmPilha } from "./telas/pilha.js";
 import telaDividas from "./telas/dividas.js";
 import telaPlano from "./telas/planoModulo.js";
 import telaRenda from "./telas/renda.js";
@@ -39,19 +41,16 @@ import telaPerfil from "./telas/perfil.js";
 import telaDados from "./telas/dadosEAtividade.js";
 import { ligarBuscaGlobal } from "./buscaGlobal.js";
 
+// Seis abas, sem título repetido em cima (itens 60 e 86 da lista de 05/10): a Agenda junta calendário e
+// fluxo numa tela só; Contas e Cartões viram uma aba; Importar e Revisar foram para Configurações.
 const telaDinheiro = criarTelaComAbas({
-  titulo: "Dinheiro",
-  subtitulo: "Tudo que entra e sai: lançamentos, agenda, renda, contas, cartões e extratos.",
   abas: [
     { id: "apagar", rotulo: "A pagar", tela: telaAPagar },
     { id: "transacoes", rotulo: "Transações", tela: telaTransacoes },
-    { id: "agenda", rotulo: "Agenda", tela: telaPlanejamento },
+    { id: "agenda", rotulo: "Agenda", tela: criarTelaEmPilha([telaCalendario, telaFluxoCaixa]) },
     { id: "renda", rotulo: "Renda", tela: telaRenda },
-    { id: "recorrencias", rotulo: "Recorrências", tela: telaRecorrencias },
-    { id: "contas", rotulo: "Contas", tela: telaContas },
-    { id: "cartoes", rotulo: "Cartões", tela: telaCartoes },
-    { id: "importar", rotulo: "Importar", tela: telaImportar },
-    { id: "revisar", rotulo: "Revisar", tela: telaRevisar },
+    { id: "recorrencias", rotulo: "Contas fixas", tela: telaRecorrencias },
+    { id: "contas", rotulo: "Contas e cartões", tela: criarTelaEmPilha([telaContas, telaCartoes]) },
   ],
 });
 
@@ -59,6 +58,8 @@ const telaConfiguracoes = criarTelaComAbas({
   titulo: "Configurações",
   abas: [
     { id: "perfil", rotulo: "Sobre nós", tela: telaPerfil },
+    { id: "importar", rotulo: "Importar extrato", tela: telaImportar },
+    { id: "revisar", rotulo: "Revisar lançamentos", tela: telaRevisar },
     { id: "pessoas", rotulo: "Pessoas", tela: telaPessoas },
     { id: "categorias", rotulo: "Categorias", tela: telaCategorias },
     { id: "preferencias", rotulo: "Preferências", tela: telaPreferencias },
@@ -76,6 +77,12 @@ const MODULOS = [
 
 // Telas que viraram aba de outro módulo: quem ainda pede o destino antigo
 // (um atalho, um alerta) cai na aba certa em vez de num módulo que não existe.
+const REDIRECIONAMENTOS_DE_ABA = {
+  "dinheiro/importar": { modulo: "configuracoes", aba: "importar" },
+  "dinheiro/revisar": { modulo: "configuracoes", aba: "revisar" },
+  "dinheiro/cartoes": { modulo: "dinheiro", aba: "contas" },
+};
+
 const REDIRECIONAMENTOS = {
   planejamento: { modulo: "dinheiro", aba: "agenda" },
   renda: { modulo: "dinheiro", aba: "renda" },
@@ -94,7 +101,9 @@ let containerConteudo = null;
 export function inicializar(container) {
   containerConteudo = container;
   registrarNavegacao((destino) => {
-    const { modulo, aba } = { ...destino, ...(REDIRECIONAMENTOS[destino.modulo] || {}) };
+    let { modulo, aba } = { ...destino, ...(REDIRECIONAMENTOS[destino.modulo] || {}) };
+    const deAba = REDIRECIONAMENTOS_DE_ABA[`${modulo}/${aba}`];
+    if (deAba) ({ modulo, aba } = deAba);
     const m = MODULOS.find((x) => x.id === modulo);
     if (!m) return;
     if (aba && m.tela.definirAba) m.tela.definirAba(aba);
@@ -159,7 +168,7 @@ function abrirFolhaDeLancar() {
   const opcoes = [
     { id: "nova-transacao", rotulo: "Lançar um gasto ou recebimento", ic: "adicionar", destino: { modulo: "dinheiro", aba: "transacoes", acao: "nova-transacao" } },
     { id: "saldo", rotulo: "Atualizar o saldo das contas", ic: "dinheiro", acao: abrirAtualizarSaldo },
-    { id: "importar", rotulo: "Importar um extrato", ic: "dinheiro", destino: { modulo: "dinheiro", aba: "importar" } },
+    { id: "importar", rotulo: "Importar um extrato", ic: "dinheiro", destino: { modulo: "configuracoes", aba: "importar" } },
     { id: "agenda", rotulo: "Ver o que vence", ic: "planejamento", destino: { modulo: "dinheiro", aba: "agenda" } },
     { id: "divida", rotulo: "Ver minhas dívidas", ic: "dividas", destino: { modulo: "dividas" } },
   ];

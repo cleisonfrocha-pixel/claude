@@ -1761,3 +1761,4 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - 13.4 Uma conta só para o mês (itens 19 a 25): `resumoDoMes` em Transações, Contas do mês e conferido contra Fechamento e Meu ano; `sujaONome` em todas as contagens de nome sujo; uma sobra só.
 - 13.5 Dívidas claras (itens 31 a 38): topo em três perguntas (com e sem oferta lado a lado), barra da cota pelo que o trabalho abateu, cotação do banco descontando só parcela paga depois dela, sem acordo não atrasa.
 - 13.6 Início enxuto (itens 50 a 58): contas com hora da atualização, "você chega em DD/MM com R$ X" com a conta aberta, a receber certo x esperado, atrasados e semana com Paguei por linha, uma coluna.
+- 13.7 Dinheiro e Agenda simplificados (itens 29, 30, 60 a 69, 72, 75): 6 abas, Agenda numa tela, menu "⋯", formulário curto, Renda fechada por seção, contas fixas x verbas, Revisar 10 por vez, Importar em linguagem simples.
