@@ -2,6 +2,7 @@
 // deve ser instrumento de clareza, não uma prisão" (texto do blueprint) —
 // por isso nada aqui trava gasto, só mostra fatos.
 
+import { parteSemDetalhePorPagamento } from "./transacoes.js";
 import { somarMeses } from "./tempo.js";
 
 /** Meses que têm QUALQUER movimento pago registrado. Mês antes do começo
@@ -48,13 +49,14 @@ function despesasPorCategoria(transacoes, competencia) {
 export function calcularCustos(transacoes, categorias, competencia) {
   const essenciaisIds = new Set((categorias || []).filter((c) => c.essencial).map((c) => c.id));
   const dividasIds = new Set((categorias || []).filter((c) => c.grupo === "dividas").map((c) => c.id));
-  const faturasComCompra = new Set((transacoes || []).filter((t) => t.tipo === "despesa" && t.faturaId).map((t) => t.faturaId));
+  const semDetalhe = parteSemDetalhePorPagamento(transacoes);
   let essencialCentavos = 0, dividasCentavos = 0, faturaSemDetalheCentavos = 0, atualCentavos = 0;
   for (const t of transacoes || []) {
     if (t.status !== "pago" || t.competencia !== competencia) continue;
     if (t.tipo === "pagamento_fatura") {
-      if (t.faturaId && faturasComCompra.has(t.faturaId)) continue; // compras já contadas
-      const v = Number(t.valorCentavos) || 0;
+      // Compras lançadas já contaram; entra só o pedaço da fatura que não tem compra detalhada.
+      const v = semDetalhe.get(t.id ?? t) || 0;
+      if (!v) continue;
       faturaSemDetalheCentavos += v;
       atualCentavos += v;
       continue;

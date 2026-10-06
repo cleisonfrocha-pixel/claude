@@ -12,7 +12,7 @@
 import { eventosFuturos } from "./previstos.js";
 import { compromissosPorDia } from "./calendario.js";
 import { lerVerbas } from "./verbas.js";
-import { dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
+import { dataVencimentoFatura, statusEfetivo, totaisPorFatura } from "./transacoes.js";
 import { competenciaDeData, diasNoMes, dataDeCompetencia } from "./tempo.js";
 
 const ABERTO = new Set(["previsto", "agendado", "atrasado"]);
@@ -117,15 +117,11 @@ export function contasDoMes({ transacoes, faturas, cartoes, dividas, recorrencia
     });
   }
   const cartaoPorId = new Map((cartoes || []).map((c) => [c.id, c]));
-  const totalPorFatura = new Map();
-  for (const t of transacoes || []) {
-    if (!t.faturaId || t.tipo !== "despesa" || t.status === "cancelado") continue;
-    totalPorFatura.set(t.faturaId, (totalPorFatura.get(t.faturaId) || 0) + (Number(t.valorCentavos) || 0));
-  }
+  const totais = totaisPorFatura(transacoes);
   for (const f of faturas || []) {
     if (f.status !== "paga") continue;
     const cartao = cartaoPorId.get(f.cartaoId);
-    const total = totalPorFatura.get(f.id) || 0;
+    const total = (totais.get(f.id) || {}).totalCentavos || 0;
     if (!cartao || total <= 0) continue;
     const venc = dataVencimentoFatura(cartao, f.competencia);
     if (competenciaDeData(venc) !== competencia) continue;

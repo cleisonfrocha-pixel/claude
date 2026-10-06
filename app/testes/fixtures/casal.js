@@ -81,8 +81,8 @@ export function montarCasal() {
   // Faturas pagas (Roxinho vence dia 10, Itaú dia 5).
   subir("pagamentos de fatura", [
     { acao: "pagamento_fatura", valor: "1.400", cartao: "Roxinho", data: "2026-07-10" },
-    { acao: "pagamento_fatura", valor: "1.500", cartao: "Roxinho", data: "2026-08-10" },
-    { acao: "pagamento_fatura", valor: "1.520", cartao: "Roxinho", data: "2026-09-10" },
+    { acao: "pagamento_fatura", valor: "1.865,90", cartao: "Roxinho", data: "2026-08-10" },
+    { acao: "pagamento_fatura", valor: "1.815,90", cartao: "Roxinho", data: "2026-09-10" },
     { acao: "pagamento_fatura", valor: "350", cartao: "Itaú Click", data: "2026-08-05" },
     { acao: "pagamento_fatura", valor: "180", cartao: "Itaú Click", data: "2026-09-05" },
   ]);

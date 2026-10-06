@@ -128,3 +128,13 @@ test("13.2 item 6: gasto acima da verba zera o que falta, nunca negativo", () =>
   const r = calcularClarezaDeCaixa({ contas: [conta], transacoes, faturas: [], cartoes: [], dividas: [], recorrencias: [], fontesRenda: [], hoje: HOJE, horizonteDias: 30 });
   assert.equal(r.comprometidoCentavos, 0);
 });
+
+test("13.3 item 63: R$ 100 de mercado não sugere Vivo, Claude nem DAS só porque o valor é perto", () => {
+  const abertas = [
+    desp({ id: "vivo", descricao: "Vivo internet móvel", data: "2026-10-10", valorCentavos: 9462 }),
+    desp({ id: "claude", descricao: "Claude IA", data: "2026-10-04", valorCentavos: 11000 }),
+    desp({ id: "das", descricao: "DAS Simples Nacional (agosto)", data: "2026-08-20", status: "atrasado", valorCentavos: 9088 }),
+  ];
+  assert.equal(candidatosDePagamento({ tipo: "despesa", valorCentavos: 10000, descricao: "Mercado", data: "2026-10-02" }, abertas, { hoje: "2026-10-02" }).length, 0);
+  assert.deepEqual(candidatosDePagamento({ tipo: "despesa", valorCentavos: 9088, descricao: "DAS agosto", data: "2026-10-02" }, abertas, { hoje: "2026-10-02" }).map((c) => c.transacao.id), ["das"]);
+});

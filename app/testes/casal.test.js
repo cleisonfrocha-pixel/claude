@@ -107,10 +107,12 @@ test("casal: caminhos partem da média dos meses fechados, descontam a parcela u
   assert.equal(base.caixaCentavos, 162000);
   const c = compararCenarios(base);
   const atual = c.cenarios.find((x) => x.id === "atual").resultado;
-  assert.equal(atual.sobraMensalInicialCentavos, 419160); // 10.100 − 3.957,50 − 320,90 − 1.630
+  // 10.100 − 3.957,50 − 320,90 − 1.630 − 672,05: a fatura de julho do Roxinho teve R$ 1.400 pagos e só
+  // R$ 55,90 em compras lançadas; os R$ 1.344,10 sem detalhe agora contam como gasto (13.3 item 26).
+  assert.equal(atual.sobraMensalInicialCentavos, 351955);
   assert.equal(c.cenarios.find((x) => x.id === "conservador").resultado.viavel, true);
   assert.equal(c.recomendado.id, "quitacao");
-  assert.equal(c.cenarios.find((x) => x.id === "quitacao").resultado.mesNomeLimpo, 1);
+  assert.equal(c.cenarios.find((x) => x.id === "quitacao").resultado.mesNomeLimpo, 2); // com a sobra menor, limpa o nome no 2º mês
 });
 
 test("casal: projeção de 30 dias com o gasto do dia a dia na média dos últimos meses", () => {

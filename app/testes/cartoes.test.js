@@ -128,3 +128,32 @@ test("resumo cancelado deixa de contar em dobro", () => {
   const compra = { id: "c", tipo: "despesa", faturaId: "f1", valorCentavos: 4500, descricao: "Uber", status: "pago" };
   assert.deepEqual(faturasContadasEmDobro([resumo, compra]), []);
 });
+
+import { totaisPorFatura } from "../src/domain/transacoes.js";
+test("13.3 item 10: total da fatura não soma o pagamento nem compra cancelada; paga sem detalhe vale o pago", () => {
+  const t = [
+    { faturaId: "f", tipo: "despesa", status: "pago", valorCentavos: 10000 },
+    { faturaId: "f", tipo: "despesa", status: "cancelado", valorCentavos: 165000 },
+    { faturaId: "f", tipo: "pagamento_fatura", status: "pago", valorCentavos: 4000 },
+    { faturaId: "g", tipo: "pagamento_fatura", status: "pago", valorCentavos: 250000 },
+  ];
+  const m = totaisPorFatura(t);
+  assert.deepEqual(m.get("f"), { comprasCentavos: 10000, pagoCentavos: 4000, faltaCentavos: 6000, totalCentavos: 10000, semDetalheCentavos: 0 });
+  assert.equal(m.get("g").totalCentavos, 250000);
+  assert.equal(m.get("g").semDetalheCentavos, 250000);
+});
+
+import { parteSemDetalhePorPagamento } from "../src/domain/transacoes.js";
+test("13.3 item 26: fatura com detalhe parcial mostra o pedaço sem detalhe; fatura detalhada não soma o pagamento", () => {
+  const t = [
+    { id: "c1", faturaId: "f", tipo: "despesa", status: "pago", valorCentavos: 100000 },
+    { id: "p1", faturaId: "f", tipo: "pagamento_fatura", status: "pago", data: "2026-09-05", valorCentavos: 200000 },
+    { id: "p2", faturaId: "f", tipo: "pagamento_fatura", status: "pago", data: "2026-09-10", valorCentavos: 300000 },
+    { id: "c2", faturaId: "g", tipo: "despesa", status: "pago", valorCentavos: 50000 },
+    { id: "p3", faturaId: "g", tipo: "pagamento_fatura", status: "pago", data: "2026-09-10", valorCentavos: 50000 },
+  ];
+  const m = parteSemDetalhePorPagamento(t);
+  assert.equal(m.get("p1") + m.get("p2"), 400000);
+  assert.equal(m.get("p1"), 160000);
+  assert.equal(m.get("p3"), 0);
+});

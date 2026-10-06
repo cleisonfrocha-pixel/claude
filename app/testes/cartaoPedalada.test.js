@@ -56,7 +56,7 @@ test("cabe no cartão: limite e saldo da conta que paga a fatura", () => {
 });
 
 test("uso habitual do cartão: o que falta até o uso mensal vira saída estimada no dia do pagamento", () => {
-  const cartao = { ...nubank, diaPagamentoHabitual: 12, usoMensalCentavos: 40000, status: "ativo" };
+  const cartao = { ...nubank, limiteTotalCentavos: 100000, diaPagamentoHabitual: 12, usoMensalCentavos: 40000, status: "ativo" }; // uso abaixo do limite (igual ao limite é ignorado, 13.3 item 28)
   const base = { transacoes: [compra({ valorCentavos: 10000 })], faturas: fat, cartoes: [cartao], dividas: [], recorrencias: [], fontesRenda: [], hoje: "2026-10-02" };
   const ev = eventosFuturos({ ...base, de: "2026-10-02", ate: "2026-12-31" }).filter((e) => e.origem?.tipo === "cartaoUso");
   const out = ev.find((e) => e.data === "2026-10-12");

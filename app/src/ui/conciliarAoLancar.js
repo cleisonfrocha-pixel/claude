@@ -2,19 +2,31 @@
 // provavelmente quita e pergunta. Se a pessoa disser que sim, dá baixa nela em
 // vez de criar um lançamento novo (que deixaria a conta prevista aberta).
 
-import { transacoes } from "../dados/transacoesRepo.js";
+import { carregarBase } from "../dados/base.js";
 import { candidatosDePagamento } from "../domain/conciliacao.js";
+import { eventosFuturos } from "../domain/previstos.js";
+import { diasNoMes, dataDeCompetencia } from "../domain/tempo.js";
 import { formatarBRL } from "../domain/dinheiro.js";
 import { formatarData, hojeISO } from "../domain/tempo.js";
 import { escapeHtml } from "./utilitarios.js";
 import * as modal from "./modal.js";
 
-/** Resolve com o id da conta prevista escolhida, "novo" (é outro lançamento) ou
- * null (fechou a janela sem decidir: nada é gravado). */
+/** Resolve com o id da conta prevista escolhida, `{ evento }` quando a escolhida é uma conta que
+ * ainda só existe no cadastro (renda da fonte, parcela de dívida, conta mensal ainda não gerada:
+ * quem chama dá baixa no evento e o vínculo fica gravado), "novo" (é outro lançamento) ou null
+ * (fechou a janela sem decidir: nada é gravado). */
 export async function perguntarSeQuita(lancamento) {
   if (lancamento.status !== "pago" || !["despesa", "receita"].includes(lancamento.tipo)) return "novo";
-  const abertas = (await transacoes.listar()).map((t) => ({ id: t.id, ...t.dados }));
-  const candidatos = candidatosDePagamento(lancamento, abertas, { hoje: hojeISO() });
+  const base = await carregarBase();
+  const hoje = hojeISO();
+  // Contas previstas do mês do lançamento que ainda não viraram lançamento: entram na busca como se
+  // fossem contas abertas, com um id próprio ("ev:N").
+  const comp = (lancamento.data || hoje).slice(0, 7);
+  const inicio = `${comp}-01` < hoje ? `${comp}-01` : hoje;
+  const eventos = eventosFuturos({ ...base, de: inicio, ate: dataDeCompetencia(comp, diasNoMes(comp)), hoje })
+    .filter((e) => e.tipo === lancamento.tipo && !e.estimativa && ["fonteRenda", "divida", "recorrencia"].includes(e.origem?.tipo));
+  const comoConta = eventos.map((e, i) => ({ id: `ev:${i}`, tipo: e.tipo, status: e.atrasado ? "atrasado" : "previsto", data: e.vencimento || e.data, competencia: (e.vencimento || e.data).slice(0, 7), valorCentavos: e.valorCentavos, descricao: e.descricao, semDia: !!e.semDia }));
+  const candidatos = candidatosDePagamento(lancamento, [...base.transacoes, ...comoConta], { hoje });
   if (!candidatos.length) return "novo";
   return new Promise((resolver) => {
     let decidido = false;
@@ -35,7 +47,7 @@ export async function perguntarSeQuita(lancamento) {
     document.getElementById("overlay-modal").querySelectorAll("[data-escolha]").forEach((b) => b.addEventListener("click", () => {
       decidido = true;
       const v = b.dataset.escolha;
-      resolver(v === "cancelar" ? null : v);
+      resolver(v === "cancelar" ? null : v.startsWith("ev:") ? { evento: eventos[Number(v.slice(3))] } : v);
       modal.fechar();
     }));
   });

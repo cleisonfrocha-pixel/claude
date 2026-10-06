@@ -91,6 +91,80 @@ export function gerarParcelas({ valorTotalCentavos, quantidade, competenciaInici
 }
 
 /**
+ * Os números de cada fatura, num lugar só (item 10 da lista de 05/10: cada tela somava a fatura de
+ * um jeito e algumas somavam o próprio pagamento e as compras canceladas como se fossem compra).
+ * - compras: despesas da fatura, sem as canceladas;
+ * - pago: pagamentos de fatura já feitos;
+ * - falta: o que ainda vai sair da conta (compras menos o que já foi pago, nunca negativo);
+ * - total: o tamanho da fatura. Fatura antiga paga sem as compras detalhadas vale pelo que foi
+ *   pago; com detalhe parcial, vale o maior dos dois (o pedaço sem detalhe é `semDetalhe`).
+ */
+export function totaisPorFatura(transacoes) {
+  const mapa = new Map();
+  const de = (id) => {
+    if (!mapa.has(id)) mapa.set(id, { comprasCentavos: 0, pagoCentavos: 0 });
+    return mapa.get(id);
+  };
+  for (const t of transacoes || []) {
+    if (!t.faturaId || t.status === "cancelado") continue;
+    const v = Number(t.valorCentavos) || 0;
+    if (t.tipo === "despesa") de(t.faturaId).comprasCentavos += v;
+    else if (t.tipo === "pagamento_fatura" && t.status === "pago") de(t.faturaId).pagoCentavos += v;
+  }
+  for (const x of mapa.values()) {
+    x.faltaCentavos = Math.max(0, x.comprasCentavos - x.pagoCentavos);
+    x.totalCentavos = Math.max(x.comprasCentavos, x.pagoCentavos);
+    x.semDetalheCentavos = Math.max(0, x.pagoCentavos - x.comprasCentavos);
+  }
+  return mapa;
+}
+
+const VAZIA = Object.freeze({ comprasCentavos: 0, pagoCentavos: 0, faltaCentavos: 0, totalCentavos: 0, semDetalheCentavos: 0 });
+/**
+ * Quanto de cada pagamento de fatura é gasto SEM compra detalhada: a fatura inteira, quando ninguém
+ * lançou compra nenhuma dela, ou só o pedaço que passa das compras lançadas (detalhe parcial). Esse
+ * pedaço é gasto real de categoria desconhecida; o resto do pagamento não é gasto (as compras já
+ * contaram). Repartido entre os pagamentos da fatura na proporção de cada um, sem perder centavo.
+ * Devolve Map(id do pagamento -> centavos sem detalhe).
+ */
+export function parteSemDetalhePorPagamento(transacoes) {
+  const totais = totaisPorFatura(transacoes);
+  const pagamentos = new Map();
+  for (const t of transacoes || []) {
+    if (t.tipo !== "pagamento_fatura" || t.status !== "pago") continue;
+    if (!t.faturaId) continue;
+    if (!pagamentos.has(t.faturaId)) pagamentos.set(t.faturaId, []);
+    pagamentos.get(t.faturaId).push(t);
+  }
+  const saida = new Map();
+  for (const t of transacoes || []) {
+    if (t.tipo === "pagamento_fatura" && t.status === "pago" && !t.faturaId) saida.set(t.id ?? t, Number(t.valorCentavos) || 0);
+  }
+  for (const [faturaId, lista] of pagamentos) {
+    const { semDetalheCentavos, pagoCentavos } = totais.get(faturaId);
+    let distribuido = 0;
+    lista.sort((a, b) => (a.data || "").localeCompare(b.data || ""));
+    lista.forEach((t, i) => {
+      const parte = i === lista.length - 1 ? semDetalheCentavos - distribuido : Math.floor(semDetalheCentavos * (Number(t.valorCentavos) || 0) / pagoCentavos);
+      distribuido += parte;
+      saida.set(t.id ?? t, parte);
+    });
+  }
+  return saida;
+}
+
+/** A fatura está paga quando o que foi pago cobre as compras dela (fatura sem compra detalhada:
+ * qualquer pagamento quita, porque não há como saber o total). */
+export function faturaQuitada({ comprasCentavos, pagoCentavos }) {
+  return pagoCentavos > 0 && pagoCentavos >= comprasCentavos;
+}
+
+/** Os números de uma fatura só (ver `totaisPorFatura`). */
+export function totaisDaFatura(transacoes, faturaId) {
+  return totaisPorFatura((transacoes || []).filter((t) => t.faturaId === faturaId)).get(faturaId) || VAZIA;
+}
+
+/**
  * Quais competências uma recorrência mensal ainda precisa ter provisionadas,
  * dado um horizonte de meses a partir de agora e as competências que já
  * existem para ela. Puro: devolve o que falta, não grava nada. Herdeiro do

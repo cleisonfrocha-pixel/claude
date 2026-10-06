@@ -101,7 +101,10 @@ export async function darBaixaEvento(evento, { valorCentavos, contaId, cartaoId,
     lerTudo("contas"), lerTudo("categorias"), lerTudo("fontesRenda"), lerTudo("dividas"), lerTudo("recorrencias"),
   ]);
   const data = evento.data <= hoje && !evento.atrasado ? evento.data : hoje;
-  const base = { valorCentavos: valor, data, status: "pago", certeza: "confirmado", foiPrevisto: true, pagoEm: quando };
+  // O mês do compromisso é o do vencimento dele, não o de hoje: pagar hoje a parcela atrasada de
+  // setembro não pode "cobrir" a parcela de outubro (ela sumia da lista).
+  const competencia = competenciaDeData(evento.vencimento || evento.data);
+  const base = { valorCentavos: valor, data, competencia, status: "pago", certeza: "confirmado", foiPrevisto: true, pagoEm: quando };
   const escolhida = contaId ? contas.find((c) => c.id === contaId && c.status === "ativa") : null;
   // Quando sobrou um pedaço (pagou menos que o combinado), o pedaço fica a pagar/receber.
   const criarResto = async (extra) => (resto > 0 ? criarSimples({ ...base, ...extra, valorCentavos: resto, status: "previsto", certeza: evento.certeza === "incerto" ? "incerto" : "provavel", foiPrevisto: false, pagoEm: null, data: evento.data > quando ? evento.data : quando }) : null);
@@ -136,7 +139,7 @@ export async function darBaixaEvento(evento, { valorCentavos, contaId, cartaoId,
       contaId: cartaoId && !ehReceita ? null : (escolhida?.id || r.contaId || contaPadrao(contas, r.pessoaId)?.id || null),
       cartaoId: !ehReceita ? (cartaoId || r.cartaoId || null) : null,
       categoriaId: r.categoriaId, pessoaId: r.pessoaId, descricao: r.descricao, recorrenciaId: r.id,
-      competencia: competenciaDeData(evento.data), ...(r.semDia ? { semDia: true } : {}),
+      competencia, ...(r.semDia ? { semDia: true } : {}),
     };
     if (dados.cartaoId) dados.data = quando; // compra no cartão: na data em que foi feita
     const criadaId = await criarSimples({ ...base, ...dados, ...(dados.cartaoId ? { data: quando } : {}) });

@@ -10,7 +10,7 @@ import { uid } from "./id.js";
 import { cartoes, ErroDeValidacao } from "./repositorios.js";
 import { obterOuCriarFatura, marcarFaturaPaga } from "./faturasRepo.js";
 import { padraoTransacao, validarTransacao } from "../domain/esquema.js";
-import { competenciaFatura, gerarParcelas, construirParTransferencia } from "../domain/transacoes.js";
+import { competenciaFatura, gerarParcelas, construirParTransferencia, totaisDaFatura, faturaQuitada } from "../domain/transacoes.js";
 import { competenciaDeData, somarMeses } from "../domain/tempo.js";
 
 const CAMINHO = "transacoes";
@@ -38,6 +38,18 @@ export const transacoes = {
     const erros = validarTransacao(dados);
     if (erros.length) throw new ErroDeValidacao(erros);
     const extra = {};
+    // Compra no cartão com data ou cartão mudados vai para a fatura certa (antes ficava presa na antiga).
+    const antes = atual ? atual.dados : {};
+    const mudouData = "data" in campos && campos.data !== antes.data;
+    const mudouCartao = "cartaoId" in campos && campos.cartaoId !== antes.cartaoId;
+    if (dados.tipo === "despesa" && dados.cartaoId && (mudouData || mudouCartao) && !("faturaId" in campos)) {
+      const cartao = await buscarCartao(dados.cartaoId);
+      const deslocamento = Math.max(0, (Number(dados.parcelaNum) || 1) - 1);
+      extra.faturaId = await obterOuCriarFatura(dados.cartaoId, somarMeses(competenciaFatura(cartao, dados.data), deslocamento));
+      if (!("competencia" in campos)) extra.competencia = somarMeses(competenciaDeData(dados.data), deslocamento);
+    } else if (dados.tipo === "despesa" && !dados.cartaoId && antes.cartaoId && antes.faturaId && !("faturaId" in campos)) {
+      extra.faturaId = null; // saiu do cartão: não pertence mais a fatura nenhuma
+    }
     // A hora em que o dinheiro mexeu: virou pago agora, ou deixou de ser pago.
     // Editar um lançamento já pago não mexe nela (senão o saldo conferido contaria de novo).
     if ("status" in campos && !("movimentadoEm" in campos) && atual) {
@@ -157,6 +169,8 @@ export async function registrarPagamentoFatura({ faturaId, contaId, valorCentavo
   const erros = validarTransacao(dados);
   if (erros.length) throw new ErroDeValidacao(erros);
   const id = await db.criar(CAMINHO, { ...dados, criadoEm: agora(), atualizadoEm: agora() });
-  await marcarFaturaPaga(faturaId);
+  // Pagamento parcial não quita a fatura: ela continua aberta com o resto (antes o resto sumia).
+  const todas = (await db.listar(CAMINHO)).map((t) => ({ id: t.id, ...t.dados }));
+  if (faturaQuitada(totaisDaFatura(todas, faturaId))) await marcarFaturaPaga(faturaId);
   return id;
 }

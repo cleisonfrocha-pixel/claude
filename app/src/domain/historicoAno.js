@@ -9,6 +9,7 @@
 //   não tem nenhuma compra detalhada (vira "cartão sem detalhe", categoria desconhecida);
 // - cada número devolve os ids dos lançamentos que o formam (§9 e §17).
 
+import { parteSemDetalhePorPagamento } from "./transacoes.js";
 import { competenciaDeData } from "./tempo.js";
 import { NOME_GRUPO } from "./relatorios.js";
 import { precisaRevisar } from "./favorecidos.js";
@@ -61,7 +62,7 @@ export function montarHistoricoAno({ transacoes, categorias, fontesRenda, contas
   const cat = new Map((categorias || []).map((c) => [c.id, c]));
   const nomeFonte = new Map((fontesRenda || []).map((f) => [f.id, f.nome]));
   const todos = (transacoes || []).filter((t) => t.status === "pago" && (!pessoaId || t.pessoaId === pessoaId));
-  const faturasComCompra = new Set((transacoes || []).filter((t) => t.tipo === "despesa" && t.faturaId).map((t) => t.faturaId));
+  const semDetalhe = parteSemDetalhePorPagamento(transacoes);
 
   const meses = new Map(); // competência -> { renda: Map(fonteKey -> itens), saidas: Map(grupo -> itens), repasses }
   const mes = (c) => {
@@ -81,7 +82,9 @@ export function montarHistoricoAno({ transacoes, categorias, fontesRenda, contas
     } else if (t.tipo === "despesa") {
       empurrar(m.saidas, cat.get(t.categoriaId)?.grupo || "outros", item);
     } else if (t.tipo === "pagamento_fatura") {
-      if (!t.faturaId || !faturasComCompra.has(t.faturaId)) empurrar(m.saidas, GRUPO_CARTAO_SEM_DETALHE, item);
+      // Só o que a fatura teve sem compra detalhada (inteira, ou o pedaço além das compras lançadas).
+      const parte = semDetalhe.get(t.id ?? t) || 0;
+      if (parte > 0) empurrar(m.saidas, GRUPO_CARTAO_SEM_DETALHE, { ...item, valorCentavos: parte });
     } else if (t.tipo === "repasse") {
       (t.direcao === "entrada" ? m.repasseEntrada : m.repasseSaida).push(item);
     }

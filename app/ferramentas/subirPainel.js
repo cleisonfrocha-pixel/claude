@@ -11,7 +11,7 @@ import { paraCentavos, formatarBRL } from "../src/domain/dinheiro.js";
 import { conferirExtrato } from "./extrato/reconciliar.js";
 import { regraDoFavorecido } from "../src/domain/favorecidos.js";
 import { somarMeses, dataDeCompetencia, formatarData } from "../src/domain/tempo.js";
-import { competenciaFatura, gerarParcelas, construirParTransferencia, competenciasFaltantes } from "../src/domain/transacoes.js";
+import { competenciaFatura, gerarParcelas, construirParTransferencia, competenciasFaltantes, totaisDaFatura, faturaQuitada } from "../src/domain/transacoes.js";
 import * as E from "../src/domain/esquema.js";
 import { faturaParaPagamento, dataFechamentoFatura } from "../src/domain/cartoes.js";
 import { dataProximoVencimento, statusDivida } from "../src/domain/dividas.js";
@@ -339,7 +339,8 @@ export function montarEscritas({ estado: estadoOriginal, pedido, agora, gerarId 
         exigir(fatura, `não achei fatura em aberto do ${cartao.apelido}${item.competencia ? ` em ${item.competencia}` : ""}`);
         avisarDuplicata(duplicataDe((t) => t.tipo === "pagamento_fatura" && t.faturaId === fatura.id, valor, data));
         transacao({ tipo: "pagamento_fatura", contaId: conta.id, pessoaId: cartao.pessoaId, faturaId: fatura.id, valorCentavos: valor, data, descricao: item.descricao || "Pagamento de fatura", categoriaId: null, idExterno: item.idExterno ? String(item.idExterno) : null });
-        if (fatura.status !== "paga") atualizar("faturas", fatura, { status: "paga" });
+        // Só quita quando o pago cobre as compras dela; pagamento parcial deixa o resto em aberto.
+        if (fatura.status !== "paga" && faturaQuitada(totaisDaFatura(estado.transacoes, fatura.id))) atualizar("faturas", fatura, { status: "paga" });
         local.resumo.push(`Pagamento de fatura · ${formatarBRL(valor)} · ${cartao.apelido} (${fatura.competencia}) · saiu da ${conta.nome} · ${formatarData(data)} (não é despesa nova: as compras já contaram)`);
       } else if (acao === "criar") {
         const colecao = item.colecao;

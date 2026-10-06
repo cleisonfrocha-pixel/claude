@@ -1757,3 +1757,4 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 
 - 13.1 Saldo e caixa certos (itens 1, 2, 3, 4, 8, 15, 18): hora do movimento (`movimentadoEm`) contra a hora da conferência (`saldoConferidoEm`), livre garantido estável, receita atrasada fora do caixa, valor inválido recusado.
 - 13.2 Verbas e projeção honesta (itens 5, 6, 7, 13, 16, 70, 71, 73, 74): `domain/verbas.js` (o que falta da verba é derivado do gasto real), parcelas fora do cartão mês a mês, gasto médio sem o cartão, Agenda e Fluxo enxutos.
+- 13.3 Vínculos, faturas e parcelas (itens 9, 10, 11, 12, 14, 26, 27, 28, 63): total único da fatura, pagamento parcial, compra editada muda de fatura, parcela atrasada no mês certo, renda sem vínculo não duplica, Lançar oferece contas previstas e grava o vínculo, sugestão só com nome e valor.

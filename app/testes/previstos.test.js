@@ -106,3 +106,35 @@ test("13.2 item 16: compra no cartão com uso habitual não entra também no gas
   assert.equal(semCartoes, 70000);
   assert.equal(comCartoes, 20000);
 });
+
+test("13.3 item 9: salário lançado do extrato sem vínculo não faz a fonte aparecer de novo no mês", () => {
+  const fontesRenda = [{ id: "f", nome: "Salário Carolina", tipo: "fixa", valorEsperadoCentavos: 500000, diaRecebimento: 5, contaId: "bb", ativa: true }];
+  const base = { dividas: [], recorrencias: [], cartoes: [], faturas: [], fontesRenda, de: "2026-10-01", ate: "2026-10-31", hoje: "2026-10-01" };
+  const sem = eventosFuturos({ ...base, transacoes: [] }).filter((e) => e.tipo === "receita");
+  assert.equal(sem.length, 1);
+  const extrato = [{ tipo: "receita", status: "pago", contaId: "bb", competencia: "2026-10", data: "2026-10-05", valorCentavos: 497500, descricao: "PIX RECEBIDO PREFEITURA SALARIO" }];
+  assert.equal(eventosFuturos({ ...base, transacoes: extrato }).filter((e) => e.tipo === "receita").length, 0);
+  const outra = [{ tipo: "receita", status: "pago", contaId: "next", competencia: "2026-10", data: "2026-10-05", valorCentavos: 30000, descricao: "Dona Ana" }];
+  assert.equal(eventosFuturos({ ...base, transacoes: outra }).filter((e) => e.tipo === "receita").length, 1, "outra entrada qualquer não cobre o salário");
+});
+
+test("13.3 item 9: conta mensal NÃO casa sozinha com um pagamento parecido (Vivo de setembro pago em outubro)", () => {
+  const recorrencias = [{ id: "r", descricao: "Vivo internet móvel", tipo: "despesa", valorEstimadoCentavos: 9462, diaBase: 10, ativa: true, categoriaId: "tel" }];
+  const base = { dividas: [], fontesRenda: [], cartoes: [], faturas: [], recorrencias, de: "2026-10-02", ate: "2026-10-31", hoje: "2026-10-02" };
+  const pagoSetembro = [{ tipo: "despesa", status: "pago", contaId: "k", competencia: "2026-10", data: "2026-10-02", valorCentavos: 9200, descricao: "Vivo internet móvel SET" }];
+  assert.equal(eventosFuturos({ ...base, transacoes: pagoSetembro }).length, 1);
+});
+
+test("13.3 item 14: parcela atrasada de setembro paga em outubro não esconde a parcela de outubro", () => {
+  const divida = { id: "d", nome: "Jeep", valorParcelaCentavos: 331637, quantidadeParcelas: 60, parcelasPagas: 21, dataInicio: "2025-01-03", diaVencimento: 3 };
+  const pagaHoje = [{ tipo: "despesa", status: "pago", dividaId: "d", competencia: "2026-09", data: "2026-10-02", pagoEm: "2026-10-02", valorCentavos: 331637, contaId: "k" }];
+  const ev = eventosFuturos({ transacoes: pagaHoje, dividas: [divida], recorrencias: [], fontesRenda: [], cartoes: [], faturas: [], de: "2026-10-02", ate: "2026-10-31", hoje: "2026-10-02" });
+  assert.equal(ev.filter((e) => e.origem.tipo === "divida").length, 1);
+});
+
+test("13.3 item 28: uso mensal informado igual ao limite, sem fatura que mostre isso, não projeta o limite inteiro", async () => {
+  const { usoMensalDoCartao } = await import("../src/domain/previstos.js");
+  const cartao = { id: "pf", limiteTotalCentavos: 40000, usoMensalCentavos: 40000 };
+  assert.equal(usoMensalDoCartao(cartao, { transacoes: [], faturas: [], competenciaHoje: "2026-10" }).valorCentavos, 0);
+  assert.equal(usoMensalDoCartao({ ...cartao, usoMensalCentavos: 25000 }, { transacoes: [], faturas: [], competenciaHoje: "2026-10" }).valorCentavos, 25000);
+});

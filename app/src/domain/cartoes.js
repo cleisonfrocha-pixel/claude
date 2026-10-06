@@ -5,7 +5,7 @@
 // na fatura corrente.
 
 import { dataDeCompetencia } from "./tempo.js";
-import { dataVencimentoFatura } from "./transacoes.js";
+import { dataVencimentoFatura, totaisPorFatura } from "./transacoes.js";
 
 /** A partir de que valor de utilização o cartão entra em alerta.
  * §5 pede "destacar aproximação de limite" — dois degraus: atenção e
@@ -50,17 +50,16 @@ export function faturaParaPagamento(cartao, faturasEmAberto, dataPagamento) {
  * `transacao.faturaId`) — mesma exigência de domain/caixa.js.
  */
 export function calcularVisaoCartao({ cartao, transacoesDoCartao, faturasDoCartao, hoje }) {
-  const totalPorFatura = new Map();
-  for (const t of transacoesDoCartao || []) {
-    if (!t.faturaId) continue;
-    totalPorFatura.set(t.faturaId, (totalPorFatura.get(t.faturaId) || 0) + (Number(t.valorCentavos) || 0));
-  }
+  const totais = totaisPorFatura(transacoesDoCartao);
 
   const emAberto = (faturasDoCartao || [])
     .filter((f) => f.status !== "paga")
     .map((f) => ({
       ...f,
-      totalCentavos: totalPorFatura.get(f.id) || 0,
+      // O que ainda está em aberto nela (compras menos pagamento parcial): é o que ocupa limite.
+      totalCentavos: (totais.get(f.id) || {}).faltaCentavos || 0,
+      comprasCentavos: (totais.get(f.id) || {}).comprasCentavos || 0,
+      pagoCentavos: (totais.get(f.id) || {}).pagoCentavos || 0,
       vencimento: dataVencimentoFatura(cartao, f.competencia),
       fechada: faturaFechada(cartao, f, hoje),
     }))

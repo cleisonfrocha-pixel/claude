@@ -344,3 +344,15 @@ test("13.1: saldo novo de conta pelo chat grava a hora da conferência", () => {
   assert.equal(u.data.saldoInicialCentavos, 225298);
   assert.equal(u.data.saldoConferidoEm, "2026-09-26T17:16:00.000Z");
 });
+
+test("13.3 item 11: pagamento parcial de fatura deixa a fatura aberta com o resto", () => {
+  const e = estadoBase();
+  const r1 = montar([{ acao: "despesa", valor: "1.000,00", cartao: "roxinho", categoria: "moradia", descricao: "Compra", data: "2026-09-10" }], e);
+  for (const w of r1.escritas) if (w.op === "set") e[w.collection].push({ id: w.doc_id, ...w.data });
+  const f = e.faturas[0];
+  const r2 = montar([{ acao: "pagamento_fatura", valor: "400,00", cartao: "roxinho", conta: "nubank", data: "2026-09-26", competencia: f.competencia }], e);
+  assert.equal(r2.escritas.some((w) => w.collection === "faturas" && w.data.status === "paga"), false, "400 de 1.000 não quita");
+  for (const w of r2.escritas) if (w.op === "set") e[w.collection].push({ id: w.doc_id, ...w.data });
+  const r3 = montar([{ acao: "pagamento_fatura", valor: "600,00", cartao: "roxinho", conta: "nubank", data: "2026-09-27", competencia: f.competencia }], e);
+  assert.equal(r3.escritas.some((w) => w.collection === "faturas" && w.data.status === "paga"), true, "o resto quita");
+});

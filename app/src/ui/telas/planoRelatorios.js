@@ -76,7 +76,7 @@ function renderizar() {
 
   const cartoes = rel.cartoes.filter((c) => c.proximaFatura.jaNaFaturaCentavos > 0 || c.previstoCentavos > 0);
   const blocoCartoes = cartoes.length ? bloco("Cartões: o que já está na próxima fatura",
-    barrasRanking({ titulo: "Fatura em aberto por cartão", cor1: 1, linhas: cartoes.map((c) => ({ rotulo: c.apelido, valorCentavos: c.proximaFatura.jaNaFaturaCentavos, sub: `sai da conta dia ${c.proximaFatura.saiEm.slice(8, 10)}/${c.proximaFatura.saiEm.slice(5, 7)} · limite livre ${formatarBRL(c.limiteLivreCentavos)}${c.previstoCentavos ? ` · ${formatarBRL(c.previstoCentavos)} em compras ainda planejadas` : ""}` })) }),
+    barrasRanking({ titulo: "Fatura a pagar por cartão", cor1: 1, linhas: cartoes.map((c) => ({ rotulo: c.apelido, valorCentavos: c.proximaFatura.jaNaFaturaCentavos, sub: `sai da conta dia ${c.proximaFatura.saiEm.slice(8, 10)}/${c.proximaFatura.saiEm.slice(5, 7)} · limite livre ${formatarBRL(c.limiteLivreCentavos)}${c.previstoCentavos ? ` · ${formatarBRL(c.previstoCentavos)} em compras ainda planejadas` : ""}` })) }),
     ajudaHtml("Compra no cartão é compromisso, mas o dinheiro só sai da conta no dia em que você paga a fatura.")) : "";
 
   const d = rel.dividas;

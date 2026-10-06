@@ -145,3 +145,13 @@ test("13.1: desfazer a baixa tira a hora do movimento e o saldo volta", async ()
   await desfazerBaixa(d);
   assert.equal(await saldo(next), 225298);
 });
+
+test("13.3 item 12: editar a data de uma compra no cartão leva a compra para a fatura certa", async () => {
+  const { cartao } = await semear();
+  const { criarSimples, transacoes } = await import("../src/dados/transacoesRepo.js");
+  const id = await criarSimples({ tipo: "despesa", status: "pago", certeza: "confirmado", data: "2026-10-05", valorCentavos: 5000, cartaoId: cartao, contaId: null, descricao: "Farmácia", categoriaId: "c", pessoaId: "p" });
+  const fat = async () => { const t = (await db.listar("transacoes")).find((x) => x.id === id).dados; const f = (await db.listar("faturas")).find((x) => x.id === t.faturaId); return f.dados.competencia; };
+  assert.equal(await fat(), "2026-10"); // fecha dia 11
+  await transacoes.atualizar(id, { data: "2026-10-15" });
+  assert.equal(await fat(), "2026-11");
+});

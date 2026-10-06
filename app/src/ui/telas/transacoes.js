@@ -24,7 +24,7 @@ import { consumirAcao } from "../navegacao.js";
 import { filtrarTransacoes, haFiltroAtivo } from "../../domain/busca.js";
 import { baixarComPergunta } from "../baixaUI.js";
 import { perguntarSeQuita } from "../conciliarAoLancar.js";
-import { darBaixaTransacao } from "../../dados/baixaRepo.js";
+import { darBaixaTransacao, darBaixaEvento } from "../../dados/baixaRepo.js";
 
 /** Valor digitado num campo: recusa texto que não é dinheiro em vez de gravar R$ 0,00. */
 function valorDoCampo(id) {
@@ -762,6 +762,12 @@ async function onSubmitTransacao(ev) {
       // Se isso paga uma conta que já está na lista, dá baixa nela em vez de duplicar.
       const quita = await perguntarSeQuita(lancamento);
       if (quita === null) return;
+      if (quita?.evento) {
+        await darBaixaEvento(quita.evento, { valorCentavos: lancamento.valorCentavos, contaId: lancamento.contaId || null, cartaoId: lancamento.cartaoId || null, dataPagamento: lancamento.data });
+        mostrarToast("Lançado e ligado à conta prevista: ela não aparece mais como a pagar.");
+        fecharModal();
+        return;
+      }
       if (quita !== "novo") {
         await darBaixaTransacao(quita, { valorCentavos: lancamento.valorCentavos, contaId: lancamento.contaId || null, cartaoId: lancamento.cartaoId || null, dataPagamento: lancamento.data });
         mostrarToast("Conta paga: foi dada baixa na que já estava na lista.");

@@ -13,6 +13,7 @@
 // anterior?") feita sobre dois números diferentes.
 
 import { somarMeses } from "./tempo.js";
+import { totaisDaFatura } from "./transacoes.js";
 
 /** Recorrências cujo início cai exatamente na competência atual —
  * `inicio` é o mês em que o compromisso passa a valer (domain/esquema.js),
@@ -63,9 +64,7 @@ export function detectarAumentoCartao(cartoes, faturas, transacoes, competencia,
     const faturasDoCartao = (faturas || []).filter((f) => f.cartaoId === cartao.id);
     const totalPorCompetencia = new Map();
     for (const f of faturasDoCartao) {
-      const total = (transacoes || [])
-        .filter((t) => t.faturaId === f.id)
-        .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
+      const total = totaisDaFatura(transacoes, f.id).totalCentavos;
       totalPorCompetencia.set(f.competencia, total);
     }
     const atualCentavos = totalPorCompetencia.get(competencia) || 0;

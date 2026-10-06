@@ -56,9 +56,9 @@ test("detectarAumentoCartao: fatura muito acima da média das anteriores aparece
   const cartoes = [{ id: "c1", apelido: "Roxinho" }];
   const faturas = [fatura("f1", "c1", "2026-01"), fatura("f2", "c1", "2026-02"), fatura("f3", "c1", "2026-03")];
   const transacoes = [
-    { faturaId: "f1", valorCentavos: 100000 },
-    { faturaId: "f2", valorCentavos: 100000 },
-    { faturaId: "f3", valorCentavos: 300000 }, // mês atual, bem acima da média (100000)
+    { tipo: "despesa", faturaId: "f1", valorCentavos: 100000 },
+    { tipo: "despesa", faturaId: "f2", valorCentavos: 100000 },
+    { tipo: "despesa", faturaId: "f3", valorCentavos: 300000 }, // mês atual, bem acima da média (100000)
   ];
   const r = detectarAumentoCartao(cartoes, faturas, transacoes, "2026-03");
   assert.equal(r.length, 1);
@@ -69,7 +69,7 @@ test("detectarAumentoCartao: fatura muito acima da média das anteriores aparece
 test("detectarAumentoCartao: sem histórico de faturas anteriores, não aparece", () => {
   const cartoes = [{ id: "c1", apelido: "Roxinho" }];
   const faturas = [fatura("f1", "c1", "2026-03")];
-  const transacoes = [{ faturaId: "f1", valorCentavos: 300000 }];
+  const transacoes = [{ tipo: "despesa", faturaId: "f1", valorCentavos: 300000 }];
   assert.deepEqual(detectarAumentoCartao(cartoes, faturas, transacoes, "2026-03"), []);
 });
 
@@ -77,8 +77,8 @@ test("detectarAumentoCartao: gasto normal (dentro da média), não aparece", () 
   const cartoes = [{ id: "c1", apelido: "Roxinho" }];
   const faturas = [fatura("f1", "c1", "2026-02"), fatura("f2", "c1", "2026-03")];
   const transacoes = [
-    { faturaId: "f1", valorCentavos: 100000 },
-    { faturaId: "f2", valorCentavos: 105000 },
+    { tipo: "despesa", faturaId: "f1", valorCentavos: 100000 },
+    { tipo: "despesa", faturaId: "f2", valorCentavos: 105000 },
   ];
   assert.deepEqual(detectarAumentoCartao(cartoes, faturas, transacoes, "2026-03"), []);
 });

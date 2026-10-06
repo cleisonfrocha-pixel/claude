@@ -13,6 +13,7 @@ import { competenciaFatura, dataVencimentoFatura, dataPagamentoPrevisto } from "
 import { dataDaParcela, parcelasRestantes } from "./dividas.js";
 import { leituraDaFonte } from "./pisoDaRenda.js";
 import { repartirVerba } from "./calendario.js";
+import { jaLancadoSemVinculo } from "./conciliacao.js";
 
 const MESES_PISO_VARIAVEL = 3;
 const MESES_MINIMOS_HISTORICO = 3;
@@ -75,6 +76,10 @@ export function usoMensalDoCartao(cartao, { transacoes, faturas, competenciaHoje
     if (totais.length === 3) break;
   }
   if (totais.length >= 2) return { valorCentavos: Math.round(totais.reduce((a, b) => a + b, 0) / totais.length), baseadoEmMeses: totais.length, origem: "faturas" };
+  // Uso informado igual ao limite (ou acima) sem nenhuma fatura que mostre isso é o limite copiado no
+  // campo errado, não uso de verdade: projetaria 100% do limite todo mês. Vale só o que já está lançado.
+  const limite = Number(cartao.limiteTotalCentavos) || 0;
+  if (limite > 0 && informado >= limite) return { valorCentavos: 0, baseadoEmMeses: 0, origem: "cadastro igual ao limite (ignorado)" };
   return { valorCentavos: informado, baseadoEmMeses: 0, origem: "cadastro" };
 }
 
@@ -165,6 +170,7 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
     for (const c of comps) {
       if (f.fim && c > f.fim) continue; // contrato acabou: não projeta além do último mês
       if (receitas.some((t) => t.competencia === c && t.status !== "cancelado")) continue;
+      if (jaLancadoSemVinculo({ tipo: "receita", valorCentavos: valor.valorCentavos, nomes: [f.nome], contaId: f.contaId, competencia: c, tolerancia: 0.15 }, lista, "fonteRendaId")) continue;
       const dataOriginal = dataDeCompetencia(c, dia);
       // Dia esperado já passou neste mês e ninguém confirmou o recebimento:
       // não some do calendário, pesa hoje como atrasado (mesmo tratamento
@@ -210,6 +216,8 @@ export function eventosFuturos({ transacoes, dividas, recorrencias, fontesRenda,
       if (r.inicio && c < r.inicio) continue;
       if (r.fim && c > r.fim) continue;
       if (lista.some((t) => t.recorrenciaId === r.id && t.competencia === c)) continue;
+      // Conta e parcela NÃO casam sozinhas por nome e valor: no dado real isso juntava o Vivo de setembro
+      // pago em 02/10 com o de outubro, e a Brena do Gedi com a do Del Poente. Só renda casa (abaixo).
       const dataLancamento = dataDeCompetencia(c, r.diaBase);
       // Mês que já passou sem o lançamento gerado não vira cobrança
       // retroativa: só projeta daqui pra frente.

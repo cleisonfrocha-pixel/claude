@@ -5,7 +5,7 @@
 
 const ABERTO = new Set(["previsto", "agendado", "atrasado"]);
 
-function palavras(texto) {
+export function palavras(texto) {
   return new Set((texto || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").split(/[^a-z0-9]+/).filter((p) => p.length >= 3 && !/^(set|out|nov|dez|jan|fev|mar|abr|mai|jun|jul|ago|conta|pagamento)$/.test(p)));
 }
 
@@ -16,8 +16,8 @@ function diasEntre(a, b) {
 /**
  * Contas abertas que o lançamento provavelmente quita, da mais provável para a
  * menos (até 3). `lancamento`: { tipo, valorCentavos, descricao, data }.
- * Casa por nome parecido (palavra em comum) ou por valor perto (±15%) com
- * vencimento perto (±10 dias) ou conta já atrasada.
+ * Casa só quando o nome é parecido (palavra em comum) e o valor é perto (até 30%),
+ * com vencimento a até 45 dias. Verba do mês casa pelo nome ou pela categoria.
  */
 export function candidatosDePagamento(lancamento, transacoes, { hoje } = {}) {
   const valor = Number(lancamento.valorCentavos) || 0;
@@ -37,14 +37,34 @@ export function candidatosDePagamento(lancamento, transacoes, { hoje } = {}) {
       if (mesmoMes && (nomeBate || mesmaCategoria)) saida.push({ transacao: t, parecido: true, verba: true, diferenca: 0, dias: 0, pontos: -1 });
       continue;
     }
+    // Só sugere quando o nome E o valor batem (item 63 da lista de 05/10: R$ 100 sugeria Vivo,
+    // Claude e DAS só porque o valor era perto). Conta que varia (luz, água) aceita até 30%.
     const dif = Math.abs(v - valor) / v;
     const parecido = [...palavras(t.descricao)].some((p) => pal.has(p));
     const dias = Math.abs(diasEntre(t.data, lancamento.data || hoje || t.data));
-    const atrasada = t.status === "atrasado" || (hoje && t.data < hoje && !t.semDia);
-    const valorBate = dif <= 0.15 && (dias <= 10 || atrasada);
-    if (!parecido && !valorBate) continue;
-    if (parecido && (dif > 0.6 || dias > 45)) continue;
-    saida.push({ transacao: t, parecido, diferenca: dif, dias, pontos: (parecido ? 0 : 1000) + dif * 100 + dias });
+    if (!parecido || dif > 0.3 || dias > 45) continue;
+    saida.push({ transacao: t, parecido, diferenca: dif, dias, pontos: dif * 100 + dias });
   }
   return saida.sort((a, b) => a.pontos - b.pontos).slice(0, 3);
+}
+
+/**
+ * O compromisso que um evento previsto representa (renda da fonte, conta da recorrência, parcela da
+ * dívida) já foi lançado no mês sem o vínculo? Lançamento manual ou de extrato não grava o id da
+ * fonte, da recorrência ou da dívida, e o previsto continuava aparecendo: o salário de R$ 5.000
+ * virava R$ 10.000 na projeção. Casa quando, no mesmo mês, há lançamento do mesmo tipo, ainda sem
+ * vínculo, com valor perto (`tolerancia`) e nome parecido (ou a mesma conta, para renda).
+ */
+export function jaLancadoSemVinculo({ tipo, valorCentavos, nomes, contaId, competencia, tolerancia = 0.2 }, lista, campoVinculo) {
+  const alvo = Number(valorCentavos) || 0;
+  if (!(alvo > 0)) return null;
+  const pal = new Set(nomes.flatMap((n) => [...palavras(n)]));
+  return (lista || []).find((t) => {
+    if (t.tipo !== tipo || t.status === "cancelado" || t[campoVinculo] || t.semDia) return false;
+    if ((t.competencia || (t.data || "").slice(0, 7)) !== competencia) return false;
+    const v = Number(t.valorCentavos) || 0;
+    if (Math.abs(v - alvo) / alvo > tolerancia) return false;
+    const nome = [...palavras(t.descricao)].some((p) => pal.has(p));
+    return nome || (tipo === "receita" && contaId && t.contaId === contaId && t.status === "pago");
+  }) || null;
 }

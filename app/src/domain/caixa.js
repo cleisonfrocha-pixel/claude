@@ -8,7 +8,7 @@
 // compõem, nunca uma caixa preta.
 
 import { somarDias } from "./tempo.js";
-import { efeitoNaConta, dataVencimentoFatura, statusEfetivo } from "./transacoes.js";
+import { efeitoNaConta, dataVencimentoFatura, statusEfetivo, totaisPorFatura } from "./transacoes.js";
 import { compromissosPorDia } from "./calendario.js";
 import { eventosFuturos } from "./previstos.js";
 
@@ -81,15 +81,14 @@ export function calcularComprometido({ transacoes, faturas, cartoes, hoje, horiz
   }
 
   const cartaoPorId = new Map((cartoes || []).map((c) => [c.id, c]));
+  const totais = totaisPorFatura(transacoes);
   for (const f of faturas || []) {
     if (f.status === "paga") continue;
     const cartao = cartaoPorId.get(f.cartaoId);
     if (!cartao) continue;
     const vencimento = dataVencimentoFatura(cartao, f.competencia);
     if (vencimento > horizonteAte) continue;
-    const totalFatura = (transacoes || [])
-      .filter((t) => t.faturaId === f.id)
-      .reduce((s, t) => s + (Number(t.valorCentavos) || 0), 0);
+    const totalFatura = (totais.get(f.id) || {}).faltaCentavos || 0;
     if (totalFatura <= 0) continue;
     itens.push({
       tipo: "fatura", descricao: `Fatura ${cartao.apelido || "do cartão"}`, valorCentavos: totalFatura,

@@ -5,7 +5,7 @@
 // Duas perguntas, uma depois da outra: que dias têm compromisso (e quanto),
 // e — caminhando o saldo dia a dia — em que dia isso aperta de verdade.
 
-import { dataVencimentoFatura, dataPagamentoPrevisto, statusEfetivo } from "./transacoes.js";
+import { dataVencimentoFatura, dataPagamentoPrevisto, statusEfetivo, totaisPorFatura } from "./transacoes.js";
 import { diasNoMes, dataDeCompetencia, somarDias } from "./tempo.js";
 import { lerVerbas } from "./verbas.js";
 
@@ -88,17 +88,14 @@ export function compromissosPorDia({ transacoes, faturas, cartoes, de, ate, hoje
     // despesa em cartão: ignorada aqui de propósito — ver fatura abaixo.
   }
 
-  const totalPorFatura = new Map();
-  for (const t of transacoes || []) {
-    if (!t.faturaId) continue;
-    totalPorFatura.set(t.faturaId, (totalPorFatura.get(t.faturaId) || 0) + (Number(t.valorCentavos) || 0));
-  }
+  const totais = totaisPorFatura(transacoes);
   const cartaoPorId = new Map((cartoes || []).map((c) => [c.id, c]));
   for (const f of faturas || []) {
     if (f.status === "paga") continue;
     const cartao = cartaoPorId.get(f.cartaoId);
     if (!cartao) continue;
-    const total = totalPorFatura.get(f.id) || 0;
+    // Só o que ainda falta pagar dela: pagamento parcial já saiu da conta.
+    const total = (totais.get(f.id) || {}).faltaCentavos || 0;
     if (total <= 0) continue;
     const vencimento = dataVencimentoFatura(cartao, f.competencia);
     const saida = dataPagamentoPrevisto(cartao, f.competencia);

@@ -57,3 +57,31 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
   confirmado, provável, atrasadas, contas com data, parcelas, cartões, o que falta das verbas, dia a dia.
 - **Dado real (06/10):** "pode gastar até 07/10" foi de -R$ 1.410,77 para R$ 1.657,82. O primeiro dia negativo
   passou de hoje para 15/10 (-R$ 1.060,79, pesam as camisetas de R$ 1.400 e as compras do ML).
+
+### 13.3 Vínculos, faturas e parcelas (feita, 06/10)
+
+- **Item 10.** `totaisPorFatura` em `domain/transacoes.js` é a conta única da fatura: compras (sem canceladas),
+  pago, o que falta, total e o pedaço sem detalhe. Caixa, calendário, contas do mês, cartões e anomalias usam ela.
+- **Item 11.** Pagamento parcial não quita mais a fatura (no app e na ferramenta do chat): ela fica aberta com o
+  resto, e só o resto pesa no caixa. O casal de teste pagava menos que as faturas de agosto e setembro e o painel
+  escondia a diferença; o fixture passou a pagar o valor certo.
+- **Item 12.** Editar data ou cartão de uma compra recalcula a fatura e o mês (parcela mantém o deslocamento).
+- **Item 14.** Pagar hoje a parcela atrasada de setembro gravava o pagamento como outubro e escondia a parcela de
+  outubro. Agora o lançamento leva o mês do vencimento. O contador `parcelasPagas` continua (há parcelas pagas
+  antes do painel, como as 20 do Jeep, que não existem como lançamento); a troca por valor derivado fica para a 13.5.
+- **Item 9.** Renda lançada à mão ou do extrato sem vínculo (o salário) não faz a fonte aparecer de novo no mês:
+  casa por nome e valor (15%) ou pela conta da fonte. Conta mensal e parcela **não** casam sozinhas: no dado real
+  isso juntaria o Vivo de setembro pago em 02/10 com o de outubro, e a Brena, a Giu e o Felipe do Gedi com os do
+  Del Poente. Para esses, o vínculo é gravado no Lançar: o "isso paga uma conta?" agora oferece também as contas
+  que ainda só existem no cadastro (renda da fonte, parcela, conta mensal); escolher grava o lançamento ligado
+  (conferido no navegador: o salário da Carolina lançado à mão ficou com `fonteRendaId`).
+- **Item 63.** A sugestão só aparece quando nome **e** valor batem (até 30%). R$ 100 de mercado não sugere mais
+  Vivo, Claude nem DAS.
+- **Item 26.** Fatura paga com detalhe parcial: o pedaço sem compra lançada entra como "cartão sem detalhe" no
+  histórico do ano e no orçamento (antes sumia; no dado real eram R$ 5.072,74). `parteSemDetalhePorPagamento`.
+- **Item 27.** A tela Cartões já mostra a da Shopee como "Fechada · vence 10/10". O "aberta" do banco quer dizer
+  "não paga". O relatório passou a dizer "Fatura a pagar por cartão".
+- **Item 28.** Uso mensal informado igual ao limite, sem fatura que mostre isso, é ignorado (Nubank PF projetava
+  R$ 400 todo mês). Com 2 ou mais faturas fechadas vale a média real (Nubank PJ R$ 3.174,85, Shopee R$ 1.403,51).
+- **Para a 13.10 (dado):** DAS "(setembro)" previsto em outubro sem vínculo com a recorrência do DAS: aparece duas
+  vezes na projeção (R$ 86,05).
