@@ -88,7 +88,7 @@ export async function abrirComoResolver({ divida, pessoaNome = "", aoFecharAcord
         <li>Pague no Pix (à vista) ou escolha parcelar. O acordo só vale depois do pagamento.</li>` : `<li>Peça ao credor, por escrito, o valor de quitação de hoje e até quando vale. Confira se bate com <span data-valor>${of ? formatarBRL(of.valorCentavos) : "o cadastrado"}</span>.</li>
         <li>Se não cabe à vista, pergunte o parcelamento da mesma oferta. Quanto mais parcelas, menos desconto costuma ter.</li>`}
         <li>Volte aqui e toque em <b>Fechei o acordo</b>: ele vira uma conta a pagar na data que você escolher e entra no seu caixa.</li>
-        <li>Quando pagar, toque em <b>Paguei</b> em A pagar: a dívida baixa e o nome limpa no painel.</li>
+        <li>Quando pagar, toque em <b>Paguei</b> em A pagar: a dívida diminui e o nome limpa no painel.</li>
       </ol>
       <h3 class="dv-passo-titulo">Quer renegociar?</h3>
       <ul class="dv-lista">

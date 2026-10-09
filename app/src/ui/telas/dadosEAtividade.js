@@ -1,6 +1,7 @@
 // Configurações › Dados: levar uma cópia completa embora e ver o que mudou
 // por último. Nada aqui altera dado.
 
+import { hojeISO } from "../../domain/tempo.js";
 import { exportarJSON, exportarTransacoesCSV, atividade } from "../../dados/exportacaoRepo.js";
 import { abrir as abrirModal, fechar as fecharModal } from "../modal.js";
 import { escapeHtml, mostrarToast } from "../utilitarios.js";
@@ -47,7 +48,7 @@ export default {
 
 async function exportar(tipo) {
   const texto = tipo === "json" ? await exportarJSON() : await exportarTransacoesCSV();
-  const nome = `painel-financeiro-${new Date().toISOString().slice(0, 10)}.${tipo}`;
+  const nome = `painel-financeiro-${hojeISO()}.${tipo}`;
   abrirModal(`
     <div class="modal">
       <h2>Sua cópia está pronta</h2>

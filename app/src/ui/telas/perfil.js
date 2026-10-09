@@ -30,7 +30,7 @@ function renderizar() {
     <section class="inicio-bloco" data-sec="${escapeHtml(s.id)}">
       <h3>${escapeHtml(s.titulo)}</h3>
       <p class="tela-sub" style="white-space:pre-wrap;color:var(--text);margin:0 0 8px;">${escapeHtml(s.texto)}</p>
-      <button class="btn-mini" data-a="editar">Editar</button> <button class="btn-mini perigo" data-a="apagar">Apagar</button>
+      <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary><div class="menu-mais-lista"><button class="btn-mini" data-a="editar">Editar</button><button class="btn-mini perigo" data-a="apagar">Apagar</button></div></details>
     </section>`;
   const nova = editando === "nova" ? secao({ id: "nova", titulo: "", texto: "" }) : "";
   container.innerHTML = `

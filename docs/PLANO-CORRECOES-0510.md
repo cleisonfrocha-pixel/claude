@@ -190,3 +190,19 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - **Item 83.** Plano tem 3 abas: Plano, Ano (Meu ano, Evolução, Relatórios, Por pessoa, em seções) e Metas
   (metas + patrimônio). Destinos antigos redirecionam.
 - Conferido no navegador com o estado real (390 px), sem erro de página. 597 testes passando.
+
+### 13.9 Textos, fonte e telas que não se atualizam (feita, 09/10)
+
+- **Item 17.** O contexto das telas de cadastro (Cartões, Dívidas, Contas) é lido de novo a cada mudança de
+  lançamento ou fatura (`assinarTambem`), então cancelar um resumo ou pagar uma parcela atualiza na hora. O painel de
+  decisões também assina cartões e faturas. Objetivos e patrimônio já assinavam lançamentos, contas e dívidas.
+- **Itens 84 e 85.** "Retrato", "baixar", "livre garantido", "cobertura" e "sobra depois do essencial" saíram dos
+  textos. O botão "i" deixou de existir (`ajudaHtml` devolve vazio): quando o título precisa de ajuda, o título muda.
+- **Item 86.** Dinheiro (13.7) e Plano (13.8) abrem sem título repetido em cima das abas.
+- **Item 87.** Editar e Apagar ficam no menu "⋯" em Renda, Patrimônio, Metas e Perfil (os cadastros e
+  lançamentos já estavam desde a 13.7); Apagar em vermelho dentro do menu.
+- **Item 88.** Poppins e IBM Plex Mono vêm de `estilo/fontes/` (woff2, só o latim, ~80 KB), pela mesma origem. Não há
+  mais chamada a serviço externo de fonte.
+- **Item 89.** Leitura em andamento antes de uma gravação não pode mais guardar no cache o resultado velho
+  (`versaoEscrita` por coleção em `dados/db.js`). Teste `testes/dbCache.test.js` falha sem a correção.
+- **Item 90.** O nome do arquivo exportado usa a data local (`hojeISO`), não a UTC.

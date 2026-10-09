@@ -83,8 +83,12 @@ function cartaoFonte(f, painel) {
       ${!f.ativa ? `<span class="item-tag inativa">inativa</span>` : ""}
       <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" data-id="${escapeHtml(f.id)}" aria-expanded="${aberto}">${aberto ? "Fechar" : "Detalhes"}</button>
       <div class="item-acoes">
-        <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(f.id)}" >Editar</button>
-        <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(f.id)}" >Apagar</button>
+        <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+          <div class="menu-mais-lista">
+            <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(f.id)}">Editar</button>
+            <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(f.id)}">Apagar</button>
+          </div>
+        </details>
       </div>
     </div>
     ${aberto ? `<div class="item-extra">${detalheFonte(f, painel)}</div>` : ""}`;

@@ -127,7 +127,7 @@ export function diagnosticarCausaDeficit({ rendaAtualCentavos, custoEssencialCen
     if (comprometimentoMensalDividasCentavos > 0 && sobraAposEssencial < comprometimentoMensalDividasCentavos) {
       causas.push({
         tipo: "divida",
-        titulo: "O que sobra depois do essencial não cobre as parcelas de dívida",
+        titulo: "Depois do essencial, o que sobra não paga as parcelas de dívida",
         dados: { sobraAposEssencial, comprometimentoMensalDividasCentavos, faltaCentavos: comprometimentoMensalDividasCentavos - sobraAposEssencial },
       });
     }

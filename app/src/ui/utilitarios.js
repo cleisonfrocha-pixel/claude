@@ -21,10 +21,10 @@ export function iniciais(nome) {
   return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
 }
 
-/** Botãozinho "i" que abre uma explicação curta, em linguagem simples, ao
- * lado de um número ou título. Sem JavaScript: é um <details>. */
-export function ajudaHtml(texto) {
-  return `<details class="ajuda"><summary aria-label="O que é isto?">i</summary><span class="ajuda-texto">${escapeHtml(texto)}</span></details>`;
+/** Antes era um botão "i" ao lado de cada título (lista de 05/10, item 85): se o título precisa de ajuda
+ * para ser entendido, o título é que muda. Fica como função vazia para os chamadores antigos não quebrarem. */
+export function ajudaHtml() {
+  return "";
 }
 
 let toastTimer = null;

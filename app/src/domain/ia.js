@@ -73,7 +73,7 @@ export function limitarRetrato(linhas, limite = LIMITE_RETRATO_CARACTERES) {
   for (const l of linhas) {
     total += l.fonte.length + l.texto.length + 4;
     if (total > limite) {
-      saida.push({ fonte: "Aviso", texto: "O retrato foi cortado por ser grande: parte dos dados não está aqui. Diga que não tem esse dado em vez de supor." });
+      saida.push({ fonte: "Aviso", texto: "Os dados foram cortados por ser grande: parte dos dados não está aqui. Diga que não tem esse dado em vez de supor." });
       break;
     }
     saida.push(l);
@@ -93,7 +93,7 @@ export const INSTRUCOES_IA = `Você é o assistente do painel financeiro de uma 
 export function montarTurnos({ retrato, historico, pergunta }) {
   const dados = retrato.map((l) => `[${l.fonte}] ${l.texto}`).join("\n");
   const extra = retrato.some((l) => l.fonte.startsWith("Perfil")) ? instrucoesDoPerfil(true) : "";
-  const base = `${INSTRUCOES_IA}${extra}\n\nDADOS (retrato atual do painel, calculado agora):\n${dados}`;
+  const base = `${INSTRUCOES_IA}${extra}\n\nDADOS (números atuais do painel, calculado agora):\n${dados}`;
   const recente = (historico || []).slice(-6);
   const turnos = [{ role: "user", content: base }];
   if (recente.length) turnos.push({ role: "assistant", content: "Entendi as regras e li os dados. Pode perguntar." });

@@ -145,7 +145,7 @@ export async function darBaixaEvento(evento, { valorCentavos, contaId, cartaoId,
     const criadaId = await criarSimples({ ...base, ...dados, ...(dados.cartaoId ? { data: quando } : {}) });
     return { criadaId, restoId: await criarResto({ ...dados, ...(dados.cartaoId ? {} : {}) }) };
   }
-  throw new Error("Esse item é uma estimativa, não um compromisso que dá pra baixar.");
+  throw new Error("Esse item é uma estimativa, não um compromisso que dá pra marcar como pago.");
 }
 
 /** Muda valor, dia e conta de um compromisso que ainda é só previsão (renda esperada, parcela de

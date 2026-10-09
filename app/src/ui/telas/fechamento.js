@@ -80,7 +80,7 @@ function renderizar() {
         <div><span>Dívidas</span><b class="mono" data-valor>${formatarBRL(p.passivosCentavos)}</b>
           ${p.variacaoDividaCentavos != null ? `<small data-valor>${sinal(p.variacaoDividaCentavos)}${formatarBRL(Math.abs(p.variacaoDividaCentavos))} no mês</small>` : ""}</div>
       </div>`
-    : `<p class="tela-sub" style="margin:0;">Este mês não tem retrato de patrimônio guardado.</p>`);
+    : `<p class="tela-sub" style="margin:0;">Este mês ainda não tem o patrimônio guardado.</p>`);
 
   const decisoes = bloco("Decisões tomadas no mês", f.decisoesDoMes.length
     ? `<div class="inicio-lista">${f.decisoesDoMes.map((d) => `<div class="inicio-linha" style="grid-template-columns:1fr auto;"><span class="inicio-desc">${escapeHtml(d.titulo || d.id)}</span><small>${escapeHtml(d.status)}</small></div>`).join("")}</div>`

@@ -94,11 +94,17 @@ const cacheLeitura = new Map(); // caminho -> { lista, em }
 const emVoo = new Map(); // caminho -> Promise
 const assinaturasAtivas = new Map(); // caminho -> quantidade
 
-function guardar(caminho, lista) {
+// Versão por coleção: uma leitura que começou antes de uma escrita não pode guardar o resultado velho
+// no cache depois dela (lista de 05/10, item 89).
+const versaoEscrita = new Map();
+
+function guardar(caminho, lista, versaoDaLeitura) {
+  if (versaoDaLeitura !== undefined && versaoDaLeitura !== (versaoEscrita.get(caminho) || 0)) return;
   cacheLeitura.set(caminho, { lista, em: Date.now() });
 }
 
 function invalidar(caminho) {
+  versaoEscrita.set(caminho, (versaoEscrita.get(caminho) || 0) + 1);
   cacheLeitura.delete(caminho);
 }
 
@@ -113,14 +119,18 @@ export async function listar(caminho) {
     const c = cacheLeitura.get(caminho);
     const viva = (assinaturasAtivas.get(caminho) || 0) > 0;
     if (c && (Date.now() - c.em < TTL_LEITURA_MS || (viva && c.assinada))) return c.lista.slice();
+    if (emVoo.has(caminho) && emVoo.get(caminho).versao !== (versaoEscrita.get(caminho) || 0)) emVoo.delete(caminho);
     if (!emVoo.has(caminho)) {
-      emVoo.set(caminho, (async () => {
+      const versao = versaoEscrita.get(caminho) || 0;
+      const promessa = (async () => {
         const db = await dbPromise;
         const snap = await db.collection(caminho).get();
         const lista = snap.docs.filter((d) => d.exists).map((d) => ({ id: d.id, dados: d.data() }));
-        guardar(caminho, lista);
+        guardar(caminho, lista, versao);
         return lista;
-      })().finally(() => emVoo.delete(caminho)));
+      })().finally(() => { if (emVoo.get(caminho) === promessa) emVoo.delete(caminho); });
+      promessa.versao = versao;
+      emVoo.set(caminho, promessa);
     }
     return (await emVoo.get(caminho)).slice();
   }

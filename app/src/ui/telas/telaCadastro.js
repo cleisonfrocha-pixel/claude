@@ -60,10 +60,17 @@ export function criarTelaCadastro(config) {
     }
 
     if (pararAssinatura) pararAssinatura();
-    pararAssinatura = config.repo.assinar((lista) => {
-      itens = lista;
-      renderizarLista();
-    });
+    // O contexto (transações, dívidas...) é lido de novo a cada mudança do cadastro ou de qualquer repo
+    // listado em `assinarTambem`: pagar uma parcela ou cancelar um resumo atualiza a tela na hora (item 17).
+    const recarregar = async () => {
+      if (config.carregarContexto) {
+        try { contexto = (await config.carregarContexto()) || contexto; } catch (e) { console.error(e); }
+      }
+      if (containerAtual) renderizarLista();
+    };
+    const paradas = [config.repo.assinar((lista) => { itens = lista; recarregar(); })];
+    for (const r of config.assinarTambem || []) paradas.push(r.assinar(() => { if (itens.length) recarregar(); }));
+    pararAssinatura = () => paradas.forEach((f) => f());
   }
 
   function desmontar() {

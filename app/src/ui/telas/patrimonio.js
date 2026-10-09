@@ -75,8 +75,12 @@ function cartaoAtivo(a) {
       <div class="item-valor mono" data-valor>${formatarBRL(a.valorAtualCentavos)}</div>
       <div class="item-acoes">
         ${["veiculo", "imovel"].includes(a.classe) ? `<button class="btn-mini btn-extra" data-acao="vender" data-id="${escapeHtml(a.id)}">E se eu vender?</button>` : ""}
-        <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(a.id)}" >Editar</button>
-        <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(a.id)}" >Apagar</button>
+        <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+          <div class="menu-mais-lista">
+            <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(a.id)}">Editar</button>
+            <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(a.id)}">Apagar</button>
+          </div>
+        </details>
       </div>
     </div>`;
 }

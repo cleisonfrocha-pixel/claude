@@ -26,6 +26,7 @@ const ROTULO_TIPO = {
 
 export default criarTelaCadastro({
   repo: contas,
+  assinarTambem: [transacoes],
   titulo: "Contas",
   subtitulo: "Onde o dinheiro está, por instituição. A base da clareza de caixa.",
   rotuloNovo: "Nova conta",

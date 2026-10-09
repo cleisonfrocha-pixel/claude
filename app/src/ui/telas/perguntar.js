@@ -58,7 +58,7 @@ function renderizar() {
       <button class="btn btn-ghost" type="button" id="ia-parar" hidden>Parar</button>
     </form>
     <details class="bloco-recolhivel" id="ia-dados" style="margin-top:14px;">
-      <summary><span class="titulo">Dados que a IA lê</span><span class="resumo">O retrato do painel que vai junto com cada pergunta</span></summary>
+      <summary><span class="titulo">Dados que a IA lê</span><span class="resumo">Os números do painel que vão junto com cada pergunta</span></summary>
       <div class="conteudo" id="ia-dados-corpo"><p class="tela-sub">Carregando…</p></div>
     </details>`;
 }

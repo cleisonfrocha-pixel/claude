@@ -210,8 +210,12 @@ export function assinarPainelDecisoes(cb) {
   const pararFontesRenda = fontesRenda.assinar(recalcular);
   const pararRecorrencias = recorrencias.assinar(recalcular);
   const pararAtivos = ativos.assinar(recalcular);
+  const pararCartoes = cartoes.assinar(recalcular);
+  const pararFaturas = faturas.assinar(recalcular);
   const pararDecisoes = db.assinar(CAMINHO_DECISOES, recalcular);
   return () => {
+    pararCartoes();
+    pararFaturas();
     cancelada = true;
     pararContas();
     pararTransacoes();

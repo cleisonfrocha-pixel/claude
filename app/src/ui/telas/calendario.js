@@ -163,7 +163,7 @@ function renderizarDetalhe() {
           <b class="${item.tipo === "receita" ? "valor-pos" : "valor-neg"}" data-valor>${item.tipo === "receita" ? "+" : "−"}${formatarBRL(item.valorCentavos)}</b>
           ${podeBaixar(item) ? `<button class="btn-mini btn-baixa" data-baixa-evento="${info.itens.indexOf(item)}">${item.tipo === "receita" ? "Recebi" : "Paguei"}</button>` : ""}
         </div>`).join("")}
-      ${!info.coberto ? `<div class="erro-form" style="margin-top:10px;">Saldo projetado negativo neste dia: obrigação sem cobertura suficiente.</div>` : ""}
+      ${!info.coberto ? `<div class="erro-form" style="margin-top:10px;">Saldo projetado negativo neste dia: as contas do dia passam do dinheiro que você tem.</div>` : ""}
     </div>`;
   alvo.querySelectorAll("[data-baixa-evento]").forEach((btn) => {
     btn.addEventListener("click", async () => {

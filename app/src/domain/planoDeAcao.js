@@ -76,7 +76,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
       titulo: `Limpar o nome: ${ofertas.length} ${ofertas.length === 1 ? "oferta" : "ofertas"} na mesa`,
       texto: livre >= menor
         ? `Dá para fechar a primeira agora (${BRL(ofertas[0].valorCentavos)}). Fechar todas custa ${BRL(panorama.totalOfertasCentavos)} e economiza ${BRL(panorama.economiaCentavos)}.`
-        : `Hoje o livre garantido é ${BRL(livre)}, menos que a menor oferta (${BRL(menor)}). Fechar todas custa ${BRL(panorama.totalOfertasCentavos)} e economiza ${BRL(panorama.economiaCentavos)}: separe um valor por mês para isso.`,
+        : `Hoje o que você pode gastar com segurança é ${BRL(livre)}, menos que a menor oferta (${BRL(menor)}). Fechar todas custa ${BRL(panorama.totalOfertasCentavos)} e economiza ${BRL(panorama.economiaCentavos)}: separe um valor por mês para isso.`,
       valorCentavos: panorama.totalOfertasCentavos,
       detalhes: ofertas.slice(0, 4).map((o) => `${o.credor || o.nome}: ${BRL(o.valorCentavos)} (−${o.descontoPct}%)`),
       destino: { modulo: "dividas" },

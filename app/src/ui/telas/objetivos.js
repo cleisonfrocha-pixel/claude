@@ -47,8 +47,12 @@ function cartaoObjetivo(o) {
       <span class="item-tag${o.compativel ? "" : " critico"}">${o.compativel ? "no ritmo" : "fora do ritmo"}</span>
       <button class="btn-mini${aberto ? " ativo" : ""}" data-acao="expandir" data-id="${escapeHtml(o.id)}" aria-expanded="${aberto}">${aberto ? "Fechar" : "Detalhes"}</button>
       <div class="item-acoes">
-        <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(o.id)}" >Editar</button>
-        <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(o.id)}" >Apagar</button>
+        <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+          <div class="menu-mais-lista">
+            <button class="btn-mini" data-acao="editar" data-id="${escapeHtml(o.id)}">Editar</button>
+            <button class="btn-mini perigo" data-acao="apagar" data-id="${escapeHtml(o.id)}">Apagar</button>
+          </div>
+        </details>
       </div>
     </div>
     ${aberto ? `<div class="item-extra" data-extra-id="${escapeHtml(o.id)}">${detalheObjetivo(o)}</div>` : ""}`;

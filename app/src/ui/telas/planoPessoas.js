@@ -68,7 +68,7 @@ function cartaoPessoa(p) {
         </div>
       </div>
       <div class="pessoa-destaque ${n.coberturaCentavos < 0 ? "negativo" : ""}">
-        <span>${n.coberturaCentavos < 0 ? "Falta pra cobrir o essencial e as parcelas" : "Sobra depois do essencial e das parcelas"} ${ajudaHtml("Considera só o gasto essencial e as parcelas, pra saber quem cobre quem. A \"Sobra do mês\" abaixo desconta todos os gastos.")}</span>
+        <span>${n.coberturaCentavos < 0 ? "Falta pra cobrir o essencial e as parcelas" : "Sobra, depois do essencial e das parcelas"} ${ajudaHtml("Considera só o gasto essencial e as parcelas, pra saber quem cobre quem. A \"Sobra do mês\" abaixo desconta todos os gastos.")}</span>
         <b data-valor>${brl(Math.abs(n.coberturaCentavos))}</b>
       </div>
       ${linha("Renda do mês", `<span class="valor-pos">${brl(n.rendaCentavos)}</span>`, n.rendaProvavelCentavos ? `${formatarBRL(n.rendaConfirmadaCentavos)} recebidos + ${formatarBRL(n.rendaProvavelCentavos)} esperados` : "")}

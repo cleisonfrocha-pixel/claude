@@ -7,7 +7,7 @@
 import { pessoas, contas } from "../../dados/repositorios.js";
 import { assinarInicio } from "../../dados/inicioRepo.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
-import { formatarData, competenciaLabel, somarDias } from "../../domain/tempo.js";
+import { formatarData, competenciaLabel, somarDias, hojeISO } from "../../domain/tempo.js";
 import { escapeHtml } from "../utilitarios.js";
 import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
@@ -184,7 +184,7 @@ function blocoPrazos(prazos) {
 function renderizar() {
   if (!container || !estadoInicio) return;
   const { caixa, contasMes, prazos } = estadoInicio;
-  const hoje = estadoInicio.hoje || caixa.pontos?.[0]?.data || new Date().toISOString().slice(0, 10);
+  const hoje = estadoInicio.hoje || caixa.pontos?.[0]?.data || hojeISO();
   linhasComBaixa = [];
   container.innerHTML = `
     <div class="inicio-coluna">

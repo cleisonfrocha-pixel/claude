@@ -103,6 +103,7 @@ function evolucaoHtml(dados, hoje) {
 
 const tela = criarTelaCadastro({
   repo: dividas,
+  assinarTambem: [transacoes],
   titulo: "Dívidas",
   subtitulo: "Cada dívida, a pressão que ela exerce no mês, e o que aconteceria se você pagasse mais.",
   rotuloNovo: "Nova dívida",
