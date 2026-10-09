@@ -219,3 +219,14 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
   é renda ou repasse; 3 protestos sem credor (R$ 4.927,09) são os mesmos de Bradesco/Mercado Pago/EDP?; cartão Next
   cancelado ainda deve saldo (R$ 328,66 e R$ 2.832,80)?; Jeep: a cotação de 05/10 já considera a parcela de 03/10?;
   "Equipe e freelancers" e "Ferramentas" contam como essencial?; água de outubro (R$ 319,61 previsto) está certa?
+
+### Respostas do Cleison (09/10) e o que entrou no banco
+
+- Aluguel só em dezembro, DAS de mar a ago não pagos, aporte GEDI ainda não saiu, R$ 0 da Carolina é real, ofertas do
+  Serasa sem validade, Gedi/Tony é só repasse, cotação do Jeep já considera a parcela paga, água de outubro certa
+  (vazamento já arrumado), equipe/ferramentas seguem como essencial: nada a mudar nesses dados.
+- Salário da Carolina: outubro e novembro caem juntos em 07/11 (2 × R$ 4.750, provável). A de outubro ficou com
+  competência 2026-10 para o painel não gerar outra.
+- Aporte GEDI de R$ 1.500 passou para 10/11 (repassa no mês que vem, usando o dinheiro do Del Poente agora).
+- As duas faturas do cartão Next cancelado (R$ 328,66 e R$ 2.832,80) ficaram ligadas à dívida do Bradesco.
+- `COLECOES_LIDAS` voltou a ser exportado em `ferramentas/subirPainel.js` (a ferramenta de montar não rodava).

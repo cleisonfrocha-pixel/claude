@@ -33,7 +33,7 @@ export const COLECOES = {
 };
 
 export const LIMITE_FORCAR_SEM_ID = 20;
-const COLECOES_LIDAS = [...Object.keys(COLECOES), "faturas", "transacoes", "regrasClassificacao", COLECAO_LOTES];
+export const COLECOES_LIDAS = [...Object.keys(COLECOES), "faturas", "transacoes", "regrasClassificacao", COLECAO_LOTES];
 
 // Campo de id que cada referência por nome preenche, por coleção.
 const CAMPO_REF = {
