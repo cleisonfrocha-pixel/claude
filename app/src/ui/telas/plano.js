@@ -13,10 +13,9 @@ import { navegar } from "../navegacao.js";
 import { formatarBRL } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel } from "../../domain/tempo.js";
 import { escapeHtml, ajudaHtml } from "../utilitarios.js";
-import { linhaSaldo } from "../graficos.js";
 
-const ROTULO_URGENCIA = { alta: "urgente", media: "atenção", baixa: "oportuno" };
-const CLASSE_URGENCIA = { alta: "critico", media: "atencao", baixa: "" };
+const ROTULO_URGENCIA = { alta: "ver logo", media: "com calma", baixa: "quando der" };
+const CLASSE_URGENCIA = { alta: "atencao", media: "", baixa: "" };
 const ROTULO_TIPO = { problema: "Problemas", risco: "Riscos", oportunidade: "Oportunidades" };
 const ROTULO_STATUS = { resolvida: "Resolvido", ignorada: "Não se aplica", adiada: "Lembrar depois", cancelada: "Descartado" };
 const ROTULO_HORIZONTE = {
@@ -152,11 +151,13 @@ function cartaoAchado(a) {
       ${aberto ? `<div class="item-extra" style="margin:8px 0;">${painelLancamentos(a)}</div>` : ""}
       <div class="achado-rodape">
         ${a.impactoCentavos != null ? `<b class="mono" data-valor>${formatarBRL(a.impactoCentavos)}</b>` : "<span></span>"}
-        <div class="achado-botoes">
-          <button class="btn-mini" data-acao="resolvida" title="Some da lista e vai pro histórico">Já resolvi</button>
-          <button class="btn-mini" data-acao="adiada" title="Some agora e volta depois">Lembrar depois</button>
-          <button class="btn-mini" data-acao="ignorada" title="Não vale pra sua situação">Não se aplica</button>
-        </div>
+        <details class="menu-mais"><summary class="btn-mini" aria-label="Mais opções">⋯</summary>
+          <div class="menu-mais-lista">
+            <button class="btn-mini" data-acao="resolvida" title="Some da lista e vai pro histórico">Já resolvi</button>
+            <button class="btn-mini" data-acao="adiada" title="Some agora e volta depois">Lembrar depois</button>
+            <button class="btn-mini" data-acao="ignorada" title="Não vale pra sua situação">Não se aplica</button>
+          </div>
+        </details>
       </div>
     </div>`;
 }
@@ -178,31 +179,49 @@ function cartaoRevisao(c) {
 const ROTULO_DESTINO = { apagar: "Ver as contas", caminhos: "Ver os caminhos", patrimonio: "Ver patrimônio e metas" };
 const rotuloDestino = (d) => (d.modulo === "dividas" ? "Ver as dívidas" : ROTULO_DESTINO[d.aba] || "Abrir");
 
-/** O plano em passos: o veredito, o gráfico do saldo nos próximos 12 meses e o que fazer, em ordem. */
-function blocoPlanoDeAcao(g) {
-  const { veredito, passos } = g.acao;
-  const linhas = g.mapa.linhas;
-  const viradaI = g.mapa.buraco?.mesDaVirada ? linhas.findIndex((l) => l.competencia === g.mapa.buraco.mesDaVirada) : null;
+/** Cabeçalho de recuperação (13.8): meta, progresso, próximo passo e o que mudou. */
+function blocoRecuperacao(g) {
+  const r = g.recuperacao;
+  const { veredito } = g.acao;
+  const prox = r.proximoPasso;
   return `
     <section class="inicio-bloco pa-hero tom-${veredito.tom}">
-      <h3>Seu plano</h3>
-      <div class="pa-veredito"><b>${escapeHtml(veredito.titulo)}</b><span>${escapeHtml(veredito.texto)}</span></div>
-      ${g.baseReal ? `<p class="tela-sub" style="margin:6px 0 0;">${escapeHtml(g.baseReal.frase)}</p>` : ""}
-      ${linhaSaldo({ meses: linhas, rotulos: linhas.map((l) => mesCurto(l.competencia)), titulo: "Saldo em conta ao fim de cada mês, próximos 12 meses", destaqueIndice: viradaI >= 0 ? viradaI : null, destaqueRotulo: viradaI >= 0 && viradaI != null ? "vira" : "" })}
-    </section>
-    <section class="inicio-bloco">
-      <h3>O que fazer, em ordem ${ajudaHtml("Os passos saem dos seus números: caixa dos próximos dias, o que está atrasado, o mês em que a conta deixa de fechar, as ofertas de dívida e os prazos do seu perfil. O mais urgente vem primeiro.")}</h3>
-      ${passos.length ? `<ol class="pa-passos">${passos.map((p, i) => `
+      <h3>Sua recuperação</h3>
+      <div class="pa-veredito"><b>${escapeHtml(r.meta.frase)}</b></div>
+      <div class="plano-onde" style="margin-top:12px;">
+        <div><span>Nome limpo</span><b class="mono">${r.progresso.limpas} de ${r.progresso.total}</b><small>${r.progresso.percentual}% resolvido</small></div>
+        ${r.meta.faltaCaixaCentavos > 0 ? `<div><span>Falta no pior dia</span><b class="mono valor-neg" data-valor>${formatarBRL(r.meta.faltaCaixaCentavos)}</b></div>` : ""}
+        ${r.meta.custoDasOfertasCentavos > 0 ? `<div><span>Limpar com as ofertas</span><b class="mono" data-valor>${formatarBRL(r.meta.custoDasOfertasCentavos)}</b><small>economiza <span data-valor>${formatarBRL(r.meta.economiaDasOfertasCentavos)}</span></small></div>` : ""}
+      </div>
+      ${prox ? `<p style="margin:12px 0 0;"><b>Próximo passo:</b> ${escapeHtml(prox.titulo)}</p>` : ""}
+      <p class="tela-sub" style="margin:8px 0 0;">${r.semComparacao ? "Ainda sem mês passado guardado para comparar. O painel anota o pior dia do mês e as contas atrasadas e passa a mostrar o que mudou." : escapeHtml("Desde o mês passado: " + r.mudou.join(" "))}</p>
+    </section>`;
+}
+
+function passoHtml(p, i) {
+  return `
         <li class="pa-passo tom-${p.tom}">
           <span class="pa-num" aria-hidden="true">${i + 1}</span>
           <div class="pa-corpo">
             <div class="pa-topo"><span class="pa-prazo">${escapeHtml(p.prazo)}</span>${p.valorCentavos ? `<b class="mono" data-valor>${formatarBRL(p.valorCentavos)}</b>` : ""}</div>
             <h4>${escapeHtml(p.titulo)}</h4>
-            ${p.texto ? `<p>${escapeHtml(p.texto)}</p>` : ""}
-            ${p.detalhes?.length ? `<ul>${p.detalhes.map((d) => `<li>${escapeHtml(d)}</li>`).join("")}</ul>` : ""}
+            ${p.detalhes?.length ? `<p>${escapeHtml(p.detalhes.slice(0, 2).join(" · "))}</p>` : ""}
             <button class="btn btn-ghost btn-sm" data-pa-destino="${i}">${escapeHtml(rotuloDestino(p.destino))}</button>
           </div>
-        </li>`).join("")}</ol>` : `<div class="alerta-tudo-coberto">Nada pedindo ação agora.</div>`}
+        </li>`;
+}
+
+/** Só o que é de hoje fica à vista (até 3, sem parágrafo); o resto fica em "Mais adiante". */
+function blocoPlanoDeAcao(g) {
+  const { passos } = g.acao;
+  const hoje = passos.map((p, i) => ({ p, i })).filter((x) => x.p.quando === "hoje").slice(0, 3);
+  const depois = passos.map((p, i) => ({ p, i })).filter((x) => !hoje.includes(x));
+  return `
+    ${blocoRecuperacao(g)}
+    <section class="inicio-bloco">
+      <h3>O que fazer agora</h3>
+      ${hoje.length ? `<ol class="pa-passos">${hoje.map((x) => passoHtml(x.p, x.i)).join("")}</ol>` : `<div class="alerta-tudo-coberto">Nada pedindo ação hoje.</div>`}
+      ${depois.length ? `<details class="renda-secao" style="margin-top:12px;"><summary>Mais adiante (${depois.length})</summary><ol class="pa-passos">${depois.map((x) => passoHtml(x.p, x.i)).join("")}</ol></details>` : ""}
     </section>`;
 }
 
@@ -305,7 +324,7 @@ function blocoAlavancas(g) {
   if (!g.alavancas.length) return "";
   return `
     <section class="inicio-bloco">
-      <h3>3 coisas que mudam o jogo</h3>
+      <h3>O que mais move o ponteiro</h3>
       ${g.alavancas.map((l, i) => `
         <div class="plano-alavanca">
           <div class="plano-alavanca-topo">
@@ -436,7 +455,7 @@ function renderizar() {
         <section class="inicio-bloco">
           <h3>Revisar</h3>
           <p class="tela-sub" style="margin:0 0 10px;">${pendentes.length
-            ? `${pendentes.length} ${pendentes.length === 1 ? "ponto" : "pontos"}${urgentes ? `, ${urgentes} urgente${urgentes > 1 ? "s" : ""}` : ""}. Toque em "De onde veio" pra ver os lançamentos por trás de cada um.`
+            ? `${pendentes.length} ${pendentes.length === 1 ? "ponto" : "pontos"}${urgentes ? `, ${urgentes} pra ver logo` : ""}. Toque em "De onde veio" pra ver os lançamentos por trás de cada um.`
             : "Nada pedindo atenção agora."}</p>
           <div id="achados-lista">
             ${cards.length ? cards.map(cartaoRevisao).join("") : `<div class="alerta-tudo-coberto">Nenhum problema, risco ou oportunidade pendente agora.</div>`}

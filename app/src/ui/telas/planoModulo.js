@@ -12,20 +12,30 @@ import telaMeuAno from "./planoMeuAno.js";
 import telaFechamento from "./fechamento.js";
 import telaPerguntar from "./perguntar.js";
 import telaPatrimonioEMetas from "./patrimonioEMetas.js";
+import telaMetasForm from "./metasForm.js";
+import { criarTelaEmSecoes } from "./secoes.js";
+import { criarTelaEmPilha } from "./pilha.js";
+
+// Três abas (lista de 05/10, item 83): Plano (próximos passos), Ano (histórico) e Metas.
+const telaPlano = criarTelaEmPilha([
+  telaVisaoGeral,
+  criarTelaEmSecoes([{ titulo: "Simular caminhos", resumo: "O que muda se você quitar mais rápido ou ganhar mais", tela: telaCaminhos }], { abertaPrimeira: false }),
+]);
+const telaAno = criarTelaEmSecoes([
+  { titulo: "Meu ano", resumo: "Mês a mês, o que entrou e o que saiu", tela: telaMeuAno },
+  { titulo: "Estou saindo do buraco?", resumo: "Evolução dos últimos meses", tela: telaEvolucao },
+  { titulo: "Pra onde vai o dinheiro", resumo: "Relatórios com gráficos", tela: telaRelatorios },
+  { titulo: "Cleison e Carolina", resumo: "Quem cobre o quê na casa", tela: telaPorPessoa },
+]);
+const telaMetas = criarTelaEmPilha([telaMetasForm, telaPatrimonioEMetas]);
 
 export default criarTelaComAbas({
-  titulo: "Plano",
-  subtitulo: "Diagnóstico sem moralizar, quem cobre o quê na casa, e os caminhos possíveis daqui pra frente.",
   botaoFlutuante: { rotulo: "Perguntar", aba: "perguntar" },
   abas: [
-    { id: "geral", rotulo: "Visão geral", tela: telaVisaoGeral },
-    { id: "pessoas", rotulo: "Por pessoa", tela: telaPorPessoa },
-    { id: "meuano", rotulo: "Meu ano", tela: telaMeuAno },
-    { id: "relatorios", rotulo: "Relatórios", tela: telaRelatorios },
-    { id: "evolucao", rotulo: "Evolução", tela: telaEvolucao },
-    { id: "caminhos", rotulo: "Caminhos", tela: telaCaminhos },
+    { id: "geral", rotulo: "Plano", tela: telaPlano },
+    { id: "meuano", rotulo: "Ano", tela: telaAno },
+    { id: "patrimonio", rotulo: "Metas", tela: telaMetas },
     { id: "fechamento", rotulo: "Fechamento", tela: telaFechamento, oculta: true },
     { id: "perguntar", rotulo: "Perguntar", tela: telaPerguntar, oculta: true },
-    { id: "patrimonio", rotulo: "Patrimônio & Metas", tela: telaPatrimonioEMetas },
   ],
 });

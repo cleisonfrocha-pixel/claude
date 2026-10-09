@@ -5,6 +5,7 @@
 // resumo precisa reagir a conta/transação/dívida mudando, não só à lista
 // de fontes — a fábrica de cadastro não dá conta disso sozinha.
 
+import { navegar } from "../navegacao.js";
 import { fontesRenda, ErroDeValidacao } from "../../dados/repositorios.js";
 import { assinarPainelRenda, calcularPainelRenda } from "../../dados/rendaRepo.js";
 import { definirMetas } from "../../dados/orcamentoRepo.js";
@@ -184,26 +185,7 @@ function renderizar() {
       </div>` : ""}
 
     </details>
-    <details class="inicio-detalhe renda-secao"><summary>Metas (quanto quer gastar, quanto precisa, quanto investir)</summary>
-<p class="tela-sub">Quanto você quer gastar, quanto precisa pra se recuperar e quanto investir. Só você define, o painel nunca inventa.</p>
-    <div class="simulador-linha" style="margin-bottom:10px;">
-      <div class="field"><label for="input-custo-desejado">Quanto quero gastar por mês</label>
-        <input type="text" inputmode="decimal" id="input-custo-desejado" placeholder="0,00" value="${metas.custoDesejadoCentavos != null ? formatarBRL(metas.custoDesejadoCentavos).replace("R$ ", "") : ""}"></div>
-      <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-custo-desejado">Salvar</button>
-    </div>
-    <div class="simulador-linha" style="margin-bottom:10px;">
-      <div class="field"><label for="input-meta-recuperacao">Quanto preciso por mês pra me recuperar (opcional)</label>
-        <input type="text" inputmode="decimal" id="input-meta-recuperacao" placeholder="0,00" value="${metas.metaRecuperacaoCentavos != null ? formatarBRL(metas.metaRecuperacaoCentavos).replace("R$ ", "") : ""}"></div>
-      <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-meta-recuperacao">Salvar</button>
-    </div>
-    <div class="simulador-linha">
-      <div class="field"><label for="input-investimento-minimo">Investimento mínimo por mês</label>
-        <input type="text" inputmode="decimal" id="input-investimento-minimo" placeholder="0,00" value="${metas.investimentoMinimoMensalCentavos ? formatarBRL(metas.investimentoMinimoMensalCentavos).replace("R$ ", "") : ""}"></div>
-      <button class="btn btn-ghost btn-sm" type="button" data-acao="salvar-investimento-minimo">Salvar</button>
-    </div>
-    <div class="tela-sub" style="margin:6px 0 0;">Continua saindo todo mês em Plano › Caminhos, mesmo com dívida em aberto — protegido como o essencial, nunca vira dinheiro pra pagar dívida.</div>
-
-    </details>
+    <p class="tela-sub">As metas (quanto quer gastar, quanto precisa pra se recuperar, quanto investir) ficam num lugar só: <button class="btn-link" data-ir-metas>Plano › Metas</button>.</p>
     <details class="inicio-detalhe renda-secao"><summary>Pra onde vai o dinheiro</summary>
 
     <div class="resumo-mes">
@@ -274,6 +256,7 @@ function renderizarListaFontes() {
 }
 
 function ligarEventosGerais() {
+  container.querySelector('[data-ir-metas]')?.addEventListener("click", () => navegar({ modulo: "plano", aba: "patrimonio" }));
   const btnNova = container.querySelector('[data-acao="nova-fonte"]');
   if (btnNova) btnNova.addEventListener("click", () => abrirFormularioFonte(null));
 

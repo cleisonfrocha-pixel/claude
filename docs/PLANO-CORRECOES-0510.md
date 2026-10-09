@@ -171,3 +171,22 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - **Item 30 (dado):** a fatura que veio só como "Compras até o fechamento" continua num lançamento só porque não há
   extrato com as compras; quando vier, a tela de Cartões já avisa e cancela o resumo.
 - Conferido no navegador (390 px): as 6 abas, Configurações > Importar e Revisar, sem erro.
+
+### 13.8 Plano de recuperação (feita, 09/10)
+
+- **Item 76.** O gráfico de 12 meses saiu da abertura. Os números mês a mês continuam em "Os números por trás do plano".
+- **Item 77.** "O que fazer agora" mostra só passos de hoje (até 3), sem parágrafo; "Mais adiante" guarda a virada de
+  dezembro, limpar o nome, prazos longe e reserva (`quando: "hoje" | "depois"` em `montarPlanoDeAcao`).
+- **Item 78.** Os rótulos deixaram de gritar ("ver logo", "com calma", "quando der") e Já resolvi / Lembrar depois /
+  Não se aplica ficam no menu "⋯" de cada alerta.
+- **Item 79.** Alavancas da vida real: Estoque e revenda (grupo negócio) deixou de ser sugestão de corte e a renda
+  nova virou "Renovar ou repor CryptoPag, que acaba em 12/26", com as fontes do cadastro (repasse da GEDI fora).
+- **Item 80.** Caminhos ficou recolhido em "Simular caminhos", no fim do Plano.
+- **Item 81.** Cabeçalho "Sua recuperação" (`domain/recuperacao.js`, com teste): meta (quanto falta no pior dia e
+  quantos nomes sujos), progresso (nome limpo X de N), próximo passo e o que mudou desde o mês passado (usa os
+  instantâneos; sem mês anterior, diz isso em vez de inventar).
+- **Item 82.** As metas (gastar, recuperar, investir) têm um lugar só: Plano › Metas. Renda aponta para lá e a
+  pendência do Início também.
+- **Item 83.** Plano tem 3 abas: Plano, Ano (Meu ano, Evolução, Relatórios, Por pessoa, em seções) e Metas
+  (metas + patrimônio). Destinos antigos redirecionam.
+- Conferido no navegador com o estado real (390 px), sem erro de página. 597 testes passando.

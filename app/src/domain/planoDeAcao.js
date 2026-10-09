@@ -21,7 +21,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
   if (buraco) {
     const dias = diasEntre(hoje, buraco.data);
     passos.push({
-      id: "caixa-curto", prazo: dias <= 7 ? "Esta semana" : "Este mês", tom: "urgente",
+      id: "caixa-curto", quando: "hoje", prazo: dias <= 7 ? "Esta semana" : "Este mês", tom: "urgente",
       titulo: `Em ${dm(buraco.data)} faltam ${BRL(buraco.faltaCentavos)}`,
       texto: situacao.decisao?.texto || "", valorCentavos: buraco.faltaCentavos,
       detalhes: (buraco.causas || []).slice(0, 3).map((c) => `${c.descricao}: ${BRL(c.valorCentavos)}`),
@@ -32,7 +32,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
   // 2. O que já está atrasado.
   if (atrasadas.totalCentavos > 0) {
     passos.push({
-      id: "atrasadas", prazo: "Agora", tom: "urgente",
+      id: "atrasadas", quando: "hoje", prazo: "Agora", tom: "urgente",
       titulo: `Resolver o que está atrasado (${BRL(atrasadas.totalCentavos)})`,
       texto: "Atraso cobra juros e multa e pesa no nome. Pague ou negocie estes primeiro.",
       valorCentavos: atrasadas.totalCentavos,
@@ -47,7 +47,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
   if (virada) {
     const antes = mapa.linhas[mapa.linhas.indexOf(virada) - 1];
     passos.push({
-      id: "virada", prazo: `Até ${antes ? nomeMes(antes.competencia) : "lá"}`, tom: "atencao",
+      id: "virada", quando: "depois", prazo: `Até ${antes ? nomeMes(antes.competencia) : "lá"}`, tom: "atencao",
       titulo: `${nomeMes(virada.competencia)[0].toUpperCase()}${nomeMes(virada.competencia).slice(1)} é a virada: o mês deixa de se pagar`,
       texto: `${antes ? `A sobra vai de ${BRL(antes.sobraCentavos)} para ${BRL(virada.sobraCentavos)}. ` : ""}Faltam ${BRL(b.deficitMensalCentavos)} por mês. Para fechar: entrar esse valor a mais, cortar o mesmo, ou juntar antes o que falta.`,
       valorCentavos: b.deficitMensalCentavos,
@@ -59,7 +59,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
     });
   } else if (b && b.faltaParaAguentarCentavos > 0) {
     passos.push({
-      id: "negativo", prazo: "Neste ano", tom: "atencao",
+      id: "negativo", quando: "depois", prazo: "Neste ano", tom: "atencao",
       titulo: `O saldo fica negativo em ${nomeMes(b.mesDoPontoMaisBaixo)}`,
       texto: `Ponto mais baixo: ${BRL(b.pontoMaisBaixoCentavos)}. Faltam ${BRL(b.faltaParaAguentarCentavos)} para atravessar os 12 meses.`,
       valorCentavos: b.faltaParaAguentarCentavos, destino: { modulo: "plano", aba: "caminhos" },
@@ -72,7 +72,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
     const livre = situacao?.livreGarantidoCentavos ?? 0;
     const menor = Math.min(...ofertas.map((o) => o.valorCentavos));
     passos.push({
-      id: "nome", prazo: "Quando houver caixa", tom: "normal",
+      id: "nome", quando: "depois", prazo: "Quando houver caixa", tom: "normal",
       titulo: `Limpar o nome: ${ofertas.length} ${ofertas.length === 1 ? "oferta" : "ofertas"} na mesa`,
       texto: livre >= menor
         ? `Dá para fechar a primeira agora (${BRL(ofertas[0].valorCentavos)}). Fechar todas custa ${BRL(panorama.totalOfertasCentavos)} e economiza ${BRL(panorama.economiaCentavos)}.`
@@ -87,7 +87,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
   for (const p of prazos) {
     if (p.diasAte < 0) continue;
     passos.push({
-      id: `prazo:${p.id || p.data}`, prazo: p.diasAte === 0 ? "Hoje" : `Em ${p.diasAte} ${p.diasAte === 1 ? "dia" : "dias"} (${dm(p.data)})`,
+      id: `prazo:${p.id || p.data}`, quando: p.diasAte <= 14 ? "hoje" : "depois", prazo: p.diasAte === 0 ? "Hoje" : `Em ${p.diasAte} ${p.diasAte === 1 ? "dia" : "dias"} (${dm(p.data)})`,
       tom: p.diasAte <= 30 ? "atencao" : "normal", titulo: p.titulo, texto: p.nota || "", destino: { modulo: "plano", aba: "caminhos" },
     });
   }
@@ -95,7 +95,7 @@ export function montarPlanoDeAcao({ situacao, mapa, panorama, prazos = [], alava
   // 6. Reserva: só quando nada acima grita.
   if (reservaCentavos <= 0 && custoEssencialMesCentavos > 0 && !buraco) {
     passos.push({
-      id: "reserva", prazo: "Quando sobrar", tom: "normal", titulo: "Começar a reserva",
+      id: "reserva", quando: "depois", prazo: "Quando sobrar", tom: "normal", titulo: "Começar a reserva",
       texto: `Hoje não há reserva. A primeira meta é um mês de essencial: ${BRL(custoEssencialMesCentavos)}.`,
       valorCentavos: custoEssencialMesCentavos, destino: { modulo: "plano", aba: "patrimonio" },
     });

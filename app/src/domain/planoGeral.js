@@ -2,6 +2,7 @@
 // avisos agrupados. Puro (CLAUDE.md). Toda alavanca diz a premissa e aponta
 // os dados de onde saiu o número; nenhuma inventa valor.
 
+import { formatarBRL } from "./dinheiro.js";
 import { statusDivida, parcelasRestantes, classificarDivida } from "./dividas.js";
 
 const PESO = { alta: 3, media: 2, baixa: 1 };
@@ -36,11 +37,11 @@ export function agruparAchados(achados, { limiar = 3 } = {}) {
 }
 
 /** Até 3 alavancas, em ordem do maior efeito mensal. */
-export function alavancas({ transacoes, categorias, dividas, competencia, hoje, sobraCentavos }) {
+export function alavancas({ transacoes, categorias, dividas, competencia, hoje, sobraCentavos, fontesRenda = [] }) {
   const lista = [];
 
   // 1) Cortar a maior categoria NÃO essencial do mês.
-  const nao = new Map((categorias || []).filter((c) => c.natureza === "despesa" && !c.essencial && c.grupo !== "dividas").map((c) => [c.id, c]));
+  const nao = new Map((categorias || []).filter((c) => c.natureza === "despesa" && !c.essencial && c.grupo !== "dividas" && c.grupo !== "negocio").map((c) => [c.id, c]));
   const porCategoria = new Map();
   for (const t of transacoes || []) {
     if (t.tipo !== "despesa" || t.competencia !== competencia || t.status === "cancelado" || !nao.has(t.categoriaId)) continue;
@@ -76,11 +77,16 @@ export function alavancas({ transacoes, categorias, dividas, competencia, hoje, 
   // 3) Fechar o déficit com renda nova, ou, se sobra, destinar a sobra.
   if (Number.isFinite(sobraCentavos)) {
     if (sobraCentavos < 0) {
+      // Renda a partir da vida real: o que já entra, o que acaba e o que é só repasse. Nada de "renda nova" genérica.
+      const ativas = (fontesRenda || []).filter((f) => f.ativa !== false && !/passa direto/i.test(f.nome || "") && (Number(f.valorEsperadoCentavos) || 0) > 0);
+      const acaba = ativas.filter((f) => f.fim).sort((a, b) => b.valorEsperadoCentavos - a.valorEsperadoCentavos)[0];
+      const maior = [...ativas].sort((a, b) => b.valorEsperadoCentavos - a.valorEsperadoCentavos)[0];
+      const nomeFonte = (f) => String(f.nome).replace(/\s*\(.*\)\s*$/, "");
       lista.push({
-        id: "renda:deficit", titulo: "Trazer renda nova para fechar o mês",
+        id: "renda:deficit", titulo: acaba ? `Renovar ou repor ${nomeFonte(acaba)}, que acaba em ${acaba.fim.slice(5, 7)}/${acaba.fim.slice(2, 4)}` : "Fechar a conta do mês com a renda que já existe",
         impactoMensalCentavos: -sobraCentavos,
-        premissa: "É quanto falta por mês entre o que entra (confirmado e provável) e o que sai.",
-        baseCentavos: -sobraCentavos, origem: { tipo: "renda", id: "mes_atual", rotulo: "Renda do mês" }, destino: { modulo: "dinheiro", aba: "renda" },
+        premissa: `Faltam ${formatarBRL(-sobraCentavos)} por mês entre o que entra (confirmado e provável) e o que sai.${maior ? ` A maior fonte é ${nomeFonte(maior)}.` : ""} Só conta o que fechar.`,
+        baseCentavos: -sobraCentavos, origem: { tipo: "renda", id: "mes_atual", rotulo: "Renda" }, destino: { modulo: "dinheiro", aba: "renda" },
       });
     } else if (sobraCentavos > 0) {
       lista.push({

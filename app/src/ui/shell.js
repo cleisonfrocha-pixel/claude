@@ -81,6 +81,10 @@ const REDIRECIONAMENTOS_DE_ABA = {
   "dinheiro/importar": { modulo: "configuracoes", aba: "importar" },
   "dinheiro/revisar": { modulo: "configuracoes", aba: "revisar" },
   "dinheiro/cartoes": { modulo: "dinheiro", aba: "contas" },
+  "plano/pessoas": { modulo: "plano", aba: "meuano" },
+  "plano/relatorios": { modulo: "plano", aba: "meuano" },
+  "plano/evolucao": { modulo: "plano", aba: "meuano" },
+  "plano/caminhos": { modulo: "plano", aba: "geral" },
 };
 
 const REDIRECIONAMENTOS = {
