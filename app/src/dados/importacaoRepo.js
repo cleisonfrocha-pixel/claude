@@ -65,7 +65,7 @@ export async function confirmarImportacao({ texto, formato, contaId, aceitos }) 
       // segundo lançamento do mesmo gasto.
       await transacoes.atualizar(c.conciliaCom.id, {
         valorCentavos: Math.abs(c.valorCentavos), data: c.data, status: "pago", certeza: "confirmado",
-        origem, origemId: c.externoId || loteId, revisado: false,
+        origem, origemId: c.externoId || loteId, idExterno: c.idExterno || null, revisado: false,
       });
       criadas.push(c.conciliaCom.id);
       continue;
@@ -76,7 +76,7 @@ export async function confirmarImportacao({ texto, formato, contaId, aceitos }) 
       pessoaId: item.pessoaId || "",
       descricao: c.descricao,
       status: "pago", certeza: "confirmado",
-      origem, origemId: c.externoId || loteId,
+      origem, origemId: c.externoId || loteId, idExterno: c.idExterno || null,
       revisado: false,
     });
     criadas.push(id);

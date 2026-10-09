@@ -214,3 +214,19 @@ test("conciliar: valor só parecido (sem nome parecido) não casa", () => {
   const [r] = prepararCand([{ data: "2026-10-13", descricao: "Algo que não existe", valorCentavos: -7700, tipo: "despesa", valido: true }], { transacoesExistentes: existentes, categorias: [], contaId: "c1" });
   assert.equal(r.conciliaCom, null);
 });
+
+import { comIdentificadorEstavel, detectarDuplicatas as detectarDup2 } from "../src/domain/importacao.js";
+
+test("importação idempotente: linha sem id do banco ganha identificador estável e reimportar acusa duplicata", () => {
+  const cand = [
+    { data: "2026-10-01", valorCentavos: -5040, descricao: "Pix Mercado", tipo: "despesa" },
+    { data: "2026-10-01", valorCentavos: -5040, descricao: "Pix Mercado", tipo: "despesa" },
+  ];
+  const [a, b] = comIdentificadorEstavel(cand, "c1");
+  assert.notEqual(a.idExterno, b.idExterno, "duas linhas idênticas no mesmo arquivo continuam sendo duas");
+  const gravadas = [{ id: "t1", contaId: "c1", status: "pago", idExterno: a.idExterno, valorCentavos: 5040, data: "2026-10-05" }];
+  const r = detectarDup2(cand, gravadas, "c1");
+  assert.equal(r[0].possivelDuplicata, true);
+  assert.equal(r[0].motivoDuplicata, "mesmo identificador do banco");
+  assert.equal(r[1].possivelDuplicata, false, "a segunda linha idêntica não foi gravada ainda");
+});

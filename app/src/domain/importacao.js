@@ -138,13 +138,29 @@ function diferencaEmDias(dataA, dataB) {
  * próxima. Não decide sozinho: só aponta, quem confirma é o usuário na
  * revisão (§18 — "revisão de lançamentos ambíguos").
  */
+const normalizar = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim().slice(0, 60);
+
+/** Identificador estável do lançamento do extrato (lista de 05/10, item 48): o do banco, quando existe; senão
+ * conta + data + valor + descrição, com um contador para duas linhas idênticas no mesmo arquivo. Gravado em
+ * `idExterno`, é o que faz reimportar o mesmo arquivo não duplicar. */
+export function comIdentificadorEstavel(candidatos, contaId) {
+  const vistos = new Map();
+  return candidatos.map((c) => {
+    if (c.externoId) return { ...c, idExterno: c.externoId };
+    const base = `imp:${contaId}:${c.data}:${c.valorCentavos}:${normalizar(c.descricao)}`;
+    const n = (vistos.get(base) || 0) + 1;
+    vistos.set(base, n);
+    return { ...c, idExterno: n === 1 ? base : `${base}#${n}` };
+  });
+}
+
 export function detectarDuplicatas(candidatos, transacoesExistentes, contaId) {
   // Previsto em aberto não é "duplicata" do extrato: é o mesmo compromisso
   // esperando confirmação, e quem resolve é `conciliarComPrevistos`.
   const existentesDaConta = (transacoesExistentes || []).filter((t) => t.contaId === contaId && !STATUS_ABERTO.has(t.status));
-  return candidatos.map((c) => {
-    if (c.externoId) {
-      const porId = existentesDaConta.find((t) => t.idExterno === c.externoId || t.origemId === c.externoId);
+  return comIdentificadorEstavel(candidatos, contaId).map((c) => {
+    {
+      const porId = existentesDaConta.find((t) => (c.idExterno && t.idExterno === c.idExterno) || (c.externoId && t.origemId === c.externoId));
       if (porId) return { ...c, possivelDuplicata: true, duplicataDe: porId.id, motivoDuplicata: "mesmo identificador do banco" };
     }
     const porSemelhanca = existentesDaConta.find((t) =>

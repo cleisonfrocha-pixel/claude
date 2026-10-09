@@ -206,3 +206,16 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - **Item 89.** Leitura em andamento antes de uma gravação não pode mais guardar no cache o resultado velho
   (`versaoEscrita` por coleção em `dados/db.js`). Teste `testes/dbCache.test.js` falha sem a correção.
 - **Item 90.** O nome do arquivo exportado usa a data local (`hojeISO`), não a UTC.
+
+### 13.10 Dados reais e perguntas (feita no que é código, 09/10; o resto espera as respostas)
+
+- **Item 48 (código).** Importar extrato é idempotente: cada linha ganha um `idExterno` estável (o do banco, ou
+  conta + data + valor + descrição, com contador para linhas idênticas no mesmo arquivo), gravado no lançamento.
+  Reimportar o mesmo arquivo acusa "mesmo identificador do banco" em vez de duplicar. Teste em `importacao.test.js`.
+- **Não mexi nos dados** dos itens 39 a 47 e 49: cada um depende de uma resposta sua (abaixo). Gravar palpite no
+  banco seria inventar. Assim que responder, entra pela skill `subir-painel`.
+- **Perguntas abertas:** aluguel em out/nov; DAS de mar a ago pagos ou duplicados; aporte GEDI de R$ 1.500 saiu?;
+  hora do saldo do Next (R$ 4.252,98) e se o R$ 0,00 da Carolina é real; validade das 4 ofertas do Serasa; Gedi/Tony
+  é renda ou repasse; 3 protestos sem credor (R$ 4.927,09) são os mesmos de Bradesco/Mercado Pago/EDP?; cartão Next
+  cancelado ainda deve saldo (R$ 328,66 e R$ 2.832,80)?; Jeep: a cotação de 05/10 já considera a parcela de 03/10?;
+  "Equipe e freelancers" e "Ferramentas" contam como essencial?; água de outubro (R$ 319,61 previsto) está certa?
