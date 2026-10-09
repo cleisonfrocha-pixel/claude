@@ -88,7 +88,11 @@ export function painelDeVerbas(transacoes, hoje) {
     if (!v) continue;
     const esperado = arredondar((v.totalCentavos * dias) / diasNoMes);
     const ritmo = v.gastoCentavos > v.totalCentavos ? "estourou" : v.gastoCentavos > esperado * 1.15 + 100 ? "acima" : "no ritmo";
+    const doMes = (transacoes || []).filter((x) => x.tipo === "despesa" && x.categoriaId === t.categoriaId && compDe(x) === competencia && consomeVerba(x))
+      .sort((a, b) => (b.data || "").localeCompare(a.data || "")).slice(0, 6)
+      .map((x) => ({ id: x.id, data: x.data, descricao: x.descricao || "Gasto", valorCentavos: Number(x.valorCentavos) || 0 }));
     linhas.push({
+      lancamentos: doMes, contaId: t.contaId || null, pessoaId: t.pessoaId || "",
       id: t.id, nome: t.descricao || "Verba", categoriaId: t.categoriaId || "", recorrenciaId: t.recorrenciaId || null,
       totalCentavos: v.totalCentavos, gastoCentavos: v.gastoCentavos, restanteCentavos: v.restanteCentavos,
       excedenteCentavos: Math.max(0, v.gastoCentavos - v.totalCentavos),

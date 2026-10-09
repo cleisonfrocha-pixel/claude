@@ -238,3 +238,7 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
   cota). Tudo derivado dos lançamentos da categoria no mês (`painelDeVerbas`, com teste), nada gravado.
 - O botão "Gastei" abre o lançamento já na categoria da verba. Gastar na mesma categoria é o que abate a cota.
 - Conta com valor e data (internet, celular, fatura) continua sendo conta fixa, não verba.
+- (09/10, 2ª passada) Cada verba virou um cartão: "R$ usado de R$ total" em destaque, barra grossa, "Ainda pode gastar",
+  o botão grande "+ Lançar gasto" que abre ali mesmo valor e conta (lembra a última conta) e o "Lançar" que grava um
+  gasto pago na categoria da verba, sem abrir tela. "O que já entrou nesta verba" lista os últimos gastos. Uma frase
+  de "Como usar" no topo do bloco.

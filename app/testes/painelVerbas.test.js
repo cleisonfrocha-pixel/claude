@@ -32,3 +32,9 @@ test("painel de verbas: só o mês corrente; gasto de outra categoria ou cancela
   assert.equal(r.length, 1);
   assert.equal(r[0].gastoCentavos, 0);
 });
+
+test("painel de verbas: traz os últimos gastos da verba, para o Cleison ver o que já entrou", () => {
+  const [l] = painelDeVerbas([verba, gasto(1000, "a"), { ...gasto(2000, "b"), data: "2026-10-08", descricao: "Cinema" }], "2026-10-09");
+  assert.equal(l.lancamentos.length, 2);
+  assert.equal(l.lancamentos[0].descricao, "Cinema");
+});

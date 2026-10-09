@@ -6,9 +6,10 @@
 
 import { pessoas, contas } from "../../dados/repositorios.js";
 import { assinarInicio } from "../../dados/inicioRepo.js";
-import { formatarBRL } from "../../domain/dinheiro.js";
+import { formatarBRL, paraCentavos, valorDigitadoValido } from "../../domain/dinheiro.js";
 import { formatarData, competenciaLabel, somarDias, hojeISO } from "../../domain/tempo.js";
-import { escapeHtml } from "../utilitarios.js";
+import { escapeHtml, mostrarToast } from "../utilitarios.js";
+import { criarSimples } from "../../dados/transacoesRepo.js";
 import { icone } from "../icones.js";
 import * as privacidade from "../privacidade.js";
 import { navegar } from "../navegacao.js";
@@ -16,7 +17,6 @@ import { abrirAtualizarSaldo } from "../atualizarSaldo.js";
 import { avatarMarcaHtml } from "../avatarMarca.js";
 import { chegadaAteAProximaEntrada, aReceber } from "../../domain/inicio.js";
 import { baixarComPergunta } from "../baixaUI.js";
-import { abrirLancamento } from "./transacoes.js";
 
 let pararInicio = null;
 let estadoInicio = null;
@@ -173,24 +173,49 @@ function blocoMes(c) {
   return `<section class="inicio-bloco"><button class="btn-link" data-ir-contas>Contas de ${escapeHtml(competenciaLabel(c.competencia).split(" ")[0].toLowerCase())}: ${r.quantidadePagas} de ${r.quantidade} pagas</button></section>`;
 }
 
-const ROTULO_RITMO = { "no ritmo": "no ritmo", acima: "gastando rápido", estourou: "passou da cota" };
+const ROTULO_RITMO = { "no ritmo": "No ritmo", acima: "Gastando rápido", estourou: "Passou da cota" };
 
-/** Verbas do mês (lazer, combustível, mercado...): da cota de X, quanto já usou e quanto ainda pode. */
-function blocoVerbas(verbas) {
+/** Verbas do mês (lazer, combustível, mercado...): "X de Y" bem à vista, o que ainda pode, e um jeito de
+ * lançar o gasto ali mesmo (valor + Lançar), sem abrir tela nenhuma. */
+function blocoVerbas(verbas, contasAtivas) {
   if (!verbas || !verbas.length) return "";
+  const opcoes = (padrao) => contasAtivas.map((c) => `<option value="${escapeHtml(c.id)}"${c.id === padrao ? " selected" : ""}>${escapeHtml(c.nome)}</option>`).join("");
   return `
-    <section class="inicio-bloco">
+    <section class="inicio-bloco verbas-bloco">
       <h3>Suas verbas do mês</h3>
+      <p class="verbas-como"><b>Como usar:</b> cada vez que gastar, toque em <b>+ Lançar gasto</b>, digite o valor e toque em <b>Lançar</b>. A barra enche e o "ainda pode" diminui.</p>
       ${verbas.map((v, i) => `
-        <div class="verba-linha ritmo-${v.ritmo.replace(" ", "-")}">
-          <div class="verba-topo"><b>${escapeHtml(curto(v.nome))}</b><span class="mono" data-valor>${formatarBRL(v.gastoCentavos)} de ${formatarBRL(v.totalCentavos)}</span></div>
-          <div class="barra-limite"><span style="width:${v.percentual}%"></span></div>
-          <div class="verba-base">
-            <small>${v.excedenteCentavos > 0 ? `passou <span data-valor>${formatarBRL(v.excedenteCentavos)}</span>` : `ainda pode <b data-valor>${formatarBRL(v.restanteCentavos)}</b>${v.restanteCentavos > 0 ? ` (uns <span data-valor>${formatarBRL(v.porSemanaCentavos)}</span> por semana)` : ""}`} · ${ROTULO_RITMO[v.ritmo]}</small>
-            <button class="btn-mini" data-gastei="${i}">Gastei</button>
-          </div>
+        <div class="verba-card ritmo-${v.ritmo.replace(" ", "-")}">
+          <div class="verba-topo"><b>${escapeHtml(curto(v.nome))}</b><span class="verba-ritmo">${ROTULO_RITMO[v.ritmo]}</span></div>
+          <div class="verba-xy"><span class="verba-usado mono" data-valor>${formatarBRL(v.gastoCentavos)}</span><span class="verba-de"> usados de </span><span class="verba-total mono" data-valor>${formatarBRL(v.totalCentavos)}</span></div>
+          <div class="barra-limite barra-grossa"><span style="width:${v.percentual}%"></span></div>
+          <div class="verba-restante">${v.excedenteCentavos > 0
+            ? `Passou <b class="valor-neg" data-valor>${formatarBRL(v.excedenteCentavos)}</b> da cota`
+            : `Ainda pode gastar <b class="mono" data-valor>${formatarBRL(v.restanteCentavos)}</b>${v.restanteCentavos > 0 ? ` <small>· uns <span data-valor>${formatarBRL(v.porSemanaCentavos)}</span> por semana</small>` : ""}`}</div>
+          <button class="btn btn-primary verba-botao" data-verba-abrir="${i}">+ Lançar gasto</button>
+          <form class="verba-form" data-verba-form="${i}" hidden>
+            <label class="verba-campo"><span>Quanto você gastou?</span><input type="text" inputmode="decimal" placeholder="0,00" data-verba-valor="${i}" autocomplete="off"></label>
+            <label class="verba-campo"><span>Saiu de qual conta?</span><select data-verba-conta="${i}">${opcoes(lembrada() || v.contaId)}</select></label>
+            <div class="verba-acoes"><button type="submit" class="btn btn-primary">Lançar</button><button type="button" class="btn btn-ghost" data-verba-fechar="${i}">Cancelar</button></div>
+          </form>
+          ${v.lancamentos.length ? `<details class="inicio-detalhe"><summary>O que já entrou nesta verba (${v.lancamentos.length}${v.lancamentos.length >= 6 ? "+" : ""})</summary>${v.lancamentos.map((l) => `<div class="fatura-linha"><span class="rotulo">${escapeHtml(l.descricao)}<small>${escapeHtml(dm(l.data))}</small></span><span data-valor>${formatarBRL(l.valorCentavos)}</span></div>`).join("")}</details>` : ""}
         </div>`).join("")}
     </section>`;
+}
+
+function lembrada() { try { return localStorage.getItem("gedi_verba_conta"); } catch { return null; } }
+function lembrar(id) { try { localStorage.setItem("gedi_verba_conta", id); } catch { /* sem armazenamento: segue sem lembrar */ } }
+
+async function lancarNaVerba(v, valorTexto, contaId) {
+  if (!valorDigitadoValido(valorTexto)) { mostrarToast("Digite o valor, por exemplo 35,90."); return false; }
+  const valor = paraCentavos(valorTexto);
+  if (!(valor > 0)) { mostrarToast("O valor precisa ser maior que zero."); return false; }
+  try {
+    await criarSimples({ tipo: "despesa", contaId, categoriaId: v.categoriaId, pessoaId: v.pessoaId, valorCentavos: valor, data: hojeISO(), status: "pago", certeza: "confirmado", descricao: curto(v.nome), movimentadoEm: new Date().toISOString(), origem: "manual", revisado: true });
+  } catch (e) { mostrarToast(e.message || "Não consegui lançar."); return false; }
+  lembrar(contaId);
+  mostrarToast(`Lançado: ${formatarBRL(valor)} em ${curto(v.nome)}.`);
+  return true;
 }
 
 function blocoPrazos(prazos) {
@@ -207,13 +232,14 @@ function renderizar() {
   const { caixa, contasMes, prazos, verbas } = estadoInicio;
   const hoje = estadoInicio.hoje || caixa.pontos?.[0]?.data || hojeISO();
   linhasComBaixa = [];
+  const contasAtivas = (caixa.detalhes.contasOperacao || []).map((x) => x.conta);
   container.innerHTML = `
     <div class="inicio-coluna">
       ${blocoContas(caixa)}
       ${blocoChegada(caixa)}
       ${blocoReceber(caixa)}
       ${blocoAgenda(caixa, hoje)}
-      ${blocoVerbas(verbas)}
+      ${blocoVerbas(verbas, contasAtivas)}
       ${blocoMes(contasMes)}
       ${blocoPrazos(prazos)}
     </div>`;
@@ -224,9 +250,25 @@ function renderizar() {
     const item = linhasComBaixa[Number(b.dataset.paguei)];
     if (item) baixarComPergunta(item, "despesa");
   }));
-  container.querySelectorAll("[data-gastei]").forEach((b) => b.addEventListener("click", () => {
-    const v = (estadoInicio.verbas || [])[Number(b.dataset.gastei)];
-    if (v) abrirLancamento({ tipo: "despesa", status: "pago", titulo: `Gastei: ${curto(v.nome)}`, dica: `Entra na verba "${curto(v.nome)}" e abate do que ainda pode gastar.`, categoriaId: v.categoriaId, descricao: curto(v.nome) });
+  container.querySelectorAll("[data-verba-abrir]").forEach((b) => b.addEventListener("click", () => {
+    const i = b.dataset.verbaAbrir;
+    container.querySelector(`[data-verba-form="${i}"]`).hidden = false;
+    b.hidden = true;
+    container.querySelector(`[data-verba-valor="${i}"]`).focus();
+  }));
+  container.querySelectorAll("[data-verba-fechar]").forEach((b) => b.addEventListener("click", () => {
+    const i = b.dataset.verbaFechar;
+    container.querySelector(`[data-verba-form="${i}"]`).hidden = true;
+    container.querySelector(`[data-verba-abrir="${i}"]`).hidden = false;
+  }));
+  container.querySelectorAll("[data-verba-form]").forEach((f) => f.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const i = f.dataset.verbaForm;
+    const v = (estadoInicio.verbas || [])[Number(i)];
+    if (!v) return;
+    const btn = f.querySelector('button[type="submit"]'); btn.disabled = true;
+    const ok = await lancarNaVerba(v, f.querySelector(`[data-verba-valor="${i}"]`).value, f.querySelector(`[data-verba-conta="${i}"]`).value);
+    if (!ok) btn.disabled = false;
   }));
   ligarBotaoOcultar();
 }
