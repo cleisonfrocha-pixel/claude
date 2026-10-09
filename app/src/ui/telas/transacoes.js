@@ -544,6 +544,14 @@ function aplicarPreset(preset) {
     const st = document.getElementById("s-status");
     if (st) st.value = preset.status;
   }
+  if (preset.categoriaId) {
+    const cat = document.getElementById("s-categoria");
+    if (cat) cat.value = preset.categoriaId;
+  }
+  if (preset.descricao) {
+    const d = document.getElementById("s-descricao");
+    if (d) d.value = preset.descricao;
+  }
   if (preset.rotuloData) {
     const rot = document.querySelector('label[for="s-data"]');
     if (rot) rot.textContent = preset.rotuloData;

@@ -230,3 +230,11 @@ artefato republicado, este arquivo atualizado com o que foi feito e o que ficou.
 - Aporte GEDI de R$ 1.500 passou para 10/11 (repassa no mês que vem, usando o dinheiro do Del Poente agora).
 - As duas faturas do cartão Next cancelado (R$ 328,66 e R$ 2.832,80) ficaram ligadas à dívida do Bradesco.
 - `COLECOES_LIDAS` voltou a ser exportado em `ferramentas/subirPainel.js` (a ferramenta de montar não rodava).
+
+### Verbas à vista no Início (pedido do Cleison, 09/10)
+
+- "Suas verbas do mês" no Início: para cada verba (lazer, combustível, mercado, almoço, fórmula do Caio, anúncios), o
+  quanto já foi da cota, quanto ainda pode e uns quanto por semana, com o ritmo (no ritmo, gastando rápido, passou da
+  cota). Tudo derivado dos lançamentos da categoria no mês (`painelDeVerbas`, com teste), nada gravado.
+- O botão "Gastei" abre o lançamento já na categoria da verba. Gastar na mesma categoria é o que abate a cota.
+- Conta com valor e data (internet, celular, fatura) continua sendo conta fixa, não verba.

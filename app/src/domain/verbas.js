@@ -64,3 +64,37 @@ export function lerVerbas(transacoes, hoje) {
   }
   return saida;
 }
+
+const arredondar = (n) => Math.round(n);
+
+/**
+ * "Da cota de X, já usei Y, ainda posso gastar Z" (pedido do Cleison, 09/10): uma linha por verba do mês
+ * corrente, derivada dos lançamentos (nada gravado). `ritmo` compara o gasto com o que seria um gasto
+ * uniforme até hoje: "estourou" (passou da verba), "acima" (mais de 15% acima do uniforme), "no ritmo".
+ * `porSemanaCentavos` é o que sobra dividido pelas semanas que faltam (pelo menos uma).
+ */
+export function painelDeVerbas(transacoes, hoje) {
+  const competencia = competenciaDeData(hoje);
+  const lidas = lerVerbas(transacoes, hoje);
+  const dias = Number(hoje.slice(8, 10));
+  const [a, m] = competencia.split("-").map(Number);
+  const diasNoMes = new Date(a, m, 0).getDate();
+  const diasRestantes = diasNoMes - dias + 1;
+  const semanas = Math.max(1, Math.ceil(diasRestantes / 7));
+  const linhas = [];
+  for (const t of transacoes || []) {
+    if (!ehVerbaAberta(t) || compDe(t) !== competencia) continue;
+    const v = lidas.get(t.id ?? t);
+    if (!v) continue;
+    const esperado = arredondar((v.totalCentavos * dias) / diasNoMes);
+    const ritmo = v.gastoCentavos > v.totalCentavos ? "estourou" : v.gastoCentavos > esperado * 1.15 + 100 ? "acima" : "no ritmo";
+    linhas.push({
+      id: t.id, nome: t.descricao || "Verba", categoriaId: t.categoriaId || "", recorrenciaId: t.recorrenciaId || null,
+      totalCentavos: v.totalCentavos, gastoCentavos: v.gastoCentavos, restanteCentavos: v.restanteCentavos,
+      excedenteCentavos: Math.max(0, v.gastoCentavos - v.totalCentavos),
+      percentual: v.totalCentavos > 0 ? Math.min(100, Math.round((v.gastoCentavos / v.totalCentavos) * 100)) : 0,
+      porSemanaCentavos: Math.floor(v.restanteCentavos / semanas), semanasRestantes: semanas, ritmo,
+    });
+  }
+  return linhas.sort((x, y) => y.totalCentavos - x.totalCentavos);
+}

@@ -1765,3 +1765,4 @@ Auditoria do que vale graficar (e onde): o que o Cleison pediu foi "pra onde o d
 - Fase 13.8: Plano de recuperação (cabeçalho meta/progresso/próximo passo/o que mudou, passos só de hoje, alertas calmos com ⋯, alavancas da vida real, 3 abas, metas num lugar só). `domain/recuperacao.js`, `testes/recuperacao.test.js`.
 - Fase 13.9: textos sem jargão, sem "i", Editar/Apagar em "⋯", fontes embutidas, cache de leitura sem dado velho (`testes/dbCache.test.js`), telas de cadastro reativas.
 - Fase 13.10: importação idempotente (`idExterno` estável); limpeza de dados real aguarda respostas do Cleison (ver PLANO-CORRECOES-0510.md).
+- Verbas à vista no Início (cota, usado, falta, por semana, ritmo; botão Gastei). `painelDeVerbas` em `domain/verbas.js`, `testes/painelVerbas.test.js`.
